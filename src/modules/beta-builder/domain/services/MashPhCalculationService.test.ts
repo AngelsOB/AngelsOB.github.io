@@ -199,6 +199,7 @@ describe('Mash pH Calculation Service', () => {
         mashThicknessLPerKg: 2.5,
         grainAbsorptionLPerKg: 0.96,
         mashTunDeadspaceLiters: 1,
+        mashTunLossLiters: 0,
         mashEfficiencyPercent: 75,
       },
       waterChemistry: undefined,

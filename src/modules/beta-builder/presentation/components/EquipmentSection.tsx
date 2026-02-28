@@ -37,10 +37,14 @@ export const EquipmentSection: React.FC = () => {
     recipe.equipment.boilTimeMin !== currentProfile.boilTimeMin ||
     recipe.equipment.boilOffRateLPerHour !== currentProfile.boilOffRateL_hr ||
     recipe.equipment.mashEfficiencyPercent !== currentProfile.mashEfficiency ||
+    recipe.equipment.mashThicknessLPerKg !== currentProfile.mashThicknessL_kg ||
     recipe.equipment.grainAbsorptionLPerKg !== currentProfile.grainAbsorptionL_kg ||
     recipe.equipment.mashTunDeadspaceLiters !== currentProfile.mashTunDeadspaceL ||
+    recipe.equipment.mashTunLossLiters !== currentProfile.mashTunLossL ||
     recipe.equipment.kettleLossLiters !== currentProfile.kettleDeadspaceL ||
+    recipe.equipment.chillerLossLiters !== currentProfile.chillerLossL ||
     recipe.equipment.fermenterLossLiters !== currentProfile.fermenterLossL ||
+    recipe.equipment.coolingShrinkagePercent !== currentProfile.coolingShrinkagePercent ||
     Math.abs(recipe.equipment.hopsAbsorptionLPerKg - currentProfile.hopAbsorptionL_kg) > 0.01
   );
 
@@ -54,10 +58,14 @@ export const EquipmentSection: React.FC = () => {
         boilTimeMin: profile.boilTimeMin,
         boilOffRateLPerHour: profile.boilOffRateL_hr,
         mashEfficiencyPercent: profile.mashEfficiency,
+        mashThicknessLPerKg: profile.mashThicknessL_kg,
         grainAbsorptionLPerKg: profile.grainAbsorptionL_kg,
         mashTunDeadspaceLiters: profile.mashTunDeadspaceL,
+        mashTunLossLiters: profile.mashTunLossL,
         kettleLossLiters: profile.kettleDeadspaceL,
+        chillerLossLiters: profile.chillerLossL,
         fermenterLossLiters: profile.fermenterLossL,
+        coolingShrinkagePercent: profile.coolingShrinkagePercent,
         hopsAbsorptionLPerKg: profile.hopAbsorptionL_kg,
       },
     });
@@ -245,6 +253,26 @@ export const EquipmentSection: React.FC = () => {
             />
           </div>
           <div>
+            <label htmlFor="equipment-mash-tun-loss" className="block text-xs font-semibold mb-2">
+              Mash Tun Loss (L)
+            </label>
+            <input
+              id="equipment-mash-tun-loss"
+              type="number"
+              value={recipe.equipment.mashTunLossLiters ?? 0}
+              onChange={(e) =>
+                updateRecipe({
+                  equipment: {
+                    ...recipe.equipment,
+                    mashTunLossLiters: parseFloat(e.target.value) || 0,
+                  },
+                })
+              }
+              className="brew-input w-full py-1 px-2"
+              step="0.1"
+            />
+          </div>
+          <div>
             <label htmlFor="equipment-kettle-loss" className="block text-xs font-semibold mb-2">
               Kettle Loss (L)
             </label>
@@ -368,10 +396,14 @@ export const EquipmentSection: React.FC = () => {
           boilTimeMin: recipe.equipment.boilTimeMin,
           boilOffRateLPerHour: recipe.equipment.boilOffRateLPerHour,
           mashEfficiencyPercent: recipe.equipment.mashEfficiencyPercent,
+          mashThicknessLPerKg: recipe.equipment.mashThicknessLPerKg,
           grainAbsorptionLPerKg: recipe.equipment.grainAbsorptionLPerKg,
           mashTunDeadspaceLiters: recipe.equipment.mashTunDeadspaceLiters,
+          mashTunLossLiters: recipe.equipment.mashTunLossLiters ?? 0,
           kettleLossLiters: recipe.equipment.kettleLossLiters,
+          chillerLossLiters: recipe.equipment.chillerLossLiters,
           fermenterLossLiters: recipe.equipment.fermenterLossLiters,
+          coolingShrinkagePercent: recipe.equipment.coolingShrinkagePercent,
           hopsAbsorptionLPerKg: recipe.equipment.hopsAbsorptionLPerKg,
         }}
       />
