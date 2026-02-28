@@ -38,6 +38,7 @@ function createTestRecipe(
       mashThicknessLPerKg: 3.0,
       grainAbsorptionLPerKg: 1.04,
       mashTunDeadspaceLiters: 2.0,
+      mashTunLossLiters: 0,
       kettleLossLiters: 1.0,
       hopsAbsorptionLPerKg: 0.7,
       chillerLossLiters: 0.5,

@@ -53,6 +53,13 @@ export class RecipeRepository {
           migrated = { ...migrated, yeasts: oldYeast ? [oldYeast] : [] } as typeof migrated;
           delete (migrated as Record<string, unknown>).yeast;
         }
+        // Migrate equipment: add mashTunLossLiters (deadspace is now recovered, loss is separate)
+        if (migrated.equipment && (migrated.equipment.mashTunLossLiters === undefined)) {
+          migrated = {
+            ...migrated,
+            equipment: { ...migrated.equipment, mashTunLossLiters: 0 },
+          };
+        }
         return migrated as Recipe;
       });
 

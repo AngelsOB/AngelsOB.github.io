@@ -16,6 +16,7 @@ function createTestRecipe(overrides: Partial<Recipe> = {}): Recipe {
     mashThicknessLPerKg: 2.5,
     grainAbsorptionLPerKg: 0.96,
     mashTunDeadspaceLiters: 1,
+    mashTunLossLiters: 0,
     mashEfficiencyPercent: 75,
   };
 

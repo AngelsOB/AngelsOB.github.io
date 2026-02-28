@@ -218,7 +218,7 @@ export type Recipe = {
   parentRecipeId?: string; // If this is a variation, the ID of the parent recipe
   parentVersionNumber?: number; // If this is a variation, which version was forked
 
-  /** Target batch volume in liters (into fermenter) */
+  /** Target batch volume in liters (final packaged volume — fermenter loss is added on top) */
   batchVolumeL: number;
 
   /** Equipment profile name (references saved equipment profile) */
@@ -236,8 +236,10 @@ export type Recipe = {
     mashThicknessLPerKg: number;
     /** Grain absorption in liters per kilogram (typical: 1.04) */
     grainAbsorptionLPerKg: number;
-    /** Mash tun deadspace in liters (typical: 2.0) */
+    /** Mash tun deadspace in liters — water below false bottom/grain basket, recovered during drain (typical: 3.5) */
     mashTunDeadspaceLiters: number;
+    /** Mash tun loss in liters — water actually lost in the mash tun that doesn't reach the kettle (typical: 0) */
+    mashTunLossLiters: number;
     /** Kettle/trub loss in liters (typical: 1.0) */
     kettleLossLiters: number;
     /** Hop absorption in liters per kilogram (typical: 0.7) - NO LONGER OPTIONAL! */

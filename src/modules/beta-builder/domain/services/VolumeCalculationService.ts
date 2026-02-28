@@ -69,7 +69,11 @@ export class VolumeCalculationService {
    * Calculate sparge water volume
    *
    * Formula: preBoilVolume - mashRunoff
-   * Where mashRunoff = mashWater - grainAbsorption - deadspace
+   * Where mashRunoff = mashWater - grainAbsorption - mashTunLoss
+   *
+   * Note: Deadspace (water below false bottom) IS recovered during drain,
+   * so it affects the strike/sparge split but NOT total water.
+   * Only mashTunLoss (water that doesn't reach the kettle) is subtracted.
    */
   calculateSpargeWater(recipe: Recipe): number {
     const { fermentables, equipment } = recipe;
@@ -83,8 +87,12 @@ export class VolumeCalculationService {
     // Grain absorbs water
     const grainAbsorptionL = totalGrainKg * equipment.grainAbsorptionLPerKg;
 
+    // Mash tun loss = water that doesn't make it out of the mash tun (default 0)
+    const mashTunLossL = equipment.mashTunLossLiters ?? 0;
+
     // Mash runoff = what we get out of the mash tun
-    const mashRunoffL = mashWaterL - grainAbsorptionL - equipment.mashTunDeadspaceLiters;
+    // Deadspace is recovered during drain (not subtracted), only grain absorption and tun loss reduce runoff
+    const mashRunoffL = mashWaterL - grainAbsorptionL - mashTunLossL;
 
     // Sparge = what we need to reach pre-boil volume
     const spargeWaterL = preBoilL - mashRunoffL;

@@ -435,6 +435,11 @@ export const generateRecipeMarkdown = (
   lines.push(
     `| Mash Tun Deadspace | ${fmt(recipe.equipment.mashTunDeadspaceLiters, 1)} L |`
   );
+  if (recipe.equipment.mashTunLossLiters > 0) {
+    lines.push(
+      `| Mash Tun Loss | ${fmt(recipe.equipment.mashTunLossLiters, 1)} L |`
+    );
+  }
   lines.push(
     `| Kettle Loss | ${fmt(recipe.equipment.kettleLossLiters, 1)} L |`
   );

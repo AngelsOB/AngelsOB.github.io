@@ -20,10 +20,14 @@ interface CustomEquipmentModalProps {
     boilTimeMin: number;
     boilOffRateLPerHour: number;
     mashEfficiencyPercent: number;
+    mashThicknessLPerKg: number;
     grainAbsorptionLPerKg: number;
     mashTunDeadspaceLiters: number;
+    mashTunLossLiters: number;
     kettleLossLiters: number;
+    chillerLossLiters: number;
     fermenterLossLiters: number;
+    coolingShrinkagePercent: number;
     hopsAbsorptionLPerKg: number;
   };
 }
@@ -46,9 +50,13 @@ export const CustomEquipmentModal = ({
       batchSizeL: currentSettings.batchVolumeL,
       boilTimeMin: currentSettings.boilTimeMin,
       boilOffRateL_hr: currentSettings.boilOffRateLPerHour,
+      mashThicknessL_kg: currentSettings.mashThicknessLPerKg,
       mashTunDeadspaceL: currentSettings.mashTunDeadspaceLiters,
+      mashTunLossL: currentSettings.mashTunLossLiters,
       kettleDeadspaceL: currentSettings.kettleLossLiters,
+      chillerLossL: currentSettings.chillerLossLiters,
       fermenterLossL: currentSettings.fermenterLossLiters,
+      coolingShrinkagePercent: currentSettings.coolingShrinkagePercent,
       grainAbsorptionL_kg: currentSettings.grainAbsorptionLPerKg,
       hopAbsorptionL_kg: currentSettings.hopsAbsorptionLPerKg,
       mashEfficiency: currentSettings.mashEfficiencyPercent,
