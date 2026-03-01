@@ -254,7 +254,7 @@ export default function HopFlavorRadar({
             <div
               key={s.name}
               className="inline-flex items-center gap-2 rounded-lg px-2 py-1"
-              style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}
+              style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}
             >
               <span
                 className="inline-block h-3 w-3 rounded-sm"

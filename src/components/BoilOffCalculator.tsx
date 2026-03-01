@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import CalculatorCard from "./CalculatorCard";
 import { postBoilVolume, gravityPoints } from "../calculators/boilOff";
 
 function parseNum(input: string): number | null {
@@ -47,45 +46,52 @@ export default function BoilOffCalculator() {
     };
   }, [preVolInput, preGravInput, targetOGInput, boilOffRate]);
 
-  const inputClass =
-    "w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]";
-
   return (
-    <CalculatorCard title="Boil-Off / Pre-Boil Gravity">
-      <p className="text-xs text-muted leading-relaxed">
+    <div className="brew-section" data-accent="mash">
+      <div className="flex items-baseline gap-3 mb-2">
+        <h2 className="brew-section-title">Boil-Off</h2>
+        <span className="text-xs text-muted">pre-boil gravity method</span>
+      </div>
+
+      <p className="text-sm text-muted mb-5 leading-relaxed">
         Measure your pre-boil volume &amp; gravity, enter your target OG, and
         see how far you need to boil down.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Inputs — 4 across on desktop, 2x2 on mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
         <label className="block">
-          <div className="text-sm text-muted mb-1">Pre-Boil Volume</div>
+          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+            Pre-Boil Vol
+          </div>
           <div className="relative">
             <input
               type="number"
               inputMode="decimal"
               step="0.25"
               min="0"
-              className={inputClass}
+              className="brew-input w-full tabular-nums"
               value={preVolInput}
               onChange={(e) => setPreVolInput(e.target.value)}
               placeholder="7.0"
             />
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-neutral-500">
+            <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-muted opacity-50">
               gal
             </span>
           </div>
         </label>
 
         <label className="block">
-          <div className="text-sm text-muted mb-1">Pre-Boil Gravity</div>
+          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+            Pre-Boil SG
+          </div>
           <input
             type="number"
             inputMode="decimal"
             step="0.001"
             min="1.000"
             max="1.200"
-            className={inputClass}
+            className="brew-input w-full tabular-nums"
             value={preGravInput}
             onChange={(e) => setPreGravInput(e.target.value)}
             placeholder="1.042"
@@ -93,81 +99,83 @@ export default function BoilOffCalculator() {
         </label>
 
         <label className="block">
-          <div className="text-sm text-muted mb-1">Target OG</div>
+          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+            Target OG
+          </div>
           <input
             type="number"
             inputMode="decimal"
             step="0.001"
             min="1.000"
             max="1.200"
-            className={inputClass}
+            className="brew-input w-full tabular-nums"
             value={targetOGInput}
             onChange={(e) => setTargetOGInput(e.target.value)}
             placeholder="1.054"
           />
         </label>
+
+        <label className="block">
+          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+            Boil-Off Rate
+          </div>
+          <div className="relative">
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.25"
+              min="0"
+              className="brew-input w-full tabular-nums"
+              value={boilOffRate}
+              onChange={(e) => setBoilOffRate(e.target.value)}
+              placeholder="1.25"
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-muted opacity-50">
+              gal/hr
+            </span>
+          </div>
+        </label>
       </div>
 
-      <label className="block">
-        <div className="text-sm text-muted mb-1">
-          Boil-Off Rate{" "}
-          <span className="text-xs opacity-60">(optional, for time estimate)</span>
-        </div>
-        <div className="relative max-w-48">
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.25"
-            min="0"
-            className={inputClass}
-            value={boilOffRate}
-            onChange={(e) => setBoilOffRate(e.target.value)}
-            placeholder="1.25"
-          />
-          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-neutral-500">
-            gal/hr
-          </span>
-        </div>
-      </label>
-
-      <div className="mt-1">
-        {calc.error ? (
-          <div className="text-sm text-muted">{calc.error}</div>
-        ) : (
-          <div className="space-y-2">
-            <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-              <div className="text-sm text-muted">Target Post-Boil Volume</div>
-              <div className="text-3xl font-semibold tracking-tight">
-                {calc.postVol!.toFixed(2)}{" "}
-                <span className="text-base font-normal text-muted">gal</span>
+      {/* Results */}
+      {calc.error ? (
+        <div className="text-sm text-muted">{calc.error}</div>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            {/* Primary result — larger */}
+            <div className="brew-gauge">
+              <div className="brew-gauge-label">Post-Boil Volume</div>
+              <div className="brew-gauge-value text-3xl tabular-nums">
+                {calc.postVol!.toFixed(2)}
+                <span className="text-sm font-normal text-muted ml-1">gal</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border px-4 py-3">
-                <div className="text-xs text-muted">Boil Off</div>
-                <div className="text-lg font-semibold">
-                  {calc.boilOff!.toFixed(2)}{" "}
-                  <span className="text-sm font-normal text-muted">gal</span>
-                </div>
-              </div>
-              <div className="rounded-lg border px-4 py-3">
-                <div className="text-xs text-muted">Est. Boil Time</div>
-                <div className="text-lg font-semibold">
-                  {calc.boilTime != null
-                    ? `${Math.round(calc.boilTime)} min`
-                    : "—"}
-                </div>
+            <div className="brew-gauge">
+              <div className="brew-gauge-label">Boil Off</div>
+              <div className="brew-gauge-value tabular-nums">
+                {calc.boilOff!.toFixed(2)}
+                <span className="text-sm font-normal text-muted ml-1">gal</span>
               </div>
             </div>
 
-            <div className="text-xs text-muted opacity-70 pt-1">
-              {calc.prePoints!.toFixed(1)} pts × {parseNum(preVolInput)!} gal ={" "}
-              {calc.targetPoints!.toFixed(1)} pts × {calc.postVol!.toFixed(2)} gal
+            <div className="brew-gauge">
+              <div className="brew-gauge-label">Est. Boil Time</div>
+              <div className="brew-gauge-value tabular-nums">
+                {calc.boilTime != null ? Math.round(calc.boilTime) : "—"}
+                <span className="text-sm font-normal text-muted ml-1">min</span>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    </CalculatorCard>
+
+          {/* Formula breakdown */}
+          <div className="text-[11px] text-muted opacity-50 font-mono tabular-nums">
+            {calc.prePoints!.toFixed(1)} pts × {parseNum(preVolInput)!} gal ={" "}
+            {calc.targetPoints!.toFixed(1)} pts × {calc.postVol!.toFixed(2)} gal
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

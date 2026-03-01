@@ -12,6 +12,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
+import EmptyState from "../../../../components/EmptyState";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import type { Yeast, StarterInfo } from "../../domain/models/Recipe";
 import type { YeastPreset } from "../../domain/models/Presets";
@@ -169,9 +170,11 @@ export default function YeastSection() {
 
       {/* Yeast Display */}
       {!currentYeast ? (
-        <p className="text-muted italic">
-          No yeast selected. Click "Select Yeast" to choose from preset database.
-        </p>
+        <EmptyState
+          message="No yeast selected"
+          actionLabel="Select a yeast strain"
+          onAction={() => setIsPickerOpen(true)}
+        />
       ) : (
         <div className="space-y-4">
           <YeastDisplay

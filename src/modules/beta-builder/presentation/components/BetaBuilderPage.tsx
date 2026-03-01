@@ -231,7 +231,8 @@ export default function BetaBuilderPage() {
 
           {/* Calculated Values - Gauge Style */}
           {calculations && (
-            <div ref={calculatedValuesRef} className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+            <div ref={calculatedValuesRef} className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:min-w-max">
               {/* ABV */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">ABV</div>
@@ -282,6 +283,7 @@ export default function BetaBuilderPage() {
                 <div className="brew-gauge-value text-lg">{calculations.carbsG.toFixed(1)}g</div>
                 <div className="text-[9px] text-muted">per 12 oz</div>
               </div>
+            </div>
             </div>
           )}
 

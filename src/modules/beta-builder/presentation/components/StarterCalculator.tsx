@@ -155,8 +155,8 @@ export default function StarterCalculator({
   };
 
   return (
-    <div className="rounded-lg" style={{ border: '1px solid rgb(var(--brew-border-subtle))' }}>
-      <div className="flex items-center justify-between p-4 rounded-t-lg" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', borderBottom: '1px solid rgb(var(--brew-border-subtle))' }}>
+    <div className="rounded-lg" style={{ border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
+      <div className="flex items-center justify-between p-4 rounded-t-lg" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', borderBottom: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
         <div className="flex items-center gap-3">
           <span className="font-medium" style={{ color: 'var(--fg-strong)' }}>Pitch Rate & Starter</span>
           {!isOpen && summaryText && (
@@ -175,7 +175,7 @@ export default function StarterCalculator({
       {isOpen && (
         <div className="p-4 space-y-4">
           {/* Part 1: Cells */}
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+          <div className="rounded-lg p-4 space-y-3" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
             <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>Part 1: Cells</div>
 
             {/* Package inputs */}
@@ -290,7 +290,7 @@ export default function StarterCalculator({
           </div>
 
           {/* Part 2: Starter Steps */}
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'rgb(var(--brew-card-inset) / 0.3)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+          <div className="rounded-lg p-4 space-y-3" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
             <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
               Part 2: Starter (up to 3 steps)
             </div>
@@ -365,14 +365,14 @@ export default function StarterCalculator({
                       </select>
                     </label>
 
-                    <div className="rounded-md px-3 py-2" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                    <div className="rounded-md px-3 py-2" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
                       <div className="text-[11px] text-muted">DME (g)</div>
                       <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
                         {res?.dmeGrams.toFixed(0) ?? "–"}
                       </div>
                     </div>
 
-                    <div className="rounded-md px-3 py-2" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                    <div className="rounded-md px-3 py-2" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
                       <div className="text-[11px] text-muted">End (B)</div>
                       <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
                         {res?.endBillion.toFixed(0) ?? "–"}

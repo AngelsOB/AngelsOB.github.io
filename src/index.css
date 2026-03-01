@@ -3,7 +3,6 @@
 /* Force dark mode to work with .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
-
 /* ========================================
    THEME SYSTEM
    Light theme = default (:root)
@@ -12,16 +11,16 @@
 
 :root {
   /* Light theme — warm cream */
-  --bg: 252 249 244;           /* warm off-white */
-  --surface: 248 244 238;     /* warm cream */
-  --card: 255 253 249;        /* warm white */
-  --text: 0 0 0;              /* black */
-  --text-muted: 100 90 75;    /* warm gray */
-  --border: 222 216 204;      /* warm border */
+  --bg: 252 249 244; /* warm off-white */
+  --surface: 248 244 238; /* warm cream */
+  --card: 255 253 249; /* warm white */
+  --text: 0 0 0; /* black */
+  --text-muted: 100 90 75; /* warm gray */
+  --border: 212 205 190; /* warm border */
 
   /* Accent colors (shared) */
-  --accent: 251 146 60;       /* orange-400 */
-  --glow: 249 115 22;         /* orange-500 */
+  --accent: 251 146 60; /* orange-400 */
+  --glow: 249 115 22; /* orange-500 */
 
   /* Coral theme (OKLCH) */
   --coral-50: oklch(96.75% 0.017 44.86);
@@ -37,7 +36,7 @@
   --coral-950: oklch(19.22% 0.046 58.17);
 
   /* Semantic text (light theme) — warm near-black */
-  --fg-strong: oklch(15% 0.010 50);
+  --fg-strong: oklch(15% 0.01 50);
   --fg-muted: oklch(45% 0.012 50);
 
   /* =============================================
@@ -45,56 +44,87 @@
      ============================================= */
 
   /* Default accent: Warm brown/amber (hue 45) — approachable default for non-section areas */
-  --brew-accent-50:  oklch(97% 0.012 45);
-  --brew-accent-100: oklch(94% 0.030 45);
+  --brew-accent-50: oklch(97% 0.012 45);
+  --brew-accent-100: oklch(94% 0.03 45);
   --brew-accent-200: oklch(88% 0.065 45);
   --brew-accent-300: oklch(78% 0.105 45);
   --brew-accent-400: oklch(70% 0.135 45);
-  --brew-accent-500: oklch(60% 0.140 45);
+  --brew-accent-500: oklch(60% 0.14 45);
   --brew-accent-600: oklch(50% 0.125 45);
-  --brew-accent-700: oklch(42% 0.100 45);
+  --brew-accent-700: oklch(42% 0.1 45);
   --brew-accent-800: oklch(34% 0.075 45);
-  --brew-accent-900: oklch(26% 0.050 45);
+  --brew-accent-900: oklch(26% 0.05 45);
   --brew-accent-950: oklch(20% 0.035 45);
 
   /* Neutral: Warm sand (hue 60) */
-  --brew-neutral-50:  oklch(98% 0.006 60);
+  --brew-neutral-50: oklch(98% 0.006 60);
   --brew-neutral-100: oklch(95% 0.008 60);
-  --brew-neutral-200: oklch(90% 0.010 60);
+  --brew-neutral-200: oklch(90% 0.01 60);
   --brew-neutral-300: oklch(82% 0.012 60);
-  --brew-neutral-400: oklch(65% 0.010 60);
-  --brew-neutral-500: oklch(55% 0.010 60);
-  --brew-neutral-600: oklch(45% 0.010 60);
-  --brew-neutral-700: oklch(35% 0.010 60);
-  --brew-neutral-800: oklch(25% 0.010 60);
+  --brew-neutral-400: oklch(65% 0.01 60);
+  --brew-neutral-500: oklch(55% 0.01 60);
+  --brew-neutral-600: oklch(45% 0.01 60);
+  --brew-neutral-700: oklch(35% 0.01 60);
+  --brew-neutral-800: oklch(25% 0.01 60);
   --brew-neutral-900: oklch(18% 0.008 60);
 
   /* Semantic colors */
   --brew-success: oklch(62% 0.17 155);
   --brew-warning: oklch(75% 0.15 85);
-  --brew-danger:  oklch(58% 0.20 25);
-  --brew-info:    oklch(62% 0.14 230);
+  --brew-danger: oklch(58% 0.2 25);
+  --brew-info: oklch(62% 0.14 230);
 
-  /* Warm soft shadows (replaces neumorphic) */
-  --shadow-card: 0 1px 3px rgba(140, 120, 90, 0.08), 0 4px 16px rgba(140, 120, 90, 0.06);
-  --shadow-card-hover: 0 2px 8px rgba(140, 120, 90, 0.12), 0 8px 24px rgba(140, 120, 90, 0.08);
-  --shadow-inset: inset 0 1px 3px rgba(140, 120, 90, 0.1);
+  /* Layered natural shadows — exponential Y/Blur with negative spread (½ Y) */
+  --shadow-card:
+    0 0 0 1px rgba(140, 120, 90, 0.045), 0 1px 1px -0.5px rgba(140, 120, 90, 0.045),
+    0 3px 3px -1.5px rgba(140, 120, 90, 0.045), 0 6px 6px -3px rgba(140, 120, 90, 0.045),
+    0 12px 12px -6px rgba(140, 120, 90, 0.035), 0 24px 24px -12px rgba(140, 120, 90, 0.03);
+  --shadow-card-hover:
+    0 0 0 1px rgba(140, 120, 90, 0.06), 0 1px 1px -0.5px rgba(140, 120, 90, 0.06),
+    0 4px 4px -2px rgba(140, 120, 90, 0.06), 0 8px 8px -4px rgba(140, 120, 90, 0.06),
+    0 16px 16px -8px rgba(140, 120, 90, 0.05), 0 36px 36px -18px rgba(140, 120, 90, 0.04);
+  --shadow-elevated:
+    0 0 0 1px rgba(140, 120, 90, 0.06), 0 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0 4px 4px -2px rgba(0, 0, 0, 0.06), 0 10px 10px -5px rgba(0, 0, 0, 0.06),
+    0 24px 24px -12px rgba(0, 0, 0, 0.06), 0 48px 48px -24px rgba(0, 0, 0, 0.05);
+  --shadow-inset:
+    inset 0 1px 2px rgba(140, 120, 90, 0.09), inset 0 2px 4px rgba(140, 120, 90, 0.06);
 
   /* Noise texture — warm-tinted */
   --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 
   /* Typography */
-  --brew-tracking-tight:   -0.025em;
-  --brew-tracking-wide:     0.08em;
-  --brew-tracking-widest:   0.14em;
+  --brew-tracking-tight: -0.025em;
+  --brew-tracking-wide: 0.08em;
+  --brew-tracking-widest: 0.14em;
 
   /* Brew theme surfaces — warm cream */
   --brew-bg: 252 249 244;
   --brew-surface: 248 244 238;
   --brew-card: 255 253 249;
   --brew-card-inset: 244 240 232;
-  --brew-border: 222 216 204;
-  --brew-border-subtle: 212 205 192;
+  --brew-border: 215 208 194;
+  --brew-border-subtle: 202 194 180;
+
+  /* Sidebar section colors — bold & saturated by default */
+  --sidebar-recipe-bg: oklch(65% 0.12 55);
+  --sidebar-recipe-text: oklch(98% 0.005 55);
+  --sidebar-equipment-bg: oklch(42% 0.12 260);
+  --sidebar-equipment-text: oklch(92% 0.02 260);
+  --sidebar-grain-bg: oklch(62% 0.16 75);
+  --sidebar-grain-text: oklch(98% 0.01 75);
+  --sidebar-mash-bg: oklch(60% 0.16 55);
+  --sidebar-mash-text: oklch(98% 0.005 55);
+  --sidebar-hops-bg: oklch(48% 0.14 145);
+  --sidebar-hops-text: oklch(95% 0.02 145);
+  --sidebar-yeast-bg: oklch(45% 0.16 310);
+  --sidebar-yeast-text: oklch(92% 0.02 310);
+  --sidebar-water-bg: oklch(48% 0.18 250);
+  --sidebar-water-text: oklch(93% 0.02 250);
+  --sidebar-fermentation-bg: oklch(52% 0.17 15);
+  --sidebar-fermentation-text: oklch(95% 0.01 15);
+  --sidebar-checklist-bg: oklch(58% 0.14 25);
+  --sidebar-checklist-text: oklch(96% 0.01 25);
 
   /* Legacy aliases (temporary — removed after component migration) */
   --brew-amber-400: var(--brew-accent-400);
@@ -114,11 +144,11 @@
   --surface: 22 20 18;
   --card: 28 26 22;
   --text: 240 238 232;
-  --text-muted: 160 152 140;  /* warm gray */
-  --border: 54 50 44;         /* warm border */
+  --text-muted: 160 152 140; /* warm gray */
+  --border: 54 50 44; /* warm border */
 
   --accent: 251 146 60;
-  --glow: 234 88 12;          /* orange-600 */
+  --glow: 234 88 12; /* orange-600 */
 
   /* repeat coral theme for dark */
   --coral-50: oklch(96.75% 0.017 44.86);
@@ -137,10 +167,20 @@
   --fg-strong: oklch(96% 0.006 50);
   --fg-muted: oklch(68% 0.008 50);
 
-  /* Dark warm shadows */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
-  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  /* Dark layered shadows */
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.15), 0 1px 1px -0.5px rgba(0, 0, 0, 0.12),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.12), 0 6px 6px -3px rgba(0, 0, 0, 0.12),
+    0 12px 12px -6px rgba(0, 0, 0, 0.1), 0 24px 24px -12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px -0.5px rgba(0, 0, 0, 0.15),
+    0 4px 4px -2px rgba(0, 0, 0, 0.15), 0 8px 8px -4px rgba(0, 0, 0, 0.15),
+    0 16px 16px -8px rgba(0, 0, 0, 0.12), 0 36px 36px -18px rgba(0, 0, 0, 0.1);
+  --shadow-elevated:
+    0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 1px -0.5px rgba(0, 0, 0, 0.2),
+    0 4px 4px -2px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.18),
+    0 24px 24px -12px rgba(0, 0, 0, 0.15), 0 48px 48px -24px rgba(0, 0, 0, 0.12);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.14);
 
   /* Noise texture (slightly more visible in dark) */
   --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
@@ -154,6 +194,1253 @@
   --brew-border-subtle: 42 38 34;
 }
 
+/* =============================================
+   PALETTE: VINTAGE
+   Warm paper, muted coral-red accent, charcoal text, slate blue.
+   Inspired by old-world wine labels & letterpress printing.
+   ============================================= */
+
+.palette-vintage {
+  /* Surfaces — warm parchment / paper */
+  --bg: 255 248 240;
+  --surface: 250 243 234;
+  --card: 255 252 247;
+  --text: 59 56 51; /* #3B3833 charcoal */
+  --text-muted: 107 125 148; /* slate blue */
+  --border: 220 210 195;
+
+  /* Accent — muted vintage orange */
+  --accent: 215 140 70; /* warm amber-orange */
+  --glow: 200 120 55;
+
+  /* Coral scale — hue ~55 (same orange family), reduced chroma for vintage feel */
+  --coral-50: oklch(97% 0.012 55);
+  --coral-100: oklch(93% 0.028 55);
+  --coral-200: oklch(87% 0.058 52);
+  --coral-300: oklch(78% 0.095 54);
+  --coral-400: oklch(72% 0.13 57);
+  --coral-500: oklch(62% 0.12 57);
+  --coral-600: oklch(52% 0.105 57);
+  --coral-700: oklch(43% 0.088 57);
+  --coral-800: oklch(34% 0.068 57);
+  --coral-900: oklch(26% 0.048 57);
+  --coral-950: oklch(20% 0.036 57);
+
+  /* Semantic text — charcoal + slate */
+  --fg-strong: oklch(22% 0.008 50);
+  --fg-muted: oklch(52% 0.02 240);
+
+  /* Brew surfaces — warm paper */
+  --brew-bg: 255 248 240;
+  --brew-surface: 250 243 234;
+  --brew-card: 255 252 247;
+  --brew-card-inset: 246 238 228;
+  --brew-border: 220 210 195;
+  --brew-border-subtle: 210 200 185;
+
+  /* Default brew accent — muted vintage orange hue ~55 */
+  --brew-accent-50: oklch(97% 0.01 55);
+  --brew-accent-100: oklch(94% 0.025 55);
+  --brew-accent-200: oklch(88% 0.055 55);
+  --brew-accent-300: oklch(78% 0.09 55);
+  --brew-accent-400: oklch(70% 0.115 55);
+  --brew-accent-500: oklch(60% 0.115 55);
+  --brew-accent-600: oklch(50% 0.1 55);
+  --brew-accent-700: oklch(42% 0.085 55);
+  --brew-accent-800: oklch(34% 0.065 55);
+  --brew-accent-900: oklch(26% 0.045 55);
+  --brew-accent-950: oklch(20% 0.032 55);
+
+  /* Sidebar — slightly muted vintage (≈75% of default chroma) */
+  --sidebar-recipe-bg: oklch(63% 0.09 55);
+  --sidebar-recipe-text: oklch(97% 0.005 55);
+  --sidebar-equipment-bg: oklch(42% 0.09 260);
+  --sidebar-equipment-text: oklch(91% 0.015 260);
+  --sidebar-grain-bg: oklch(60% 0.12 75);
+  --sidebar-grain-text: oklch(97% 0.008 75);
+  --sidebar-mash-bg: oklch(58% 0.12 55);
+  --sidebar-mash-text: oklch(97% 0.005 55);
+  --sidebar-hops-bg: oklch(47% 0.1 145);
+  --sidebar-hops-text: oklch(94% 0.015 145);
+  --sidebar-yeast-bg: oklch(44% 0.12 310);
+  --sidebar-yeast-text: oklch(91% 0.015 310);
+  --sidebar-water-bg: oklch(47% 0.14 250);
+  --sidebar-water-text: oklch(92% 0.015 250);
+  --sidebar-fermentation-bg: oklch(50% 0.13 15);
+  --sidebar-fermentation-text: oklch(94% 0.008 15);
+  --sidebar-checklist-bg: oklch(55% 0.1 25);
+  --sidebar-checklist-text: oklch(95% 0.008 25);
+
+  /* Warmer shadows */
+  --shadow-card:
+    0 0 0 1px rgba(160, 130, 90, 0.05), 0 1px 1px -0.5px rgba(160, 130, 90, 0.05),
+    0 3px 3px -1.5px rgba(160, 130, 90, 0.05), 0 6px 6px -3px rgba(160, 130, 90, 0.04),
+    0 12px 12px -6px rgba(160, 130, 90, 0.035), 0 24px 24px -12px rgba(160, 130, 90, 0.03);
+  --shadow-card-hover:
+    0 0 0 1px rgba(160, 130, 90, 0.07), 0 1px 1px -0.5px rgba(160, 130, 90, 0.07),
+    0 4px 4px -2px rgba(160, 130, 90, 0.07), 0 8px 8px -4px rgba(160, 130, 90, 0.06),
+    0 16px 16px -8px rgba(160, 130, 90, 0.05), 0 36px 36px -18px rgba(160, 130, 90, 0.04);
+
+  /* Neutrals — warmer parchment tone (hue 45) */
+  --brew-neutral-50: oklch(98% 0.008 45);
+  --brew-neutral-100: oklch(95% 0.012 45);
+  --brew-neutral-200: oklch(90% 0.015 45);
+  --brew-neutral-300: oklch(82% 0.016 45);
+  --brew-neutral-400: oklch(65% 0.014 45);
+  --brew-neutral-500: oklch(55% 0.014 45);
+  --brew-neutral-600: oklch(45% 0.012 45);
+  --brew-neutral-700: oklch(35% 0.012 45);
+  --brew-neutral-800: oklch(25% 0.012 45);
+  --brew-neutral-900: oklch(18% 0.01 45);
+}
+
+/* Vintage palette — muted section accents (reduced chroma for vintage feel) */
+.palette-vintage .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.025 260);
+  --brew-accent-300: oklch(80% 0.042 260);
+  --brew-accent-400: oklch(68% 0.058 260);
+  --brew-accent-500: oklch(55% 0.065 260);
+  --brew-accent-600: oklch(45% 0.055 260);
+  --brew-accent-700: oklch(38% 0.045 260);
+  --brew-accent-800: oklch(30% 0.032 260);
+  --brew-accent-900: oklch(26% 0.023 260);
+  --brew-accent-950: oklch(20% 0.017 260);
+}
+.palette-vintage .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.058 75);
+  --brew-accent-300: oklch(80% 0.095 75);
+  --brew-accent-400: oklch(72% 0.115 75);
+  --brew-accent-500: oklch(62% 0.118 75);
+  --brew-accent-600: oklch(52% 0.105 75);
+  --brew-accent-700: oklch(42% 0.088 75);
+  --brew-accent-800: oklch(34% 0.065 75);
+  --brew-accent-900: oklch(26% 0.047 75);
+  --brew-accent-950: oklch(20% 0.034 75);
+}
+.palette-vintage .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.058 55);
+  --brew-accent-300: oklch(80% 0.092 55);
+  --brew-accent-400: oklch(72% 0.11 55);
+  --brew-accent-500: oklch(62% 0.115 55);
+  --brew-accent-600: oklch(52% 0.1 55);
+  --brew-accent-700: oklch(42% 0.085 55);
+  --brew-accent-800: oklch(34% 0.062 55);
+  --brew-accent-900: oklch(26% 0.045 55);
+  --brew-accent-950: oklch(20% 0.032 55);
+}
+.palette-vintage .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.055 145);
+  --brew-accent-300: oklch(80% 0.088 145);
+  --brew-accent-400: oklch(68% 0.108 145);
+  --brew-accent-500: oklch(55% 0.118 145);
+  --brew-accent-600: oklch(45% 0.102 145);
+  --brew-accent-700: oklch(38% 0.085 145);
+  --brew-accent-800: oklch(30% 0.058 145);
+  --brew-accent-900: oklch(26% 0.042 145);
+  --brew-accent-950: oklch(20% 0.03 145);
+}
+.palette-vintage .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.048 310);
+  --brew-accent-300: oklch(78% 0.078 310);
+  --brew-accent-400: oklch(68% 0.108 310);
+  --brew-accent-500: oklch(55% 0.12 310);
+  --brew-accent-600: oklch(45% 0.108 310);
+  --brew-accent-700: oklch(38% 0.09 310);
+  --brew-accent-800: oklch(30% 0.065 310);
+  --brew-accent-900: oklch(26% 0.047 310);
+  --brew-accent-950: oklch(20% 0.034 310);
+}
+.palette-vintage .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.05 230);
+  --brew-accent-300: oklch(80% 0.082 230);
+  --brew-accent-400: oklch(68% 0.105 230);
+  --brew-accent-500: oklch(55% 0.115 230);
+  --brew-accent-600: oklch(45% 0.1 230);
+  --brew-accent-700: oklch(38% 0.085 230);
+  --brew-accent-800: oklch(30% 0.06 230);
+  --brew-accent-900: oklch(26% 0.043 230);
+  --brew-accent-950: oklch(20% 0.031 230);
+}
+.palette-vintage .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.05 15);
+  --brew-accent-300: oklch(78% 0.082 15);
+  --brew-accent-400: oklch(68% 0.11 15);
+  --brew-accent-500: oklch(55% 0.125 15);
+  --brew-accent-600: oklch(45% 0.11 15);
+  --brew-accent-700: oklch(38% 0.09 15);
+  --brew-accent-800: oklch(30% 0.065 15);
+  --brew-accent-900: oklch(26% 0.047 15);
+  --brew-accent-950: oklch(20% 0.034 15);
+}
+.palette-vintage .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.048 25);
+  --brew-accent-300: oklch(78% 0.078 25);
+  --brew-accent-400: oklch(68% 0.1 25);
+  --brew-accent-500: oklch(55% 0.112 25);
+  --brew-accent-600: oklch(45% 0.1 25);
+  --brew-accent-700: oklch(38% 0.082 25);
+  --brew-accent-800: oklch(30% 0.06 25);
+  --brew-accent-900: oklch(26% 0.043 25);
+  --brew-accent-950: oklch(20% 0.031 25);
+}
+
+.dark.palette-vintage {
+  /* Surfaces — deep warm charcoal */
+  --bg: 20 18 16;
+  --surface: 28 25 22;
+  --card: 35 32 28;
+  --text: 240 235 228;
+  --text-muted: 140 152 168; /* slate blue in dark */
+  --border: 60 55 48;
+
+  --accent: 215 140 70; /* warm amber-orange */
+  --glow: 180 110 50;
+
+  /* fg — warm light tones */
+  --fg-strong: oklch(94% 0.006 50);
+  --fg-muted: oklch(65% 0.015 240);
+
+  /* Brew surfaces — dark warm */
+  --brew-bg: 20 18 16;
+  --brew-surface: 28 25 22;
+  --brew-card: 35 32 28;
+  --brew-card-inset: 24 22 19;
+  --brew-border: 60 55 48;
+  --brew-border-subtle: 48 44 38;
+
+  /* Darker shadows */
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 1px -0.5px rgba(0, 0, 0, 0.14),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.14), 0 6px 6px -3px rgba(0, 0, 0, 0.12),
+    0 12px 12px -6px rgba(0, 0, 0, 0.1), 0 24px 24px -12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
+    0 4px 4px -2px rgba(0, 0, 0, 0.18), 0 8px 8px -4px rgba(0, 0, 0, 0.16),
+    0 16px 16px -8px rgba(0, 0, 0, 0.14), 0 36px 36px -18px rgba(0, 0, 0, 0.1);
+}
+
+/* ── MIDNIGHT ── Cool navy, electric blue accent ── */
+.palette-midnight {
+  --bg: 240 243 249;
+  --surface: 233 237 245;
+  --card: 245 247 252;
+  --text: 30 40 65;
+  --text-muted: 100 115 145;
+  --border: 205 215 230;
+
+  --accent: 60 130 246;
+  --glow: 37 99 235;
+
+  --coral-50: oklch(97% 0.012 250);
+  --coral-100: oklch(94% 0.028 250);
+  --coral-200: oklch(88% 0.06 250);
+  --coral-300: oklch(78% 0.11 250);
+  --coral-400: oklch(68% 0.16 250);
+  --coral-500: oklch(58% 0.17 250);
+  --coral-600: oklch(48% 0.155 250);
+  --coral-700: oklch(40% 0.13 250);
+  --coral-800: oklch(32% 0.1 250);
+  --coral-900: oklch(24% 0.07 250);
+  --coral-950: oklch(18% 0.05 250);
+
+  --fg-strong: oklch(18% 0.015 250);
+  --fg-muted: oklch(50% 0.02 250);
+
+  --brew-bg: 240 243 249;
+  --brew-surface: 233 237 245;
+  --brew-card: 245 247 252;
+  --brew-card-inset: 228 233 242;
+  --brew-border: 205 215 230;
+  --brew-border-subtle: 195 205 222;
+
+  --brew-accent-50: oklch(97% 0.01 250);
+  --brew-accent-100: oklch(94% 0.024 250);
+  --brew-accent-200: oklch(88% 0.05 250);
+  --brew-accent-300: oklch(78% 0.095 250);
+  --brew-accent-400: oklch(68% 0.14 250);
+  --brew-accent-500: oklch(58% 0.15 250);
+  --brew-accent-600: oklch(48% 0.135 250);
+  --brew-accent-700: oklch(40% 0.115 250);
+  --brew-accent-800: oklch(32% 0.085 250);
+  --brew-accent-900: oklch(24% 0.06 250);
+  --brew-accent-950: oklch(18% 0.042 250);
+
+  --brew-neutral-50: oklch(98% 0.006 250);
+  --brew-neutral-100: oklch(95% 0.01 250);
+  --brew-neutral-200: oklch(91% 0.012 250);
+  --brew-neutral-300: oklch(83% 0.014 250);
+  --brew-neutral-400: oklch(66% 0.012 250);
+  --brew-neutral-500: oklch(56% 0.012 250);
+  --brew-neutral-600: oklch(46% 0.01 250);
+  --brew-neutral-700: oklch(36% 0.01 250);
+  --brew-neutral-800: oklch(26% 0.01 250);
+  --brew-neutral-900: oklch(18% 0.008 250);
+
+  --shadow-card:
+    0 0 0 1px rgba(60, 80, 130, 0.05), 0 1px 1px -0.5px rgba(60, 80, 130, 0.05),
+    0 3px 3px -1.5px rgba(60, 80, 130, 0.05), 0 6px 6px -3px rgba(60, 80, 130, 0.04),
+    0 12px 12px -6px rgba(60, 80, 130, 0.035), 0 24px 24px -12px rgba(60, 80, 130, 0.03);
+  --shadow-card-hover:
+    0 0 0 1px rgba(60, 80, 130, 0.07), 0 1px 1px -0.5px rgba(60, 80, 130, 0.07),
+    0 4px 4px -2px rgba(60, 80, 130, 0.07), 0 8px 8px -4px rgba(60, 80, 130, 0.06),
+    0 16px 16px -8px rgba(60, 80, 130, 0.05), 0 36px 36px -18px rgba(60, 80, 130, 0.04);
+
+  --sidebar-recipe-bg: oklch(55% 0.14 250);
+  --sidebar-recipe-text: oklch(96% 0.008 250);
+  --sidebar-equipment-bg: oklch(40% 0.1 260);
+  --sidebar-equipment-text: oklch(92% 0.015 260);
+  --sidebar-grain-bg: oklch(58% 0.12 82);
+  --sidebar-grain-text: oklch(97% 0.008 82);
+  --sidebar-mash-bg: oklch(55% 0.14 55);
+  --sidebar-mash-text: oklch(96% 0.005 55);
+  --sidebar-hops-bg: oklch(46% 0.11 160);
+  --sidebar-hops-text: oklch(94% 0.012 160);
+  --sidebar-yeast-bg: oklch(42% 0.13 290);
+  --sidebar-yeast-text: oklch(91% 0.015 290);
+  --sidebar-water-bg: oklch(48% 0.16 250);
+  --sidebar-water-text: oklch(93% 0.015 250);
+  --sidebar-fermentation-bg: oklch(48% 0.14 15);
+  --sidebar-fermentation-text: oklch(94% 0.008 15);
+  --sidebar-checklist-bg: oklch(50% 0.12 250);
+  --sidebar-checklist-text: oklch(94% 0.008 250);
+}
+.dark.palette-midnight {
+  --bg: 14 18 30;
+  --surface: 20 25 42;
+  --card: 28 34 55;
+  --text: 220 228 245;
+  --text-muted: 130 145 175;
+  --border: 45 55 80;
+
+  --accent: 80 145 255;
+  --glow: 50 110 230;
+
+  --fg-strong: oklch(95% 0.008 250);
+  --fg-muted: oklch(65% 0.015 250);
+
+  --brew-bg: 14 18 30;
+  --brew-surface: 20 25 42;
+  --brew-card: 28 34 55;
+  --brew-card-inset: 16 20 36;
+  --brew-border: 45 55 80;
+  --brew-border-subtle: 38 48 70;
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 1px -0.5px rgba(0, 0, 0, 0.2),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.18), 0 6px 6px -3px rgba(0, 0, 0, 0.15),
+    0 12px 12px -6px rgba(0, 0, 0, 0.12), 0 24px 24px -12px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 1px -0.5px rgba(0, 0, 0, 0.25),
+    0 4px 4px -2px rgba(0, 0, 0, 0.22), 0 8px 8px -4px rgba(0, 0, 0, 0.2),
+    0 16px 16px -8px rgba(0, 0, 0, 0.16), 0 36px 36px -18px rgba(0, 0, 0, 0.12);
+}
+
+/* Midnight — cooled-down section accents, blues pop */
+.palette-midnight .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.035 255);
+  --brew-accent-300: oklch(80% 0.065 255);
+  --brew-accent-400: oklch(68% 0.095 255);
+  --brew-accent-500: oklch(55% 0.105 255);
+  --brew-accent-600: oklch(45% 0.092 255);
+  --brew-accent-700: oklch(38% 0.075 255);
+  --brew-accent-800: oklch(30% 0.055 255);
+  --brew-accent-900: oklch(26% 0.04 255);
+  --brew-accent-950: oklch(20% 0.029 255);
+}
+.palette-midnight .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.05 85);
+  --brew-accent-300: oklch(80% 0.082 85);
+  --brew-accent-400: oklch(72% 0.105 85);
+  --brew-accent-500: oklch(62% 0.108 85);
+  --brew-accent-600: oklch(52% 0.095 85);
+  --brew-accent-700: oklch(42% 0.078 85);
+  --brew-accent-800: oklch(34% 0.058 85);
+  --brew-accent-900: oklch(26% 0.042 85);
+  --brew-accent-950: oklch(20% 0.03 85);
+}
+.palette-midnight .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.048 65);
+  --brew-accent-300: oklch(80% 0.078 65);
+  --brew-accent-400: oklch(72% 0.098 65);
+  --brew-accent-500: oklch(62% 0.102 65);
+  --brew-accent-600: oklch(52% 0.09 65);
+  --brew-accent-700: oklch(42% 0.075 65);
+  --brew-accent-800: oklch(34% 0.055 65);
+  --brew-accent-900: oklch(26% 0.04 65);
+  --brew-accent-950: oklch(20% 0.029 65);
+}
+.palette-midnight .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.048 160);
+  --brew-accent-300: oklch(80% 0.078 160);
+  --brew-accent-400: oklch(68% 0.1 160);
+  --brew-accent-500: oklch(55% 0.11 160);
+  --brew-accent-600: oklch(45% 0.095 160);
+  --brew-accent-700: oklch(38% 0.08 160);
+  --brew-accent-800: oklch(30% 0.058 160);
+  --brew-accent-900: oklch(26% 0.042 160);
+  --brew-accent-950: oklch(20% 0.03 160);
+}
+.palette-midnight .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.042 280);
+  --brew-accent-300: oklch(78% 0.07 280);
+  --brew-accent-400: oklch(68% 0.098 280);
+  --brew-accent-500: oklch(55% 0.112 280);
+  --brew-accent-600: oklch(45% 0.1 280);
+  --brew-accent-700: oklch(38% 0.082 280);
+  --brew-accent-800: oklch(30% 0.06 280);
+  --brew-accent-900: oklch(26% 0.043 280);
+  --brew-accent-950: oklch(20% 0.031 280);
+}
+.palette-midnight .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.05 240);
+  --brew-accent-300: oklch(80% 0.088 240);
+  --brew-accent-400: oklch(68% 0.12 240);
+  --brew-accent-500: oklch(55% 0.135 240);
+  --brew-accent-600: oklch(45% 0.118 240);
+  --brew-accent-700: oklch(38% 0.098 240);
+  --brew-accent-800: oklch(30% 0.072 240);
+  --brew-accent-900: oklch(26% 0.052 240);
+  --brew-accent-950: oklch(20% 0.037 240);
+}
+.palette-midnight .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.038 270);
+  --brew-accent-300: oklch(78% 0.062 270);
+  --brew-accent-400: oklch(68% 0.088 270);
+  --brew-accent-500: oklch(55% 0.1 270);
+  --brew-accent-600: oklch(45% 0.088 270);
+  --brew-accent-700: oklch(38% 0.072 270);
+  --brew-accent-800: oklch(30% 0.052 270);
+  --brew-accent-900: oklch(26% 0.037 270);
+  --brew-accent-950: oklch(20% 0.027 270);
+}
+.palette-midnight .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.035 250);
+  --brew-accent-300: oklch(78% 0.06 250);
+  --brew-accent-400: oklch(68% 0.085 250);
+  --brew-accent-500: oklch(55% 0.098 250);
+  --brew-accent-600: oklch(45% 0.085 250);
+  --brew-accent-700: oklch(38% 0.07 250);
+  --brew-accent-800: oklch(30% 0.05 250);
+  --brew-accent-900: oklch(26% 0.036 250);
+  --brew-accent-950: oklch(20% 0.026 250);
+}
+
+/* ── FOREST ── Deep greens, earthy, natural ── */
+.palette-forest {
+  --bg: 243 247 240;
+  --surface: 236 242 232;
+  --card: 248 251 245;
+  --text: 35 50 30;
+  --text-muted: 95 120 85;
+  --border: 200 215 190;
+
+  --accent: 55 140 70;
+  --glow: 40 120 55;
+
+  --coral-50: oklch(97% 0.015 148);
+  --coral-100: oklch(94% 0.032 148);
+  --coral-200: oklch(88% 0.065 148);
+  --coral-300: oklch(78% 0.11 148);
+  --coral-400: oklch(68% 0.145 148);
+  --coral-500: oklch(55% 0.14 148);
+  --coral-600: oklch(46% 0.125 148);
+  --coral-700: oklch(38% 0.105 148);
+  --coral-800: oklch(30% 0.08 148);
+  --coral-900: oklch(24% 0.055 148);
+  --coral-950: oklch(18% 0.04 148);
+
+  --fg-strong: oklch(18% 0.02 145);
+  --fg-muted: oklch(48% 0.025 145);
+
+  --brew-bg: 243 247 240;
+  --brew-surface: 236 242 232;
+  --brew-card: 248 251 245;
+  --brew-card-inset: 230 238 225;
+  --brew-border: 200 215 190;
+  --brew-border-subtle: 188 205 178;
+
+  --brew-accent-50: oklch(97% 0.012 148);
+  --brew-accent-100: oklch(94% 0.028 148);
+  --brew-accent-200: oklch(88% 0.055 148);
+  --brew-accent-300: oklch(78% 0.095 148);
+  --brew-accent-400: oklch(68% 0.125 148);
+  --brew-accent-500: oklch(55% 0.125 148);
+  --brew-accent-600: oklch(46% 0.108 148);
+  --brew-accent-700: oklch(38% 0.09 148);
+  --brew-accent-800: oklch(30% 0.068 148);
+  --brew-accent-900: oklch(24% 0.048 148);
+  --brew-accent-950: oklch(18% 0.035 148);
+
+  --brew-neutral-50: oklch(98% 0.008 145);
+  --brew-neutral-100: oklch(95% 0.012 145);
+  --brew-neutral-200: oklch(91% 0.015 145);
+  --brew-neutral-300: oklch(83% 0.016 145);
+  --brew-neutral-400: oklch(66% 0.014 145);
+  --brew-neutral-500: oklch(56% 0.014 145);
+  --brew-neutral-600: oklch(46% 0.012 145);
+  --brew-neutral-700: oklch(36% 0.012 145);
+  --brew-neutral-800: oklch(26% 0.012 145);
+  --brew-neutral-900: oklch(18% 0.01 145);
+
+  --shadow-card:
+    0 0 0 1px rgba(50, 90, 40, 0.05), 0 1px 1px -0.5px rgba(50, 90, 40, 0.05),
+    0 3px 3px -1.5px rgba(50, 90, 40, 0.05), 0 6px 6px -3px rgba(50, 90, 40, 0.04),
+    0 12px 12px -6px rgba(50, 90, 40, 0.035), 0 24px 24px -12px rgba(50, 90, 40, 0.03);
+  --shadow-card-hover:
+    0 0 0 1px rgba(50, 90, 40, 0.07), 0 1px 1px -0.5px rgba(50, 90, 40, 0.07),
+    0 4px 4px -2px rgba(50, 90, 40, 0.07), 0 8px 8px -4px rgba(50, 90, 40, 0.06),
+    0 16px 16px -8px rgba(50, 90, 40, 0.05), 0 36px 36px -18px rgba(50, 90, 40, 0.04);
+
+  --sidebar-recipe-bg: oklch(55% 0.12 148);
+  --sidebar-recipe-text: oklch(96% 0.008 148);
+  --sidebar-equipment-bg: oklch(40% 0.1 200);
+  --sidebar-equipment-text: oklch(92% 0.012 200);
+  --sidebar-grain-bg: oklch(58% 0.13 70);
+  --sidebar-grain-text: oklch(97% 0.008 70);
+  --sidebar-mash-bg: oklch(55% 0.12 70);
+  --sidebar-mash-text: oklch(96% 0.005 70);
+  --sidebar-hops-bg: oklch(48% 0.15 148);
+  --sidebar-hops-text: oklch(95% 0.015 148);
+  --sidebar-yeast-bg: oklch(42% 0.14 320);
+  --sidebar-yeast-text: oklch(91% 0.015 320);
+  --sidebar-water-bg: oklch(46% 0.14 200);
+  --sidebar-water-text: oklch(92% 0.012 200);
+  --sidebar-fermentation-bg: oklch(50% 0.14 20);
+  --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-checklist-bg: oklch(52% 0.1 148);
+  --sidebar-checklist-text: oklch(95% 0.008 148);
+}
+.dark.palette-forest {
+  --bg: 14 20 14;
+  --surface: 20 28 20;
+  --card: 28 38 28;
+  --text: 225 238 220;
+  --text-muted: 130 155 125;
+  --border: 45 60 42;
+
+  --accent: 75 170 85;
+  --glow: 50 140 60;
+
+  --fg-strong: oklch(95% 0.008 145);
+  --fg-muted: oklch(65% 0.018 145);
+
+  --brew-bg: 14 20 14;
+  --brew-surface: 20 28 20;
+  --brew-card: 28 38 28;
+  --brew-card-inset: 16 24 16;
+  --brew-border: 45 60 42;
+  --brew-border-subtle: 38 52 36;
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 1px -0.5px rgba(0, 0, 0, 0.16),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.16), 0 6px 6px -3px rgba(0, 0, 0, 0.14),
+    0 12px 12px -6px rgba(0, 0, 0, 0.12), 0 24px 24px -12px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 1px -0.5px rgba(0, 0, 0, 0.2),
+    0 4px 4px -2px rgba(0, 0, 0, 0.2), 0 8px 8px -4px rgba(0, 0, 0, 0.18),
+    0 16px 16px -8px rgba(0, 0, 0, 0.15), 0 36px 36px -18px rgba(0, 0, 0, 0.12);
+}
+
+/* Forest — greens pop, warm sections go earthy/olive */
+.palette-forest .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.022 220);
+  --brew-accent-300: oklch(80% 0.04 220);
+  --brew-accent-400: oklch(68% 0.055 220);
+  --brew-accent-500: oklch(55% 0.062 220);
+  --brew-accent-600: oklch(45% 0.052 220);
+  --brew-accent-700: oklch(38% 0.042 220);
+  --brew-accent-800: oklch(30% 0.03 220);
+  --brew-accent-900: oklch(26% 0.022 220);
+  --brew-accent-950: oklch(20% 0.016 220);
+}
+.palette-forest .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.058 90);
+  --brew-accent-300: oklch(80% 0.095 88);
+  --brew-accent-400: oklch(72% 0.118 85);
+  --brew-accent-500: oklch(62% 0.12 82);
+  --brew-accent-600: oklch(52% 0.105 80);
+  --brew-accent-700: oklch(42% 0.088 80);
+  --brew-accent-800: oklch(34% 0.065 80);
+  --brew-accent-900: oklch(26% 0.047 80);
+  --brew-accent-950: oklch(20% 0.034 80);
+}
+.palette-forest .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.052 70);
+  --brew-accent-300: oklch(80% 0.085 68);
+  --brew-accent-400: oklch(72% 0.108 65);
+  --brew-accent-500: oklch(62% 0.112 62);
+  --brew-accent-600: oklch(52% 0.098 60);
+  --brew-accent-700: oklch(42% 0.082 60);
+  --brew-accent-800: oklch(34% 0.06 60);
+  --brew-accent-900: oklch(26% 0.043 60);
+  --brew-accent-950: oklch(20% 0.031 60);
+}
+.palette-forest .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.065 148);
+  --brew-accent-300: oklch(80% 0.11 148);
+  --brew-accent-400: oklch(68% 0.145 148);
+  --brew-accent-500: oklch(55% 0.155 148);
+  --brew-accent-600: oklch(45% 0.135 148);
+  --brew-accent-700: oklch(38% 0.112 148);
+  --brew-accent-800: oklch(30% 0.082 148);
+  --brew-accent-900: oklch(26% 0.059 148);
+  --brew-accent-950: oklch(20% 0.043 148);
+}
+.palette-forest .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.035 290);
+  --brew-accent-300: oklch(78% 0.058 290);
+  --brew-accent-400: oklch(68% 0.078 290);
+  --brew-accent-500: oklch(55% 0.088 290);
+  --brew-accent-600: oklch(45% 0.078 290);
+  --brew-accent-700: oklch(38% 0.065 290);
+  --brew-accent-800: oklch(30% 0.048 290);
+  --brew-accent-900: oklch(26% 0.035 290);
+  --brew-accent-950: oklch(20% 0.025 290);
+}
+.palette-forest .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.048 180);
+  --brew-accent-300: oklch(80% 0.08 180);
+  --brew-accent-400: oklch(68% 0.108 180);
+  --brew-accent-500: oklch(55% 0.12 180);
+  --brew-accent-600: oklch(45% 0.105 180);
+  --brew-accent-700: oklch(38% 0.088 180);
+  --brew-accent-800: oklch(30% 0.062 180);
+  --brew-accent-900: oklch(26% 0.045 180);
+  --brew-accent-950: oklch(20% 0.032 180);
+}
+.palette-forest .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.042 30);
+  --brew-accent-300: oklch(78% 0.068 30);
+  --brew-accent-400: oklch(68% 0.09 30);
+  --brew-accent-500: oklch(55% 0.102 30);
+  --brew-accent-600: oklch(45% 0.09 30);
+  --brew-accent-700: oklch(38% 0.075 30);
+  --brew-accent-800: oklch(30% 0.055 30);
+  --brew-accent-900: oklch(26% 0.04 30);
+  --brew-accent-950: oklch(20% 0.029 30);
+}
+.palette-forest .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.038 130);
+  --brew-accent-300: oklch(78% 0.062 130);
+  --brew-accent-400: oklch(68% 0.082 130);
+  --brew-accent-500: oklch(55% 0.092 130);
+  --brew-accent-600: oklch(45% 0.08 130);
+  --brew-accent-700: oklch(38% 0.066 130);
+  --brew-accent-800: oklch(30% 0.048 130);
+  --brew-accent-900: oklch(26% 0.035 130);
+  --brew-accent-950: oklch(20% 0.025 130);
+}
+
+/* ── COPPER ── Rich bronze metallics, brewery feel ── */
+.palette-copper {
+  --bg: 250 245 238;
+  --surface: 244 238 228;
+  --card: 252 249 243;
+  --text: 55 38 22;
+  --text-muted: 130 105 75;
+  --border: 215 200 175;
+
+  --accent: 190 110 40;
+  --glow: 170 90 25;
+
+  --coral-50: oklch(97% 0.015 65);
+  --coral-100: oklch(93% 0.035 62);
+  --coral-200: oklch(86% 0.075 58);
+  --coral-300: oklch(77% 0.13 52);
+  --coral-400: oklch(70% 0.16 48);
+  --coral-500: oklch(60% 0.155 45);
+  --coral-600: oklch(50% 0.14 44);
+  --coral-700: oklch(42% 0.115 44);
+  --coral-800: oklch(34% 0.088 44);
+  --coral-900: oklch(26% 0.062 44);
+  --coral-950: oklch(20% 0.045 44);
+
+  --fg-strong: oklch(20% 0.018 50);
+  --fg-muted: oklch(50% 0.028 50);
+
+  --brew-bg: 250 245 238;
+  --brew-surface: 244 238 228;
+  --brew-card: 252 249 243;
+  --brew-card-inset: 240 234 222;
+  --brew-border: 215 200 175;
+  --brew-border-subtle: 205 190 165;
+
+  --brew-accent-50: oklch(97% 0.012 48);
+  --brew-accent-100: oklch(94% 0.03 48);
+  --brew-accent-200: oklch(88% 0.065 48);
+  --brew-accent-300: oklch(78% 0.112 48);
+  --brew-accent-400: oklch(70% 0.145 48);
+  --brew-accent-500: oklch(60% 0.14 45);
+  --brew-accent-600: oklch(50% 0.125 44);
+  --brew-accent-700: oklch(42% 0.105 44);
+  --brew-accent-800: oklch(34% 0.078 44);
+  --brew-accent-900: oklch(26% 0.055 44);
+  --brew-accent-950: oklch(20% 0.04 44);
+
+  --brew-neutral-50: oklch(98% 0.01 50);
+  --brew-neutral-100: oklch(95% 0.015 50);
+  --brew-neutral-200: oklch(90% 0.018 50);
+  --brew-neutral-300: oklch(82% 0.02 50);
+  --brew-neutral-400: oklch(65% 0.018 50);
+  --brew-neutral-500: oklch(55% 0.018 50);
+  --brew-neutral-600: oklch(45% 0.015 50);
+  --brew-neutral-700: oklch(35% 0.015 50);
+  --brew-neutral-800: oklch(25% 0.015 50);
+  --brew-neutral-900: oklch(18% 0.012 50);
+
+  --shadow-card:
+    0 0 0 1px rgba(120, 80, 30, 0.06), 0 1px 1px -0.5px rgba(120, 80, 30, 0.06),
+    0 3px 3px -1.5px rgba(120, 80, 30, 0.06), 0 6px 6px -3px rgba(120, 80, 30, 0.05),
+    0 12px 12px -6px rgba(120, 80, 30, 0.04), 0 24px 24px -12px rgba(120, 80, 30, 0.035);
+  --shadow-card-hover:
+    0 0 0 1px rgba(120, 80, 30, 0.08), 0 1px 1px -0.5px rgba(120, 80, 30, 0.08),
+    0 4px 4px -2px rgba(120, 80, 30, 0.08), 0 8px 8px -4px rgba(120, 80, 30, 0.07),
+    0 16px 16px -8px rgba(120, 80, 30, 0.06), 0 36px 36px -18px rgba(120, 80, 30, 0.05);
+
+  --sidebar-recipe-bg: oklch(60% 0.12 45);
+  --sidebar-recipe-text: oklch(97% 0.005 45);
+  --sidebar-equipment-bg: oklch(40% 0.1 240);
+  --sidebar-equipment-text: oklch(91% 0.012 240);
+  --sidebar-grain-bg: oklch(58% 0.15 60);
+  --sidebar-grain-text: oklch(97% 0.008 60);
+  --sidebar-mash-bg: oklch(56% 0.14 45);
+  --sidebar-mash-text: oklch(97% 0.005 45);
+  --sidebar-hops-bg: oklch(46% 0.12 120);
+  --sidebar-hops-text: oklch(94% 0.012 120);
+  --sidebar-yeast-bg: oklch(42% 0.14 330);
+  --sidebar-yeast-text: oklch(91% 0.012 330);
+  --sidebar-water-bg: oklch(46% 0.15 230);
+  --sidebar-water-text: oklch(92% 0.012 230);
+  --sidebar-fermentation-bg: oklch(50% 0.15 20);
+  --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-checklist-bg: oklch(54% 0.12 35);
+  --sidebar-checklist-text: oklch(95% 0.008 35);
+}
+.dark.palette-copper {
+  --bg: 22 16 10;
+  --surface: 30 22 14;
+  --card: 40 30 20;
+  --text: 240 228 210;
+  --text-muted: 165 140 110;
+  --border: 65 52 38;
+
+  --accent: 210 135 55;
+  --glow: 185 110 35;
+
+  --fg-strong: oklch(95% 0.008 50);
+  --fg-muted: oklch(68% 0.02 50);
+
+  --brew-bg: 22 16 10;
+  --brew-surface: 30 22 14;
+  --brew-card: 40 30 20;
+  --brew-card-inset: 25 18 12;
+  --brew-border: 65 52 38;
+  --brew-border-subtle: 55 44 32;
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.18), 0 6px 6px -3px rgba(0, 0, 0, 0.15),
+    0 12px 12px -6px rgba(0, 0, 0, 0.12), 0 24px 24px -12px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 1px -0.5px rgba(0, 0, 0, 0.22),
+    0 4px 4px -2px rgba(0, 0, 0, 0.22), 0 8px 8px -4px rgba(0, 0, 0, 0.2),
+    0 16px 16px -8px rgba(0, 0, 0, 0.16), 0 36px 36px -18px rgba(0, 0, 0, 0.12);
+}
+
+/* Copper — everything warmer/richer, shifted toward amber-bronze hues */
+.palette-copper .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.025 250);
+  --brew-accent-300: oklch(80% 0.045 248);
+  --brew-accent-400: oklch(68% 0.062 245);
+  --brew-accent-500: oklch(55% 0.07 245);
+  --brew-accent-600: oklch(45% 0.06 245);
+  --brew-accent-700: oklch(38% 0.048 245);
+  --brew-accent-800: oklch(30% 0.035 245);
+  --brew-accent-900: oklch(26% 0.025 245);
+  --brew-accent-950: oklch(20% 0.018 245);
+}
+.palette-copper .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.072 65);
+  --brew-accent-300: oklch(80% 0.125 60);
+  --brew-accent-400: oklch(72% 0.155 55);
+  --brew-accent-500: oklch(62% 0.16 50);
+  --brew-accent-600: oklch(52% 0.145 48);
+  --brew-accent-700: oklch(42% 0.12 48);
+  --brew-accent-800: oklch(34% 0.09 48);
+  --brew-accent-900: oklch(26% 0.065 48);
+  --brew-accent-950: oklch(20% 0.047 48);
+}
+.palette-copper .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.068 50);
+  --brew-accent-300: oklch(80% 0.118 48);
+  --brew-accent-400: oklch(72% 0.148 46);
+  --brew-accent-500: oklch(62% 0.155 44);
+  --brew-accent-600: oklch(52% 0.14 44);
+  --brew-accent-700: oklch(42% 0.115 44);
+  --brew-accent-800: oklch(34% 0.085 44);
+  --brew-accent-900: oklch(26% 0.061 44);
+  --brew-accent-950: oklch(20% 0.044 44);
+}
+.palette-copper .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.048 140);
+  --brew-accent-300: oklch(80% 0.078 140);
+  --brew-accent-400: oklch(68% 0.1 140);
+  --brew-accent-500: oklch(55% 0.112 140);
+  --brew-accent-600: oklch(45% 0.098 140);
+  --brew-accent-700: oklch(38% 0.08 140);
+  --brew-accent-800: oklch(30% 0.058 140);
+  --brew-accent-900: oklch(26% 0.042 140);
+  --brew-accent-950: oklch(20% 0.03 140);
+}
+.palette-copper .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.04 305);
+  --brew-accent-300: oklch(78% 0.065 305);
+  --brew-accent-400: oklch(68% 0.088 305);
+  --brew-accent-500: oklch(55% 0.1 305);
+  --brew-accent-600: oklch(45% 0.088 305);
+  --brew-accent-700: oklch(38% 0.072 305);
+  --brew-accent-800: oklch(30% 0.052 305);
+  --brew-accent-900: oklch(26% 0.037 305);
+  --brew-accent-950: oklch(20% 0.027 305);
+}
+.palette-copper .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.042 225);
+  --brew-accent-300: oklch(80% 0.07 225);
+  --brew-accent-400: oklch(68% 0.092 225);
+  --brew-accent-500: oklch(55% 0.102 225);
+  --brew-accent-600: oklch(45% 0.09 225);
+  --brew-accent-700: oklch(38% 0.075 225);
+  --brew-accent-800: oklch(30% 0.055 225);
+  --brew-accent-900: oklch(26% 0.04 225);
+  --brew-accent-950: oklch(20% 0.029 225);
+}
+.palette-copper .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.055 25);
+  --brew-accent-300: oklch(78% 0.092 25);
+  --brew-accent-400: oklch(68% 0.125 25);
+  --brew-accent-500: oklch(55% 0.138 25);
+  --brew-accent-600: oklch(45% 0.122 25);
+  --brew-accent-700: oklch(38% 0.1 25);
+  --brew-accent-800: oklch(30% 0.072 25);
+  --brew-accent-900: oklch(26% 0.052 25);
+  --brew-accent-950: oklch(20% 0.037 25);
+}
+.palette-copper .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.048 42);
+  --brew-accent-300: oklch(78% 0.08 42);
+  --brew-accent-400: oklch(68% 0.105 42);
+  --brew-accent-500: oklch(55% 0.118 42);
+  --brew-accent-600: oklch(45% 0.105 42);
+  --brew-accent-700: oklch(38% 0.088 42);
+  --brew-accent-800: oklch(30% 0.062 42);
+  --brew-accent-900: oklch(26% 0.045 42);
+  --brew-accent-950: oklch(20% 0.032 42);
+}
+
+/* ── INK ── Minimal monochrome, high contrast, subtle blue-gray ── */
+.palette-ink {
+  --bg: 248 248 250;
+  --surface: 242 242 245;
+  --card: 255 255 255;
+  --text: 18 18 22;
+  --text-muted: 110 110 125;
+  --border: 220 220 228;
+
+  --accent: 45 45 55;
+  --glow: 30 30 40;
+
+  --coral-50: oklch(97% 0.004 260);
+  --coral-100: oklch(93% 0.008 260);
+  --coral-200: oklch(86% 0.015 260);
+  --coral-300: oklch(75% 0.025 260);
+  --coral-400: oklch(62% 0.03 260);
+  --coral-500: oklch(48% 0.028 260);
+  --coral-600: oklch(38% 0.025 260);
+  --coral-700: oklch(30% 0.02 260);
+  --coral-800: oklch(24% 0.015 260);
+  --coral-900: oklch(18% 0.01 260);
+  --coral-950: oklch(14% 0.008 260);
+
+  --fg-strong: oklch(10% 0.005 260);
+  --fg-muted: oklch(50% 0.008 260);
+
+  --brew-bg: 248 248 250;
+  --brew-surface: 242 242 245;
+  --brew-card: 255 255 255;
+  --brew-card-inset: 238 238 242;
+  --brew-border: 220 220 228;
+  --brew-border-subtle: 210 210 218;
+
+  --brew-accent-50: oklch(97% 0.004 260);
+  --brew-accent-100: oklch(94% 0.006 260);
+  --brew-accent-200: oklch(88% 0.012 260);
+  --brew-accent-300: oklch(78% 0.02 260);
+  --brew-accent-400: oklch(65% 0.025 260);
+  --brew-accent-500: oklch(50% 0.025 260);
+  --brew-accent-600: oklch(40% 0.022 260);
+  --brew-accent-700: oklch(32% 0.018 260);
+  --brew-accent-800: oklch(25% 0.014 260);
+  --brew-accent-900: oklch(18% 0.01 260);
+  --brew-accent-950: oklch(14% 0.008 260);
+
+  --brew-neutral-50: oklch(98% 0.003 260);
+  --brew-neutral-100: oklch(95% 0.005 260);
+  --brew-neutral-200: oklch(91% 0.006 260);
+  --brew-neutral-300: oklch(84% 0.008 260);
+  --brew-neutral-400: oklch(66% 0.008 260);
+  --brew-neutral-500: oklch(56% 0.008 260);
+  --brew-neutral-600: oklch(46% 0.006 260);
+  --brew-neutral-700: oklch(36% 0.006 260);
+  --brew-neutral-800: oklch(26% 0.006 260);
+  --brew-neutral-900: oklch(18% 0.004 260);
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04), 0 3px 6px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06), 0 6px 12px rgba(0, 0, 0, 0.04);
+
+  --sidebar-recipe-bg: oklch(35% 0.01 260);
+  --sidebar-recipe-text: oklch(96% 0.004 260);
+  --sidebar-equipment-bg: oklch(42% 0.012 260);
+  --sidebar-equipment-text: oklch(92% 0.004 260);
+  --sidebar-grain-bg: oklch(48% 0.01 80);
+  --sidebar-grain-text: oklch(96% 0.004 80);
+  --sidebar-mash-bg: oklch(40% 0.01 50);
+  --sidebar-mash-text: oklch(96% 0.004 50);
+  --sidebar-hops-bg: oklch(38% 0.015 145);
+  --sidebar-hops-text: oklch(94% 0.004 145);
+  --sidebar-yeast-bg: oklch(35% 0.015 310);
+  --sidebar-yeast-text: oklch(92% 0.004 310);
+  --sidebar-water-bg: oklch(40% 0.018 250);
+  --sidebar-water-text: oklch(93% 0.004 250);
+  --sidebar-fermentation-bg: oklch(38% 0.012 15);
+  --sidebar-fermentation-text: oklch(94% 0.004 15);
+  --sidebar-checklist-bg: oklch(30% 0.008 260);
+  --sidebar-checklist-text: oklch(94% 0.004 260);
+}
+.dark.palette-ink {
+  --bg: 10 10 12;
+  --surface: 16 16 18;
+  --card: 22 22 25;
+  --text: 235 235 240;
+  --text-muted: 125 125 140;
+  --border: 40 40 48;
+
+  --accent: 200 200 215;
+  --glow: 170 170 188;
+
+  --fg-strong: oklch(96% 0.004 260);
+  --fg-muted: oklch(62% 0.006 260);
+
+  --brew-bg: 10 10 12;
+  --brew-surface: 16 16 18;
+  --brew-card: 22 22 25;
+  --brew-card-inset: 12 12 14;
+  --brew-border: 40 40 48;
+  --brew-border-subtle: 34 34 40;
+
+  --shadow-card:
+    0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover:
+    0 0 0 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.35),
+    0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Ink — near-monochrome, very low chroma, elegant restraint */
+.palette-ink .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.01 260);
+  --brew-accent-300: oklch(80% 0.018 260);
+  --brew-accent-400: oklch(68% 0.025 260);
+  --brew-accent-500: oklch(55% 0.028 260);
+  --brew-accent-600: oklch(45% 0.024 260);
+  --brew-accent-700: oklch(38% 0.02 260);
+  --brew-accent-800: oklch(30% 0.015 260);
+  --brew-accent-900: oklch(26% 0.011 260);
+  --brew-accent-950: oklch(20% 0.008 260);
+}
+.palette-ink .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.018 75);
+  --brew-accent-300: oklch(80% 0.03 75);
+  --brew-accent-400: oklch(72% 0.04 75);
+  --brew-accent-500: oklch(62% 0.042 75);
+  --brew-accent-600: oklch(52% 0.036 75);
+  --brew-accent-700: oklch(42% 0.03 75);
+  --brew-accent-800: oklch(34% 0.022 75);
+  --brew-accent-900: oklch(26% 0.016 75);
+  --brew-accent-950: oklch(20% 0.011 75);
+}
+.palette-ink .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.016 55);
+  --brew-accent-300: oklch(80% 0.028 55);
+  --brew-accent-400: oklch(72% 0.036 55);
+  --brew-accent-500: oklch(62% 0.038 55);
+  --brew-accent-600: oklch(52% 0.032 55);
+  --brew-accent-700: oklch(42% 0.026 55);
+  --brew-accent-800: oklch(34% 0.02 55);
+  --brew-accent-900: oklch(26% 0.014 55);
+  --brew-accent-950: oklch(20% 0.01 55);
+}
+.palette-ink .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.014 145);
+  --brew-accent-300: oklch(80% 0.024 145);
+  --brew-accent-400: oklch(68% 0.032 145);
+  --brew-accent-500: oklch(55% 0.035 145);
+  --brew-accent-600: oklch(45% 0.03 145);
+  --brew-accent-700: oklch(38% 0.025 145);
+  --brew-accent-800: oklch(30% 0.018 145);
+  --brew-accent-900: oklch(26% 0.013 145);
+  --brew-accent-950: oklch(20% 0.009 145);
+}
+.palette-ink .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.012 310);
+  --brew-accent-300: oklch(78% 0.02 310);
+  --brew-accent-400: oklch(68% 0.028 310);
+  --brew-accent-500: oklch(55% 0.032 310);
+  --brew-accent-600: oklch(45% 0.028 310);
+  --brew-accent-700: oklch(38% 0.022 310);
+  --brew-accent-800: oklch(30% 0.016 310);
+  --brew-accent-900: oklch(26% 0.012 310);
+  --brew-accent-950: oklch(20% 0.008 310);
+}
+.palette-ink .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.015 230);
+  --brew-accent-300: oklch(80% 0.025 230);
+  --brew-accent-400: oklch(68% 0.035 230);
+  --brew-accent-500: oklch(55% 0.038 230);
+  --brew-accent-600: oklch(45% 0.032 230);
+  --brew-accent-700: oklch(38% 0.026 230);
+  --brew-accent-800: oklch(30% 0.02 230);
+  --brew-accent-900: oklch(26% 0.014 230);
+  --brew-accent-950: oklch(20% 0.01 230);
+}
+.palette-ink .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.014 15);
+  --brew-accent-300: oklch(78% 0.024 15);
+  --brew-accent-400: oklch(68% 0.032 15);
+  --brew-accent-500: oklch(55% 0.036 15);
+  --brew-accent-600: oklch(45% 0.03 15);
+  --brew-accent-700: oklch(38% 0.025 15);
+  --brew-accent-800: oklch(30% 0.018 15);
+  --brew-accent-900: oklch(26% 0.013 15);
+  --brew-accent-950: oklch(20% 0.009 15);
+}
+.palette-ink .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.01 260);
+  --brew-accent-300: oklch(78% 0.018 260);
+  --brew-accent-400: oklch(68% 0.024 260);
+  --brew-accent-500: oklch(55% 0.028 260);
+  --brew-accent-600: oklch(45% 0.024 260);
+  --brew-accent-700: oklch(38% 0.02 260);
+  --brew-accent-800: oklch(30% 0.014 260);
+  --brew-accent-900: oklch(26% 0.01 260);
+  --brew-accent-950: oklch(20% 0.007 260);
+}
+
+/* ── SAHARA ── Sandy desert warmth, terracotta accent ── */
+.palette-sahara {
+  --bg: 252 247 238;
+  --surface: 246 240 228;
+  --card: 255 251 243;
+  --text: 65 48 30;
+  --text-muted: 145 120 90;
+  --border: 225 210 185;
+
+  --accent: 195 95 55;
+  --glow: 180 75 35;
+
+  --coral-50: oklch(97% 0.015 42);
+  --coral-100: oklch(93% 0.035 40);
+  --coral-200: oklch(86% 0.072 38);
+  --coral-300: oklch(77% 0.125 35);
+  --coral-400: oklch(68% 0.155 32);
+  --coral-500: oklch(58% 0.15 30);
+  --coral-600: oklch(48% 0.135 28);
+  --coral-700: oklch(40% 0.112 28);
+  --coral-800: oklch(32% 0.085 28);
+  --coral-900: oklch(24% 0.06 28);
+  --coral-950: oklch(18% 0.042 28);
+
+  --fg-strong: oklch(20% 0.02 45);
+  --fg-muted: oklch(52% 0.025 45);
+
+  --brew-bg: 252 247 238;
+  --brew-surface: 246 240 228;
+  --brew-card: 255 251 243;
+  --brew-card-inset: 242 235 222;
+  --brew-border: 225 210 185;
+  --brew-border-subtle: 215 200 175;
+
+  --brew-accent-50: oklch(97% 0.012 35);
+  --brew-accent-100: oklch(94% 0.028 35);
+  --brew-accent-200: oklch(88% 0.06 35);
+  --brew-accent-300: oklch(78% 0.105 33);
+  --brew-accent-400: oklch(68% 0.135 30);
+  --brew-accent-500: oklch(58% 0.132 28);
+  --brew-accent-600: oklch(48% 0.118 28);
+  --brew-accent-700: oklch(40% 0.098 28);
+  --brew-accent-800: oklch(32% 0.075 28);
+  --brew-accent-900: oklch(24% 0.052 28);
+  --brew-accent-950: oklch(18% 0.038 28);
+
+  --brew-neutral-50: oklch(98% 0.01 45);
+  --brew-neutral-100: oklch(95% 0.015 45);
+  --brew-neutral-200: oklch(90% 0.018 45);
+  --brew-neutral-300: oklch(82% 0.02 45);
+  --brew-neutral-400: oklch(65% 0.018 45);
+  --brew-neutral-500: oklch(55% 0.018 45);
+  --brew-neutral-600: oklch(45% 0.015 45);
+  --brew-neutral-700: oklch(35% 0.015 45);
+  --brew-neutral-800: oklch(25% 0.015 45);
+  --brew-neutral-900: oklch(18% 0.012 45);
+
+  --shadow-card:
+    0 0 0 1px rgba(140, 100, 50, 0.06), 0 1px 1px -0.5px rgba(140, 100, 50, 0.06),
+    0 3px 3px -1.5px rgba(140, 100, 50, 0.05), 0 6px 6px -3px rgba(140, 100, 50, 0.045),
+    0 12px 12px -6px rgba(140, 100, 50, 0.04), 0 24px 24px -12px rgba(140, 100, 50, 0.035);
+  --shadow-card-hover:
+    0 0 0 1px rgba(140, 100, 50, 0.08), 0 1px 1px -0.5px rgba(140, 100, 50, 0.08),
+    0 4px 4px -2px rgba(140, 100, 50, 0.07), 0 8px 8px -4px rgba(140, 100, 50, 0.065),
+    0 16px 16px -8px rgba(140, 100, 50, 0.055), 0 36px 36px -18px rgba(140, 100, 50, 0.045);
+
+  --sidebar-recipe-bg: oklch(58% 0.14 30);
+  --sidebar-recipe-text: oklch(96% 0.006 30);
+  --sidebar-equipment-bg: oklch(40% 0.1 245);
+  --sidebar-equipment-text: oklch(91% 0.012 245);
+  --sidebar-grain-bg: oklch(60% 0.14 65);
+  --sidebar-grain-text: oklch(97% 0.008 65);
+  --sidebar-mash-bg: oklch(56% 0.14 40);
+  --sidebar-mash-text: oklch(96% 0.005 40);
+  --sidebar-hops-bg: oklch(46% 0.12 135);
+  --sidebar-hops-text: oklch(94% 0.012 135);
+  --sidebar-yeast-bg: oklch(42% 0.14 315);
+  --sidebar-yeast-text: oklch(91% 0.012 315);
+  --sidebar-water-bg: oklch(46% 0.15 240);
+  --sidebar-water-text: oklch(92% 0.012 240);
+  --sidebar-fermentation-bg: oklch(50% 0.15 18);
+  --sidebar-fermentation-text: oklch(94% 0.008 18);
+  --sidebar-checklist-bg: oklch(54% 0.12 30);
+  --sidebar-checklist-text: oklch(95% 0.008 30);
+}
+.dark.palette-sahara {
+  --bg: 24 18 12;
+  --surface: 32 24 16;
+  --card: 42 32 22;
+  --text: 242 230 212;
+  --text-muted: 165 145 118;
+  --border: 68 55 40;
+
+  --accent: 215 115 65;
+  --glow: 195 90 40;
+
+  --fg-strong: oklch(95% 0.008 45);
+  --fg-muted: oklch(68% 0.02 45);
+
+  --brew-bg: 24 18 12;
+  --brew-surface: 32 24 16;
+  --brew-card: 42 32 22;
+  --brew-card-inset: 28 20 14;
+  --brew-border: 68 55 40;
+  --brew-border-subtle: 58 46 34;
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.18), 0 6px 6px -3px rgba(0, 0, 0, 0.15),
+    0 12px 12px -6px rgba(0, 0, 0, 0.12), 0 24px 24px -12px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 1px -0.5px rgba(0, 0, 0, 0.22),
+    0 4px 4px -2px rgba(0, 0, 0, 0.22), 0 8px 8px -4px rgba(0, 0, 0, 0.2),
+    0 16px 16px -8px rgba(0, 0, 0, 0.16), 0 36px 36px -18px rgba(0, 0, 0, 0.12);
+}
+
+/* Sahara — warmer hues across the board, terracotta influence */
+.palette-sahara .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(90% 0.022 255);
+  --brew-accent-300: oklch(80% 0.04 252);
+  --brew-accent-400: oklch(68% 0.055 250);
+  --brew-accent-500: oklch(55% 0.062 250);
+  --brew-accent-600: oklch(45% 0.052 250);
+  --brew-accent-700: oklch(38% 0.042 250);
+  --brew-accent-800: oklch(30% 0.03 250);
+  --brew-accent-900: oklch(26% 0.022 250);
+  --brew-accent-950: oklch(20% 0.016 250);
+}
+.palette-sahara .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(90% 0.068 60);
+  --brew-accent-300: oklch(80% 0.115 55);
+  --brew-accent-400: oklch(72% 0.145 50);
+  --brew-accent-500: oklch(62% 0.15 48);
+  --brew-accent-600: oklch(52% 0.135 46);
+  --brew-accent-700: oklch(42% 0.112 46);
+  --brew-accent-800: oklch(34% 0.082 46);
+  --brew-accent-900: oklch(26% 0.059 46);
+  --brew-accent-950: oklch(20% 0.043 46);
+}
+.palette-sahara .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(90% 0.062 45);
+  --brew-accent-300: oklch(80% 0.108 42);
+  --brew-accent-400: oklch(72% 0.138 40);
+  --brew-accent-500: oklch(62% 0.142 38);
+  --brew-accent-600: oklch(52% 0.128 38);
+  --brew-accent-700: oklch(42% 0.105 38);
+  --brew-accent-800: oklch(34% 0.078 38);
+  --brew-accent-900: oklch(26% 0.056 38);
+  --brew-accent-950: oklch(20% 0.041 38);
+}
+.palette-sahara .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(90% 0.045 142);
+  --brew-accent-300: oklch(80% 0.072 140);
+  --brew-accent-400: oklch(68% 0.095 138);
+  --brew-accent-500: oklch(55% 0.105 138);
+  --brew-accent-600: oklch(45% 0.092 138);
+  --brew-accent-700: oklch(38% 0.075 138);
+  --brew-accent-800: oklch(30% 0.055 138);
+  --brew-accent-900: oklch(26% 0.04 138);
+  --brew-accent-950: oklch(20% 0.029 138);
+}
+.palette-sahara .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(88% 0.038 305);
+  --brew-accent-300: oklch(78% 0.062 305);
+  --brew-accent-400: oklch(68% 0.085 305);
+  --brew-accent-500: oklch(55% 0.095 305);
+  --brew-accent-600: oklch(45% 0.085 305);
+  --brew-accent-700: oklch(38% 0.07 305);
+  --brew-accent-800: oklch(30% 0.05 305);
+  --brew-accent-900: oklch(26% 0.036 305);
+  --brew-accent-950: oklch(20% 0.026 305);
+}
+.palette-sahara .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(90% 0.04 225);
+  --brew-accent-300: oklch(80% 0.068 222);
+  --brew-accent-400: oklch(68% 0.088 220);
+  --brew-accent-500: oklch(55% 0.098 220);
+  --brew-accent-600: oklch(45% 0.085 220);
+  --brew-accent-700: oklch(38% 0.07 220);
+  --brew-accent-800: oklch(30% 0.05 220);
+  --brew-accent-900: oklch(26% 0.036 220);
+  --brew-accent-950: oklch(20% 0.026 220);
+}
+.palette-sahara .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(88% 0.058 22);
+  --brew-accent-300: oklch(78% 0.098 20);
+  --brew-accent-400: oklch(68% 0.13 18);
+  --brew-accent-500: oklch(55% 0.145 18);
+  --brew-accent-600: oklch(45% 0.128 18);
+  --brew-accent-700: oklch(38% 0.105 18);
+  --brew-accent-800: oklch(30% 0.078 18);
+  --brew-accent-900: oklch(26% 0.056 18);
+  --brew-accent-950: oklch(20% 0.041 18);
+}
+.palette-sahara .brew-section[data-accent="checklist"] {
+  --brew-accent-200: oklch(88% 0.048 35);
+  --brew-accent-300: oklch(78% 0.082 33);
+  --brew-accent-400: oklch(68% 0.108 32);
+  --brew-accent-500: oklch(55% 0.12 30);
+  --brew-accent-600: oklch(45% 0.108 30);
+  --brew-accent-700: oklch(38% 0.088 30);
+  --brew-accent-800: oklch(30% 0.065 30);
+  --brew-accent-900: oklch(26% 0.047 30);
+  --brew-accent-950: oklch(20% 0.034 30);
+}
 
 /* =============================================
    PER-SECTION COLOR IDENTITY
@@ -163,124 +1450,123 @@
 
 /* Equipment — Slate (hue 260) */
 .brew-section[data-accent="equipment"] {
-  --brew-accent-50:  oklch(97% 0.008 260);
+  --brew-accent-50: oklch(97% 0.008 260);
   --brew-accent-100: oklch(94% 0.015 260);
-  --brew-accent-200: oklch(90% 0.030 260);
-  --brew-accent-300: oklch(80% 0.050 260);
-  --brew-accent-400: oklch(68% 0.070 260);
-  --brew-accent-500: oklch(55% 0.080 260);
-  --brew-accent-600: oklch(45% 0.070 260);
+  --brew-accent-200: oklch(90% 0.03 260);
+  --brew-accent-300: oklch(80% 0.05 260);
+  --brew-accent-400: oklch(68% 0.07 260);
+  --brew-accent-500: oklch(55% 0.08 260);
+  --brew-accent-600: oklch(45% 0.07 260);
   --brew-accent-700: oklch(38% 0.055 260);
-  --brew-accent-800: oklch(30% 0.040 260);
-  --brew-accent-900: oklch(24% 0.030 260);
-  --brew-accent-950: oklch(18% 0.020 260);
+  --brew-accent-800: oklch(30% 0.04 260);
+  --brew-accent-900: oklch(24% 0.03 260);
+  --brew-accent-950: oklch(18% 0.02 260);
 }
 
 /* Fermentables/Grain — Amber/golden (hue 75) */
 .brew-section[data-accent="grain"] {
-  --brew-accent-50:  oklch(97% 0.012 75);
+  --brew-accent-50: oklch(97% 0.012 75);
   --brew-accent-100: oklch(94% 0.035 75);
   --brew-accent-200: oklch(90% 0.075 75);
-  --brew-accent-300: oklch(80% 0.120 75);
-  --brew-accent-400: oklch(72% 0.150 75);
+  --brew-accent-300: oklch(80% 0.12 75);
+  --brew-accent-400: oklch(72% 0.15 75);
   --brew-accent-500: oklch(62% 0.155 75);
-  --brew-accent-600: oklch(52% 0.140 75);
+  --brew-accent-600: oklch(52% 0.14 75);
   --brew-accent-700: oklch(42% 0.115 75);
   --brew-accent-800: oklch(34% 0.085 75);
-  --brew-accent-900: oklch(26% 0.060 75);
-  --brew-accent-950: oklch(20% 0.040 75);
+  --brew-accent-900: oklch(26% 0.06 75);
+  --brew-accent-950: oklch(20% 0.04 75);
 }
 
 /* Mash Schedule — Warm orange (hue 55) */
 .brew-section[data-accent="mash"] {
-  --brew-accent-50:  oklch(97% 0.012 55);
+  --brew-accent-50: oklch(97% 0.012 55);
   --brew-accent-100: oklch(94% 0.035 55);
   --brew-accent-200: oklch(90% 0.075 55);
-  --brew-accent-300: oklch(80% 0.120 55);
+  --brew-accent-300: oklch(80% 0.12 55);
   --brew-accent-400: oklch(72% 0.145 55);
-  --brew-accent-500: oklch(62% 0.150 55);
+  --brew-accent-500: oklch(62% 0.15 55);
   --brew-accent-600: oklch(52% 0.135 55);
-  --brew-accent-700: oklch(42% 0.110 55);
-  --brew-accent-800: oklch(34% 0.080 55);
+  --brew-accent-700: oklch(42% 0.11 55);
+  --brew-accent-800: oklch(34% 0.08 55);
   --brew-accent-900: oklch(26% 0.055 55);
   --brew-accent-950: oklch(20% 0.038 55);
 }
 
 /* Hops — Green (hue 145) */
 .brew-section[data-accent="hops"] {
-  --brew-accent-50:  oklch(97% 0.010 145);
-  --brew-accent-100: oklch(94% 0.030 145);
-  --brew-accent-200: oklch(90% 0.070 145);
-  --brew-accent-300: oklch(80% 0.110 145);
-  --brew-accent-400: oklch(68% 0.140 145);
+  --brew-accent-50: oklch(97% 0.01 145);
+  --brew-accent-100: oklch(94% 0.03 145);
+  --brew-accent-200: oklch(90% 0.07 145);
+  --brew-accent-300: oklch(80% 0.11 145);
+  --brew-accent-400: oklch(68% 0.14 145);
   --brew-accent-500: oklch(55% 0.155 145);
   --brew-accent-600: oklch(45% 0.135 145);
-  --brew-accent-700: oklch(38% 0.110 145);
-  --brew-accent-800: oklch(30% 0.070 145);
-  --brew-accent-900: oklch(24% 0.050 145);
+  --brew-accent-700: oklch(38% 0.11 145);
+  --brew-accent-800: oklch(30% 0.07 145);
+  --brew-accent-900: oklch(24% 0.05 145);
   --brew-accent-950: oklch(18% 0.035 145);
 }
 
 /* Yeast — Violet (hue 310) */
 .brew-section[data-accent="yeast"] {
-  --brew-accent-50:  oklch(97% 0.010 310);
+  --brew-accent-50: oklch(97% 0.01 310);
   --brew-accent-100: oklch(94% 0.025 310);
-  --brew-accent-200: oklch(88% 0.060 310);
-  --brew-accent-300: oklch(78% 0.100 310);
-  --brew-accent-400: oklch(68% 0.140 310);
-  --brew-accent-500: oklch(55% 0.160 310);
+  --brew-accent-200: oklch(88% 0.06 310);
+  --brew-accent-300: oklch(78% 0.1 310);
+  --brew-accent-400: oklch(68% 0.14 310);
+  --brew-accent-500: oklch(55% 0.16 310);
   --brew-accent-600: oklch(45% 0.145 310);
-  --brew-accent-700: oklch(38% 0.120 310);
+  --brew-accent-700: oklch(38% 0.12 310);
   --brew-accent-800: oklch(30% 0.085 310);
-  --brew-accent-900: oklch(24% 0.060 310);
-  --brew-accent-950: oklch(18% 0.040 310);
+  --brew-accent-900: oklch(24% 0.06 310);
+  --brew-accent-950: oklch(18% 0.04 310);
 }
 
 /* Water — Blue (hue 230) */
 .brew-section[data-accent="water"] {
-  --brew-accent-50:  oklch(97% 0.010 230);
+  --brew-accent-50: oklch(97% 0.01 230);
   --brew-accent-100: oklch(94% 0.025 230);
-  --brew-accent-200: oklch(88% 0.060 230);
-  --brew-accent-300: oklch(78% 0.100 230);
+  --brew-accent-200: oklch(88% 0.06 230);
+  --brew-accent-300: oklch(78% 0.1 230);
   --brew-accent-400: oklch(68% 0.145 230);
-  --brew-accent-500: oklch(55% 0.160 230);
+  --brew-accent-500: oklch(55% 0.16 230);
   --brew-accent-600: oklch(45% 0.145 230);
-  --brew-accent-700: oklch(38% 0.120 230);
+  --brew-accent-700: oklch(38% 0.12 230);
   --brew-accent-800: oklch(30% 0.085 230);
-  --brew-accent-900: oklch(24% 0.060 230);
-  --brew-accent-950: oklch(18% 0.040 230);
+  --brew-accent-900: oklch(24% 0.06 230);
+  --brew-accent-950: oklch(18% 0.04 230);
 }
 
 /* Fermentation — Wine-red (hue 15) */
 .brew-section[data-accent="fermentation"] {
-  --brew-accent-50:  oklch(97% 0.010 15);
-  --brew-accent-100: oklch(94% 0.030 15);
+  --brew-accent-50: oklch(97% 0.01 15);
+  --brew-accent-100: oklch(94% 0.03 15);
   --brew-accent-200: oklch(88% 0.065 15);
-  --brew-accent-300: oklch(78% 0.110 15);
-  --brew-accent-400: oklch(68% 0.150 15);
-  --brew-accent-500: oklch(55% 0.170 15);
+  --brew-accent-300: oklch(78% 0.11 15);
+  --brew-accent-400: oklch(68% 0.15 15);
+  --brew-accent-500: oklch(55% 0.17 15);
   --brew-accent-600: oklch(45% 0.155 15);
   --brew-accent-700: oklch(38% 0.125 15);
-  --brew-accent-800: oklch(30% 0.090 15);
+  --brew-accent-800: oklch(30% 0.09 15);
   --brew-accent-900: oklch(24% 0.065 15);
   --brew-accent-950: oklch(18% 0.045 15);
 }
 
 /* Brew Day Checklist — Coral (hue 25) */
 .brew-section[data-accent="checklist"] {
-  --brew-accent-50:  oklch(97% 0.010 25);
-  --brew-accent-100: oklch(94% 0.030 25);
+  --brew-accent-50: oklch(97% 0.01 25);
+  --brew-accent-100: oklch(94% 0.03 25);
   --brew-accent-200: oklch(88% 0.065 25);
-  --brew-accent-300: oklch(78% 0.110 25);
-  --brew-accent-400: oklch(68% 0.150 25);
+  --brew-accent-300: oklch(78% 0.11 25);
+  --brew-accent-400: oklch(68% 0.15 25);
   --brew-accent-500: oklch(58% 0.165 25);
-  --brew-accent-600: oklch(48% 0.150 25);
-  --brew-accent-700: oklch(40% 0.120 25);
+  --brew-accent-600: oklch(48% 0.15 25);
+  --brew-accent-700: oklch(40% 0.12 25);
   --brew-accent-800: oklch(32% 0.085 25);
-  --brew-accent-900: oklch(24% 0.060 25);
-  --brew-accent-950: oklch(18% 0.040 25);
+  --brew-accent-900: oklch(24% 0.06 25);
+  --brew-accent-950: oklch(18% 0.04 25);
 }
-
 
 /* =============================================
    Section Sidebar — Raw Materials–inspired nav
@@ -336,6 +1622,7 @@
   cursor: pointer;
   pointer-events: all;
   overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--sidebar-accent) 25%, transparent);
 
   /*
    * Springy height transition — overshoots slightly then settles.
@@ -360,6 +1647,13 @@
   opacity: 1;
   filter: brightness(1.08);
   transform: scale(1.02);
+  border-color: color-mix(in oklch, var(--sidebar-accent) 40%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--sidebar-accent) 12%, transparent),
+    0 1px 1px -0.5px color-mix(in oklch, var(--sidebar-accent) 10%, transparent),
+    0 3px 3px -1.5px color-mix(in oklch, var(--sidebar-accent) 8%, transparent),
+    0 6px 6px -3px color-mix(in oklch, var(--sidebar-accent) 6%, transparent),
+    0 12px 12px -6px color-mix(in oklch, var(--sidebar-accent) 5%, transparent);
 }
 
 .section-sidebar-item.is-active {
@@ -367,8 +1661,14 @@
   transform: scale(1);
   width: 14.5vw;
   border-radius: 16px;
+  border-color: color-mix(in oklch, var(--sidebar-accent) 45%, transparent);
   box-shadow:
-    0 4px 24px -4px oklch(0% 0 0 / 0.18),
+    0 0 0 1px color-mix(in oklch, var(--sidebar-accent) 18%, transparent),
+    0 1px 1px -0.5px color-mix(in oklch, var(--sidebar-accent) 14%, transparent),
+    0 3px 3px -1.5px color-mix(in oklch, var(--sidebar-accent) 12%, transparent),
+    0 6px 6px -3px color-mix(in oklch, var(--sidebar-accent) 10%, transparent),
+    0 12px 12px -6px color-mix(in oklch, var(--sidebar-accent) 8%, transparent),
+    0 24px 24px -12px color-mix(in oklch, var(--sidebar-accent) 6%, transparent),
     0 0 0 1px oklch(100% 0 0 / 0.06) inset;
 }
 
@@ -382,7 +1682,9 @@
   letter-spacing: 0.05em;
   line-height: 1;
   opacity: 0.7;
-  transition: opacity 0.3s ease 0.05s, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    opacity 0.3s ease 0.05s,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   transform: translateY(0);
 }
 
@@ -391,7 +1693,8 @@
   transform: translateY(-1px);
 }
 
-/* Section label — slides up into view when active */
+/* Section label — slides up into view when active.
+   Responsive tiers: <640px hides labels, 640–1024px shows short labels, 1024px+ shows full labels. */
 .section-sidebar-label {
   position: absolute;
   bottom: 12px;
@@ -410,6 +1713,43 @@
 .section-sidebar-item:not(.is-active) .section-sidebar-label {
   transform: translateY(3px);
   opacity: 0.65;
+}
+
+/* Responsive label tiers:
+   <640px  → labels hidden on inactive items; active item shows short label
+   640–1024 → short labels visible on all items
+   1024+   → full labels visible on all items */
+.section-sidebar-label-full {
+  display: none;
+}
+
+.section-sidebar-label-short {
+  display: none;
+}
+
+/* Below 640px: only the active item gets a short label */
+@media (max-width: 639px) {
+  .section-sidebar-item.is-active .section-sidebar-label-short {
+    display: inline;
+  }
+}
+
+/* 640px – 1024px: show short labels on all items */
+@media (min-width: 640px) {
+  .section-sidebar-label-short {
+    display: inline;
+  }
+}
+
+/* 1024px+: swap to full labels */
+@media (min-width: 1024px) {
+  .section-sidebar-label-short {
+    display: none;
+  }
+
+  .section-sidebar-label-full {
+    display: inline;
+  }
 }
 
 /*
@@ -453,22 +1793,54 @@
   .has-section-sidebar {
     padding-left: 8vw;
     padding-right: 0;
-    max-width: 100vw !important;  /* restore max-w-4xl */
+    max-width: 100vw !important; /* restore max-w-4xl */
     margin-left: auto !important;
     margin-right: auto !important;
   }
 }
 
+/* When sidebar is visible, shift footer to clear it too */
+@media (min-width: 186px) {
+  :has(.has-section-sidebar) > footer {
+    padding-left: 14vw;
+  }
+}
+@media (min-width: 1475px) {
+  :has(.has-section-sidebar) > footer {
+    padding-left: 8vw;
+  }
+}
 
 @layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .bg-dashboard {
-    /* Theme-aware background */
-    background: rgb(var(--bg));
+    /* Theme-aware background — warm ambient glow */
+    background:
+      radial-gradient(
+        1100px 400px at 10% -5%,
+        color-mix(in oklch, var(--brew-accent-100) 18%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 350px at 90% -5%,
+        color-mix(in oklch, var(--brew-accent-200) 12%, transparent),
+        transparent 55%
+      ),
+      rgb(var(--bg));
+    background-attachment: fixed;
   }
 
   .dark .bg-dashboard {
     /* Dark mode: subtle warm gradient */
-    background: radial-gradient(
+    background:
+      radial-gradient(
         1000px 360px at 15% -10%,
         color-mix(in oklch, var(--brew-accent-400) 8%, transparent),
         transparent 55%
@@ -478,27 +1850,21 @@
         color-mix(in oklch, var(--brew-accent-600) 6%, transparent),
         transparent 50%
       ),
-      linear-gradient(
-        180deg,
-        rgb(18 16 14) 0%,
-        rgb(16 14 12) 35%,
-        rgb(var(--bg)) 100%
-      );
+      linear-gradient(180deg, rgb(18 16 14) 0%, rgb(16 14 12) 35%, rgb(var(--bg)) 100%);
     background-attachment: fixed;
   }
 
   .card-glass {
-    @apply relative rounded-2xl bg-[rgb(var(--card))] backdrop-blur-md border border-[rgb(var(--border))];
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+    @apply relative rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] backdrop-blur-md;
+    box-shadow: var(--shadow-card);
     transition: box-shadow 150ms ease;
   }
   .dark .card-glass {
-    @apply bg-[rgb(var(--card))]/65 border-white/10;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45);
+    @apply border-white/10 bg-[rgb(var(--card))]/65;
   }
   .card-inner-ring::after {
     content: "";
-    @apply pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-[rgb(var(--border))];
+    @apply pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-[rgb(var(--border))] ring-inset;
   }
   .dark .card-inner-ring::after {
     @apply ring-white/10;
@@ -506,23 +1872,13 @@
 
   /* Theme-aware shadow-soft override */
   .shadow-soft {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06) !important;
-  }
-  .dark .shadow-soft {
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    box-shadow: var(--shadow-card) !important;
   }
 
   .neon-glow {
-    background: radial-gradient(
-        60% 140% at 10% -20%,
-        rgba(var(--glow) / 0.35),
-        transparent 60%
-      ),
-      radial-gradient(
-        40% 100% at 90% -10%,
-        rgba(var(--accent) / 0.25),
-        transparent 60%
-      );
+    background:
+      radial-gradient(60% 140% at 10% -20%, rgba(var(--glow) / 0.35), transparent 60%),
+      radial-gradient(40% 100% at 90% -10%, rgba(var(--accent) / 0.25), transparent 60%);
   }
 
   .text-primary {
@@ -553,11 +1909,7 @@
 
   .dark .btn-neon {
     color: white;
-    background: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.35)
-    );
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
     box-shadow: 0 0 18px var(--coral-800);
   }
   .dark .btn-neon:hover {
@@ -577,18 +1929,10 @@
   }
 
   .dark .btn-outline {
-    background: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.25),
-      rgba(0, 0, 0, 0.35)
-    );
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
   }
   .dark .btn-outline:hover {
-    background: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.2),
-      rgba(0, 0, 0, 0.3)
-    );
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
   }
 
   .btn-tonal {
@@ -603,26 +1947,28 @@
 
   /* Very light section grouping */
   .section-soft {
-    @apply rounded-xl p-3 sm:p-4 border;
+    @apply rounded-xl border p-3 sm:p-4;
     background-color: color-mix(in oklch, var(--fg-strong) 6%, transparent);
     border-color: color-mix(in oklch, var(--fg-strong) 12%, transparent);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
-      0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-card);
     transition: box-shadow 160ms ease;
   }
 
   /* Elevated inputs on RecipeBuilder page */
   .page-recipe .section-soft input,
   .page-recipe .section-soft select {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
-      0 4px 6px -4px rgba(0, 0, 0, 0.3);
-    transition: box-shadow 150ms ease, background-color 150ms ease;
+    box-shadow: var(--shadow-card);
+    transition:
+      box-shadow 150ms ease,
+      background-color 150ms ease;
   }
   .page-recipe .section-soft input:hover,
   .page-recipe .section-soft select:hover,
   .page-recipe .section-soft input:focus,
   .page-recipe .section-soft select:focus {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.04),
+      0 1px 1px -0.5px rgba(0, 0, 0, 0.04);
     outline: none;
   }
 
@@ -661,107 +2007,51 @@
   }
 
   .border-white\/10 {
-    border-color: color-mix(
-      in oklch,
-      var(--fg-strong) 10%,
-      transparent
-    ) !important;
+    border-color: color-mix(in oklch, var(--fg-strong) 10%, transparent) !important;
   }
   .border-white\/20 {
-    border-color: color-mix(
-      in oklch,
-      var(--fg-strong) 20%,
-      transparent
-    ) !important;
+    border-color: color-mix(in oklch, var(--fg-strong) 20%, transparent) !important;
   }
 
   .bg-white\/5 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 5%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 5%, transparent) !important;
   }
   .bg-white\/10 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 10%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 10%, transparent) !important;
   }
   .bg-white\/15 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 15%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 15%, transparent) !important;
   }
   .bg-white\/25 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 25%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 25%, transparent) !important;
   }
   .bg-white\/40 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 40%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 40%, transparent) !important;
   }
   .bg-white\/50 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 50%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 50%, transparent) !important;
   }
   .bg-white\/90 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 90%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 90%, transparent) !important;
   }
 
   .hover\:bg-white\/10:hover {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 10%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 10%, transparent) !important;
   }
   .hover\:bg-white\/15:hover {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 15%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 15%, transparent) !important;
   }
 
   /* Theme-aware bg-black overrides (for dropdowns/overlays) */
   .bg-black\/50 {
-    background-color: color-mix(
-      in oklch,
-      var(--fg-strong) 50%,
-      transparent
-    ) !important;
+    background-color: color-mix(in oklch, var(--fg-strong) 50%, transparent) !important;
   }
 
   .ring-white\/50 {
-    --tw-ring-color: color-mix(
-      in oklch,
-      var(--fg-strong) 50%,
-      transparent
-    ) !important;
+    --tw-ring-color: color-mix(in oklch, var(--fg-strong) 50%, transparent) !important;
   }
   .ring-white\/60 {
-    --tw-ring-color: color-mix(
-      in oklch,
-      var(--fg-strong) 60%,
-      transparent
-    ) !important;
+    --tw-ring-color: color-mix(in oklch, var(--fg-strong) 60%, transparent) !important;
   }
 
   /* =============================================
@@ -771,7 +2061,7 @@
 
   /* Section card — accent-tinted background with prominent noise & top border */
   .brew-section {
-    @apply rounded-2xl p-6 mb-6;
+    @apply mb-6 rounded-2xl p-6;
     /*
      * Layer stack (top → bottom):
      *  1. Heavy noise — gives tactile grain over the tinted surface
@@ -780,68 +2070,120 @@
      *  4. Full-card base wash — even accent tint edge-to-edge
      *  5. Card background color
      */
+    border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
+        padding-box,
       radial-gradient(
         ellipse 140% 100% at 5% -10%,
-        color-mix(in oklch, var(--brew-accent-100) 70%, transparent),
+        color-mix(in oklch, var(--brew-accent-200) 65%, transparent),
         transparent 65%
-      ),
+      )
+        padding-box,
       radial-gradient(
         ellipse 110% 80% at 100% 110%,
-        color-mix(in oklch, var(--brew-accent-100) 50%, transparent),
+        color-mix(in oklch, var(--brew-accent-200) 45%, transparent),
         transparent 60%
-      ),
+      )
+        padding-box,
       linear-gradient(
         165deg,
-        color-mix(in oklch, var(--brew-accent-50) 60%, transparent) 0%,
-        color-mix(in oklch, var(--brew-accent-50) 25%, transparent) 50%,
-        transparent 100%
-      ),
-      rgb(var(--brew-card));
-    background-size: 180px 180px, auto, auto, auto, auto;
-    border: 1px solid color-mix(in oklch, var(--brew-accent-200) 40%, rgb(var(--brew-border-subtle)));
-    border-top: 3px solid var(--brew-accent-500);
-    box-shadow: var(--shadow-card);
+        color-mix(in oklch, var(--brew-accent-100) 90%, transparent) 0%,
+        color-mix(in oklch, var(--brew-accent-100) 50%, transparent) 50%,
+        color-mix(in oklch, var(--brew-accent-50) 20%, transparent) 100%
+      )
+        padding-box,
+      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card)))
+        padding-box,
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--brew-accent-400) 65%, transparent),
+        color-mix(in oklch, var(--brew-accent-300) 30%, transparent)
+      )
+        border-box;
+    background-size:
+      180px 180px,
+      auto,
+      auto,
+      auto,
+      auto,
+      auto;
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
+      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
+      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
+      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
+      0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
+      0 24px 24px -12px color-mix(in oklch, var(--brew-accent-500) 3%, transparent);
   }
   .dark .brew-section {
+    /*
+     * Dark mode: card IS the section color with a subtle gradient.
+     * Gradient border: accent glow at top, fading down — border-box trick.
+     *
+     * Tuning knobs — override per-palette or per-section:
+     *   --section-grad-from    start color  (default: accent-900)
+     *   --section-grad-to      end color    (default: ~925, midpoint of 900/950)
+     *   --section-grad-angle   direction    (default: to bottom)
+     */
+    --section-grad-from: color-mix(in oklch, var(--brew-accent-800) 80%, var(--brew-accent-900));
+    --section-grad-to: color-mix(in oklch, var(--brew-accent-900) 10%, var(--brew-accent-950));
+    --section-grad-angle: to bottom;
+
+    border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"),
-      radial-gradient(
-        ellipse 140% 100% at 5% -10%,
-        color-mix(in oklch, var(--brew-accent-900) 70%, transparent),
-        transparent 65%
-      ),
-      radial-gradient(
-        ellipse 110% 80% at 100% 110%,
-        color-mix(in oklch, var(--brew-accent-900) 45%, transparent),
-        transparent 60%
-      ),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")
+        padding-box,
+      linear-gradient(var(--section-grad-angle), var(--section-grad-from), var(--section-grad-to))
+        padding-box,
       linear-gradient(
-        165deg,
-        color-mix(in oklch, var(--brew-accent-950) 65%, transparent) 0%,
-        color-mix(in oklch, var(--brew-accent-950) 30%, transparent) 50%,
-        transparent 100%
-      ),
-      rgb(var(--brew-card));
-    background-size: 180px 180px, auto, auto, auto, auto;
-    border-color: color-mix(in oklch, var(--brew-accent-800) 25%, rgb(var(--brew-border-subtle)));
+          to bottom,
+          color-mix(in oklch, var(--brew-accent-600) 50%, transparent),
+          color-mix(in oklch, var(--brew-accent-800) 20%, transparent)
+        )
+        border-box;
+    background-size:
+      180px 180px,
+      auto,
+      auto;
+    box-shadow:
+      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
+      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-900) 12%, transparent),
+      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-900) 10%, transparent),
+      0 12px 12px -6px rgba(0, 0, 0, 0.1),
+      0 24px 24px -12px rgba(0, 0, 0, 0.08);
   }
   .brew-section:hover {
-    box-shadow: var(--shadow-card-hover);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
+      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
+      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
+      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
+      0 16px 16px -8px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
+      0 36px 36px -18px color-mix(in oklch, var(--brew-accent-500) 4%, transparent);
+  }
+  .dark .brew-section:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--brew-accent-700) 18%, transparent),
+      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 18%, transparent),
+      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-900) 16%, transparent),
+      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
+      0 16px 16px -8px rgba(0, 0, 0, 0.12),
+      0 36px 36px -18px rgba(0, 0, 0, 0.1);
   }
 
   /* Warm inset input — translucent inside glass containers */
   .brew-input {
-    @apply px-3 py-2 rounded-lg text-sm transition-all duration-150;
+    @apply rounded-lg px-3 py-2 text-sm transition-all duration-150;
     background: rgb(var(--brew-card-inset) / 0.6);
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     color: var(--fg-strong);
     box-shadow: var(--shadow-inset);
   }
   .dark .brew-input {
-    background: rgb(var(--brew-card-inset) / 0.5);
-    border-color: rgb(255 255 255 / 0.08);
+    background: color-mix(in oklch, var(--brew-accent-900) 20%, rgb(var(--brew-card-inset) / 0.35));
+    border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.08));
   }
   .brew-input:focus {
     outline: none;
@@ -857,19 +2199,38 @@
 
   /* Stat gauge — translucent glass surface */
   .brew-gauge {
-    @apply rounded-xl p-4 text-center overflow-hidden backdrop-blur-sm;
+    @apply overflow-hidden rounded-xl p-4 text-center backdrop-blur-sm;
     background: rgb(var(--brew-card) / 0.55);
-    border: 1px solid rgb(var(--brew-border-subtle));
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), var(--shadow-card);
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      var(--shadow-card);
   }
   .dark .brew-gauge {
-    background: rgb(var(--brew-card) / 0.35);
-    border-color: rgb(255 255 255 / 0.08);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 3px rgba(0,0,0,0.3);
+    background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
+    border: 1px solid transparent;
+    background-clip: padding-box, padding-box, border-box;
+    background-origin: padding-box, padding-box, border-box;
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--brew-accent-800) 20%, transparent),
+        color-mix(in oklch, var(--brew-accent-950) 40%, transparent)
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--brew-accent-600) 35%, transparent),
+        color-mix(in oklch, var(--brew-accent-800) 15%, transparent)
+      );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      var(--shadow-card);
   }
 
   .brew-gauge-label {
-    @apply text-[10px] font-bold uppercase mb-1;
+    @apply mb-1 text-[10px] font-bold uppercase;
     letter-spacing: var(--brew-tracking-widest);
     color: var(--fg-muted);
   }
@@ -882,37 +2243,51 @@
 
   /* Section title — bold with accent underline */
   .brew-section-title {
-    @apply text-xl font-black inline-block pb-1;
+    @apply inline-block pb-1 text-xl font-black;
     letter-spacing: var(--brew-tracking-tight);
     color: var(--fg-strong);
     border-bottom: 3px solid var(--brew-accent-500);
   }
 
-  /* Primary button — accent-colored with warm shadow */
+  /* Primary button — accent-colored with layered shadow */
   .brew-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150;
     background: var(--brew-accent-500);
     color: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 6px color-mix(in oklch, var(--brew-accent-500) 25%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
+      0 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+      0 2px 2px -1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
+      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
+      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 5%, transparent);
   }
   .brew-btn-primary:hover {
     background: var(--brew-accent-600);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15), 0 4px 12px color-mix(in oklch, var(--brew-accent-500) 30%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 15%, transparent),
+      0 1px 1px -0.5px rgba(0, 0, 0, 0.08),
+      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
+      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
+      0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
+      0 20px 20px -10px color-mix(in oklch, var(--brew-accent-500) 5%, transparent);
   }
   .brew-btn-primary:active {
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.18),
+      inset 0 2px 4px rgba(0, 0, 0, 0.12);
   }
 
   /* Ghost button — translucent glass */
   .brew-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150;
     color: var(--fg-strong);
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     background: rgb(var(--brew-card) / 0.25);
   }
   .dark .brew-btn-ghost {
-    border-color: rgb(255 255 255 / 0.08);
-    background: rgb(255 255 255 / 0.04);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.06));
+    background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(255 255 255 / 0.03));
   }
   .brew-btn-ghost:hover {
     background: rgb(var(--brew-card-inset) / 0.6);
@@ -924,44 +2299,70 @@
     color: var(--brew-accent-400);
   }
 
-  /* Ingredient row — translucent glass surface */
+  /* Ingredient row — translucent glass surface with accent-tinted gradient border */
   .brew-ingredient-row {
-    @apply rounded-lg p-3 transition-all duration-150 backdrop-blur-sm;
+    @apply rounded-lg p-3 backdrop-blur-sm transition-all duration-150;
     background: rgb(var(--brew-card) / 0.45);
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
   }
   .dark .brew-ingredient-row {
-    background: rgb(var(--brew-card) / 0.3);
-    border-color: rgb(255 255 255 / 0.06);
+    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border: 1px solid transparent;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--brew-accent-700) 15%, transparent),
+        color-mix(in oklch, var(--brew-accent-800) 10%, transparent)
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--brew-accent-700) 30%, transparent),
+        color-mix(in oklch, var(--brew-accent-600) 25%, transparent)
+      );
   }
   .brew-ingredient-row:hover {
     background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
-    border-color: rgb(var(--brew-border) / 0.6);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), var(--shadow-card);
+    border-color: color-mix(in oklch, var(--brew-accent-400) 40%, rgb(var(--brew-border)));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      var(--shadow-card);
   }
   .dark .brew-ingredient-row:hover {
-    background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card) / 0.4));
-    border-color: rgb(255 255 255 / 0.08);
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--brew-accent-700) 35%, transparent),
+        color-mix(in oklch, var(--brew-accent-900) 50%, transparent)
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--brew-accent-600) 40%, transparent),
+        color-mix(in oklch, var(--brew-accent-700) 25%, transparent)
+      );
   }
 
   /* Recipe card — warm with noise */
   .brew-recipe-card {
-    @apply rounded-xl overflow-hidden transition-all duration-200;
+    @apply overflow-hidden rounded-xl transition-all duration-200;
     background: rgb(var(--brew-card));
     background-image: var(--noise-texture);
     background-size: 200px 200px;
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
     box-shadow: var(--shadow-card);
   }
   .brew-recipe-card:hover {
     box-shadow: var(--shadow-card-hover);
-    border-color: var(--brew-accent-300);
+    border-color: color-mix(in oklch, var(--brew-accent-400) 45%, rgb(var(--brew-border-subtle)));
   }
 
   /* Tag pill — translucent accent tinted */
   .brew-tag {
-    @apply px-2.5 py-0.5 text-xs font-semibold rounded-full backdrop-blur-sm;
+    @apply rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm;
     letter-spacing: var(--brew-tracking-wide);
     background: color-mix(in oklch, var(--brew-accent-200) 30%, transparent);
     color: var(--brew-accent-800);
@@ -977,16 +2378,20 @@
   .brew-journal {
     @apply w-full rounded-lg p-4 text-sm leading-relaxed;
     background: rgb(var(--brew-card-inset) / 0.5);
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     color: var(--fg-strong);
     box-shadow: var(--shadow-inset);
     min-height: 100px;
     resize: vertical;
   }
   .dark .brew-journal {
-    border-color: rgb(255 255 255 / 0.08);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.08));
   }
-  .brew-journal::placeholder { font-style: italic; opacity: 0.5; }
+  .brew-journal::placeholder {
+    font-style: italic;
+    opacity: 0.5;
+  }
   .brew-journal:focus {
     outline: none;
     border-color: var(--brew-accent-400);
@@ -997,7 +2402,7 @@
 
   /* Modal — frosted glass, elevated, section-tinted */
   .brew-modal {
-    @apply rounded-2xl backdrop-blur-xl overflow-hidden;
+    @apply overflow-hidden rounded-2xl backdrop-blur-xl;
     background:
       url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E"),
       radial-gradient(
@@ -1017,10 +2422,17 @@
         transparent 100%
       ),
       rgb(var(--brew-card) / 0.88);
-    background-size: 180px 180px, auto, auto, auto, auto;
+    background-size:
+      180px 180px,
+      auto,
+      auto,
+      auto,
+      auto;
     border: 1px solid color-mix(in oklch, var(--brew-accent-200) 30%, rgb(var(--brew-border) / 0.6));
     border-top: 3px solid var(--brew-accent-500);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgb(255 255 255 / 0.08);
+    box-shadow:
+      var(--shadow-elevated),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
   }
   .dark .brew-modal {
     background:
@@ -1042,21 +2454,39 @@
         transparent 100%
       ),
       rgb(var(--brew-card) / 0.75);
-    background-size: 180px 180px, auto, auto, auto, auto;
+    background-size:
+      180px 180px,
+      auto,
+      auto,
+      auto,
+      auto;
     border-color: color-mix(in oklch, var(--brew-accent-800) 20%, rgb(255 255 255 / 0.08));
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgb(255 255 255 / 0.05);
+    box-shadow:
+      var(--shadow-elevated),
+      inset 0 1px 0 rgb(255 255 255 / 0.05);
   }
 
   /* SRM color swatch — data-driven color, chrome is themed */
   .brew-srm-swatch {
-    @apply rounded-xl p-4 text-center overflow-hidden relative;
-    box-shadow: inset 0 4px 20px rgba(0,0,0,0.15), inset 0 -2px 10px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.1);
-    border: 1px solid rgba(0,0,0,0.1);
+    @apply relative overflow-hidden rounded-xl p-4 text-center;
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.08),
+      inset 0 4px 12px rgba(0, 0, 0, 0.06),
+      inset 0 -1px 4px rgba(0, 0, 0, 0.04),
+      0 0 0 1px rgba(0, 0, 0, 0.06),
+      0 1px 1px -0.5px rgba(0, 0, 0, 0.04),
+      0 3px 3px -1.5px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
   }
   .brew-srm-swatch::after {
-    content: '';
+    content: "";
     @apply absolute inset-0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 40%, rgba(0,0,0,0.1) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
     pointer-events: none;
   }
 
@@ -1069,32 +2499,36 @@
 
   /* Inactive chip — translucent */
   .brew-chip {
-    @apply px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 cursor-pointer;
+    @apply cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-all duration-150;
     background: rgb(var(--brew-card-inset) / 0.5);
     color: var(--fg-muted);
-    border: 1px solid rgb(var(--brew-border-subtle));
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-border-subtle)));
   }
   .dark .brew-chip {
-    background: rgb(255 255 255 / 0.04);
-    border-color: rgb(255 255 255 / 0.08);
+    background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(255 255 255 / 0.03));
+    border-color: color-mix(in oklch, var(--brew-accent-700) 18%, rgb(255 255 255 / 0.06));
   }
   .brew-chip:hover {
     background: color-mix(in oklch, var(--brew-accent-100) 25%, rgb(var(--brew-card-inset) / 0.6));
-    border-color: rgb(var(--brew-border));
+    border-color: color-mix(in oklch, var(--brew-accent-400) 35%, rgb(var(--brew-border)));
     color: var(--fg-strong);
   }
   .dark .brew-chip:hover {
     background: rgb(255 255 255 / 0.08);
-    border-color: rgb(255 255 255 / 0.1);
+    border-color: color-mix(in oklch, var(--brew-accent-600) 30%, rgb(255 255 255 / 0.1));
   }
 
   /* Active chip */
   .brew-chip-active {
-    @apply px-3 py-1 rounded-full text-xs font-medium transition-all duration-150 cursor-pointer;
+    @apply cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-all duration-150;
     background: var(--brew-accent-500);
     color: white;
     border: 1px solid var(--brew-accent-600);
-    box-shadow: 0 1px 4px color-mix(in oklch, var(--brew-accent-500) 30%, transparent);
+    box-shadow:
+      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
+      0 2px 2px -1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
+      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 6%, transparent);
   }
   .brew-chip-active:hover {
     background: var(--brew-accent-600);
@@ -1102,7 +2536,7 @@
 
   /* Filter category label */
   .brew-chip-label {
-    @apply py-1 px-2 text-xs font-bold uppercase;
+    @apply px-2 py-1 text-xs font-bold uppercase;
     letter-spacing: var(--brew-tracking-widest);
     color: var(--fg-muted);
   }
@@ -1124,22 +2558,26 @@
 
   /* ---- Picker row (modal lists) ---- */
   .brew-picker-row {
-    @apply w-full text-left px-4 py-2.5 rounded-lg transition-all duration-100;
+    @apply w-full rounded-lg px-4 py-2.5 text-left transition-all duration-100;
     background: rgb(var(--brew-card-inset) / 0.35);
-    border: 1px solid rgb(var(--brew-border-subtle) / 0.4);
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 15%, rgb(var(--brew-border-subtle) / 0.4));
   }
   .brew-picker-row:hover {
     background: rgb(var(--brew-card-inset) / 0.7);
-    border-color: rgb(var(--brew-border-subtle));
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
+    border-color: color-mix(in oklch, var(--brew-accent-400) 30%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.03),
+      0 1px 1px -0.5px rgb(0 0 0 / 0.03),
+      0 3px 3px -1.5px rgb(0 0 0 / 0.03);
   }
   .dark .brew-picker-row {
-    background: rgb(255 255 255 / 0.03);
-    border-color: rgb(255 255 255 / 0.05);
+    background: color-mix(in oklch, var(--brew-accent-900) 12%, rgb(255 255 255 / 0.02));
+    border-color: color-mix(in oklch, var(--brew-accent-800) 15%, rgb(255 255 255 / 0.05));
   }
   .dark .brew-picker-row:hover {
-    background: rgb(255 255 255 / 0.07);
-    border-color: rgb(255 255 255 / 0.1);
+    background: color-mix(in oklch, var(--brew-accent-800) 18%, rgb(255 255 255 / 0.05));
+    border-color: color-mix(in oklch, var(--brew-accent-700) 25%, rgb(255 255 255 / 0.1));
   }
 
   /* ---- Themed menu item (dropdown) ---- */
@@ -1177,26 +2615,55 @@
 
 /* Brew theme animations — safe: no transform (avoids creating containing blocks) */
 @keyframes brew-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .brew-animate-in {
   animation: brew-fade-in 0.35s ease-out backwards;
 }
-.brew-stagger-1 { animation-delay: 0.04s; }
-.brew-stagger-2 { animation-delay: 0.08s; }
-.brew-stagger-3 { animation-delay: 0.12s; }
-.brew-stagger-4 { animation-delay: 0.16s; }
-.brew-stagger-5 { animation-delay: 0.20s; }
-.brew-stagger-6 { animation-delay: 0.24s; }
-.brew-stagger-7 { animation-delay: 0.28s; }
-.brew-stagger-8 { animation-delay: 0.32s; }
-.brew-stagger-9 { animation-delay: 0.36s; }
+.brew-stagger-1 {
+  animation-delay: 0.04s;
+}
+.brew-stagger-2 {
+  animation-delay: 0.08s;
+}
+.brew-stagger-3 {
+  animation-delay: 0.12s;
+}
+.brew-stagger-4 {
+  animation-delay: 0.16s;
+}
+.brew-stagger-5 {
+  animation-delay: 0.2s;
+}
+.brew-stagger-6 {
+  animation-delay: 0.24s;
+}
+.brew-stagger-7 {
+  animation-delay: 0.28s;
+}
+.brew-stagger-8 {
+  animation-delay: 0.32s;
+}
+.brew-stagger-9 {
+  animation-delay: 0.36s;
+}
 
 /* Subtle pulse for active/selected states */
 @keyframes brew-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--brew-accent-500) 0%, transparent); }
-  50% { box-shadow: 0 0 0 4px color-mix(in oklch, var(--brew-accent-500) 15%, transparent); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--brew-accent-500) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--brew-accent-500) 15%, transparent);
+  }
 }
-.brew-pulse { animation: brew-pulse 2s ease-in-out infinite; }
+.brew-pulse {
+  animation: brew-pulse 2s ease-in-out infinite;
+}
