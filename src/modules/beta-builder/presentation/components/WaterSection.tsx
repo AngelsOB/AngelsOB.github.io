@@ -170,7 +170,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       <h2 className="brew-section-title mb-4">Water</h2>
 
       {/* Water Volumes */}
-      <WaterVolumesDisplay calculations={calculations} />
+      <WaterVolumesDisplay calculations={calculations} recipe={recipe} />
 
       {/* Estimated Mash pH */}
       <PhAdjustmentsSection
