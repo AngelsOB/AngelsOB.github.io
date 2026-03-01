@@ -43,66 +43,67 @@ export default function StickyStatsBar({
     <div
       className={`fixed left-0 right-0 bg-[rgb(var(--brew-card))]/25 backdrop-blur-md border-[rgb(var(--brew-border))] shadow-lg z-40 transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
     >
-      <div className="max-w-4xl mx-auto px-8 py-2">
-        <div className="grid grid-cols-7 gap-2">
+      {/* Scrollable stats strip — snaps on mobile, centered on desktop */}
+      <div className="max-w-4xl mx-auto px-2 sm:px-8 py-2 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-3 sm:gap-4 sm:justify-between min-w-max sm:min-w-0">
           {/* ABV */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[3.5rem]">
             <div className="brew-gauge-label">ABV</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.abv.toFixed(1)}%
             </div>
           </div>
 
           {/* OG */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[3.5rem]">
             <div className="brew-gauge-label">OG</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.og.toFixed(3)}
             </div>
           </div>
 
           {/* FG */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[3.5rem]">
             <div className="brew-gauge-label">FG</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.fg.toFixed(3)}
             </div>
           </div>
 
           {/* IBU */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[2.5rem]">
             <div className="brew-gauge-label">IBU</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.ibu.toFixed(0)}
             </div>
           </div>
 
           {/* SRM with Color */}
-          <div className="text-center flex items-center justify-center gap-1.5">
+          <div className="flex items-center justify-center gap-1.5 shrink-0">
             <div
-              className="w-7 h-7 rounded-full ring-2 ring-white/30 shadow-sm"
+              className="w-5 h-5 sm:w-7 sm:h-7 rounded-full ring-2 ring-white/30 shadow-sm shrink-0"
               style={{ backgroundColor: srmToRgb(calculations.srm) }}
             />
             <div>
               <div className="brew-gauge-label">SRM</div>
-              <div className="brew-gauge-value text-lg">
+              <div className="brew-gauge-value text-base sm:text-lg">
                 {calculations.srm.toFixed(1)}
               </div>
             </div>
           </div>
 
           {/* Calories */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[2.5rem]">
             <div className="brew-gauge-label">Cal</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.calories}
             </div>
           </div>
 
           {/* Carbs */}
-          <div className="text-center">
+          <div className="text-center shrink-0 min-w-[2.5rem]">
             <div className="brew-gauge-label">Carbs</div>
-            <div className="brew-gauge-value text-lg">
+            <div className="brew-gauge-value text-base sm:text-lg">
               {calculations.carbsG.toFixed(1)}g
             </div>
           </div>

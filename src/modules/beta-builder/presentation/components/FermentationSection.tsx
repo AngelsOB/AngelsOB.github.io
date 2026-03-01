@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
+import EmptyState from '../../../../components/EmptyState';
 import FermentationStepModal from './FermentationStepModal';
 import type { FermentationStep } from '../../domain/models/Recipe';
 
@@ -85,17 +86,11 @@ export default function FermentationSection() {
       </div>
 
       {steps.length === 0 ? (
-        <div className="text-center py-8 rounded-lg border-2 border-dashed" style={{ background: 'rgb(var(--brew-card-inset))', borderColor: 'rgb(var(--brew-border))' }}>
-          <p className="text-muted mb-3">
-            No fermentation steps yet
-          </p>
-          <button
-            onClick={handleAddStep}
-            className="brew-link hover:underline text-sm"
-          >
-            Add your first step
-          </button>
-        </div>
+        <EmptyState
+          message="No fermentation steps yet"
+          actionLabel="Add your first step"
+          onAction={handleAddStep}
+        />
       ) : (
         <div className="space-y-3">
           {steps.map((step, index) => (

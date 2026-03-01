@@ -39,7 +39,7 @@ export default function RecipeSessionsBar({
       case "conditioning":
         return "text-blue-600 dark:text-blue-400";
       case "brewing":
-        return "text-orange-600 dark:text-orange-400";
+        return "text-[var(--coral-600)] dark:text-[var(--coral-400)]";
       default:
         return "text-gray-600 dark:text-gray-400";
     }

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import CalculatorCard from "./CalculatorCard";
 import { abvFromOGFG } from "../calculators/abv";
 
 function parseGravity(input: string): number | null {
@@ -30,54 +29,67 @@ export default function AbvCalculator() {
   }, [ogInput, fgInput]);
 
   return (
-    <CalculatorCard title="ABV (OG/FG)">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label className="block">
-          <div className="text-sm text-muted mb-1">
-            Original Gravity (OG)
-          </div>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.001"
-            min="0.99"
-            max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
-            value={ogInput}
-            onChange={(e) => setOgInput(e.target.value)}
-            placeholder="1.050"
-          />
-        </label>
-        <label className="block">
-          <div className="text-sm text-muted mb-1">
-            Final Gravity (FG)
-          </div>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.001"
-            min="0.99"
-            max="1.2"
-            className="w-full rounded-md border px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-[var(--coral-600)]"
-            value={fgInput}
-            onChange={(e) => setFgInput(e.target.value)}
-            placeholder="1.010"
-          />
-        </label>
+    <div className="brew-section" data-accent="grain">
+      <div className="flex items-baseline gap-3 mb-2">
+        <h2 className="brew-section-title">ABV</h2>
+        <span className="text-xs text-muted">from OG / FG</span>
       </div>
 
-      <div className="mt-3">
-        {error ? (
-          <div className="text-sm text-muted">{error}</div>
-        ) : (
-          <div className="rounded-lg border bg-emerald-500/10 px-4 py-3">
-            <div className="text-sm text-muted">Estimated ABV</div>
-            <div className="text-3xl font-semibold tracking-tight">
-              {abv != null ? `${abv.toFixed(2)}%` : "—"}
+      <p className="text-sm text-muted mb-5 leading-relaxed">
+        Enter your original and final gravity readings to estimate alcohol
+        by volume.
+      </p>
+
+      <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="flex gap-3 flex-1 min-w-0">
+          <label className="block flex-1 min-w-0">
+            <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+              OG
             </div>
-          </div>
-        )}
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.001"
+              min="0.99"
+              max="1.2"
+              className="brew-input w-full tabular-nums"
+              value={ogInput}
+              onChange={(e) => setOgInput(e.target.value)}
+              placeholder="1.050"
+            />
+          </label>
+
+          <label className="block flex-1 min-w-0">
+            <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+              FG
+            </div>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.001"
+              min="0.99"
+              max="1.2"
+              className="brew-input w-full tabular-nums"
+              value={fgInput}
+              onChange={(e) => setFgInput(e.target.value)}
+              placeholder="1.010"
+            />
+          </label>
+        </div>
+
+        <div className="sm:w-40 shrink-0">
+          {error ? (
+            <div className="text-xs text-muted py-2">{error}</div>
+          ) : (
+            <div className="brew-gauge !p-3">
+              <div className="brew-gauge-label">Estimated ABV</div>
+              <div className="brew-gauge-value tabular-nums">
+                {abv != null ? `${abv.toFixed(2)}%` : "—"}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </CalculatorCard>
+    </div>
   );
 }
