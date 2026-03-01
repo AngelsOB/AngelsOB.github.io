@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { generateDefaultChecklist } from './BrewDayChecklistService';
 import { recipeCalculationService } from './RecipeCalculationService';
-import { volumeCalculationService } from './VolumeCalculationService';
+// import { volumeCalculationService } from './VolumeCalculationService';
 import type { Recipe } from '../models/Recipe';
 
 /**
@@ -152,7 +152,6 @@ describe('Pre-boil gravity consistency', () => {
         { id: 'h2', name: 'EKG', grams: 14, alphaAcid: 5, type: 'boil', timeMinutes: 30 },
       ] as Recipe['hops'],
       equipment: {
-        name: 'G30 19L',
         boilTimeMin: 60,
         boilOffRateLPerHour: 2.3,
         kettleLossLiters: 3.5,
@@ -208,7 +207,6 @@ describe('Pre-boil gravity consistency', () => {
     expect(preBoilSugar).toBeCloseTo(postBoilSugar, 6);
 
     // With no boil, the only concentration is cooling shrinkage
-    const boilOffL = 0;
     expect(postBoilColdL).toBeCloseTo(calc.preBoilVolumeL / 1.04, 1);
   });
 
