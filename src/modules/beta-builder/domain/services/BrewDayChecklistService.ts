@@ -45,10 +45,16 @@ export function generateDefaultChecklist(
   let seq = 0;
   const id = () => `default-${++seq}`;
 
-  // Pre-boil gravity (derived)
+  // Pre-boil gravity derived from OG via concentration through the boil.
+  // Only boil-off and cooling shrinkage concentrate — post-boil losses
+  // (kettle trub, chiller, fermenter) remove wort at the same gravity.
+  const boilOffL =
+    (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
+  const shrinkageFactor = 1 + recipe.equipment.coolingShrinkagePercent / 100;
+  const postBoilColdL = (calc.preBoilVolumeL - boilOffL) / shrinkageFactor;
   const preBoilGravity =
     calc.preBoilVolumeL > 0
-      ? 1 + ((calc.og - 1) * recipe.batchVolumeL) / calc.preBoilVolumeL
+      ? 1 + ((calc.og - 1) * postBoilColdL) / calc.preBoilVolumeL
       : calc.og;
 
   // Strike temperature

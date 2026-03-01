@@ -74,14 +74,21 @@ export const generateRecipeMarkdown = (
   const gravityPoints = Math.round((calc.og - 1) * 1000);
   const buGu = gravityPoints > 0 ? calc.ibu / gravityPoints : 0;
 
-  const preBoilGravity =
-    calc.preBoilVolumeL > 0
-      ? 1 + ((calc.og - 1) * recipe.batchVolumeL) / calc.preBoilVolumeL
-      : calc.og;
-
   const boilOffL =
     (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
   const postBoilVolumeL = Math.max(0, calc.preBoilVolumeL - boilOffL);
+
+  // Pre-boil gravity derived from OG via concentration through the boil.
+  // Only boil-off and cooling shrinkage concentrate the wort — post-boil
+  // losses (kettle trub, chiller, fermenter) remove wort at the same gravity
+  // and do NOT change gravity. So we conserve sugar between pre-boil and
+  // post-boil cold volume, not between pre-boil and batch volume.
+  const shrinkageFactor = 1 + recipe.equipment.coolingShrinkagePercent / 100;
+  const postBoilColdL = postBoilVolumeL / shrinkageFactor;
+  const preBoilGravity =
+    calc.preBoilVolumeL > 0
+      ? 1 + ((calc.og - 1) * postBoilColdL) / calc.preBoilVolumeL
+      : calc.og;
 
   const firstMashTemp = recipe.mashSteps[0]?.temperatureC;
   const strikeTemp =
