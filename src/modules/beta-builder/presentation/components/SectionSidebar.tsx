@@ -6,15 +6,15 @@ import { useEffect, useRef, useState, useCallback } from 'react';
  * Colors are bold and saturated, inspired by therawmaterials.com sidebar.
  */
 const SECTIONS = [
-  { id: 'recipe-info', accent: 'recipe',       label: 'Recipe',       number: '01', bg: 'oklch(65% 0.12 55)',   text: 'oklch(98% 0.005 55)'  },
-  { id: 'equipment',   accent: 'equipment',     label: 'Equipment',    number: '02', bg: 'oklch(42% 0.12 260)',  text: 'oklch(92% 0.02 260)'  },
-  { id: 'grain',       accent: 'grain',         label: 'Fermentables', number: '03', bg: 'oklch(62% 0.16 75)',   text: 'oklch(98% 0.01 75)'   },
-  { id: 'mash',        accent: 'mash',          label: 'Mash',         number: '04', bg: 'oklch(60% 0.16 55)',   text: 'oklch(98% 0.005 55)'  },
-  { id: 'hops',        accent: 'hops',          label: 'Hops',         number: '05', bg: 'oklch(48% 0.14 145)',  text: 'oklch(95% 0.02 145)'  },
-  { id: 'yeast',       accent: 'yeast',         label: 'Yeast',        number: '06', bg: 'oklch(45% 0.16 310)',  text: 'oklch(92% 0.02 310)'  },
-  { id: 'water',       accent: 'water',         label: 'Water',        number: '07', bg: 'oklch(48% 0.18 250)',  text: 'oklch(93% 0.02 250)'  },
-  { id: 'fermentation',accent: 'fermentation',  label: 'Fermentation', number: '08', bg: 'oklch(52% 0.17 15)',   text: 'oklch(95% 0.01 15)'   },
-  { id: 'checklist',   accent: 'checklist',     label: 'Checklist',    number: '09', bg: 'oklch(58% 0.14 25)',   text: 'oklch(96% 0.01 25)'   },
+  { id: 'recipe-info', accent: 'recipe',       label: 'Recipe',       shortLabel: 'Rec.',   number: '01', bg: 'var(--sidebar-recipe-bg)',       text: 'var(--sidebar-recipe-text)'       },
+  { id: 'equipment',   accent: 'equipment',     label: 'Equipment',    shortLabel: 'Equip.', number: '02', bg: 'var(--sidebar-equipment-bg)',    text: 'var(--sidebar-equipment-text)'    },
+  { id: 'grain',       accent: 'grain',         label: 'Fermentables', shortLabel: 'Grain',  number: '03', bg: 'var(--sidebar-grain-bg)',        text: 'var(--sidebar-grain-text)'        },
+  { id: 'mash',        accent: 'mash',          label: 'Mash',         shortLabel: 'Mash',   number: '04', bg: 'var(--sidebar-mash-bg)',         text: 'var(--sidebar-mash-text)'         },
+  { id: 'hops',        accent: 'hops',          label: 'Hops',         shortLabel: 'Hops',   number: '05', bg: 'var(--sidebar-hops-bg)',         text: 'var(--sidebar-hops-text)'         },
+  { id: 'yeast',       accent: 'yeast',         label: 'Yeast',        shortLabel: 'Yeast',  number: '06', bg: 'var(--sidebar-yeast-bg)',        text: 'var(--sidebar-yeast-text)'        },
+  { id: 'water',       accent: 'water',         label: 'Water',        shortLabel: 'Water',  number: '07', bg: 'var(--sidebar-water-bg)',        text: 'var(--sidebar-water-text)'        },
+  { id: 'fermentation',accent: 'fermentation',  label: 'Fermentation', shortLabel: 'Ferm.',  number: '08', bg: 'var(--sidebar-fermentation-bg)', text: 'var(--sidebar-fermentation-text)' },
+  { id: 'checklist',   accent: 'checklist',     label: 'Checklist',    shortLabel: 'Check',  number: '09', bg: 'var(--sidebar-checklist-bg)',    text: 'var(--sidebar-checklist-text)'    },
 ] as const;
 
 /** Expanded height for the active sidebar item */
@@ -194,8 +194,9 @@ export default function SectionSidebar() {
               className={`section-sidebar-item${isActive ? ' is-active' : ''}`}
               style={{
                 backgroundColor: section.bg,
+                '--sidebar-accent': section.bg,
                 height: isActive ? `${EXPANDED_HEIGHT}px` : undefined,
-              }}
+              } as React.CSSProperties}
               onClick={() => handleClick(i)}
               aria-current={isActive ? 'true' : undefined}
               title={section.label}
@@ -213,7 +214,8 @@ export default function SectionSidebar() {
                 }}
               />
               <span className="section-sidebar-label" style={{ color: section.text }}>
-                {section.label}
+                <span className="section-sidebar-label-full">{section.label}</span>
+                <span className="section-sidebar-label-short">{section.shortLabel}</span>
               </span>
             </button>
           );

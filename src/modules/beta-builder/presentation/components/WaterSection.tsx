@@ -170,7 +170,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       <h2 className="brew-section-title mb-4">Water</h2>
 
       {/* Water Volumes */}
-      <WaterVolumesDisplay calculations={calculations} />
+      <WaterVolumesDisplay calculations={calculations} recipe={recipe} />
 
       {/* Estimated Mash pH */}
       <PhAdjustmentsSection
@@ -205,7 +205,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Info note */}
-      <div className="mt-4 text-xs p-3 rounded-lg" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+      <div className="mt-4 text-xs p-3 rounded-lg" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
         <strong>Note:</strong> Water volumes account for grain absorption, boil-off, hop
         absorption, deadspace, and all equipment losses.
       </div>

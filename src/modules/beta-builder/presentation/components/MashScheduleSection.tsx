@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { useRecipeStore } from "../stores/recipeStore";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
+import EmptyState from "../../../../components/EmptyState";
 import MashStepModal from "./MashStepModal";
 import type { MashStep } from "../../domain/models/Recipe";
 
@@ -121,10 +122,10 @@ export default function MashScheduleSection() {
 
       {/* Mash Steps List */}
       {currentRecipe.mashSteps.length === 0 ? (
-        <div className="text-center py-8 border-2 border-dashed rounded-lg" style={{ borderColor: 'rgb(var(--brew-border))', background: 'rgb(var(--brew-card-inset))' }}>
-          <p>No mash steps added yet.</p>
-          <p className="text-sm">Use the buttons above to generate a default schedule, or add steps manually below.</p>
-        </div>
+        <EmptyState
+          message="No mash steps added yet"
+          hint="Use the buttons above to generate a schedule, or add steps manually"
+        />
       ) : (
         <div className="space-y-2">
           {currentRecipe.mashSteps.map((step, index) => (

@@ -287,8 +287,8 @@ export default function DualUnitInput({
         type="button"
         className={`absolute inset-y-0 right-0 px-2 flex items-center text-xs font-medium transition-colors ${
           readOnly
-            ? "text-neutral-500 hover:text-orange-300/80 cursor-pointer"
-            : "text-neutral-500 hover:text-orange-300/80 cursor-pointer"
+            ? "text-neutral-500 hover:text-[var(--coral-300)]/80 cursor-pointer"
+            : "text-neutral-500 hover:text-[var(--coral-300)]/80 cursor-pointer"
         }`}
         onClick={handleUnitToggle}
         disabled={false}

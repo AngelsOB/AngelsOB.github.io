@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 import Toaster from "./components/Toaster";
 
 export default function App() {
@@ -15,8 +16,8 @@ export default function App() {
       <main id="main-content" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <Outlet />
       </main>
+      <Footer />
       <Toaster />
     </div>
   );
 }
-

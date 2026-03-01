@@ -11,6 +11,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
+import EmptyState from "../../../../components/EmptyState";
 import { fermentableCalculationService } from "../../domain/services/FermentableCalculationService";
 import type { Fermentable } from "../../domain/models/Recipe";
 import type { FermentablePreset } from "../../domain/models/Presets";
@@ -18,6 +19,7 @@ import { getFermentability } from "../../data/fermentablePresets";
 import CustomFermentableModal from "./CustomFermentableModal";
 import PresetPickerModal from "./PresetPickerModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
+import { srmToRgb } from "../../utils/srmColorUtils";
 
 export default function FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
@@ -252,9 +254,11 @@ export default function FermentableSection() {
 
       {/* Fermentable List */}
       {!currentRecipe?.fermentables.length ? (
-        <p className="text-muted italic">
-          No fermentables yet. Click "Add Fermentable" to select from preset database.
-        </p>
+        <EmptyState
+          message="No fermentables yet"
+          actionLabel="Add your first fermentable"
+          onAction={() => setIsPickerOpen(true)}
+        />
       ) : (
         <div className="space-y-2">
           {currentRecipe.fermentables.map((fermentable) => {
@@ -270,12 +274,17 @@ export default function FermentableSection() {
                 {/* Name - full width on mobile, 4 cols on desktop */}
                 <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center justify-between">
                   <span className="font-medium flex items-center gap-2">
+                    <span
+                      className="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10"
+                      style={{ background: srmToRgb(fermentable.colorLovibond) }}
+                      title={`${fermentable.colorLovibond}°L`}
+                    />
+                    {fermentable.name}
                     {fermentable.originCode && (
-                      <span className="text-lg" title={fermentable.originCode}>
+                      <span className="text-xs text-muted font-normal">
                         {getCountryFlag(fermentable.originCode)}
                       </span>
                     )}
-                    {fermentable.name}
                   </span>
                   {/* Remove button - visible only on mobile, next to name */}
                   <button
@@ -505,12 +514,17 @@ export default function FermentableSection() {
             className="brew-picker-row flex justify-between items-center"
           >
             <span className="font-medium flex items-center gap-2">
+              <span
+                className="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10"
+                style={{ background: srmToRgb(preset.colorLovibond) }}
+                title={`${preset.colorLovibond}°L`}
+              />
+              {preset.name}
               {preset.originCode && (
-                <span className="text-xl" title={BREWING_ORIGINS[preset.originCode]}>
+                <span className="text-xs text-muted font-normal">
                   {getCountryFlag(preset.originCode)}
                 </span>
               )}
-              {preset.name}
             </span>
             <span className="text-sm font-medium">
               {preset.colorLovibond}°L | {preset.potentialGu} PPG

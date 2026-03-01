@@ -13,6 +13,7 @@ import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
+import EmptyState from "../../../../components/EmptyState";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import { useHopGroups } from "../hooks/useHopGroups";
 import type { Hop } from "../../domain/models/Recipe";
@@ -241,9 +242,11 @@ export default function HopSection() {
 
       {/* Hop List */}
       {!currentRecipe?.hops.length ? (
-        <p className="text-muted italic">
-          No hops yet. Click "Add Hop" to select from preset database.
-        </p>
+        <EmptyState
+          message="No hops added yet"
+          actionLabel="Add your first hop"
+          onAction={() => setIsPickerOpen(true)}
+        />
       ) : (
         <div className="space-y-3">
           {/* Variety cards in 2-column grid on desktop */}
@@ -267,7 +270,7 @@ export default function HopSection() {
 
           {/* Hop Flavor Visualizer */}
           {currentRecipe.hops.length > 0 && (
-            <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgb(var(--brew-card-inset) / 0.4)', border: '1px solid rgb(var(--brew-border-subtle))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+            <div className="mt-6 p-4 rounded-xl" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-semibold">Hop Flavor Profile</h3>
                 <div className="flex gap-2">

@@ -13,8 +13,8 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
       <div
         className="flex items-center gap-0 flex-1 min-w-0 rounded-lg overflow-hidden"
         style={{
-          background: "rgb(var(--brew-card-inset) / 0.45)",
-          border: "1px solid rgb(var(--brew-border-subtle))",
+          background: "color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.4))",
+          border: "1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))",
           boxShadow: "var(--shadow-inset)",
         }}
       >

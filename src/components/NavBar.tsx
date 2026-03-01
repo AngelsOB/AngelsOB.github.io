@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import Logo from "./Logo";
 
 const navLinks = [
   { to: "/calculators", label: "Calculators" },
@@ -103,18 +104,11 @@ export default function NavBar() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--surface))]/80 backdrop-blur">
+    <nav className="relative top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--surface))]/80 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           {/* Logo */}
-          <Link
-            to="/"
-            className="text-lg sm:text-xl font-semibold tracking-tight"
-          >
-            <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
-              Beer App
-            </span>
-          </Link>
+          <Logo />
 
           {/* Desktop navigation */}
           <div className="hidden sm:flex sm:items-center sm:gap-1">
