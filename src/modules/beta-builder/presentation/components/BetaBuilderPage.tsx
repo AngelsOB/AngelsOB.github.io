@@ -23,6 +23,7 @@ import { recipeVersionRepository } from '../../domain/repositories/RecipeVersion
 import BrewDayChecklistSection from './BrewDayChecklistSection';
 import StickyStatsBar from './StickyStatsBar';
 import SectionSidebar from './SectionSidebar';
+import AnimatedValue from './AnimatedValue';
 
 export default function BetaBuilderPage() {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
@@ -136,7 +137,7 @@ export default function BetaBuilderPage() {
 
   return (
     <div className="brew-theme has-section-sidebar max-w-4xl mx-auto py-6 px-4">
-      <SectionSidebar />
+      <SectionSidebar recipe={currentRecipe} calculations={calculations} />
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
@@ -236,25 +237,33 @@ export default function BetaBuilderPage() {
               {/* ABV */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">ABV</div>
-                <div className="brew-gauge-value">{calculations.abv.toFixed(1)}%</div>
+                <div className="brew-gauge-value">
+                  <AnimatedValue value={calculations.abv} decimals={1} suffix="%" />
+                </div>
               </div>
 
               {/* OG */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">OG</div>
-                <div className="brew-gauge-value">{calculations.og.toFixed(3)}</div>
+                <div className="brew-gauge-value">
+                  <AnimatedValue value={calculations.og} decimals={3} />
+                </div>
               </div>
 
               {/* FG */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">FG</div>
-                <div className="brew-gauge-value">{calculations.fg.toFixed(3)}</div>
+                <div className="brew-gauge-value">
+                  <AnimatedValue value={calculations.fg} decimals={3} />
+                </div>
               </div>
 
               {/* IBU */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">IBU</div>
-                <div className="brew-gauge-value">{calculations.ibu.toFixed(0)}</div>
+                <div className="brew-gauge-value">
+                  <AnimatedValue value={calculations.ibu} decimals={0} />
+                </div>
               </div>
 
               {/* SRM with Color Background - the showpiece */}
@@ -266,21 +275,25 @@ export default function BetaBuilderPage() {
                   SRM
                 </div>
                 <div className="relative z-10 text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ fontVariantNumeric: 'tabular-nums lining-nums' }}>
-                  {calculations.srm.toFixed(1)}
+                  <AnimatedValue value={calculations.srm} decimals={1} />
                 </div>
               </div>
 
               {/* Calories */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">Cal</div>
-                <div className="brew-gauge-value text-lg">{calculations.calories}</div>
+                <div className="brew-gauge-value text-lg">
+                  <AnimatedValue value={calculations.calories} decimals={0} />
+                </div>
                 <div className="text-[9px] text-muted">per 12 oz</div>
               </div>
 
               {/* Carbs */}
               <div className="brew-gauge">
                 <div className="brew-gauge-label">Carbs</div>
-                <div className="brew-gauge-value text-lg">{calculations.carbsG.toFixed(1)}g</div>
+                <div className="brew-gauge-value text-lg">
+                  <AnimatedValue value={calculations.carbsG} decimals={1} suffix="g" />
+                </div>
                 <div className="text-[9px] text-muted">per 12 oz</div>
               </div>
             </div>

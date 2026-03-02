@@ -78,7 +78,7 @@ export default function RecipeSessionsBar({
 
   return (
     <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation" className="group">
-      <div className="-mt-[4px] mx-auto w-[96%] rounded-b-lg bg-[rgb(var(--card))] border border-[rgb(var(--border))] border-t-0 shadow-sm relative z-0 transition-all duration-200 ease-out group-hover:bg-gray-100 dark:group-hover:bg-gray-800/60 group-hover:scale-[0.99]">
+      <div className="mt-[3px] mx-auto w-[96%] rounded-b-lg bg-[rgb(var(--card))] border border-[rgb(var(--border))] border-t-0 shadow-sm relative z-0 transition-all duration-200 ease-out group-hover:bg-gray-100 dark:group-hover:bg-gray-800/60 group-hover:scale-[0.99]">
         {/* Expanded Session List */}
         <div
           className={`overflow-hidden transition-all duration-400 ease-out origin-bottom ${

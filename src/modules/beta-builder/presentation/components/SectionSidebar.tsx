@@ -1,4 +1,163 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
+
+interface SectionSidebarProps {
+  recipe: Recipe | null;
+  calculations: RecipeCalculations | null;
+}
+
+/** Bold wrapper for numeric values in scribble lines */
+const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
+
+/**
+ * Generate handwritten "margin scribble" lines for each sidebar section.
+ * Returns an array of ReactNodes. All numbers are wrapped in <strong> for emphasis.
+ */
+function getScribbleLines(
+  accent: string,
+  recipe: Recipe | null,
+  calculations: RecipeCalculations | null,
+): React.ReactNode[] {
+  if (!recipe) return [];
+
+  switch (accent) {
+    case 'recipe': {
+      if (!calculations) return [];
+      const lines: React.ReactNode[] = [];
+      if (calculations.og > 1) lines.push(<>OG <B>{calculations.og.toFixed(3)}</B> · <B>{calculations.abv.toFixed(1)}</B>% ABV</>);
+      if (calculations.ibu > 0) lines.push(<><B>{Math.round(calculations.ibu)}</B> IBU · <B>{calculations.srm.toFixed(1)}</B> SRM</>);
+      return lines;
+    }
+    case 'equipment': {
+      const eq = recipe.equipment;
+      const batchVol = recipe.batchVolumeL;
+      return [
+        <span className="sidebar-scribble-equipment">
+          <span className="sidebar-equip-batch"><B>{batchVol}</B>L batch</span>
+          {calculations && (
+            <span className="sidebar-equip-volumes">
+              <span>mash <B>{calculations.mashWaterL.toFixed(1)}</B>L</span>
+              <span>sparge <B>{calculations.spargeWaterL.toFixed(1)}</B>L</span>
+            </span>
+          )}
+        </span>,
+        <><B>{eq.boilTimeMin}</B> min boil · <B>{eq.mashEfficiencyPercent}</B>% eff</>,
+      ];
+    }
+    case 'grain': {
+      if (recipe.fermentables.length === 0) return [];
+      const totalKg = recipe.fermentables.reduce((s, f) => s + f.weightKg, 0);
+      if (totalKg === 0) return [];
+      const sorted = [...recipe.fermentables].sort((a, b) => b.weightKg - a.weightKg);
+      return sorted.map(f => {
+        const pct = Math.round((f.weightKg / totalKg) * 100);
+        const shortName = f.name.includes(' - ') ? f.name.split(' - ').slice(1).join(' - ') : f.name;
+        return <>{shortName} <B>{pct}%</B></>;
+      });
+    }
+    case 'mash': {
+      if (recipe.mashSteps.length === 0) return [];
+      return recipe.mashSteps.map(s => <><B>{s.temperatureC}</B>°C · <B>{s.durationMinutes}</B>min</>);
+    }
+    case 'hops': {
+      if (recipe.hops.length === 0) return [];
+      // Sort by brew-day addition order: FW → boil (desc time) → WP → DH → mash
+      const typeOrder: Record<string, number> = { 'first wort': 0, 'boil': 1, 'whirlpool': 2, 'dry hop': 3, 'mash': 4 };
+      const sorted = [...recipe.hops].sort((a, b) => {
+        const oa = typeOrder[a.type] ?? 5;
+        const ob = typeOrder[b.type] ?? 5;
+        if (oa !== ob) return oa - ob;
+        // Within boil, sort by time descending (60m before 15m)
+        if (a.type === 'boil') return (b.timeMinutes ?? 0) - (a.timeMinutes ?? 0);
+        return 0;
+      });
+      // Group hops by their addition label
+      const additionLabel = (h: Recipe['hops'][number]) => {
+        if (h.type === 'boil') return `@${h.timeMinutes ?? 0}m`;
+        if (h.type === 'dry hop') return 'DH';
+        if (h.type === 'whirlpool') return 'WP';
+        if (h.type === 'first wort') return 'FW';
+        if (h.type === 'mash') return 'Mash';
+        return '';
+      };
+      // Group consecutive hops with the same addition label
+      const groups: { label: string; hops: typeof sorted }[] = [];
+      for (const h of sorted) {
+        const lbl = additionLabel(h);
+        const last = groups[groups.length - 1];
+        if (last && last.label === lbl) {
+          last.hops.push(h);
+        } else {
+          groups.push({ label: lbl, hops: [h] });
+        }
+      }
+      // Render: hop names on left, shared addition label on right
+      const lines: React.ReactNode[] = groups.map(g => (
+        <span className="sidebar-scribble-hop-group">
+          <span className="sidebar-hop-names">
+            {g.hops.map((h, k) => <span key={k}>{h.name} <B>{h.grams}</B>g</span>)}
+          </span>
+          <span className="sidebar-hop-addition"><B>{g.label}</B></span>
+        </span>
+      ));
+      // Total oz (bottom right) and IBU (bottom left, above "Hops" label)
+      const totalG = sorted.reduce((s, h) => s + h.grams, 0);
+      const totalOz = (totalG * 0.03527).toFixed(1);
+      const ibu = calculations ? Math.round(calculations.ibu) : 0;
+      lines.push(
+        <span className="sidebar-hop-summary">
+          <span className="sidebar-hop-ibu"><B>{ibu}</B> IBU</span>
+          <span className="sidebar-hop-total">Total: <B>{totalOz}</B>oz</span>
+        </span>
+      );
+      return lines;
+    }
+    case 'yeast': {
+      if (recipe.yeasts.length === 0) return [];
+      const y = recipe.yeasts[0];
+      const att = Math.round(y.attenuation * 100);
+      return [
+        <span className="sidebar-scribble-yeast">
+          {y.laboratory && <span className="sidebar-yeast-lab">{y.laboratory}</span>}
+          <span>{y.name} · <B>{att}</B>% att</span>
+        </span>,
+      ];
+    }
+    case 'water': {
+      const left: React.ReactNode[] = [];
+      const right: React.ReactNode[] = [];
+      if (recipe.waterChemistry) {
+        const wc = recipe.waterChemistry;
+        if (wc.sourceProfileName) left.push(<span key="profile">{wc.sourceProfileName}</span>);
+        const { SO4, Cl } = wc.sourceProfile;
+        if (Cl > 0) left.push(<span key="ratio">SO₄:Cl <B>{(SO4 / Cl).toFixed(1)}</B></span>);
+        const sa = wc.saltAdditions;
+        if (sa.gypsum_g) right.push(<span key="gypsum">Gypsum <B>{sa.gypsum_g}</B>g</span>);
+        if (sa.cacl2_g) right.push(<span key="cacl2">CaCl₂ <B>{sa.cacl2_g}</B>g</span>);
+        if (sa.epsom_g) right.push(<span key="epsom">Epsom <B>{sa.epsom_g}</B>g</span>);
+        if (sa.nacl_g) right.push(<span key="nacl">NaCl <B>{sa.nacl_g}</B>g</span>);
+        if (sa.nahco3_g) right.push(<span key="nahco3">Baking soda <B>{sa.nahco3_g}</B>g</span>);
+      }
+      const waterAgents = recipe.otherIngredients.filter(i => i.category === 'water-agent');
+      for (const agent of waterAgents) {
+        right.push(<span key={agent.id}>{agent.name} <B>{agent.amount}</B>{agent.unit}</span>);
+      }
+      if (left.length === 0 && right.length === 0) return [];
+      return [
+        <span className="sidebar-scribble-cols">
+          <span className="sidebar-scribble-col-left">{left}</span>
+          <span className="sidebar-scribble-col-right">{right}</span>
+        </span>
+      ];
+    }
+    case 'fermentation': {
+      if (recipe.fermentationSteps.length === 0) return [];
+      return recipe.fermentationSteps.map(s => <><B>{s.temperatureC}</B>°C · <B>{s.durationDays}</B>d</>);
+    }
+    default:
+      return [];
+  }
+}
 
 /**
  * Section definitions for the sidebar.
@@ -17,18 +176,18 @@ const SECTIONS = [
   { id: 'checklist',   accent: 'checklist',     label: 'Checklist',    shortLabel: 'Check',  number: '09', bg: 'var(--sidebar-checklist-bg)',    text: 'var(--sidebar-checklist-text)'    },
 ] as const;
 
-/** Expanded height for the active sidebar item */
-const EXPANDED_HEIGHT = 320;
 /** Padding inside each item where the dot can travel */
 const DOT_PAD_TOP = 11;
 const DOT_PAD_BOTTOM = 32; // leave room for the label
 
-export default function SectionSidebar() {
+export default function SectionSidebar({ recipe, calculations }: SectionSidebarProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dotProgress, setDotProgress] = useState(0); // 0..1 scroll progress within active section
   const sidebarRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const activeHeightRef = useRef(320);
 
   /**
    * Find all brew-section elements on the page by data-accent.
@@ -95,6 +254,12 @@ export default function SectionSidebar() {
 
     setActiveIndex(bestIndex);
 
+    // Measure the active tile's actual height for dot positioning
+    const activeItem = itemRefs.current[bestIndex];
+    if (activeItem) {
+      activeHeightRef.current = activeItem.clientHeight || 320;
+    }
+
     // Calculate scroll progress within the active section.
     // The dot always moves with scroll regardless of section size.
     // Uses the trigger line as the reference point: progress = 0 when section top
@@ -138,7 +303,7 @@ export default function SectionSidebar() {
     const timer = setTimeout(() => {
       const sidebarHeight = sidebar.clientHeight;
       const itemTop = activeItem.offsetTop;
-      const itemHeight = EXPANDED_HEIGHT;
+      const itemHeight = activeItem.clientHeight || 320;
 
       // Center the active item in the sidebar viewport
       const targetScroll = itemTop - (sidebarHeight / 2) + (itemHeight / 2);
@@ -174,7 +339,7 @@ export default function SectionSidebar() {
    */
   const getDotTop = (isActive: boolean): number => {
     if (!isActive) return DOT_PAD_TOP;
-    const travelRange = EXPANDED_HEIGHT - DOT_PAD_TOP - DOT_PAD_BOTTOM;
+    const travelRange = activeHeightRef.current - DOT_PAD_TOP - DOT_PAD_BOTTOM;
     return DOT_PAD_TOP + travelRange * dotProgress;
   };
 
@@ -187,15 +352,16 @@ export default function SectionSidebar() {
       <div className="section-sidebar-track">
         {SECTIONS.map((section, i) => {
           const isActive = i === activeIndex;
+          const scribbleLines = getScribbleLines(section.accent, recipe, calculations);
 
           return (
             <button
               key={section.id}
+              ref={(el) => { itemRefs.current[i] = el; }}
               className={`section-sidebar-item${isActive ? ' is-active' : ''}`}
               style={{
                 backgroundColor: section.bg,
                 '--sidebar-accent': section.bg,
-                height: isActive ? `${EXPANDED_HEIGHT}px` : undefined,
               } as React.CSSProperties}
               onClick={() => handleClick(i)}
               aria-current={isActive ? 'true' : undefined}
@@ -213,6 +379,27 @@ export default function SectionSidebar() {
                   transform: isActive ? 'scale(1)' : 'scale(0)',
                 }}
               />
+              {scribbleLines.length > 0 && (
+                <span className="sidebar-scribble" style={{ color: section.text }}>
+                  {scribbleLines.map((line, j) => {
+                    // Pseudo-random per-line nudges for organic scribble feel
+                    const seed = (j * 7 + i * 13) % 11;
+                    const marginTop = seed % 3 === 0 ? 2 : seed % 3 === 1 ? -1 : 0;
+                    return (
+                      <span
+                        key={j}
+                        className="sidebar-scribble-line"
+                        style={{
+                          animationDelay: `${j * 40}ms`,
+                          marginTop: `${marginTop}px`,
+                        }}
+                      >
+                        {line}
+                      </span>
+                    );
+                  })}
+                </span>
+              )}
               <span className="section-sidebar-label" style={{ color: section.text }}>
                 <span className="section-sidebar-label-full">{section.label}</span>
                 <span className="section-sidebar-label-short">{section.shortLabel}</span>
