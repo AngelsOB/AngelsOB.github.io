@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-handwritten: "Shadows Into Light", cursive;
+  --font-handwritten-alt: "Rock Salt", cursive;
+}
+
 /* Force dark mode to work with .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -90,8 +95,11 @@
   --shadow-inset:
     inset 0 1px 2px rgba(140, 120, 90, 0.09), inset 0 2px 4px rgba(140, 120, 90, 0.06);
 
-  /* Noise texture — warm-tinted */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  /* Noise texture — warm-tinted, tactile paper grain */
+  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+
+  /* Paper fiber texture — coarser grain for tactile paper feel */
+  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05 0 0.85 0 0 0.03 0 0 0.75 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.14'/%3E%3C/svg%3E");
 
   /* Typography */
   --brew-tracking-tight: -0.025em;
@@ -182,8 +190,11 @@
     0 24px 24px -12px rgba(0, 0, 0, 0.15), 0 48px 48px -24px rgba(0, 0, 0, 0.12);
   --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.14);
 
-  /* Noise texture (slightly more visible in dark) */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  /* Noise texture (more visible in dark — matte brushed feel) */
+  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+
+  /* Paper fiber texture — subtler in dark mode */
+  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E");
 
   /* Brew theme surfaces — warm charcoal */
   --brew-bg: 16 14 12;
@@ -192,6 +203,67 @@
   --brew-card-inset: 20 18 16;
   --brew-border: 54 50 44;
   --brew-border-subtle: 42 38 34;
+}
+
+/* ========================================
+   BACKGROUND TEXTURE & ATMOSPHERE
+   Layered: vignette → ambient glow → grain → base color.
+   Applied to body so cards with solid backgrounds
+   sit cleanly on top — smooth over textured.
+   ======================================== */
+
+@layer base {
+  body {
+    background-color: rgb(var(--bg));
+    background-image:
+      /* Vignette — edge darkening to focus attention on center content */
+      radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.07) 100%),
+      /* Ambient glow — warm accent bloom, top-left */
+        radial-gradient(
+          1100px 400px at 10% -5%,
+          color-mix(in oklch, var(--brew-accent-100) 28%, transparent),
+          transparent 60%
+        ),
+      /* Ambient glow — warm accent bloom, top-right */
+        radial-gradient(
+          900px 350px at 90% -5%,
+          color-mix(in oklch, var(--brew-accent-200) 20%, transparent),
+          transparent 55%
+        ),
+      /* Noise grain — warm paper-like texture */ var(--noise-texture);
+    background-size:
+      100% 100%,
+      auto,
+      auto,
+      200px 200px;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    background-attachment: fixed;
+    transition: background-color 0.3s ease;
+  }
+
+  .dark body {
+    background-image:
+      /* Vignette — more pronounced in dark for moody depth */
+      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.12) 100%),
+      /* Ambient glow — deeper, richer in dark */
+        radial-gradient(
+          1000px 360px at 15% -10%,
+          color-mix(in oklch, var(--brew-accent-400) 10%, transparent),
+          transparent 55%
+        ),
+      radial-gradient(
+        900px 300px at 85% -10%,
+        color-mix(in oklch, var(--brew-accent-600) 8%, transparent),
+        transparent 50%
+      ),
+      /* Noise grain — matte brushed surface */ var(--noise-texture);
+    background-size:
+      100% 100%,
+      auto,
+      auto,
+      200px 200px;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  }
 }
 
 /* =============================================
@@ -1577,13 +1649,13 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 16vw;
+  width: 19vw;
   height: 100vh;
   z-index: 40;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  padding: 16px 0 24px 1vw;
+  padding: 16px 0 24px 1.5vw;
   pointer-events: none;
   display: none;
 }
@@ -1615,17 +1687,21 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
-  width: 13.5vw;
+  width: 16.5vw;
   min-width: 25px;
   min-height: 88px;
+  padding: 28px 10px 34px 10px;
   border-radius: 14px;
   cursor: pointer;
   pointer-events: all;
   overflow: hidden;
-  border: 1px solid color-mix(in oklch, var(--sidebar-accent) 25%, transparent);
+  border: 1px solid color-mix(in oklch, var(--sidebar-accent) 35%, transparent);
 
-  /* Subtle same-colour border to give definition */
-  box-shadow: inset 0 0 0 1.5px oklch(100% 0 0 / 0.1);
+  /* 3D raised surface — top highlight + depth edge + drop shadow */
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.18),
+    0 3px 0 0 color-mix(in oklch, var(--sidebar-accent), black 30%),
+    0 4px 6px rgba(0, 0, 0, 0.1);
 
   /*
    * Springy height transition — overshoots slightly then settles.
@@ -1638,12 +1714,13 @@
     border-radius 0.6s ease,
     filter 0.25s ease,
     opacity 0.5s ease,
+    box-shadow 0.15s ease,
     transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Noise texture + subtle gradient overlay */
+/* Noise texture + top-lit 3D surface gradient */
 .section-sidebar-item::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
@@ -1652,45 +1729,58 @@
   background:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E"),
     linear-gradient(
-      160deg,
-      oklch(100% 0 0 / 0.1) 0%,
-      oklch(100% 0 0 / 0.0) 40%,
-      oklch(0% 0 0 / 0.15) 100%
+      to bottom,
+      oklch(100% 0 0 / 0.2) 0%,
+      oklch(100% 0 0 / 0.06) 25%,
+      oklch(100% 0 0 / 0) 50%,
+      oklch(0% 0 0 / 0.08) 80%,
+      oklch(0% 0 0 / 0.18) 100%
     );
 }
 
 .section-sidebar-item:not(.is-active) {
   opacity: 0.65;
   transform: scale(0.96);
+  box-shadow:
+    inset 0 1px 0 oklch(100% 0 0 / 0.12),
+    0 2px 0 0 color-mix(in oklch, var(--sidebar-accent), black 30%),
+    0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .section-sidebar-item:hover {
   opacity: 1;
-  filter: brightness(1.08);
-  transform: scale(1.02);
-  border-color: color-mix(in oklch, var(--sidebar-accent) 40%, transparent);
+  filter: brightness(1.06);
+  transform: scale(1.02) translateY(-2px);
+  border-color: color-mix(in oklch, var(--sidebar-accent) 45%, transparent);
   box-shadow:
-    0 0 0 1px color-mix(in oklch, var(--sidebar-accent) 12%, transparent),
-    0 1px 1px -0.5px color-mix(in oklch, var(--sidebar-accent) 10%, transparent),
-    0 3px 3px -1.5px color-mix(in oklch, var(--sidebar-accent) 8%, transparent),
-    0 6px 6px -3px color-mix(in oklch, var(--sidebar-accent) 6%, transparent),
-    0 12px 12px -6px color-mix(in oklch, var(--sidebar-accent) 5%, transparent);
+    inset 0 1px 0 oklch(100% 0 0 / 0.22),
+    0 4px 0 0 color-mix(in oklch, var(--sidebar-accent), black 30%),
+    0 6px 12px rgba(0, 0, 0, 0.12),
+    0 12px 24px -6px color-mix(in oklch, var(--sidebar-accent) 15%, transparent);
+}
+
+.section-sidebar-item:active {
+  transform: scale(0.97) translateY(2px) !important;
+  filter: brightness(0.95);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.15),
+    0 0px 0 0 color-mix(in oklch, var(--sidebar-accent), black 30%),
+    0 1px 2px rgba(0, 0, 0, 0.06) !important;
 }
 
 .section-sidebar-item.is-active {
   opacity: 1;
   transform: scale(1);
-  width: 14.5vw;
+  width: 17.5vw;
+  min-height: 320px;
   border-radius: 16px;
-  border-color: color-mix(in oklch, var(--sidebar-accent) 45%, transparent);
+  border-color: color-mix(in oklch, var(--sidebar-accent) 50%, transparent);
   box-shadow:
-    0 0 0 1px color-mix(in oklch, var(--sidebar-accent) 18%, transparent),
-    0 1px 1px -0.5px color-mix(in oklch, var(--sidebar-accent) 14%, transparent),
-    0 3px 3px -1.5px color-mix(in oklch, var(--sidebar-accent) 12%, transparent),
-    0 6px 6px -3px color-mix(in oklch, var(--sidebar-accent) 10%, transparent),
-    0 12px 12px -6px color-mix(in oklch, var(--sidebar-accent) 8%, transparent),
-    0 24px 24px -12px color-mix(in oklch, var(--sidebar-accent) 6%, transparent),
-    0 0 0 1px oklch(100% 0 0 / 0.06) inset;
+    inset 0 1px 0 oklch(100% 0 0 / 0.2),
+    0 4px 0 0 color-mix(in oklch, var(--sidebar-accent), black 28%),
+    0 6px 8px rgba(0, 0, 0, 0.1),
+    0 12px 20px -6px color-mix(in oklch, var(--sidebar-accent) 12%, transparent),
+    0 24px 36px -12px rgba(0, 0, 0, 0.08);
 }
 
 /* Number label — floats to position with a micro-delay */
@@ -1801,10 +1891,251 @@
   box-shadow: 0 0 6px 1px oklch(100% 0 0 / 0.25);
 }
 
+/* ── Handwritten margin scribbles inside sidebar tiles ── */
+
+/* Scribble container — flow-based so tiles grow to fit all content.
+   Padding on the tile clears the absolutely-positioned number (top) and label (bottom). */
+.sidebar-scribble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  pointer-events: none;
+  text-align: right;
+  flex-grow: 1;
+  align-self: stretch;
+  justify-content: center;
+}
+
+/* Active tile: center scribbles vertically, add breathing room */
+.section-sidebar-item.is-active .sidebar-scribble {
+  justify-content: center;
+  gap: clamp(1px, 0.3vw, 4px);
+}
+
+.sidebar-scribble-line {
+  display: block;
+  font-family: var(--font-handwritten);
+  font-weight: 400;
+  font-size: clamp(12px, 1.6vw, 18px);
+  line-height: 1.1;
+  opacity: 0.6;
+  max-width: 100%;
+  --_rot: 0deg;
+  --_tx: 0px;
+  transform: rotate(var(--_rot)) translateX(var(--_tx));
+  transition:
+    font-size 0.4s ease,
+    line-height 0.4s ease,
+    opacity 0.35s ease;
+}
+
+/* Bold emphasis within scribble lines (e.g., numbers, percentages) */
+.sidebar-scribble-line strong {
+  font-weight: 800;
+  font-size: 1.65em;
+}
+
+/* Active tile: larger scribbles with fade-in animation */
+.section-sidebar-item.is-active .sidebar-scribble-line {
+  font-size: clamp(16px, 2vw, 24px);
+  line-height: 1.15;
+  opacity: 0;
+  animation: scribble-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Hop groups: keep smaller when active so the layout doesn't blow up */
+.section-sidebar-item.is-active .sidebar-scribble-line:has(.sidebar-scribble-hop-group) {
+  font-size: clamp(11px, 1.4vw, 16px);
+}
+/* Equipment: extra gap between the volume cluster and the boil/eff line */
+.section-sidebar-item.is-active .sidebar-scribble-line:has(.sidebar-scribble-equipment) {
+  margin-bottom: 24px;
+}
+
+/* Per-line rotation + offset via custom props — survives animation */
+.sidebar-scribble-line:nth-child(1) {
+  --_rot: -3deg;
+  --_tx: -8px;
+}
+.sidebar-scribble-line:nth-child(2) {
+  --_rot: 2.2deg;
+  --_tx: -14px;
+}
+.sidebar-scribble-line:nth-child(3) {
+  --_rot: -1.4deg;
+  --_tx: -4px;
+}
+.sidebar-scribble-line:nth-child(4) {
+  --_rot: 3.2deg;
+  --_tx: -18px;
+}
+.sidebar-scribble-line:nth-child(5) {
+  --_rot: -2.5deg;
+  --_tx: -10px;
+}
+.sidebar-scribble-line:nth-child(6) {
+  --_rot: 1.6deg;
+  --_tx: -20px;
+}
+.sidebar-scribble-line:nth-child(7) {
+  --_rot: -3.8deg;
+  --_tx: -6px;
+}
+.sidebar-scribble-line:nth-child(8) {
+  --_rot: 2.8deg;
+  --_tx: -16px;
+}
+.sidebar-scribble-line:nth-child(9) {
+  --_rot: -1.2deg;
+  --_tx: -12px;
+}
+.sidebar-scribble-line:nth-child(10) {
+  --_rot: 3.4deg;
+  --_tx: -22px;
+}
+
+@keyframes scribble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) rotate(var(--_rot)) translateX(var(--_tx));
+  }
+  to {
+    opacity: 0.75;
+    transform: translateY(0) rotate(var(--_rot)) translateX(var(--_tx));
+  }
+}
+
+/* Two-column water scribble — profile/ratio left, additions right */
+.sidebar-scribble-line:has(.sidebar-scribble-cols) {
+  align-self: stretch;
+  --_rot: 0deg;
+  --_tx: 0px;
+}
+.sidebar-scribble-cols {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-scribble-col-left,
+.sidebar-scribble-col-right {
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-scribble-col-left {
+  text-align: left;
+}
+.sidebar-scribble-col-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* ── Equipment scribble — batch + mash/sparge cluster, top-right ── */
+.sidebar-scribble-line:has(.sidebar-scribble-equipment) {
+  align-self: flex-end;
+  --_rot: -4.5deg;
+  --_tx: 0px;
+}
+.sidebar-scribble-equipment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-equip-batch {
+  font-size: 1em;
+  white-space: nowrap;
+}
+.sidebar-equip-volumes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.68em;
+  opacity: 0.55;
+  gap: 0;
+}
+
+/* ── Hops scribble — names left, addition label right ── */
+.sidebar-scribble-line:has(.sidebar-scribble-hop-group) {
+  align-self: stretch;
+  --_rot: 0deg;
+  --_tx: 0px;
+}
+.sidebar-scribble-hop-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.sidebar-hop-names {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-hop-names span {
+  white-space: nowrap;
+}
+.sidebar-hop-addition {
+  font-size: 1.4em;
+  opacity: 0.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sidebar-scribble-line:has(.sidebar-hop-summary) {
+  align-self: stretch;
+  --_rot: 0deg;
+  --_tx: 0px;
+  margin-top: 6px;
+}
+.sidebar-hop-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.sidebar-hop-ibu {
+  font-size: 0.85em;
+  opacity: 0.7;
+  white-space: nowrap;
+  transform: rotate(-8deg) translateY(6px) translateX(64px);
+  transform-origin: center center;
+}
+.sidebar-hop-total {
+  font-size: 1.2em;
+  opacity: 0.7;
+  white-space: nowrap;
+  transform: rotate(-3deg) translateY(18px) translateX(-16px);
+  transform-origin: right center;
+}
+
+/* ── Yeast scribble — lab name diagonal upper-left, yeast name right ── */
+.sidebar-scribble-line:has(.sidebar-scribble-yeast) {
+  --_rot: 0deg;
+  --_tx: 0px;
+  position: relative;
+}
+.sidebar-scribble-yeast {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.sidebar-yeast-lab {
+  position: absolute;
+  top: 0.5em;
+  left: -55px;
+  font-size: 0.7em;
+  opacity: 0.65;
+  transform: rotate(-12deg);
+  transform-origin: left center;
+  white-space: nowrap;
+}
+
 /* When sidebar is visible, shift main content to clear it */
 @media (min-width: 186px) {
   .has-section-sidebar {
-    padding-left: 14vw;
+    padding-left: 17vw;
     padding-right: 2vw;
     max-width: none !important;
     margin-left: 0 !important;
@@ -1813,11 +2144,11 @@
 }
 
 /* On wide viewports, content centers naturally past the sidebar — drop the padding */
-@media (min-width: 1475px) {
+@media (min-width: 1600px) {
   .has-section-sidebar {
-    padding-left: 8vw;
+    padding-left: 10vw;
     padding-right: 0;
-    max-width: 100vw !important; /* restore max-w-4xl */
+    max-width: 100vw !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
@@ -1826,12 +2157,12 @@
 /* When sidebar is visible, shift footer to clear it too */
 @media (min-width: 186px) {
   :has(.has-section-sidebar) > footer {
-    padding-left: 14vw;
+    padding-left: 17vw;
   }
 }
-@media (min-width: 1475px) {
+@media (min-width: 1600px) {
   :has(.has-section-sidebar) > footer {
-    padding-left: 8vw;
+    padding-left: 10vw;
   }
 }
 
@@ -1881,7 +2212,13 @@
   .card-glass {
     @apply relative rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] backdrop-blur-md;
     box-shadow: var(--shadow-card);
-    transition: box-shadow 150ms ease;
+    transition:
+      box-shadow 200ms ease,
+      transform 200ms ease;
+  }
+  .card-glass:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
   }
   .dark .card-glass {
     @apply border-white/10 bg-[rgb(var(--card))]/65;
@@ -1918,55 +2255,157 @@
     color: var(--fg-strong);
   }
 
-  /* Soften CTA but keep glow */
+  /* Primary CTA — raised with subtle bevel and coral depth edge */
   .btn-neon {
-    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-medium transition;
-    color: var(--fg-strong);
-    background: color-mix(in oklch, var(--coral-600) 15%, transparent);
-    border: 2px solid var(--coral-600);
-    box-shadow: 0 0 12px color-mix(in oklch, var(--coral-600) 25%, transparent);
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 font-semibold;
+    color: white;
+    background: linear-gradient(to bottom, var(--coral-500), var(--coral-600));
+    border: 1.5px solid color-mix(in oklch, var(--coral-700) 80%, var(--coral-600));
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+      0 3px 0 0 color-mix(in oklch, var(--coral-800) 80%, black),
+      0 4px 8px rgba(0, 0, 0, 0.1);
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      background 100ms ease;
   }
   .btn-neon:hover {
-    box-shadow: 0 0 20px color-mix(in oklch, var(--coral-600) 40%, transparent);
-    background: color-mix(in oklch, var(--coral-600) 22%, transparent);
+    background: linear-gradient(to bottom, var(--coral-400), var(--coral-500));
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+      0 4px 0 0 color-mix(in oklch, var(--coral-800) 80%, black),
+      0 5px 12px rgba(0, 0, 0, 0.12);
   }
-
+  .btn-neon:active {
+    transform: translateY(3px);
+    background: linear-gradient(to bottom, var(--coral-600), var(--coral-700));
+    box-shadow:
+      inset 0 2px 3px rgba(0, 0, 0, 0.15),
+      0 0px 0 0 color-mix(in oklch, var(--coral-800) 80%, black);
+  }
   .dark .btn-neon {
-    color: white;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
-    box-shadow: 0 0 18px var(--coral-800);
+    background: linear-gradient(to bottom, var(--coral-500), var(--coral-600));
+    border-color: rgba(0, 0, 0, 0.4);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+      0 3px 0 0 rgba(0, 0, 0, 0.45),
+      0 4px 8px rgba(0, 0, 0, 0.2);
   }
   .dark .btn-neon:hover {
-    box-shadow: 0 0 26px var(--coral-600);
+    background: linear-gradient(to bottom, var(--coral-400), var(--coral-500));
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+      0 4px 0 0 rgba(0, 0, 0, 0.45),
+      0 5px 12px rgba(0, 0, 0, 0.25);
   }
 
-  /* Coral outline/tonal buttons */
+  /* Outline button — light face with subtle bevel, coral accent border */
   .btn-outline {
-    @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition;
-    color: var(--fg-strong);
-    border: 2px solid var(--coral-600);
-    background: color-mix(in oklch, var(--coral-600) 8%, transparent);
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium;
+    color: var(--coral-700);
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--card)),
+      color-mix(in oklch, rgb(var(--card)) 96%, var(--coral-100))
+    );
+    border: 1.5px solid var(--coral-400);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+      0 3px 0 0 color-mix(in oklch, var(--coral-600) 60%, rgb(180, 170, 160)),
+      0 4px 8px rgba(0, 0, 0, 0.06);
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      background 100ms ease;
   }
   .btn-outline:hover {
-    box-shadow: 0 0 16px color-mix(in oklch, var(--coral-600) 35%, transparent);
-    background: color-mix(in oklch, var(--coral-600) 15%, transparent);
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--card)),
+      color-mix(in oklch, var(--coral-100) 40%, rgb(var(--card)))
+    );
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+      0 4px 0 0 color-mix(in oklch, var(--coral-600) 60%, rgb(180, 170, 160)),
+      0 5px 12px rgba(0, 0, 0, 0.08);
   }
-
+  .btn-outline:active {
+    transform: translateY(3px);
+    box-shadow:
+      inset 0 2px 3px rgba(0, 0, 0, 0.06),
+      0 0px 0 0 color-mix(in oklch, var(--coral-600) 60%, rgb(180, 170, 160));
+  }
   .dark .btn-outline {
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35));
+    color: var(--coral-400);
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--card)),
+      color-mix(in oklch, rgb(var(--card)) 97%, black)
+    );
+    border-color: var(--coral-500);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 3px 0 0 rgba(0, 0, 0, 0.4),
+      0 4px 8px rgba(0, 0, 0, 0.15);
   }
   .dark .btn-outline:hover {
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3));
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 4px 0 0 rgba(0, 0, 0, 0.4),
+      0 5px 12px rgba(0, 0, 0, 0.2);
   }
 
+  /* Tonal button — soft neutral surface with subtle bevel */
   .btn-tonal {
-    @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition;
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium;
     color: var(--fg-strong);
-    background-color: color-mix(in oklch, var(--coral-50) 10%, transparent);
-    border: 1.5px solid color-mix(in oklch, var(--coral-600) 35%, transparent);
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--coral-100) 20%, rgb(var(--card))),
+      color-mix(in oklch, var(--coral-100) 12%, rgb(var(--card)))
+    );
+    border: 1px solid color-mix(in oklch, var(--fg-strong) 12%, transparent);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+      0 2px 0 0 color-mix(in oklch, var(--fg-strong) 10%, transparent),
+      0 3px 6px rgba(0, 0, 0, 0.04);
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      background 100ms ease;
   }
   .btn-tonal:hover {
-    background-color: color-mix(in oklch, var(--coral-50) 16%, transparent);
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--coral-100) 30%, rgb(var(--card))),
+      color-mix(in oklch, var(--coral-100) 20%, rgb(var(--card)))
+    );
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+      0 3px 0 0 color-mix(in oklch, var(--fg-strong) 10%, transparent),
+      0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+  .btn-tonal:active {
+    transform: translateY(2px);
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.06),
+      0 0px 0 0 color-mix(in oklch, var(--fg-strong) 10%, transparent);
   }
 
   /* Very light section grouping */
@@ -1975,7 +2414,13 @@
     background-color: color-mix(in oklch, var(--fg-strong) 6%, transparent);
     border-color: color-mix(in oklch, var(--fg-strong) 12%, transparent);
     box-shadow: var(--shadow-card);
-    transition: box-shadow 160ms ease;
+    transition:
+      box-shadow 200ms ease,
+      transform 200ms ease;
+  }
+  .section-soft:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-1px);
   }
 
   /* Elevated inputs on RecipeBuilder page */
@@ -2099,31 +2544,30 @@
       url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
         padding-box,
       radial-gradient(
-        ellipse 140% 100% at 5% -10%,
-        color-mix(in oklch, var(--brew-accent-200) 65%, transparent),
-        transparent 65%
-      )
+          ellipse 140% 100% at 5% -10%,
+          color-mix(in oklch, var(--brew-accent-200) 65%, transparent),
+          transparent 65%
+        )
         padding-box,
       radial-gradient(
-        ellipse 110% 80% at 100% 110%,
-        color-mix(in oklch, var(--brew-accent-200) 45%, transparent),
-        transparent 60%
-      )
+          ellipse 110% 80% at 100% 110%,
+          color-mix(in oklch, var(--brew-accent-200) 45%, transparent),
+          transparent 60%
+        )
         padding-box,
       linear-gradient(
-        165deg,
-        color-mix(in oklch, var(--brew-accent-100) 90%, transparent) 0%,
-        color-mix(in oklch, var(--brew-accent-100) 50%, transparent) 50%,
-        color-mix(in oklch, var(--brew-accent-50) 20%, transparent) 100%
-      )
+          165deg,
+          color-mix(in oklch, var(--brew-accent-100) 90%, transparent) 0%,
+          color-mix(in oklch, var(--brew-accent-100) 50%, transparent) 50%,
+          color-mix(in oklch, var(--brew-accent-50) 20%, transparent) 100%
+        )
         padding-box,
-      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card)))
-        padding-box,
+      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
       linear-gradient(
-        to bottom,
-        color-mix(in oklch, var(--brew-accent-400) 65%, transparent),
-        color-mix(in oklch, var(--brew-accent-300) 30%, transparent)
-      )
+          to bottom,
+          color-mix(in oklch, var(--brew-accent-400) 65%, transparent),
+          color-mix(in oklch, var(--brew-accent-300) 30%, transparent)
+        )
         border-box;
     background-size:
       180px 180px,
@@ -2139,6 +2583,9 @@
       0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
       0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
       0 24px 24px -12px color-mix(in oklch, var(--brew-accent-500) 3%, transparent);
+    transition-property: box-shadow;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
   }
   .dark .brew-section {
     /*
@@ -2221,6 +2668,27 @@
     border-color: rgb(var(--brew-border));
   }
 
+  /* Warm focus glow — reusable focus state for inputs */
+  .focus-glow {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+  .focus-glow:focus {
+    outline: none;
+    border-color: var(--coral-600);
+    box-shadow:
+      var(--shadow-inset),
+      0 0 0 2px color-mix(in oklch, var(--coral-600) 22%, transparent);
+  }
+  .dark .focus-glow:focus {
+    border-color: var(--coral-500);
+    box-shadow:
+      var(--shadow-inset),
+      0 0 0 2px color-mix(in oklch, var(--coral-500) 20%, transparent);
+  }
+
   /* Stat gauge — translucent glass surface */
   .brew-gauge {
     @apply overflow-hidden rounded-xl p-4 text-center backdrop-blur-sm;
@@ -2230,6 +2698,15 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.06),
       var(--shadow-card);
+    transition:
+      box-shadow 200ms ease,
+      transform 200ms ease;
+  }
+  .brew-gauge:hover {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      var(--shadow-card-hover);
+    transform: translateY(-1px);
   }
   .dark .brew-gauge {
     background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
@@ -2273,63 +2750,109 @@
     border-bottom: 3px solid var(--brew-accent-500);
   }
 
-  /* Primary button — accent-colored with layered shadow */
+  /* Primary button — raised with subtle bevel and accent depth edge */
   .brew-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150;
-    background: var(--brew-accent-500);
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold;
+    background: linear-gradient(to bottom, var(--brew-accent-400), var(--brew-accent-500));
     color: white;
+    border: 1.5px solid color-mix(in oklch, var(--brew-accent-600) 80%, var(--brew-accent-500));
     box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
-      0 1px 1px -0.5px rgba(0, 0, 0, 0.06),
-      0 2px 2px -1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
-      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 5%, transparent);
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+      0 3px 0 0 color-mix(in oklch, var(--brew-accent-700) 80%, black),
+      0 4px 8px rgba(0, 0, 0, 0.1);
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      background 100ms ease;
   }
   .brew-btn-primary:hover {
-    background: var(--brew-accent-600);
+    background: linear-gradient(to bottom, var(--brew-accent-300), var(--brew-accent-400));
+    transform: translateY(-1px);
     box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 15%, transparent),
-      0 1px 1px -0.5px rgba(0, 0, 0, 0.08),
-      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
-      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
-      0 20px 20px -10px color-mix(in oklch, var(--brew-accent-500) 5%, transparent);
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.08),
+      0 4px 0 0 color-mix(in oklch, var(--brew-accent-700) 80%, black),
+      0 5px 12px rgba(0, 0, 0, 0.12);
   }
   .brew-btn-primary:active {
+    transform: translateY(3px);
+    background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-600));
     box-shadow:
-      inset 0 1px 2px rgba(0, 0, 0, 0.18),
-      inset 0 2px 4px rgba(0, 0, 0, 0.12);
+      inset 0 2px 3px rgba(0, 0, 0, 0.15),
+      0 0px 0 0 color-mix(in oklch, var(--brew-accent-700) 80%, black);
   }
 
-  /* Ghost button — translucent glass */
+  /* Ghost button — light face with subtle bevel, neutral border */
   .brew-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium;
     color: var(--fg-strong);
-    border: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    background: rgb(var(--brew-card) / 0.25);
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--brew-card)),
+      color-mix(in oklch, rgb(var(--brew-card)) 97%, black)
+    );
+    border: 1px solid color-mix(in oklch, var(--fg-strong) 14%, transparent);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+      0 2px 0 0 color-mix(in oklch, var(--fg-strong) 12%, transparent),
+      0 3px 6px rgba(0, 0, 0, 0.04);
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      background 100ms ease,
+      color 100ms ease;
   }
   .dark .brew-btn-ghost {
-    border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.06));
-    background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(255 255 255 / 0.03));
+    background: linear-gradient(
+      to bottom,
+      rgb(var(--brew-card)),
+      color-mix(in oklch, rgb(var(--brew-card)) 95%, black)
+    );
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 2px 0 0 rgba(0, 0, 0, 0.35),
+      0 3px 6px rgba(0, 0, 0, 0.15);
   }
   .brew-btn-ghost:hover {
-    background: rgb(var(--brew-card-inset) / 0.6);
-    border-color: var(--brew-accent-400);
     color: var(--brew-accent-600);
+    border-color: var(--brew-accent-400);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.03),
+      0 3px 0 0 color-mix(in oklch, var(--brew-accent-600) 50%, rgb(180, 170, 160)),
+      0 4px 10px rgba(0, 0, 0, 0.06);
   }
   .dark .brew-btn-ghost:hover {
-    background: rgb(255 255 255 / 0.08);
     color: var(--brew-accent-400);
+    border-color: var(--brew-accent-600);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+      0 3px 0 0 rgba(0, 0, 0, 0.4),
+      0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  .brew-btn-ghost:active {
+    transform: translateY(1.5px);
+    box-shadow:
+      inset 0 2px 3px rgba(0, 0, 0, 0.06),
+      0 0px 0 0 color-mix(in oklch, var(--fg-strong) 12%, transparent);
   }
 
   /* Ingredient row — translucent glass surface with accent-tinted gradient border */
   .brew-ingredient-row {
-    @apply rounded-lg p-3 backdrop-blur-sm transition-all duration-150;
+    @apply rounded-lg p-3 backdrop-blur-sm;
     background: rgb(var(--brew-card) / 0.45);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    transition:
+      all 150ms ease,
+      transform 200ms ease;
   }
   .dark .brew-ingredient-row {
     background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
@@ -2354,6 +2877,7 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.06),
       var(--shadow-card);
+    transform: translateY(-1px);
   }
   .dark .brew-ingredient-row:hover {
     background-image:
@@ -2369,19 +2893,98 @@
       );
   }
 
-  /* Recipe card — warm with noise */
+  /* Recipe card — raised 3D surface, SRM gradient border + depth edge */
   .brew-recipe-card {
-    @apply overflow-hidden rounded-xl transition-all duration-200;
-    background: rgb(var(--brew-card));
-    background-image: var(--noise-texture);
-    background-size: 200px 200px;
-    border: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
-    box-shadow: var(--shadow-card);
+    --_srm: var(--card-srm, rgb(220, 190, 140));
+    @apply rounded-xl;
+    position: relative;
+    border: 1.5px solid transparent;
+    background:
+      var(--noise-texture) padding-box,
+      var(--paper-texture) padding-box,
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent 50%, rgba(0, 0, 0, 0.02))
+        padding-box,
+      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
+      linear-gradient(
+          to bottom,
+          color-mix(in oklch, var(--_srm) 60%, transparent),
+          color-mix(in oklch, var(--_srm) 20%, transparent)
+        )
+        border-box;
+    background-size:
+      200px 200px,
+      300px 300px,
+      auto,
+      auto,
+      auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 5px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
+      0 6px 4px rgba(0, 0, 0, 0.06),
+      0 10px 20px rgba(0, 0, 0, 0.07),
+      0 20px 40px rgba(0, 0, 0, 0.04);
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease;
   }
   .brew-recipe-card:hover {
-    box-shadow: var(--shadow-card-hover);
-    border-color: color-mix(in oklch, var(--brew-accent-400) 45%, rgb(var(--brew-border-subtle)));
+    transform: translateY(-4px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 7px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
+      0 8px 6px rgba(0, 0, 0, 0.08),
+      0 16px 32px rgba(0, 0, 0, 0.1),
+      0 32px 64px rgba(0, 0, 0, 0.06);
+  }
+  .brew-recipe-card:active {
+    transform: translateY(5px);
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.12),
+      0 0px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
+      0 1px 2px rgba(0, 0, 0, 0.06);
+    transition-duration: 80ms;
+  }
+
+  /* Dark mode depth adjustments for recipe card */
+  .dark .brew-recipe-card {
+    background:
+      var(--noise-texture) padding-box,
+      var(--paper-texture) padding-box,
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent 50%, rgba(0, 0, 0, 0.06))
+        padding-box,
+      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
+      linear-gradient(
+          to bottom,
+          color-mix(in oklch, var(--_srm) 40%, transparent),
+          color-mix(in oklch, var(--_srm) 12%, transparent)
+        )
+        border-box;
+    background-size:
+      200px 200px,
+      300px 300px,
+      auto,
+      auto,
+      auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 5px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 6px 4px rgba(0, 0, 0, 0.15),
+      0 10px 20px rgba(0, 0, 0, 0.2),
+      0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+  .dark .brew-recipe-card:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 7px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 8px 6px rgba(0, 0, 0, 0.2),
+      0 16px 32px rgba(0, 0, 0, 0.25),
+      0 32px 64px rgba(0, 0, 0, 0.15);
+  }
+  .dark .brew-recipe-card:active {
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.4),
+      0 0px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 1px 2px rgba(0, 0, 0, 0.15);
   }
 
   /* Tag pill — translucent accent tinted */
@@ -2542,6 +3145,9 @@
     background: rgb(255 255 255 / 0.08);
     border-color: color-mix(in oklch, var(--brew-accent-600) 30%, rgb(255 255 255 / 0.1));
   }
+  .brew-chip:active {
+    transform: scale(0.96);
+  }
 
   /* Active chip */
   .brew-chip-active {
@@ -2556,6 +3162,9 @@
   }
   .brew-chip-active:hover {
     background: var(--brew-accent-600);
+  }
+  .brew-chip-active:active {
+    transform: scale(0.96);
   }
 
   /* Filter category label */
@@ -2602,6 +3211,10 @@
   .dark .brew-picker-row:hover {
     background: color-mix(in oklch, var(--brew-accent-800) 18%, rgb(255 255 255 / 0.05));
     border-color: color-mix(in oklch, var(--brew-accent-700) 25%, rgb(255 255 255 / 0.1));
+  }
+  .brew-picker-row:active {
+    transform: scale(0.99);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
   }
 
   /* ---- Themed menu item (dropdown) ---- */
@@ -2690,4 +3303,123 @@
 }
 .brew-pulse {
   animation: brew-pulse 2s ease-in-out infinite;
+}
+
+/* Beer glass — smooth SRM liquid transitions + rising carbonation */
+.beer-glass-liquid {
+  transition: fill 500ms ease-in-out;
+}
+
+.beer-glass-foam {
+  transition: opacity 400ms ease;
+}
+
+@keyframes beer-bubble-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.35;
+  }
+  85% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateY(-15px);
+    opacity: 0;
+  }
+}
+
+.beer-bubble {
+  animation: beer-bubble-rise 3.5s ease-in infinite;
+}
+.beer-bubble-1 {
+  animation-duration: 3.5s;
+  animation-delay: 0s;
+}
+.beer-bubble-2 {
+  animation-duration: 4.2s;
+  animation-delay: 1.3s;
+}
+.beer-bubble-3 {
+  animation-duration: 3s;
+  animation-delay: 2.5s;
+}
+
+/* Animated stat value — subtle nudge + tint on change */
+.brew-gauge-animated {
+  transition:
+    color 200ms ease-out,
+    transform 180ms ease-out;
+}
+.brew-gauge-animated.is-changed {
+  color: color-mix(in oklch, var(--brew-accent-500) 40%, currentColor);
+  transform: scale(1.08);
+  transition:
+    color 60ms ease-in-out,
+    transform 80ms ease-in-out;
+}
+
+/* Respect reduced motion preference — disable transforms & animations */
+@media (prefers-reduced-motion: reduce) {
+  .card-glass,
+  .brew-recipe-card,
+  .brew-ingredient-row,
+  .brew-gauge,
+  .section-soft,
+  .btn-neon,
+  .btn-outline,
+  .btn-tonal,
+  .brew-btn-primary,
+  .brew-btn-ghost,
+  .brew-chip,
+  .brew-chip-active,
+  .brew-picker-row,
+  .section-sidebar-item {
+    transition: none !important;
+  }
+  .card-glass:hover,
+  .brew-recipe-card:hover,
+  .brew-ingredient-row:hover,
+  .brew-gauge:hover,
+  .section-soft:hover,
+  .btn-neon:hover,
+  .btn-outline:hover,
+  .btn-tonal:hover,
+  .brew-btn-primary:hover,
+  .brew-btn-ghost:hover {
+    transform: none !important;
+  }
+  .brew-recipe-card:active,
+  .btn-neon:active,
+  .btn-outline:active,
+  .btn-tonal:active,
+  .brew-btn-primary:active,
+  .brew-btn-ghost:active,
+  .brew-chip:active,
+  .brew-chip-active:active,
+  .brew-picker-row:active,
+  .section-sidebar-item:active {
+    transform: none !important;
+  }
+  .brew-animate-in {
+    animation: none !important;
+  }
+  .brew-gauge-animated,
+  .brew-gauge-animated.is-changed {
+    transition: none !important;
+  }
+  .beer-bubble {
+    animation: none !important;
+  }
+  .beer-glass-liquid,
+  .beer-glass-foam {
+    transition: none !important;
+  }
+  .sidebar-scribble-line {
+    animation: none !important;
+    opacity: 0.75;
+    transform: none !important;
+  }
 }

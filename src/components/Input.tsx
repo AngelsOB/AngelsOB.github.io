@@ -31,11 +31,11 @@ const baseClasses =
 
 const variantClasses: Record<InputVariant, string> = {
   default:
-    "border-[rgb(var(--border))] bg-[rgb(var(--surface))] focus:ring-2 focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
+    "border-[rgb(var(--border))] bg-[rgb(var(--surface))] focus-glow",
   flush:
     "border-transparent bg-transparent focus:border-[var(--coral-600)] focus:ring-0",
   filled:
-    "border-transparent bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)] focus:ring-2 focus:ring-[var(--coral-600)] focus:bg-[color-mix(in_oklch,var(--fg-strong)_12%,transparent)]",
+    "border-transparent bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)] focus-glow focus:bg-[color-mix(in_oklch,var(--fg-strong)_12%,transparent)]",
 };
 
 const sizeClasses: Record<InputSize, string> = {

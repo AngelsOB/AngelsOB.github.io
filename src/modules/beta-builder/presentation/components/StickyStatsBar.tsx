@@ -5,7 +5,8 @@
  * past the main calculated values section. Supports both top and bottom positioning.
  */
 
-import { srmToRgb } from '../../utils/srmColorUtils';
+import AnimatedValue from "./AnimatedValue";
+import BeerGlass from "./BeerGlass";
 
 export interface RecipeCalculations {
   abv: number;
@@ -19,92 +20,86 @@ export interface RecipeCalculations {
 
 interface StickyStatsBarProps {
   calculations: RecipeCalculations;
-  position: 'top' | 'bottom';
+  position: "top" | "bottom";
   isVisible: boolean;
 }
 
-export default function StickyStatsBar({
-  calculations,
-  position,
-  isVisible,
-}: StickyStatsBarProps) {
-  const positionClasses =
-    position === 'top'
-      ? 'top-0 border-b'
-      : 'bottom-0 border-t';
+export default function StickyStatsBar({ calculations, position, isVisible }: StickyStatsBarProps) {
+  const positionClasses = position === "top" ? "top-0 border-b" : "bottom-0 border-t";
 
   const translateClasses = isVisible
-    ? 'translate-y-0 opacity-100'
-    : position === 'top'
-      ? '-translate-y-full opacity-0'
-      : 'translate-y-full opacity-0';
+    ? "translate-y-0 opacity-100"
+    : position === "top"
+      ? "-translate-y-full opacity-0"
+      : "translate-y-full opacity-0";
 
   return (
     <div
-      className={`fixed left-0 right-0 bg-[rgb(var(--brew-card))]/25 backdrop-blur-md border-[rgb(var(--brew-border))] shadow-lg z-40 transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
+      className={`fixed right-0 left-0 z-40 border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))]/25 shadow-lg backdrop-blur-md transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
     >
       {/* Scrollable stats strip — snaps on mobile, centered on desktop */}
-      <div className="max-w-4xl mx-auto px-2 sm:px-8 py-2 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-3 sm:gap-4 sm:justify-between min-w-max sm:min-w-0">
+      <div className="scrollbar-hide mx-auto max-w-4xl overflow-x-auto px-2 py-2 sm:px-8">
+        <div className="flex min-w-max gap-3 sm:min-w-0 sm:justify-between sm:gap-4">
           {/* ABV */}
-          <div className="text-center shrink-0 min-w-[3.5rem]">
+          <div className="min-w-[3.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">ABV</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.abv.toFixed(1)}%
+              <AnimatedValue value={calculations.abv} decimals={1} suffix="%" />
             </div>
           </div>
 
           {/* OG */}
-          <div className="text-center shrink-0 min-w-[3.5rem]">
+          <div className="min-w-[3.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">OG</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.og.toFixed(3)}
+              <AnimatedValue value={calculations.og} decimals={3} />
             </div>
           </div>
 
           {/* FG */}
-          <div className="text-center shrink-0 min-w-[3.5rem]">
+          <div className="min-w-[3.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">FG</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.fg.toFixed(3)}
+              <AnimatedValue value={calculations.fg} decimals={3} />
             </div>
           </div>
 
           {/* IBU */}
-          <div className="text-center shrink-0 min-w-[2.5rem]">
+          <div className="min-w-[2.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">IBU</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.ibu.toFixed(0)}
+              <AnimatedValue value={calculations.ibu} decimals={0} />
             </div>
           </div>
 
-          {/* SRM with Color */}
-          <div className="flex items-center justify-center gap-1.5 shrink-0">
-            <div
-              className="w-5 h-5 sm:w-7 sm:h-7 rounded-full ring-2 ring-white/30 shadow-sm shrink-0"
-              style={{ backgroundColor: srmToRgb(calculations.srm) }}
-            />
-            <div>
+          {/* SRM — glass spans full height beside label + number */}
+          <div className="-ml-2 flex shrink-0 items-center gap-1 sm:-ml-1.5">
+            <div className="text-center">
               <div className="brew-gauge-label">SRM</div>
               <div className="brew-gauge-value text-base sm:text-lg">
-                {calculations.srm.toFixed(1)}
+                <AnimatedValue value={calculations.srm} decimals={1} />
               </div>
             </div>
+            <BeerGlass
+              srm={calculations.srm}
+              className="h-full w-auto shrink-0 gap-1 self-stretch drop-shadow-sm"
+              style={{ minHeight: "3rem", maxHeight: "3.5rem" }}
+            />
           </div>
 
           {/* Calories */}
-          <div className="text-center shrink-0 min-w-[2.5rem]">
+          <div className="min-w-[2.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">Cal</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.calories}
+              <AnimatedValue value={calculations.calories} decimals={0} />
             </div>
           </div>
 
           {/* Carbs */}
-          <div className="text-center shrink-0 min-w-[2.5rem]">
+          <div className="min-w-[2.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">Carbs</div>
             <div className="brew-gauge-value text-base sm:text-lg">
-              {calculations.carbsG.toFixed(1)}g
+              <AnimatedValue value={calculations.carbsG} decimals={1} suffix="g" />
             </div>
           </div>
         </div>
