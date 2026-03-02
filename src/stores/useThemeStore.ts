@@ -44,7 +44,7 @@ function applyPalette(palette: Palette) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   PALETTE_CLASSES.forEach(cls => root.classList.remove(cls));
-  if (palette !== 'default') {
+  if (palette !== 'copper') {
     root.classList.add(`palette-${palette}`);
   }
 }
@@ -54,7 +54,7 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       theme: 'light',
       resolvedTheme: 'light',
-      palette: 'default',
+      palette: 'copper',
 
       setTheme: (theme: Theme) => {
         const resolved = theme === 'system' ? getSystemTheme() : theme;
