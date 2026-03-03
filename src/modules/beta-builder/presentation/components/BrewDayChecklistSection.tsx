@@ -15,7 +15,7 @@ interface Props {
 /** Celsius → Fahrenheit */
 const cToF = (c: number) => Math.round(c * 9 / 5 + 32);
 
-export default function BrewDayTargetsSection({ recipe: _recipe, calculations }: Props) {
+export default function BrewDayTargetsSection({ calculations }: Props) {
   const hasData = calculations && (calculations.og > 1 || calculations.strikeTempC != null);
 
   const cardStyle: React.CSSProperties = {
