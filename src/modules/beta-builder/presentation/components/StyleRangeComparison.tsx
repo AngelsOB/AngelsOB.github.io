@@ -1,12 +1,12 @@
 /**
  * Style Range Comparison Component
  *
- * Displays BJCP style ranges as semi-circular arc gauges showing where the
+ * Displays BJCP style ranges as horizontal strip gauges showing where the
  * current recipe falls within the style specifications. Shows:
- * - ABV, OG, FG, SRM, IBU, BU/GU ratio
- * - Green arc zone for valid range, red for out-of-range
- * - Needle marker for current recipe value
- * - SRM gauge uses actual beer color gradient
+ * - ABV, OG, FG, IBU, BU/GU ratio, SRM
+ * - Accent-colored range block for valid zone
+ * - Needle marker for current recipe value (danger color when out of range)
+ * - SRM strip uses actual beer-color gradient
  */
 
 import { getBjcpStyleSpec } from "../../../../utils/bjcpSpecs";
@@ -29,7 +29,7 @@ export default function StyleRangeComparison({
   ibu,
   srm,
 }: StyleRangeComparisonProps) {
-  const code = styleCode?.split('.')[0]?.trim();
+  const code = styleCode?.split(".")[0]?.trim();
   const spec = getBjcpStyleSpec(code);
 
   if (!spec) {
@@ -52,9 +52,12 @@ export default function StyleRangeComparison({
   }
 
   return (
-    <div className="bg-[rgb(var(--brew-card-inset)/0.45)] dark:bg-[rgb(var(--brew-card-inset)/0.35)] backdrop-blur-sm border border-[rgb(var(--brew-border-subtle))] dark:border-[rgb(255_255_255/0.08)] rounded-xl p-6" style={{ boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
+    <div
+      className="style-strip-panel"
+    >
       <h2 className="brew-section-title text-lg mb-4">BJCP Style Ranges</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
+
+      <div className="style-strip-stack">
         <ArcGauge
           label="ABV"
           range={spec.abv}
