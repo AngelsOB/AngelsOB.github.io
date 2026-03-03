@@ -49,7 +49,7 @@ export default function ArcGauge({
 
   // Compare at display precision so "1.014" is never flagged out of a
   // range that also displays as "1.014" (avoids floating-point edge cases).
-  const fmtNum = (n: number) => parseFloat(format(n).replace(/[^0-9.\-]/g, ""));
+  const fmtNum = (n: number) => parseFloat(format(n).replace(/[^0-9.-]/g, ""));
   const inRange = range
     ? fmtNum(value) >= fmtNum(lo) && fmtNum(value) <= fmtNum(hi)
     : true;
