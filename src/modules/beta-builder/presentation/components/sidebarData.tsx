@@ -1,9 +1,6 @@
 import React from "react";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 
-/** Bold wrapper for numeric values in scribble lines */
-const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</strong>;
-
 /**
  * Generate handwritten "margin scribble" lines for each sidebar section.
  * Returns an array of ReactNodes. All numbers are wrapped in <strong> for emphasis.
@@ -24,14 +21,14 @@ export function getScribbleLines(
           <span className="sidebar-scribble-recipe-og">
             <span className="sidebar-recipe-gravities">
               <span>
-                OG <B>{calculations.og.toFixed(3)}&nbsp;</B>
+                OG <strong>{calculations.og.toFixed(3)}&nbsp;</strong>
               </span>
               <span>
-                FG <B>{calculations.fg.toFixed(3)}&nbsp;</B>
+                FG <strong>{calculations.fg.toFixed(3)}&nbsp;</strong>
               </span>
             </span>
             <span className="sidebar-recipe-abv">
-              <B> {calculations.abv.toFixed(1)}</B>%
+              <strong> {calculations.abv.toFixed(1)}</strong>%
             </span>
             <span className="sidebar-scribble-recipe-og">ABV</span>
           </span>
@@ -41,7 +38,7 @@ export function getScribbleLines(
         lines.push(
           <>
             <br></br>
-            <B>{Math.round(calculations.ibu)}</B> IBU · <B>{calculations.srm.toFixed(1)}</B> SRM
+            <strong>{Math.round(calculations.ibu)}</strong> IBU · <strong>{calculations.srm.toFixed(1)}</strong> SRM
           </>
         );
       return lines;
@@ -52,21 +49,21 @@ export function getScribbleLines(
       return [
         <span className="sidebar-scribble-equipment">
           <span className="sidebar-equip-batch">
-            <B>{batchVol}</B>L batch
+            <strong>{batchVol}</strong>L batch
           </span>
           {calculations && (
             <span className="sidebar-equip-volumes">
               <span>
-                mash <B>{calculations.mashWaterL.toFixed(1)}</B>L
+                mash <strong>{calculations.mashWaterL.toFixed(1)}</strong>L
               </span>
               <span>
-                sparge <B>{calculations.spargeWaterL.toFixed(1)}</B>L
+                sparge <strong>{calculations.spargeWaterL.toFixed(1)}</strong>L
               </span>
             </span>
           )}
         </span>,
         <>
-          <B>{eq.boilTimeMin}</B> min boil · <B>{eq.mashEfficiencyPercent}</B>% eff
+          <strong>{eq.boilTimeMin}</strong> min boil · <strong>{eq.mashEfficiencyPercent}</strong>% eff
         </>,
       ];
     }
@@ -82,7 +79,7 @@ export function getScribbleLines(
           : f.name;
         return (
           <>
-            {shortName} <B>{pct}%</B>
+            {shortName} <strong>{pct}%</strong>
           </>
         );
       });
@@ -91,7 +88,7 @@ export function getScribbleLines(
       if (recipe.mashSteps.length === 0) return [];
       return recipe.mashSteps.map((s) => (
         <>
-          <B>{s.temperatureC}</B>°C · <B>{s.durationMinutes}</B>min
+          <strong>{s.temperatureC}</strong>°C · <strong>{s.durationMinutes}</strong>min
         </>
       ));
     }
@@ -134,12 +131,12 @@ export function getScribbleLines(
           <span className="sidebar-hop-names">
             {g.hops.map((h, k) => (
               <span key={k}>
-                {h.name} <B>{h.grams}</B>g
+                {h.name} <strong>{h.grams}</strong>g
               </span>
             ))}
           </span>
           <span className="sidebar-hop-addition">
-            <B>{g.label}</B>
+            <strong>{g.label}</strong>
           </span>
         </span>
       ));
@@ -149,10 +146,10 @@ export function getScribbleLines(
       lines.push(
         <span className="sidebar-hop-summary">
           <span className="sidebar-hop-ibu">
-            <B>{ibu}</B> IBU
+            <strong>{ibu}</strong> IBU
           </span>
           <span className="sidebar-hop-total">
-            Total: <B>{totalOz}</B>oz
+            Total: <strong>{totalOz}</strong>oz
           </span>
         </span>
       );
@@ -166,7 +163,7 @@ export function getScribbleLines(
         <span className="sidebar-scribble-yeast">
           {y.laboratory && <span className="sidebar-yeast-lab">{y.laboratory}</span>}
           <span>
-            {y.name} · <B>{att}</B>% att
+            {y.name} · <strong>{att}</strong>% att
           </span>
         </span>,
       ];
@@ -181,38 +178,38 @@ export function getScribbleLines(
         if (Cl > 0)
           left.push(
             <span key="ratio">
-              SO₄:Cl <B>{(SO4 / Cl).toFixed(1)}</B>
+              SO₄:Cl <strong>{(SO4 / Cl).toFixed(1)}</strong>
             </span>
           );
         const sa = wc.saltAdditions;
         if (sa.gypsum_g)
           right.push(
             <span key="gypsum">
-              Gypsum <B>{sa.gypsum_g}</B>g
+              Gypsum <strong>{sa.gypsum_g}</strong>g
             </span>
           );
         if (sa.cacl2_g)
           right.push(
             <span key="cacl2">
-              CaCl₂ <B>{sa.cacl2_g}</B>g
+              CaCl₂ <strong>{sa.cacl2_g}</strong>g
             </span>
           );
         if (sa.epsom_g)
           right.push(
             <span key="epsom">
-              Epsom <B>{sa.epsom_g}</B>g
+              Epsom <strong>{sa.epsom_g}</strong>g
             </span>
           );
         if (sa.nacl_g)
           right.push(
             <span key="nacl">
-              NaCl <B>{sa.nacl_g}</B>g
+              NaCl <strong>{sa.nacl_g}</strong>g
             </span>
           );
         if (sa.nahco3_g)
           right.push(
             <span key="nahco3">
-              Baking soda <B>{sa.nahco3_g}</B>g
+              Baking soda <strong>{sa.nahco3_g}</strong>g
             </span>
           );
       }
@@ -220,7 +217,7 @@ export function getScribbleLines(
       for (const agent of waterAgents) {
         right.push(
           <span key={agent.id}>
-            {agent.name} <B>{agent.amount}</B>
+            {agent.name} <strong>{agent.amount}</strong>
             {agent.unit}
           </span>
         );
@@ -237,7 +234,7 @@ export function getScribbleLines(
       if (recipe.fermentationSteps.length === 0) return [];
       return recipe.fermentationSteps.map((s) => (
         <>
-          <B>{s.temperatureC}</B>°C · <B>{s.durationDays}</B>d
+          <strong>{s.temperatureC}</strong>°C · <strong>{s.durationDays}</strong>d
         </>
       ));
     }
@@ -247,20 +244,20 @@ export function getScribbleLines(
       if (calculations.strikeTempC != null)
         lines.push(
           <>
-            Strike <B>{calculations.strikeTempC.toFixed(1)}</B>°C
+            Strike <strong>{calculations.strikeTempC.toFixed(1)}</strong>°C
           </>
         );
       if (calculations.estimatedMashPh != null)
         lines.push(
           <>
-            Mash pH <B>{calculations.estimatedMashPh.toFixed(2)}</B>
+            Mash pH <strong>{calculations.estimatedMashPh.toFixed(2)}</strong>
           </>
         );
       if (calculations.preBoilVolumeL > 0)
         lines.push(
           <>
-            Preboil: <B>{calculations.preBoilVolumeL.toFixed(1)}</B>L @{" "}
-            <B>{calculations.preBoilGravity.toFixed(3)}</B>
+            Preboil: <strong>{calculations.preBoilVolumeL.toFixed(1)}</strong>L @{" "}
+            <strong>{calculations.preBoilGravity.toFixed(3)}</strong>
           </>
         );
       return lines;
