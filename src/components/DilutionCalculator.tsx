@@ -52,10 +52,8 @@ export default function DilutionCalculator() {
       </div>
 
       <p className="text-sm text-muted mb-5 leading-relaxed">
-        Work out your sparge water from first runnings and a target
-        gravity &mdash; you might come up short on volume, but your gravity
-        will be spot on. Or, do this at 10 minutes-to-go in the boil and
-        you'll nail your knockout OG!
+        Add the right amount of water to hit your target OG &mdash; pre-boil
+        for sparge adjustments, or just before knockout for precision.
       </p>
 
       {/* Inputs — 3 across on desktop, stacked on mobile */}
