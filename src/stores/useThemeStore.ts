@@ -54,7 +54,7 @@ export const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       theme: 'light',
       resolvedTheme: 'light',
-      palette: 'default',
+      palette: 'copper',
 
       setTheme: (theme: Theme) => {
         const resolved = theme === 'system' ? getSystemTheme() : theme;

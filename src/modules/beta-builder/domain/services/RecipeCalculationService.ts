@@ -9,6 +9,7 @@
 import type { Recipe, RecipeCalculations, Hop, Fermentable } from '../models/Recipe';
 import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
+import { mashScheduleService } from './MashScheduleService';
 import { inferFermentability } from '../../data/fermentablePresets';
 
 export class RecipeCalculationService {
@@ -44,6 +45,24 @@ export class RecipeCalculationService {
         )
       : null;
 
+    // Strike temperature (reuse MashScheduleService heat-balance equation)
+    const strikeTempC = recipe.mashSteps.length > 0 && recipe.mashSteps[0].temperatureC != null
+      ? mashScheduleService.calculateStrikeTemp(
+          recipe.mashSteps[0].temperatureC,
+          recipe.equipment.mashThicknessLPerKg,
+          20,
+          totalGrainKg,
+        )
+      : null;
+
+    // Pre-boil gravity: dilute OG back to pre-boil volume
+    const boilOffL = (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
+    const shrinkageFactor = 1 + recipe.equipment.coolingShrinkagePercent / 100;
+    const postBoilColdL = Math.max(0, (preBoilVolumeL - boilOffL) / shrinkageFactor);
+    const preBoilGravity = preBoilVolumeL > 0
+      ? 1 + ((og - 1) * postBoilColdL) / preBoilVolumeL
+      : og;
+
     return {
       og,
       fg,
@@ -58,6 +77,8 @@ export class RecipeCalculationService {
       totalWaterL,
       estimatedMashPh,
       mashPhAdjustment,
+      strikeTempC,
+      preBoilGravity,
     };
   }
 

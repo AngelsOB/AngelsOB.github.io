@@ -5,7 +5,7 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
@@ -22,8 +22,102 @@ import { srmToRgb } from '../../utils/srmColorUtils';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import BrewDayChecklistSection from './BrewDayChecklistSection';
 import StickyStatsBar from './StickyStatsBar';
-import SectionSidebar from './SectionSidebar';
+import SectionSidebar, { SECTIONS, getScribbleLines } from './SectionSidebar';
 import AnimatedValue from './AnimatedValue';
+import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
+
+/**
+ * Mobile accordion tile header.
+ * Hidden on desktop via CSS. On mobile, acts as an expandable section toggle.
+ * Styled to match the sidebar's skeuomorphic colored tiles.
+ */
+function MobileAccordionTile({
+  section,
+  isOpen,
+  onToggle,
+  scribbleLines,
+}: {
+  section: (typeof SECTIONS)[number];
+  isOpen: boolean;
+  onToggle: () => void;
+  scribbleLines: React.ReactNode[];
+}) {
+  return (
+    <button
+      className={"mobile-accordion-tile" + (isOpen ? " is-open" : "")}
+      style={
+        { backgroundColor: section.bg, "--sidebar-accent": section.bg } as React.CSSProperties
+      }
+      onClick={onToggle}
+      aria-expanded={isOpen}
+    >
+      <span className="mobile-accordion-number" style={{ color: section.text }}>
+        {section.number}
+      </span>
+      <span className="mobile-accordion-label" style={{ color: section.text }}>
+        {section.label}
+      </span>
+      {!isOpen && scribbleLines.length > 0 && (
+        <span className="mobile-accordion-preview" style={{ color: section.text }}>
+          {scribbleLines.map((line, i) => (
+            <span key={i} className="mobile-accordion-preview-line">{line}</span>
+          ))}
+        </span>
+      )}
+      <span className="mobile-accordion-chevron" style={{ color: section.text }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path
+            d={isOpen ? "M3 9L7 5L11 9" : "M3 5L7 9L11 5"}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Helper: wraps a section with the mobile accordion tile + collapsible body.
+ * On desktop, the tile is hidden and body flows normally (CSS handles this).
+ */
+function AccordionSection({
+  sectionKey,
+  recipe,
+  calculations,
+  mobileOpen,
+  onToggle,
+  children,
+}: {
+  sectionKey: string;
+  recipe: Recipe | null;
+  calculations: RecipeCalculations | null;
+  mobileOpen: string | null;
+  onToggle: (key: string) => void;
+  children: React.ReactNode;
+}) {
+  const section = SECTIONS.find((s) => s.accent === sectionKey);
+  if (!section) return <>{children}</>;
+
+  const isOpen = mobileOpen === sectionKey;
+  const scribbleLines = getScribbleLines(sectionKey, recipe, calculations);
+
+  return (
+    <>
+      <MobileAccordionTile
+        section={section}
+        isOpen={isOpen}
+        onToggle={() => onToggle(sectionKey)}
+        scribbleLines={scribbleLines}
+      />
+      <div className={"mobile-accordion-body" + (isOpen ? " is-open" : "")}>
+        <div className="mobile-accordion-body-inner">{children}</div>
+      </div>
+    </>
+  );
+}
 
 export default function BetaBuilderPage() {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
@@ -41,8 +135,13 @@ export default function BetaBuilderPage() {
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
+  const [mobileOpenSection, setMobileOpenSection] = useState<string | null>("recipe");
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
   const isReadOnly = Boolean(versionNumber);
+
+  const toggleMobileSection = useCallback((key: string) => {
+    setMobileOpenSection((prev) => (prev === key ? null : key));
+  }, []);
 
   // Load recipe based on URL param or create new
   useEffect(() => {
@@ -181,6 +280,7 @@ export default function BetaBuilderPage() {
 
         <div className={isReadOnly ? 'pointer-events-none opacity-90' : ''}>
         {/* Recipe Name & Metadata */}
+        <AccordionSection sectionKey="recipe" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
         <div className="brew-section brew-animate-in brew-stagger-1 space-y-5">
           <div>
             <label htmlFor="recipe-name" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
@@ -328,30 +428,47 @@ export default function BetaBuilderPage() {
             />
           </div>
         </div>
+        </AccordionSection>
 
         {/* Equipment Profile */}
-        <EquipmentSection />
+        <AccordionSection sectionKey="equipment" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <EquipmentSection />
+        </AccordionSection>
 
-        {/* Fermentables - Now using dedicated component with preset picker */}
-        <FermentableSection />
+        {/* Fermentables */}
+        <AccordionSection sectionKey="grain" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <FermentableSection />
+        </AccordionSection>
 
         {/* Mash Schedule */}
-        <MashScheduleSection />
+        <AccordionSection sectionKey="mash" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <MashScheduleSection />
+        </AccordionSection>
 
-        {/* Hops - Phase 3 addition */}
-        <HopSection />
+        {/* Hops */}
+        <AccordionSection sectionKey="hops" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <HopSection />
+        </AccordionSection>
 
-        {/* Yeast - Phase 5 addition */}
-        <YeastSection />
+        {/* Yeast */}
+        <AccordionSection sectionKey="yeast" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <YeastSection />
+        </AccordionSection>
 
-        {/* Water - Volumes + Chemistry */}
-        <WaterSection calculations={calculations} recipe={currentRecipe} />
+        {/* Water */}
+        <AccordionSection sectionKey="water" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <WaterSection calculations={calculations} recipe={currentRecipe} />
+        </AccordionSection>
 
-        {/* Fermentation - Phase 5 addition */}
-        <FermentationSection />
+        {/* Fermentation */}
+        <AccordionSection sectionKey="fermentation" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <FermentationSection />
+        </AccordionSection>
 
-        {/* Brew Day Checklist */}
-        <BrewDayChecklistSection />
+        {/* Brew Day Targets */}
+        <AccordionSection sectionKey="targets" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          {currentRecipe && <BrewDayChecklistSection recipe={currentRecipe} calculations={calculations} />}
+        </AccordionSection>
 
         {/* Save Button */}
           {!isReadOnly && (
