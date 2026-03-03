@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 
 interface SectionSidebarProps {
   recipe: Recipe | null;
@@ -12,73 +12,121 @@ const B = ({ children }: { children: React.ReactNode }) => <strong>{children}</s
 /**
  * Generate handwritten "margin scribble" lines for each sidebar section.
  * Returns an array of ReactNodes. All numbers are wrapped in <strong> for emphasis.
+ * Exported for reuse by mobile accordion headers.
  */
-function getScribbleLines(
+export function getScribbleLines(
   accent: string,
   recipe: Recipe | null,
-  calculations: RecipeCalculations | null,
+  calculations: RecipeCalculations | null
 ): React.ReactNode[] {
   if (!recipe) return [];
 
   switch (accent) {
-    case 'recipe': {
+    case "recipe": {
       if (!calculations) return [];
       const lines: React.ReactNode[] = [];
-      if (calculations.og > 1) lines.push(<>OG <B>{calculations.og.toFixed(3)}</B> · <B>{calculations.abv.toFixed(1)}</B>% ABV</>);
-      if (calculations.ibu > 0) lines.push(<><B>{Math.round(calculations.ibu)}</B> IBU · <B>{calculations.srm.toFixed(1)}</B> SRM</>);
+      if (calculations.og > 1) {
+        lines.push(
+          <span className="sidebar-scribble-recipe-og">
+            <span className="sidebar-recipe-gravities">
+              <span>
+                OG <B>{calculations.og.toFixed(3)}&nbsp;</B>
+              </span>
+              <span>
+                FG <B>{calculations.fg.toFixed(3)}&nbsp;</B>
+              </span>
+            </span>
+            <span className="sidebar-recipe-abv">
+              <B> {calculations.abv.toFixed(1)}</B>%
+            </span>
+            <span className="sidebar-scribble-recipe-og">ABV</span>
+          </span>
+        );
+      }
+      if (calculations.ibu > 0)
+        lines.push(
+          <>
+            <br></br>
+            <B>{Math.round(calculations.ibu)}</B> IBU · <B>{calculations.srm.toFixed(1)}</B> SRM
+          </>
+        );
       return lines;
     }
-    case 'equipment': {
+    case "equipment": {
       const eq = recipe.equipment;
       const batchVol = recipe.batchVolumeL;
       return [
         <span className="sidebar-scribble-equipment">
-          <span className="sidebar-equip-batch"><B>{batchVol}</B>L batch</span>
+          <span className="sidebar-equip-batch">
+            <B>{batchVol}</B>L batch
+          </span>
           {calculations && (
             <span className="sidebar-equip-volumes">
-              <span>mash <B>{calculations.mashWaterL.toFixed(1)}</B>L</span>
-              <span>sparge <B>{calculations.spargeWaterL.toFixed(1)}</B>L</span>
+              <span>
+                mash <B>{calculations.mashWaterL.toFixed(1)}</B>L
+              </span>
+              <span>
+                sparge <B>{calculations.spargeWaterL.toFixed(1)}</B>L
+              </span>
             </span>
           )}
         </span>,
-        <><B>{eq.boilTimeMin}</B> min boil · <B>{eq.mashEfficiencyPercent}</B>% eff</>,
+        <>
+          <B>{eq.boilTimeMin}</B> min boil · <B>{eq.mashEfficiencyPercent}</B>% eff
+        </>,
       ];
     }
-    case 'grain': {
+    case "grain": {
       if (recipe.fermentables.length === 0) return [];
       const totalKg = recipe.fermentables.reduce((s, f) => s + f.weightKg, 0);
       if (totalKg === 0) return [];
       const sorted = [...recipe.fermentables].sort((a, b) => b.weightKg - a.weightKg);
-      return sorted.map(f => {
+      return sorted.map((f) => {
         const pct = Math.round((f.weightKg / totalKg) * 100);
-        const shortName = f.name.includes(' - ') ? f.name.split(' - ').slice(1).join(' - ') : f.name;
-        return <>{shortName} <B>{pct}%</B></>;
+        const shortName = f.name.includes(" - ")
+          ? f.name.split(" - ").slice(1).join(" - ")
+          : f.name;
+        return (
+          <>
+            {shortName} <B>{pct}%</B>
+          </>
+        );
       });
     }
-    case 'mash': {
+    case "mash": {
       if (recipe.mashSteps.length === 0) return [];
-      return recipe.mashSteps.map(s => <><B>{s.temperatureC}</B>°C · <B>{s.durationMinutes}</B>min</>);
+      return recipe.mashSteps.map((s) => (
+        <>
+          <B>{s.temperatureC}</B>°C · <B>{s.durationMinutes}</B>min
+        </>
+      ));
     }
-    case 'hops': {
+    case "hops": {
       if (recipe.hops.length === 0) return [];
       // Sort by brew-day addition order: FW → boil (desc time) → WP → DH → mash
-      const typeOrder: Record<string, number> = { 'first wort': 0, 'boil': 1, 'whirlpool': 2, 'dry hop': 3, 'mash': 4 };
+      const typeOrder: Record<string, number> = {
+        "first wort": 0,
+        boil: 1,
+        whirlpool: 2,
+        "dry hop": 3,
+        mash: 4,
+      };
       const sorted = [...recipe.hops].sort((a, b) => {
         const oa = typeOrder[a.type] ?? 5;
         const ob = typeOrder[b.type] ?? 5;
         if (oa !== ob) return oa - ob;
         // Within boil, sort by time descending (60m before 15m)
-        if (a.type === 'boil') return (b.timeMinutes ?? 0) - (a.timeMinutes ?? 0);
+        if (a.type === "boil") return (b.timeMinutes ?? 0) - (a.timeMinutes ?? 0);
         return 0;
       });
       // Group hops by their addition label
-      const additionLabel = (h: Recipe['hops'][number]) => {
-        if (h.type === 'boil') return `@${h.timeMinutes ?? 0}m`;
-        if (h.type === 'dry hop') return 'DH';
-        if (h.type === 'whirlpool') return 'WP';
-        if (h.type === 'first wort') return 'FW';
-        if (h.type === 'mash') return 'Mash';
-        return '';
+      const additionLabel = (h: Recipe["hops"][number]) => {
+        if (h.type === "boil") return `@${h.timeMinutes ?? 0}m`;
+        if (h.type === "dry hop") return "DH";
+        if (h.type === "whirlpool") return "WP";
+        if (h.type === "first wort") return "FW";
+        if (h.type === "mash") return "Mash";
+        return "";
       };
       // Group consecutive hops with the same addition label
       const groups: { label: string; hops: typeof sorted }[] = [];
@@ -92,12 +140,18 @@ function getScribbleLines(
         }
       }
       // Render: hop names on left, shared addition label on right
-      const lines: React.ReactNode[] = groups.map(g => (
+      const lines: React.ReactNode[] = groups.map((g) => (
         <span className="sidebar-scribble-hop-group">
           <span className="sidebar-hop-names">
-            {g.hops.map((h, k) => <span key={k}>{h.name} <B>{h.grams}</B>g</span>)}
+            {g.hops.map((h, k) => (
+              <span key={k}>
+                {h.name} <B>{h.grams}</B>g
+              </span>
+            ))}
           </span>
-          <span className="sidebar-hop-addition"><B>{g.label}</B></span>
+          <span className="sidebar-hop-addition">
+            <B>{g.label}</B>
+          </span>
         </span>
       ));
       // Total oz (bottom right) and IBU (bottom left, above "Hops" label)
@@ -106,53 +160,122 @@ function getScribbleLines(
       const ibu = calculations ? Math.round(calculations.ibu) : 0;
       lines.push(
         <span className="sidebar-hop-summary">
-          <span className="sidebar-hop-ibu"><B>{ibu}</B> IBU</span>
-          <span className="sidebar-hop-total">Total: <B>{totalOz}</B>oz</span>
+          <span className="sidebar-hop-ibu">
+            <B>{ibu}</B> IBU
+          </span>
+          <span className="sidebar-hop-total">
+            Total: <B>{totalOz}</B>oz
+          </span>
         </span>
       );
       return lines;
     }
-    case 'yeast': {
+    case "yeast": {
       if (recipe.yeasts.length === 0) return [];
       const y = recipe.yeasts[0];
       const att = Math.round(y.attenuation * 100);
       return [
         <span className="sidebar-scribble-yeast">
           {y.laboratory && <span className="sidebar-yeast-lab">{y.laboratory}</span>}
-          <span>{y.name} · <B>{att}</B>% att</span>
+          <span>
+            {y.name} · <B>{att}</B>% att
+          </span>
         </span>,
       ];
     }
-    case 'water': {
+    case "water": {
       const left: React.ReactNode[] = [];
       const right: React.ReactNode[] = [];
       if (recipe.waterChemistry) {
         const wc = recipe.waterChemistry;
         if (wc.sourceProfileName) left.push(<span key="profile">{wc.sourceProfileName}</span>);
         const { SO4, Cl } = wc.sourceProfile;
-        if (Cl > 0) left.push(<span key="ratio">SO₄:Cl <B>{(SO4 / Cl).toFixed(1)}</B></span>);
+        if (Cl > 0)
+          left.push(
+            <span key="ratio">
+              SO₄:Cl <B>{(SO4 / Cl).toFixed(1)}</B>
+            </span>
+          );
         const sa = wc.saltAdditions;
-        if (sa.gypsum_g) right.push(<span key="gypsum">Gypsum <B>{sa.gypsum_g}</B>g</span>);
-        if (sa.cacl2_g) right.push(<span key="cacl2">CaCl₂ <B>{sa.cacl2_g}</B>g</span>);
-        if (sa.epsom_g) right.push(<span key="epsom">Epsom <B>{sa.epsom_g}</B>g</span>);
-        if (sa.nacl_g) right.push(<span key="nacl">NaCl <B>{sa.nacl_g}</B>g</span>);
-        if (sa.nahco3_g) right.push(<span key="nahco3">Baking soda <B>{sa.nahco3_g}</B>g</span>);
+        if (sa.gypsum_g)
+          right.push(
+            <span key="gypsum">
+              Gypsum <B>{sa.gypsum_g}</B>g
+            </span>
+          );
+        if (sa.cacl2_g)
+          right.push(
+            <span key="cacl2">
+              CaCl₂ <B>{sa.cacl2_g}</B>g
+            </span>
+          );
+        if (sa.epsom_g)
+          right.push(
+            <span key="epsom">
+              Epsom <B>{sa.epsom_g}</B>g
+            </span>
+          );
+        if (sa.nacl_g)
+          right.push(
+            <span key="nacl">
+              NaCl <B>{sa.nacl_g}</B>g
+            </span>
+          );
+        if (sa.nahco3_g)
+          right.push(
+            <span key="nahco3">
+              Baking soda <B>{sa.nahco3_g}</B>g
+            </span>
+          );
       }
-      const waterAgents = recipe.otherIngredients.filter(i => i.category === 'water-agent');
+      const waterAgents = recipe.otherIngredients.filter((i) => i.category === "water-agent");
       for (const agent of waterAgents) {
-        right.push(<span key={agent.id}>{agent.name} <B>{agent.amount}</B>{agent.unit}</span>);
+        right.push(
+          <span key={agent.id}>
+            {agent.name} <B>{agent.amount}</B>
+            {agent.unit}
+          </span>
+        );
       }
       if (left.length === 0 && right.length === 0) return [];
       return [
         <span className="sidebar-scribble-cols">
           <span className="sidebar-scribble-col-left">{left}</span>
           <span className="sidebar-scribble-col-right">{right}</span>
-        </span>
+        </span>,
       ];
     }
-    case 'fermentation': {
+    case "fermentation": {
       if (recipe.fermentationSteps.length === 0) return [];
-      return recipe.fermentationSteps.map(s => <><B>{s.temperatureC}</B>°C · <B>{s.durationDays}</B>d</>);
+      return recipe.fermentationSteps.map((s) => (
+        <>
+          <B>{s.temperatureC}</B>°C · <B>{s.durationDays}</B>d
+        </>
+      ));
+    }
+    case "targets": {
+      if (!calculations) return [];
+      const lines: React.ReactNode[] = [];
+      if (calculations.strikeTempC != null)
+        lines.push(
+          <>
+            Strike <B>{calculations.strikeTempC.toFixed(1)}</B>°C
+          </>
+        );
+      if (calculations.estimatedMashPh != null)
+        lines.push(
+          <>
+            Mash pH <B>{calculations.estimatedMashPh.toFixed(2)}</B>
+          </>
+        );
+      if (calculations.preBoilVolumeL > 0)
+        lines.push(
+          <>
+            Preboil: <B>{calculations.preBoilVolumeL.toFixed(1)}</B>L @{" "}
+            <B>{calculations.preBoilGravity.toFixed(3)}</B>
+          </>
+        );
+      return lines;
     }
     default:
       return [];
@@ -163,17 +286,90 @@ function getScribbleLines(
  * Section definitions for the sidebar.
  * Each maps to a brew-section[data-accent] on the page.
  * Colors are bold and saturated, inspired by therawmaterials.com sidebar.
+ * Exported for reuse by mobile accordion.
  */
-const SECTIONS = [
-  { id: 'recipe-info', accent: 'recipe',       label: 'Recipe',       shortLabel: 'Rec.',   number: '01', bg: 'var(--sidebar-recipe-bg)',       text: 'var(--sidebar-recipe-text)'       },
-  { id: 'equipment',   accent: 'equipment',     label: 'Equipment',    shortLabel: 'Equip.', number: '02', bg: 'var(--sidebar-equipment-bg)',    text: 'var(--sidebar-equipment-text)'    },
-  { id: 'grain',       accent: 'grain',         label: 'Fermentables', shortLabel: 'Grain',  number: '03', bg: 'var(--sidebar-grain-bg)',        text: 'var(--sidebar-grain-text)'        },
-  { id: 'mash',        accent: 'mash',          label: 'Mash',         shortLabel: 'Mash',   number: '04', bg: 'var(--sidebar-mash-bg)',         text: 'var(--sidebar-mash-text)'         },
-  { id: 'hops',        accent: 'hops',          label: 'Hops',         shortLabel: 'Hops',   number: '05', bg: 'var(--sidebar-hops-bg)',         text: 'var(--sidebar-hops-text)'         },
-  { id: 'yeast',       accent: 'yeast',         label: 'Yeast',        shortLabel: 'Yeast',  number: '06', bg: 'var(--sidebar-yeast-bg)',        text: 'var(--sidebar-yeast-text)'        },
-  { id: 'water',       accent: 'water',         label: 'Water',        shortLabel: 'Water',  number: '07', bg: 'var(--sidebar-water-bg)',        text: 'var(--sidebar-water-text)'        },
-  { id: 'fermentation',accent: 'fermentation',  label: 'Fermentation', shortLabel: 'Ferm.',  number: '08', bg: 'var(--sidebar-fermentation-bg)', text: 'var(--sidebar-fermentation-text)' },
-  { id: 'checklist',   accent: 'checklist',     label: 'Checklist',    shortLabel: 'Check',  number: '09', bg: 'var(--sidebar-checklist-bg)',    text: 'var(--sidebar-checklist-text)'    },
+export const SECTIONS = [
+  {
+    id: "recipe-info",
+    accent: "recipe",
+    label: "Recipe",
+    shortLabel: "Rec.",
+    number: "01",
+    bg: "var(--sidebar-recipe-bg)",
+    text: "var(--sidebar-recipe-text)",
+  },
+  {
+    id: "equipment",
+    accent: "equipment",
+    label: "Equipment",
+    shortLabel: "Equip.",
+    number: "02",
+    bg: "var(--sidebar-equipment-bg)",
+    text: "var(--sidebar-equipment-text)",
+  },
+  {
+    id: "grain",
+    accent: "grain",
+    label: "Fermentables",
+    shortLabel: "Grain",
+    number: "03",
+    bg: "var(--sidebar-grain-bg)",
+    text: "var(--sidebar-grain-text)",
+  },
+  {
+    id: "mash",
+    accent: "mash",
+    label: "Mash",
+    shortLabel: "Mash",
+    number: "04",
+    bg: "var(--sidebar-mash-bg)",
+    text: "var(--sidebar-mash-text)",
+  },
+  {
+    id: "hops",
+    accent: "hops",
+    label: "Hops",
+    shortLabel: "Hops",
+    number: "05",
+    bg: "var(--sidebar-hops-bg)",
+    text: "var(--sidebar-hops-text)",
+  },
+  {
+    id: "yeast",
+    accent: "yeast",
+    label: "Yeast",
+    shortLabel: "Yeast",
+    number: "06",
+    bg: "var(--sidebar-yeast-bg)",
+    text: "var(--sidebar-yeast-text)",
+  },
+  {
+    id: "water",
+    accent: "water",
+    label: "Water",
+    shortLabel: "Water",
+    number: "07",
+    bg: "var(--sidebar-water-bg)",
+    text: "var(--sidebar-water-text)",
+  },
+  {
+    id: "fermentation",
+    accent: "fermentation",
+    label: "Fermentation",
+    shortLabel: "Ferm.",
+    number: "08",
+    bg: "var(--sidebar-fermentation-bg)",
+    text: "var(--sidebar-fermentation-text)",
+  },
+  {
+    id: "targets",
+    accent: "targets",
+    label: "Targets",
+    shortLabel: "Tgts",
+    number: "09",
+    bg: "var(--sidebar-targets-bg)",
+    text: "var(--sidebar-targets-text)",
+  },
 ] as const;
 
 /** Padding inside each item where the dot can travel */
@@ -183,11 +379,20 @@ const DOT_PAD_BOTTOM = 32; // leave room for the label
 export default function SectionSidebar({ recipe, calculations }: SectionSidebarProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dotProgress, setDotProgress] = useState(0); // 0..1 scroll progress within active section
+  const [titleUnderline, setTitleUnderline] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const activeHeightRef = useRef(320);
+
+  // Draw underline after recipe name is stable for 2s
+  useEffect(() => {
+    setTitleUnderline(false);
+    if (!recipe?.name) return;
+    const timer = setTimeout(() => setTitleUnderline(true), 750);
+    return () => clearTimeout(timer);
+  }, [recipe?.name]);
 
   /**
    * Find all brew-section elements on the page by data-accent.
@@ -196,12 +401,21 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
   const getSectionElements = useCallback((): HTMLElement[] => {
     const elements: HTMLElement[] = [];
 
-    const allSections = document.querySelectorAll<HTMLElement>('.brew-section');
+    const allSections = document.querySelectorAll<HTMLElement>(".brew-section");
     if (allSections.length > 0) {
       elements.push(allSections[0]); // Recipe info is always first
     }
 
-    const accentOrder = ['equipment', 'grain', 'mash', 'hops', 'yeast', 'water', 'fermentation', 'checklist'];
+    const accentOrder = [
+      "equipment",
+      "grain",
+      "mash",
+      "hops",
+      "yeast",
+      "water",
+      "fermentation",
+      "targets",
+    ];
     for (const accent of accentOrder) {
       const el = document.querySelector<HTMLElement>(`.brew-section[data-accent="${accent}"]`);
       if (el) elements.push(el);
@@ -224,9 +438,7 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
     const scrollY = window.scrollY;
     const docHeight = document.documentElement.scrollHeight;
     // How close to the bottom of the page we are (0 = top, 1 = at bottom)
-    const bottomProximity = docHeight > viewportHeight
-      ? scrollY / (docHeight - viewportHeight)
-      : 0;
+    const bottomProximity = docHeight > viewportHeight ? scrollY / (docHeight - viewportHeight) : 0;
     // Trigger line sits near the bottom of the viewport (~80%) so sections
     // activate as soon as they scroll into view. Shifts toward 100% at page end
     // so the final sections can still activate.
@@ -240,10 +452,11 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
       const visibleTop = Math.max(0, rect.top);
       const visibleBottom = Math.min(viewportHeight, rect.bottom);
       const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      const visibilityRatio = rect.height > 0 ? visibleHeight / Math.min(rect.height, viewportHeight) : 0;
+      const visibilityRatio =
+        rect.height > 0 ? visibleHeight / Math.min(rect.height, viewportHeight) : 0;
       const distFromTrigger = Math.abs(rect.top - triggerLine);
       const proximityScore = 1 / (1 + distFromTrigger / viewportHeight);
-      const passedBonus = (rect.top <= triggerLine && rect.bottom > triggerLine) ? 0.3 : 0;
+      const passedBonus = rect.top <= triggerLine && rect.bottom > triggerLine ? 0.3 : 0;
       const score = visibilityRatio * 0.3 + proximityScore * 0.4 + passedBonus;
 
       if (score > bestScore && visibleHeight > 20) {
@@ -270,18 +483,16 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
       const sectionHeight = rect.height;
       // When section.top == triggerLine → progress = 0 (just entered)
       // When section.bottom == triggerLine (i.e. section.top == triggerLine - sectionHeight) → progress = 1
-      const progress = sectionHeight > 0
-        ? (triggerLine - rect.top) / sectionHeight
-        : 0;
+      const progress = sectionHeight > 0 ? (triggerLine - rect.top) / sectionHeight : 0;
       setDotProgress(Math.max(0, Math.min(1, progress)));
     }
   }, [getSectionElements]);
 
   /** Scroll listener */
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
   /** Auto-scroll the sidebar to keep the active item centered */
@@ -290,14 +501,14 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
     if (activeIndex < 0 || !sidebarRef.current) return;
 
     const sidebar = sidebarRef.current;
-    const items = sidebar.querySelectorAll<HTMLElement>('.section-sidebar-item');
+    const items = sidebar.querySelectorAll<HTMLElement>(".section-sidebar-item");
     const activeItem = items[activeIndex];
     if (!activeItem) return;
 
     // Use instant scroll for large jumps (>2 sections), smooth for nearby transitions
     const jump = Math.abs(activeIndex - prevActiveRef.current);
     prevActiveRef.current = activeIndex;
-    const behavior = jump > 2 ? 'auto' as const : 'smooth' as const;
+    const behavior = jump > 2 ? ("auto" as const) : ("smooth" as const);
 
     // Small delay so the height style has been applied to the DOM
     const timer = setTimeout(() => {
@@ -306,7 +517,7 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
       const itemHeight = activeItem.clientHeight || 320;
 
       // Center the active item in the sidebar viewport
-      const targetScroll = itemTop - (sidebarHeight / 2) + (itemHeight / 2);
+      const targetScroll = itemTop - sidebarHeight / 2 + itemHeight / 2;
       sidebar.scrollTo({ top: Math.max(0, targetScroll), behavior });
     }, 60);
 
@@ -326,7 +537,7 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
 
     const navHeight = 60;
     const targetTop = target.getBoundingClientRect().top + window.scrollY - navHeight;
-    window.scrollTo({ top: targetTop, behavior: 'smooth' });
+    window.scrollTo({ top: targetTop, behavior: "smooth" });
 
     clickTimeout.current = setTimeout(() => {
       isClickScrolling.current = false;
@@ -344,12 +555,11 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
   };
 
   return (
-    <nav
-      ref={sidebarRef}
-      className="section-sidebar"
-      aria-label="Recipe sections"
-    >
+    <nav ref={sidebarRef} className="section-sidebar" aria-label="Recipe sections">
       <div className="section-sidebar-track">
+        {recipe?.name && (
+          <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}><span>{recipe.name}</span></div>
+        )}
         {SECTIONS.map((section, i) => {
           const isActive = i === activeIndex;
           const scribbleLines = getScribbleLines(section.accent, recipe, calculations);
@@ -357,14 +567,18 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
           return (
             <button
               key={section.id}
-              ref={(el) => { itemRefs.current[i] = el; }}
-              className={`section-sidebar-item${isActive ? ' is-active' : ''}`}
-              style={{
-                backgroundColor: section.bg,
-                '--sidebar-accent': section.bg,
-              } as React.CSSProperties}
+              ref={(el) => {
+                itemRefs.current[i] = el;
+              }}
+              className={"section-sidebar-item" + (isActive ? " is-active" : "")}
+              style={
+                {
+                  backgroundColor: section.bg,
+                  "--sidebar-accent": section.bg,
+                } as React.CSSProperties
+              }
               onClick={() => handleClick(i)}
-              aria-current={isActive ? 'true' : undefined}
+              aria-current={isActive ? "true" : undefined}
               title={section.label}
             >
               <span className="section-sidebar-number" style={{ color: section.text }}>
@@ -376,7 +590,7 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
                   backgroundColor: section.text,
                   top: `${getDotTop(isActive)}px`,
                   opacity: isActive ? 1 : 0,
-                  transform: isActive ? 'scale(1)' : 'scale(0)',
+                  transform: isActive ? "scale(1)" : "scale(0)",
                 }}
               />
               {scribbleLines.length > 0 && (

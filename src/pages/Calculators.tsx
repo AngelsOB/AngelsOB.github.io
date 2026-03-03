@@ -1,5 +1,6 @@
 import AbvCalculator from "../components/AbvCalculator";
 import BoilOffCalculator from "../components/BoilOffCalculator";
+import DilutionCalculator from "../components/DilutionCalculator";
 
 export default function Calculators() {
   return (
@@ -51,6 +52,9 @@ export default function Calculators() {
           <AbvCalculator />
         </div>
         <div className="brew-animate-in brew-stagger-6">
+          <DilutionCalculator />
+        </div>
+        <div className="brew-animate-in brew-stagger-8">
           <BoilOffCalculator />
         </div>
       </div>

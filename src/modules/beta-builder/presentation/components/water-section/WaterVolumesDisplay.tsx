@@ -21,18 +21,13 @@ type Props = {
 };
 
 export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
-  // Derive boil concentration stats
+  const preBoilGravity = calculations.preBoilGravity;
+  const hasGravity = calculations.og > 1.0;
+
+  // Derived values for the boil concentration strip
   const boilOffL =
     (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
   const postBoilHotL = Math.max(0, calculations.preBoilVolumeL - boilOffL);
-  const shrinkageFactor = 1 + recipe.equipment.coolingShrinkagePercent / 100;
-  const postBoilColdL = postBoilHotL / shrinkageFactor;
-  const preBoilGravity =
-    calculations.preBoilVolumeL > 0
-      ? 1 + ((calculations.og - 1) * postBoilColdL) / calculations.preBoilVolumeL
-      : calculations.og;
-
-  const hasGravity = calculations.og > 1.0;
 
   const cardStyle: React.CSSProperties = {
     background: "color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))",

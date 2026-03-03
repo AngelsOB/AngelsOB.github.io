@@ -131,8 +131,8 @@
   --sidebar-water-text: oklch(93% 0.02 250);
   --sidebar-fermentation-bg: oklch(52% 0.17 15);
   --sidebar-fermentation-text: oklch(95% 0.01 15);
-  --sidebar-checklist-bg: oklch(58% 0.14 25);
-  --sidebar-checklist-text: oklch(96% 0.01 25);
+  --sidebar-targets-bg: oklch(58% 0.14 25);
+  --sidebar-targets-text: oklch(96% 0.01 25);
 
   /* Legacy aliases (temporary — removed after component migration) */
   --brew-amber-400: var(--brew-accent-400);
@@ -340,8 +340,8 @@
   --sidebar-water-text: oklch(92% 0.015 250);
   --sidebar-fermentation-bg: oklch(50% 0.13 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
-  --sidebar-checklist-bg: oklch(55% 0.1 25);
-  --sidebar-checklist-text: oklch(95% 0.008 25);
+  --sidebar-targets-bg: oklch(55% 0.1 25);
+  --sidebar-targets-text: oklch(95% 0.008 25);
 
   /* Warmer shadows */
   --shadow-card:
@@ -444,7 +444,7 @@
   --brew-accent-900: oklch(26% 0.047 15);
   --brew-accent-950: oklch(20% 0.034 15);
 }
-.palette-vintage .brew-section[data-accent="checklist"] {
+.palette-vintage .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.048 25);
   --brew-accent-300: oklch(78% 0.078 25);
   --brew-accent-400: oklch(68% 0.1 25);
@@ -573,8 +573,8 @@
   --sidebar-water-text: oklch(93% 0.015 250);
   --sidebar-fermentation-bg: oklch(48% 0.14 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
-  --sidebar-checklist-bg: oklch(50% 0.12 250);
-  --sidebar-checklist-text: oklch(94% 0.008 250);
+  --sidebar-targets-bg: oklch(50% 0.12 250);
+  --sidebar-targets-text: oklch(94% 0.008 250);
 }
 .dark.palette-midnight {
   --bg: 14 18 30;
@@ -685,7 +685,7 @@
   --brew-accent-900: oklch(26% 0.037 270);
   --brew-accent-950: oklch(20% 0.027 270);
 }
-.palette-midnight .brew-section[data-accent="checklist"] {
+.palette-midnight .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.035 250);
   --brew-accent-300: oklch(78% 0.06 250);
   --brew-accent-400: oklch(68% 0.085 250);
@@ -779,8 +779,8 @@
   --sidebar-water-text: oklch(92% 0.012 200);
   --sidebar-fermentation-bg: oklch(50% 0.14 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
-  --sidebar-checklist-bg: oklch(52% 0.1 148);
-  --sidebar-checklist-text: oklch(95% 0.008 148);
+  --sidebar-targets-bg: oklch(52% 0.1 148);
+  --sidebar-targets-text: oklch(95% 0.008 148);
 }
 .dark.palette-forest {
   --bg: 14 20 14;
@@ -891,7 +891,7 @@
   --brew-accent-900: oklch(26% 0.04 30);
   --brew-accent-950: oklch(20% 0.029 30);
 }
-.palette-forest .brew-section[data-accent="checklist"] {
+.palette-forest .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.038 130);
   --brew-accent-300: oklch(78% 0.062 130);
   --brew-accent-400: oklch(68% 0.082 130);
@@ -985,8 +985,8 @@
   --sidebar-water-text: oklch(92% 0.012 230);
   --sidebar-fermentation-bg: oklch(50% 0.15 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
-  --sidebar-checklist-bg: oklch(54% 0.12 35);
-  --sidebar-checklist-text: oklch(95% 0.008 35);
+  --sidebar-targets-bg: oklch(54% 0.12 35);
+  --sidebar-targets-text: oklch(95% 0.008 35);
 }
 .dark.palette-copper {
   --bg: 22 16 10;
@@ -1097,7 +1097,7 @@
   --brew-accent-900: oklch(26% 0.052 25);
   --brew-accent-950: oklch(20% 0.037 25);
 }
-.palette-copper .brew-section[data-accent="checklist"] {
+.palette-copper .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.048 42);
   --brew-accent-300: oklch(78% 0.08 42);
   --brew-accent-400: oklch(68% 0.105 42);
@@ -1187,8 +1187,8 @@
   --sidebar-water-text: oklch(93% 0.004 250);
   --sidebar-fermentation-bg: oklch(38% 0.012 15);
   --sidebar-fermentation-text: oklch(94% 0.004 15);
-  --sidebar-checklist-bg: oklch(30% 0.008 260);
-  --sidebar-checklist-text: oklch(94% 0.004 260);
+  --sidebar-targets-bg: oklch(30% 0.008 260);
+  --sidebar-targets-text: oklch(94% 0.004 260);
 }
 .dark.palette-ink {
   --bg: 10 10 12;
@@ -1296,7 +1296,7 @@
   --brew-accent-900: oklch(26% 0.013 15);
   --brew-accent-950: oklch(20% 0.009 15);
 }
-.palette-ink .brew-section[data-accent="checklist"] {
+.palette-ink .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.01 260);
   --brew-accent-300: oklch(78% 0.018 260);
   --brew-accent-400: oklch(68% 0.024 260);
@@ -1390,8 +1390,8 @@
   --sidebar-water-text: oklch(92% 0.012 240);
   --sidebar-fermentation-bg: oklch(50% 0.15 18);
   --sidebar-fermentation-text: oklch(94% 0.008 18);
-  --sidebar-checklist-bg: oklch(54% 0.12 30);
-  --sidebar-checklist-text: oklch(95% 0.008 30);
+  --sidebar-targets-bg: oklch(54% 0.12 30);
+  --sidebar-targets-text: oklch(95% 0.008 30);
 }
 .dark.palette-sahara {
   --bg: 24 18 12;
@@ -1502,7 +1502,7 @@
   --brew-accent-900: oklch(26% 0.056 18);
   --brew-accent-950: oklch(20% 0.041 18);
 }
-.palette-sahara .brew-section[data-accent="checklist"] {
+.palette-sahara .brew-section[data-accent="targets"] {
   --brew-accent-200: oklch(88% 0.048 35);
   --brew-accent-300: oklch(78% 0.082 33);
   --brew-accent-400: oklch(68% 0.108 32);
@@ -1626,7 +1626,7 @@
 }
 
 /* Brew Day Checklist — Coral (hue 25) */
-.brew-section[data-accent="checklist"] {
+.brew-section[data-accent="targets"] {
   --brew-accent-50: oklch(97% 0.01 25);
   --brew-accent-100: oklch(94% 0.03 25);
   --brew-accent-200: oklch(88% 0.065 25);
@@ -1660,7 +1660,7 @@
   display: none;
 }
 
-@media (min-width: 186px) {
+@media (min-width: 768px) {
   .section-sidebar {
     display: block;
   }
@@ -1677,6 +1677,74 @@
   align-items: flex-start;
   justify-content: flex-start;
   padding-top: 188px; /* Clear navbar + page header to align with first brew-section */
+  padding-bottom: 120px; /* Ensure last tile isn't cut off at bottom */
+}
+
+.section-sidebar-title {
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  line-height: 1.1;
+  color: var(--fg-strong);
+  padding: 0 4px 8px;
+  transform: rotate(-2deg);
+  word-break: break-word;
+  width: 16.5vw;
+  text-align: center;
+}
+.section-sidebar-title > span {
+  position: relative;
+  display: inline-block;
+}
+.section-sidebar-title > span::before,
+.section-sidebar-title > span::after {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  height: 2.5px;
+  background: currentColor;
+  border-radius: 2px;
+  pointer-events: none;
+  transform-origin: left center;
+  transform: scaleX(0) rotate(0.8deg);
+}
+.section-sidebar-title > span::before {
+  bottom: 1px;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent);
+}
+.section-sidebar-title > span::after {
+  bottom: -2px;
+  left: 8%;
+  right: 6%;
+  height: 2px;
+  opacity: 0.5;
+  mask-image: linear-gradient(to right, transparent, black 20%, black 65%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 65%, transparent);
+  transform: scaleX(0) rotate(-0.5deg);
+}
+/* Draw in left-to-right, one after the other */
+.section-sidebar-title.is-drawn > span::before {
+  animation: title-stroke-1 80ms ease-out forwards;
+}
+.section-sidebar-title.is-drawn > span::after {
+  animation: title-stroke-2 60ms ease-out 80ms forwards;
+}
+@keyframes title-stroke-1 {
+  from {
+    transform: scaleX(0) rotate(0.8deg);
+  }
+  to {
+    transform: scaleX(1) rotate(0.8deg);
+  }
+}
+@keyframes title-stroke-2 {
+  from {
+    transform: scaleX(0) rotate(-0.5deg);
+  }
+  to {
+    transform: scaleX(1) rotate(-0.5deg);
+  }
 }
 
 .section-sidebar-item {
@@ -2025,10 +2093,29 @@
 }
 .sidebar-scribble-col-left {
   text-align: left;
+  gap: 12px;
 }
 .sidebar-scribble-col-right {
   align-items: flex-end;
   text-align: right;
+}
+
+/* ── Recipe scribble — OG/FG stacked left, ABV right ── */
+.sidebar-scribble-recipe-og {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.sidebar-recipe-gravities {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.85em;
+}
+.sidebar-recipe-abv {
+  font-size: 1.5em;
+  opacity: 0.7;
+  white-space: nowrap;
 }
 
 /* ── Equipment scribble — batch + mash/sparge cluster, top-right ── */
@@ -2133,7 +2220,7 @@
 }
 
 /* When sidebar is visible, shift main content to clear it */
-@media (min-width: 186px) {
+@media (min-width: 768px) {
   .has-section-sidebar {
     padding-left: 17vw;
     padding-right: 2vw;
@@ -2155,7 +2242,7 @@
 }
 
 /* When sidebar is visible, shift footer to clear it too */
-@media (min-width: 186px) {
+@media (min-width: 768px) {
   :has(.has-section-sidebar) > footer {
     padding-left: 17vw;
   }
@@ -2163,6 +2250,212 @@
 @media (min-width: 1600px) {
   :has(.has-section-sidebar) > footer {
     padding-left: 10vw;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE ACCORDION — SECTION TILES
+   On mobile, the sidebar tiles become full-width accordion
+   headers. Tapping a tile expands it to reveal that section's
+   content. Only one section open at a time.
+   ═══════════════════════════════════════════════════ */
+
+/* Desktop: tiles hidden, accordion body flows normally */
+.mobile-accordion-tile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* ── Accordion tile header ── */
+  .mobile-accordion-tile {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 6px;
+    /* 3D raised surface — matches desktop sidebar tiles */
+    border: 1px solid color-mix(in oklch, var(--sidebar-accent) 30%, transparent);
+    box-shadow:
+      inset 0 1px 0 oklch(100% 0 0 / 0.14),
+      0 3px 0 0 color-mix(in oklch, var(--sidebar-accent), black 30%),
+      0 3px 6px rgba(0, 0, 0, 0.08);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.15s ease,
+      opacity 0.2s ease,
+      margin 0.3s ease,
+      border-radius 0.3s ease,
+      padding 0.3s ease,
+      gap 0.3s ease;
+    opacity: 0.7;
+  }
+
+  /* Top-lit 3D gradient — same as desktop sidebar items */
+  .mobile-accordion-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      oklch(100% 0 0 / 0.2) 0%,
+      oklch(100% 0 0 / 0.05) 35%,
+      oklch(0% 0 0 / 0.06) 80%,
+      oklch(0% 0 0 / 0.14) 100%
+    );
+  }
+
+  /*
+   * EXPANDED STATE — the tile morphs into a thin colored accent strip.
+   * Number shrinks + fades, label disappears, content takes over.
+   * Feels like the tile "opened up" to reveal what's inside.
+   */
+  .mobile-accordion-tile.is-open {
+    opacity: 1;
+    padding: 5px 14px;
+    margin-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    border-bottom-color: transparent;
+    gap: 6px;
+    box-shadow:
+      inset 0 1px 0 oklch(100% 0 0 / 0.12),
+      0 0 0 0 transparent;
+  }
+
+  /* Mute the 3D gradient on the open strip */
+  .mobile-accordion-tile.is-open::before {
+    opacity: 0.5;
+  }
+
+  /* Press-in on tap */
+  .mobile-accordion-tile:active {
+    transform: scale(0.98) translateY(1px) !important;
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.12),
+      0 0 0 0 transparent,
+      0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition-duration: 0.06s !important;
+  }
+
+  .mobile-accordion-number {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    opacity: 0.5;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    transition:
+      font-size 0.3s ease,
+      opacity 0.3s ease;
+  }
+  /* Shrink number to a subtle badge when open */
+  .mobile-accordion-tile.is-open .mobile-accordion-number {
+    font-size: 11px;
+    opacity: 0.35;
+  }
+
+  .mobile-accordion-label {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    max-width: 200px;
+    overflow: hidden;
+    transition:
+      font-size 0.3s ease,
+      opacity 0.25s ease,
+      max-width 0.35s ease;
+  }
+  /* Label fades + collapses when open — section has its own title */
+  .mobile-accordion-tile.is-open .mobile-accordion-label {
+    font-size: 0;
+    max-width: 0;
+    opacity: 0;
+  }
+
+  /* Scribble preview — all lines, right-aligned column */
+  .mobile-accordion-preview {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-handwritten);
+    font-size: 13px;
+    line-height: 1.2;
+    opacity: 0.6;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .mobile-accordion-preview-line {
+    display: block;
+    text-align: right;
+  }
+  .mobile-accordion-preview strong {
+    font-weight: 800;
+    font-size: 1.3em;
+  }
+  /* Right-align Recipe & Equipment flex layouts inside preview */
+  .mobile-accordion-preview .sidebar-scribble-recipe-og {
+    justify-content: flex-end;
+  }
+  .mobile-accordion-preview .sidebar-scribble-equipment {
+    justify-content: flex-end;
+  }
+
+  /* Chevron indicator */
+  .mobile-accordion-chevron {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+  }
+  .mobile-accordion-tile.is-open .mobile-accordion-chevron {
+    opacity: 0.6;
+  }
+
+  /* ── Accordion body — grid-based collapse animation ── */
+  .mobile-accordion-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .mobile-accordion-body.is-open {
+    grid-template-rows: 1fr;
+  }
+  .mobile-accordion-body-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+  /* Add bottom spacing after expanded section content */
+  .mobile-accordion-body.is-open .mobile-accordion-body-inner {
+    padding-bottom: 8px;
+  }
+
+  /*
+   * Seamless strip-to-card join: when a section is open, the accent strip
+   * becomes the card's top edge. Remove top border-radius so they merge.
+   */
+  .mobile-accordion-body.is-open .brew-section {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin-top: 0;
+    border-top-color: transparent;
   }
 }
 
@@ -3421,5 +3714,11 @@
     animation: none !important;
     opacity: 0.75;
     transform: none !important;
+  }
+  .mobile-accordion-tile {
+    transition: none !important;
+  }
+  .mobile-accordion-body {
+    transition: none !important;
   }
 }

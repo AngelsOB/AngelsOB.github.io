@@ -332,6 +332,10 @@ export type RecipeCalculations = {
     lacticAcid88Ml: number;
     bakingSodaG: number;
   } | null;
+  /** Strike water temperature in Celsius (null if no mash steps) */
+  strikeTempC: number | null;
+  /** Pre-boil gravity (e.g., 1.042) */
+  preBoilGravity: number;
 };
 
 /**

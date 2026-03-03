@@ -50,12 +50,12 @@ export default function BoilOffCalculator() {
     <div className="brew-section" data-accent="mash">
       <div className="flex items-baseline gap-3 mb-2">
         <h2 className="brew-section-title">Boil-Off</h2>
-        <span className="text-xs text-muted">pre-boil gravity method</span>
+        <span className="text-xs text-muted">volume concentration</span>
       </div>
 
       <p className="text-sm text-muted mb-5 leading-relaxed">
-        Measure your pre-boil volume &amp; gravity, enter your target OG, and
-        see how far you need to boil down.
+        Pre-boil gravity came in low? Work out how much to boil down to
+        concentrate and land on your target OG.
       </p>
 
       {/* Inputs — 4 across on desktop, 2x2 on mobile */}
