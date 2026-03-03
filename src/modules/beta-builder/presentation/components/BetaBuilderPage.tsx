@@ -22,7 +22,8 @@ import { srmToRgb } from '../../utils/srmColorUtils';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
 import BrewDayChecklistSection from './BrewDayChecklistSection';
 import StickyStatsBar from './StickyStatsBar';
-import SectionSidebar, { SECTIONS, getScribbleLines } from './SectionSidebar';
+import SectionSidebar from './SectionSidebar';
+import { SECTIONS, getScribbleLines } from './sidebarData';
 import AnimatedValue from './AnimatedValue';
 import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
 
