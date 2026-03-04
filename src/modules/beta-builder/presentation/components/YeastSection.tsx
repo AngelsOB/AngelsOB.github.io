@@ -55,7 +55,6 @@ export default function YeastSection() {
     attenuation: [] as string[], // 'low', 'med', 'high'
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [isStarterOpen, setIsStarterOpen] = useState(false);
 
   // Load presets on mount
   useEffect(() => {
@@ -176,7 +175,7 @@ export default function YeastSection() {
           onAction={() => setIsPickerOpen(true)}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="yeast-stack">
           <YeastDisplay
             yeast={currentYeast}
             onChangeYeast={() => setIsPickerOpen(true)}
@@ -189,8 +188,6 @@ export default function YeastSection() {
               starterInfo={currentYeast.starter}
               batchVolumeL={currentRecipe?.batchVolumeL || 20}
               og={calculations.og}
-              isOpen={isStarterOpen}
-              onToggle={() => setIsStarterOpen(!isStarterOpen)}
               onStarterChange={handleStarterChange}
             />
           )}

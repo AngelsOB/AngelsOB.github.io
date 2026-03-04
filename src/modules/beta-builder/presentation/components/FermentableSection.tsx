@@ -33,6 +33,7 @@ export default function FermentableSection() {
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [editingFermentableId, setEditingFermentableId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   // Advanced Filters State
   const [activeFilters, setActiveFilters] = useState({
@@ -50,22 +51,42 @@ export default function FermentableSection() {
     loadFermentablePresets();
   }, [loadFermentablePresets]);
 
-  // Handle adding a fermentable from preset
-  const handleAddFromPreset = (preset: FermentablePreset) => {
-    const newFermentable: Fermentable = {
-      id: crypto.randomUUID(),
-      name: preset.name,
-      weightKg: 1.0, // Default weight
-      colorLovibond: preset.colorLovibond,
-      ppg: preset.potentialGu,
-      efficiencyPercent:
-        preset.type === "extract" || preset.type === "sugar" ? 100 : 75,
-      originCode: preset.originCode,
-      fermentability: getFermentability(preset),
-    };
-    addFermentable(newFermentable);
+  // Handle adding or swapping a fermentable from preset
+  const handleSelectPreset = (preset: FermentablePreset) => {
+    if (editingFermentableId) {
+      // Swap: keep the weight, update everything else
+      updateFermentable(editingFermentableId, {
+        name: preset.name,
+        colorLovibond: preset.colorLovibond,
+        ppg: preset.potentialGu,
+        efficiencyPercent:
+          preset.type === "extract" || preset.type === "sugar" ? 100 : 75,
+        originCode: preset.originCode,
+        fermentability: getFermentability(preset),
+      });
+    } else {
+      const newFermentable: Fermentable = {
+        id: crypto.randomUUID(),
+        name: preset.name,
+        weightKg: 1.0,
+        colorLovibond: preset.colorLovibond,
+        ppg: preset.potentialGu,
+        efficiencyPercent:
+          preset.type === "extract" || preset.type === "sugar" ? 100 : 75,
+        originCode: preset.originCode,
+        fermentability: getFermentability(preset),
+      };
+      addFermentable(newFermentable);
+    }
+    setEditingFermentableId(null);
     setIsPickerOpen(false);
     setSearchQuery("");
+  };
+
+  // Open picker to edit/swap a fermentable
+  const handleEditFermentable = (id: string) => {
+    setEditingFermentableId(id);
+    setIsPickerOpen(true);
   };
 
   // Handle saving a custom fermentable preset
@@ -269,10 +290,11 @@ export default function FermentableSection() {
             return (
               <div
                 key={fermentable.id}
-                className="brew-ingredient-row grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-2 lg:gap-2 items-center"
+                className="brew-ingredient-row flex items-center"
               >
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 gap-2 lg:gap-2 items-center flex-1 min-w-0">
                 {/* Name - full width on mobile, 4 cols on desktop */}
-                <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center justify-between">
+                <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center">
                   <span className="font-medium flex items-center gap-2">
                     <span
                       className="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10"
@@ -286,14 +308,6 @@ export default function FermentableSection() {
                       </span>
                     )}
                   </span>
-                  {/* Remove button - visible only on mobile, next to name */}
-                  <button
-                    onClick={() => removeFermentable(fermentable.id)}
-                    className="lg:hidden brew-danger-text text-xl font-bold"
-                    aria-label={`Remove ${fermentable.name}`}
-                  >
-                    ×
-                  </button>
                 </div>
 
                 {/* Weight/Percent - Inline Editable */}
@@ -397,15 +411,23 @@ export default function FermentableSection() {
                     </span>
                   )}
                 </div>
+                </div>{/* end grid */}
 
-                {/* Remove Button - hidden on mobile (shown next to name), visible on desktop */}
-                <div className="hidden lg:block lg:col-span-1 text-right">
+                {/* Hover-reveal actions — morphs inline */}
+                <div className="brew-row-actions">
+                  <button
+                    onClick={() => handleEditFermentable(fermentable.id)}
+                    className="brew-row-action-btn brew-link"
+                    aria-label={`Change ${fermentable.name}`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                  </button>
                   <button
                     onClick={() => removeFermentable(fermentable.id)}
-                    className="brew-danger-text text-xl font-bold"
+                    className="brew-row-action-btn brew-danger-text"
                     aria-label={`Remove ${fermentable.name}`}
                   >
-                    ×
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                   </button>
                 </div>
               </div>
@@ -425,9 +447,10 @@ export default function FermentableSection() {
         isOpen={isPickerOpen}
         onClose={() => {
           setIsPickerOpen(false);
+          setEditingFermentableId(null);
           setSearchQuery("");
         }}
-        title="Select Fermentable"
+        title={editingFermentableId ? "Swap Fermentable" : "Select Fermentable"}
         searchPlaceholder="Search fermentables..."
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -510,7 +533,7 @@ export default function FermentableSection() {
         renderItem={(preset) => (
           <button
             key={preset.name}
-            onClick={() => handleAddFromPreset(preset)}
+            onClick={() => handleSelectPreset(preset)}
             className="brew-picker-row flex justify-between items-center"
           >
             <span className="font-medium flex items-center gap-2">

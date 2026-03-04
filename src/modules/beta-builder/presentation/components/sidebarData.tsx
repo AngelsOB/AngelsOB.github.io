@@ -86,12 +86,18 @@ export function getScribbleLines(
       });
     }
     case "mash": {
-      if (recipe.mashSteps.length === 0) return [];
-      return recipe.mashSteps.map((s) => (
+      const lines: React.ReactNode[] = recipe.mashSteps.map((s) => (
         <>
           <strong>{s.temperatureC}</strong>°C · <strong>{s.durationMinutes}</strong>min
         </>
       ));
+      if (calculations?.strikeTempC != null)
+        lines.push(
+          <span className="sidebar-scribble-mash-strike">
+            Strike <strong>{calculations.strikeTempC.toFixed(1)}</strong>°C
+          </span>
+        );
+      return lines;
     }
     case "hops": {
       if (recipe.hops.length === 0) return [];
@@ -242,12 +248,6 @@ export function getScribbleLines(
     case "targets": {
       if (!calculations) return [];
       const lines: React.ReactNode[] = [];
-      if (calculations.strikeTempC != null)
-        lines.push(
-          <>
-            Strike <strong>{calculations.strikeTempC.toFixed(1)}</strong>°C
-          </>
-        );
       if (calculations.estimatedMashPh != null)
         lines.push(
           <>

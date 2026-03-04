@@ -4,6 +4,11 @@
  * Calculates yeast cell counts and starter requirements for pitching.
  * Supports multiple yeast types (liquid, dry, slurry) and multi-step starters.
  * Uses White and Braukaiser models for cell growth calculations.
+ *
+ * Layout (always visible, no collapse):
+ *  1. Yeast source controls (Type, Packs, Mfg Date) — attached to yeast card
+ *  2. Pitch rate metrics (Available, Required, Diff) — always visible
+ *  3. Starter steps + "+ Add Starter" button — like mash schedule
  */
 
 import { useMemo, useEffect, useState, useRef, useCallback } from "react";
@@ -11,43 +16,125 @@ import type { YeastType, StarterStep, StarterInfo } from "../../domain/models/Re
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
 
 interface StarterCalculatorProps {
-  /** Current starter info from yeast (for hydration) */
   starterInfo?: StarterInfo;
-  /** Batch volume in liters */
   batchVolumeL: number;
-  /** Original gravity for cell requirement calculation */
   og: number;
-  /** Whether the calculator is expanded */
-  isOpen: boolean;
-  /** Toggle open/closed state */
-  onToggle: () => void;
-  /** Callback when starter info changes */
   onStarterChange: (info: StarterInfo) => void;
+}
+
+/* ---- Datum-card helpers (equipment-style cards) ---- */
+
+function StarterDatum({
+  label,
+  value,
+  onChange,
+  step,
+  min,
+  type = "number",
+  options,
+  unit,
+  stepper,
+}: {
+  label: string;
+  value: number | string;
+  onChange: (v: any) => void;
+  step?: string;
+  min?: string;
+  type?: "number" | "date" | "select";
+  options?: { value: string; label: string }[];
+  unit?: string;
+  stepper?: boolean;
+}) {
+  const stepNum = step ? parseFloat(step) : 1;
+  const minNum = min !== undefined ? parseFloat(min) : -Infinity;
+  // Determine decimal places from step for clean rounding
+  const decimals = step ? (step.split(".")[1]?.length ?? 0) : 0;
+
+  const nudge = (dir: 1 | -1) => {
+    const next = parseFloat(String(value)) + dir * stepNum;
+    const rounded = parseFloat(next.toFixed(decimals));
+    if (rounded >= minNum) onChange(rounded);
+  };
+
+  return (
+    <div className="equip-datum is-small">
+      <span className="equip-datum-label">{label}</span>
+      <div className="equip-datum-value">
+        {type === "select" && options ? (
+          <select
+            className="equip-datum-input"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        ) : stepper ? (
+          <div className="starter-stepper">
+            <button type="button" className="starter-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`}>−</button>
+            <div className="starter-stepper-center">
+              <input
+                type="number"
+                className="equip-datum-input starter-stepper-input"
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                step={step}
+                min={min}
+              />
+              {unit && <span className="equip-datum-unit starter-stepper-unit">{unit}</span>}
+            </div>
+            <button type="button" className="starter-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`}>+</button>
+          </div>
+        ) : (
+          <input
+            type={type}
+            className="equip-datum-input"
+            value={value}
+            onChange={(e) => onChange(type === "number" ? Number(e.target.value) : e.target.value)}
+            step={step}
+            min={min}
+          />
+        )}
+        {!stepper && unit && <span className="equip-datum-unit">{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+function StarterReadout({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <div className="equip-datum is-small starter-readout">
+      <span className="equip-datum-label">{label}</span>
+      <div className="equip-datum-value">
+        <span className="starter-readout-value">{value}</span>
+        <span className="equip-datum-unit">{unit}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function StarterCalculator({
   starterInfo,
   batchVolumeL,
   og,
-  isOpen,
-  onToggle,
   onStarterChange,
 }: StarterCalculatorProps) {
-  // Starter state
   const [yeastType, setYeastType] = useState<YeastType>(starterInfo?.yeastType ?? "liquid-100");
   const [packs, setPacks] = useState<number>(starterInfo?.packs ?? 1);
   const [mfgDate, setMfgDate] = useState<string>(starterInfo?.mfgDate ?? "");
   const [slurryLiters, setSlurryLiters] = useState<number>(starterInfo?.slurryLiters ?? 0);
-  const [slurryBillionPerMl, setSlurryBillionPerMl] = useState<number>(starterInfo?.slurryBillionPerMl ?? 1);
+  const [slurryBillionPerMl, setSlurryBillionPerMl] = useState<number>(
+    starterInfo?.slurryBillionPerMl ?? 1
+  );
   const [steps, setSteps] = useState<StarterStep[]>(starterInfo?.steps ?? []);
 
-  // Track whether we're hydrating from prop to avoid re-notifying parent
   const isHydrating = useRef(false);
-
-  // Hydrate state from starterInfo prop (only on initial mount or when prop identity truly changes from outside)
   const prevStarterInfoRef = useRef(starterInfo);
+
   useEffect(() => {
-    // Skip if starterInfo hasn't actually changed from outside
     if (starterInfo === prevStarterInfoRef.current) return;
     prevStarterInfoRef.current = starterInfo;
 
@@ -59,16 +146,15 @@ export default function StarterCalculator({
       setSlurryLiters(starterInfo.slurryLiters || 0);
       setSlurryBillionPerMl(starterInfo.slurryBillionPerMl || 1);
       setSteps(starterInfo.steps);
-      // Reset hydrating flag after React processes the state updates
-      queueMicrotask(() => { isHydrating.current = false; });
+      queueMicrotask(() => {
+        isHydrating.current = false;
+      });
     }
   }, [starterInfo]);
 
-  // Stable ref to onStarterChange to avoid effect re-fires
   const onStarterChangeRef = useRef(onStarterChange);
   onStarterChangeRef.current = onStarterChange;
 
-  // Notify parent when starter info changes (but not during hydration from prop)
   const notifyParent = useCallback(() => {
     if (isHydrating.current) return;
     onStarterChangeRef.current({
@@ -81,13 +167,11 @@ export default function StarterCalculator({
     });
   }, [yeastType, packs, mfgDate, slurryLiters, slurryBillionPerMl, steps]);
 
+  /* Always notify parent when anything changes */
   useEffect(() => {
-    if (isOpen) {
-      notifyParent();
-    }
-  }, [notifyParent, isOpen]);
+    notifyParent();
+  }, [notifyParent]);
 
-  // Calculate starter results
   const starterResults = useMemo(() => {
     return starterCalculationService.calculateStarter(
       batchVolumeL,
@@ -101,35 +185,38 @@ export default function StarterCalculator({
     );
   }, [batchVolumeL, og, yeastType, packs, mfgDate, slurryLiters, slurryBillionPerMl, steps]);
 
-  const diffB = starterResults.cellsAvailableB - starterResults.requiredCellsB;
-  const finalDiffB = starterResults.finalEndB - starterResults.requiredCellsB;
+  const hasSteps = steps.length > 0;
+  const availB = hasSteps ? starterResults.finalEndB : starterResults.cellsAvailableB;
+  const cellDiff = availB - starterResults.requiredCellsB;
+  const underpitched = cellDiff < 0;
 
-  // Summary text for collapsed state
-  const summaryText = useMemo(() => {
-    if (isOpen) return "";
-
-    const yeastInfo = (() => {
-      if (yeastType === "slurry") {
-        return `Slurry ${slurryLiters.toFixed(1)} L @ ${slurryBillionPerMl.toFixed(1)} B/mL`;
-      }
-      if (yeastType === "dry") {
-        const n = Math.max(0, Math.floor(packs));
-        return `Dry ${n}×11g`;
-      }
-      const label = yeastType === "liquid-200" ? "Liquid (200B)" : "Liquid (100B)";
-      const n = Math.max(0, Math.floor(packs));
-      const mfgPart = mfgDate ? `(Mfg ${mfgDate})` : "";
-      return `${n} pack${n === 1 ? "" : "s"} of ${label} ${mfgPart}`;
-    })();
-
-    if (starterResults.totalStarterL > 0 && steps.length > 0) {
-      const last = steps[steps.length - 1];
-      const starterInfo = `${last.liters.toFixed(1)}L @ ${Number(last.gravity).toFixed(3)}`;
-      return `${yeastInfo} in a ${starterInfo} starter`;
+  /* Flash metrics when underlying values change (skip first render) */
+  const [metricFlash, setMetricFlash] = useState(false);
+  const prevMetricKey = useRef("");
+  useEffect(() => {
+    const key = `${starterResults.cellsAvailableB}|${starterResults.requiredCellsB}|${starterResults.finalEndB}`;
+    if (prevMetricKey.current && prevMetricKey.current !== key) {
+      setMetricFlash(true);
+      const timer = setTimeout(() => setMetricFlash(false), 500);
+      return () => clearTimeout(timer);
     }
+    prevMetricKey.current = key;
+  }, [starterResults]);
 
-    return yeastInfo;
-  }, [isOpen, starterResults, steps, yeastType, packs, slurryLiters, slurryBillionPerMl, mfgDate]);
+  /* Shared model for all steps — derived from first step or default */
+  const modelToStr = (m: StarterStep["model"]) =>
+    m.kind === "white" ? `white-${m.aeration}` : "braukaiser";
+  const strToModel = (v: string): StarterStep["model"] =>
+    v.startsWith("white-")
+      ? { kind: "white" as const, aeration: v.replace("white-", "") as "none" | "shaking" }
+      : { kind: "braukaiser" as const };
+
+  const starterModelStr = steps.length > 0 ? modelToStr(steps[0].model) : "white-shaking";
+
+  const handleModelChange = (v: string) => {
+    const newModel = strToModel(v);
+    setSteps((xs) => xs.map((x) => ({ ...x, model: newModel })));
+  };
 
   const handleAddStep = () => {
     if (steps.length >= 3) return;
@@ -139,7 +226,7 @@ export default function StarterCalculator({
         id: crypto.randomUUID(),
         liters: 2,
         gravity: 1.036,
-        model: { kind: "white", aeration: "shaking" },
+        model: strToModel(starterModelStr),
       },
     ]);
   };
@@ -149,282 +236,174 @@ export default function StarterCalculator({
   };
 
   const handleUpdateStep = (stepId: string, updates: Partial<StarterStep>) => {
-    setSteps((xs) =>
-      xs.map((x) => (x.id === stepId ? { ...x, ...updates } : x))
-    );
+    setSteps((xs) => xs.map((x) => (x.id === stepId ? { ...x, ...updates } : x)));
   };
 
+  const mc = "starter-metric" + (metricFlash ? " is-flash" : "");
+
   return (
-    <div className="rounded-lg" style={{ border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
-      <div className="flex items-center justify-between p-4 rounded-t-lg" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', borderBottom: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
-        <div className="flex items-center gap-3">
-          <span className="font-medium" style={{ color: 'var(--fg-strong)' }}>Pitch Rate & Starter</span>
-          {!isOpen && summaryText && (
-            <span className="text-xs font-medium text-muted">{summaryText}</span>
+    <>
+      {/* ① Yeast source — always visible, fused into yeast card */}
+      <div className="starter-source-bar">
+        <div className="starter-input-grid">
+          <StarterDatum
+            label="Type"
+            type="select"
+            value={yeastType}
+            onChange={(v) => setYeastType(v as YeastType)}
+            options={[
+              { value: "liquid-100", label: "Liquid 100B" },
+              { value: "liquid-200", label: "Liquid 200B" },
+              { value: "dry", label: "Dry 11g" },
+              { value: "slurry", label: "Slurry" },
+            ]}
+          />
+
+          {yeastType === "slurry" ? (
+            <>
+              <StarterDatum
+                label="Amount"
+                unit="L"
+                value={slurryLiters}
+                onChange={setSlurryLiters}
+                step="0.1"
+                min="0"
+              />
+              <StarterDatum
+                label="Density"
+                unit="B/mL"
+                value={slurryBillionPerMl}
+                onChange={setSlurryBillionPerMl}
+                step="0.1"
+                min="0"
+              />
+            </>
+          ) : yeastType === "dry" ? (
+            <StarterDatum label="Packs" value={packs} onChange={setPacks} step="1" min="0" />
+          ) : (
+            <>
+              <StarterDatum label="Packs" value={packs} onChange={setPacks} step="1" min="0" />
+              <StarterDatum label="Mfg Date" type="date" value={mfgDate} onChange={setMfgDate} />
+            </>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="brew-btn-ghost text-xs"
-        >
-          {isOpen ? "Hide Calculator" : "Show Calculator"}
-        </button>
       </div>
 
-      {isOpen && (
-        <div className="p-4 space-y-4">
-          {/* Part 1: Cells */}
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
-            <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>Part 1: Cells</div>
-
-            {/* Package inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-              <label className="block">
-                <div className="text-xs font-semibold mb-1">Package Type</div>
-                <select
-                  className="brew-input w-full"
-                  value={yeastType}
-                  onChange={(e) => setYeastType(e.target.value as YeastType)}
-                >
-                  <option value="liquid-100">Liquid (100B)</option>
-                  <option value="liquid-200">Liquid (200B)</option>
-                  <option value="dry">Dry (11g pkt)</option>
-                  <option value="slurry">Slurry</option>
-                </select>
-              </label>
-
-              {yeastType === "slurry" ? (
-                <>
-                  <label className="block">
-                    <div className="text-xs font-semibold mb-1">
-                      Slurry Amount (L)
-                    </div>
-                    <input
-                      className="brew-input w-full"
-                      type="number"
-                      step={0.1}
-                      min={0}
-                      value={slurryLiters}
-                      onChange={(e) => setSlurryLiters(Number(e.target.value))}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-xs font-semibold mb-1">
-                      Density (B/mL)
-                    </div>
-                    <input
-                      className="brew-input w-full"
-                      type="number"
-                      step={0.1}
-                      min={0}
-                      value={slurryBillionPerMl}
-                      onChange={(e) =>
-                        setSlurryBillionPerMl(Number(e.target.value))
-                      }
-                    />
-                  </label>
-                </>
-              ) : yeastType === "dry" ? (
-                <label className="block">
-                  <div className="text-xs font-semibold mb-1">Packs</div>
-                  <input
-                    className="brew-input w-full"
-                    type="number"
-                    step={1}
-                    min={0}
-                    value={packs}
-                    onChange={(e) => setPacks(Number(e.target.value))}
-                  />
-                </label>
-              ) : (
-                <>
-                  <label className="block">
-                    <div className="text-xs font-semibold mb-1">Packs</div>
-                    <input
-                      className="brew-input w-full"
-                      type="number"
-                      step={1}
-                      min={0}
-                      value={packs}
-                      onChange={(e) => setPacks(Number(e.target.value))}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="text-xs font-semibold mb-1">Mfg Date</div>
-                    <input
-                      className="brew-input w-full"
-                      type="date"
-                      value={mfgDate}
-                      onChange={(e) => setMfgDate(e.target.value)}
-                    />
-                  </label>
-                </>
-              )}
-            </div>
-
-            {/* Cell counts */}
-            <div className="text-sm flex flex-wrap gap-x-6 gap-y-2">
-              <span>
-                <span className="text-muted">Available:</span>{" "}
-                <span className="font-semibold">
-                  {starterResults.cellsAvailableB.toFixed(0)} B
-                </span>
-              </span>
-              <span>
-                <span className="text-muted">Required:</span>{" "}
-                <span className="font-semibold">
-                  {starterResults.requiredCellsB.toFixed(0)} B
-                </span>
-              </span>
-              <span>
-                <span className="text-muted">Diff:</span>{" "}
-                <span
-                  className={`font-semibold ${diffB < 0 ? "brew-danger-text" : ""}`}
-                  style={diffB >= 0 ? { color: 'var(--brew-success)' } : undefined}
-                >
-                  {(diffB >= 0 ? "+" : "") + diffB.toFixed(0)} B
-                </span>
-              </span>
-            </div>
-          </div>
-
-          {/* Part 2: Starter Steps */}
-          <div className="rounded-lg p-4 space-y-3" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.25))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
-            <div className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
-              Part 2: Starter (up to 3 steps)
-            </div>
-
-            <div className="space-y-3">
-              {steps.map((s, i) => {
-                const res = starterResults.stepResults[i];
-                return (
-                  <div
-                    key={s.id}
-                    className="grid grid-cols-1 gap-3 items-end sm:grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_auto]"
-                  >
-                    <div className="text-xs font-semibold">Step {i + 1}</div>
-
-                    <label className="block">
-                      <div className="text-xs font-semibold mb-1">Size (L)</div>
-                      <input
-                        className="brew-input w-full"
-                        type="number"
-                        step={0.1}
-                        value={s.liters}
-                        onChange={(e) =>
-                          handleUpdateStep(s.id, {
-                            liters: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </label>
-
-                    <label className="block">
-                      <div className="text-xs font-semibold mb-1">
-                        Gravity (SG)
-                      </div>
-                      <input
-                        className="brew-input w-full"
-                        type="number"
-                        step={0.001}
-                        value={s.gravity}
-                        onChange={(e) =>
-                          handleUpdateStep(s.id, {
-                            gravity: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </label>
-
-                    <label className="block">
-                      <div className="text-xs font-semibold mb-1">Model</div>
-                      <select
-                        className="brew-input w-full"
-                        value={
-                          s.model.kind === "white"
-                            ? `white-${s.model.aeration}`
-                            : "braukaiser"
-                        }
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          const newModel = v.startsWith("white-")
-                            ? {
-                                kind: "white" as const,
-                                aeration: v.replace("white-", "") as
-                                  | "none"
-                                  | "shaking",
-                              }
-                            : { kind: "braukaiser" as const };
-                          handleUpdateStep(s.id, { model: newModel });
-                        }}
-                      >
-                        <option value="white-none">No agitation</option>
-                        <option value="white-shaking">Shaking</option>
-                        <option value="braukaiser">Stir Plate</option>
-                      </select>
-                    </label>
-
-                    <div className="rounded-md px-3 py-2" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
-                      <div className="text-[11px] text-muted">DME (g)</div>
-                      <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
-                        {res?.dmeGrams.toFixed(0) ?? "–"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-md px-3 py-2" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))' }}>
-                      <div className="text-[11px] text-muted">End (B)</div>
-                      <div className="font-semibold text-sm" style={{ color: 'var(--fg-strong)' }}>
-                        {res?.endBillion.toFixed(0) ?? "–"}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      aria-label={`Remove step ${i + 1}`}
-                      className="p-2 brew-danger-text opacity-60 hover:opacity-100 transition-opacity"
-                      onClick={() => handleRemoveStep(s.id)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                );
-              })}
-
-              {steps.length > 0 && (
-                <div className="text-sm flex justify-end gap-x-6">
-                  <span>
-                    <span className="text-muted">Final:</span>{" "}
-                    <span className="font-semibold">
-                      {starterResults.finalEndB.toFixed(0)} B
-                    </span>
-                  </span>
-                  <span>
-                    <span className="text-muted">Diff:</span>{" "}
-                    <span
-                      className={`font-semibold ${finalDiffB < 0 ? "brew-danger-text" : ""}`}
-                      style={finalDiffB >= 0 ? { color: 'var(--brew-success)' } : undefined}
-                    >
-                      {(finalDiffB >= 0 ? "+" : "") + finalDiffB.toFixed(0)} B
-                    </span>
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-start">
-                <button
-                  type="button"
-                  className="brew-btn-ghost text-xs"
-                  onClick={handleAddStep}
-                  disabled={steps.length >= 3}
-                >
-                  + Add Step
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* ② Pitch rate metrics — always visible */}
+      <div className="starter-dashboard">
+        <div className={mc}>
+          <span className="starter-metric-label">Cells Available</span>
+          <span className="starter-metric-value">
+            {availB.toFixed(0)}
+            <span className="starter-metric-unit"> B</span>
+          </span>
         </div>
-      )}
-    </div>
+        <div className={mc}>
+          <span className="starter-metric-label">Cells Required</span>
+          <span className="starter-metric-value">
+            {starterResults.requiredCellsB.toFixed(0)}
+            <span className="starter-metric-unit"> B</span>
+          </span>
+        </div>
+        <div className={mc + (underpitched ? " is-danger" : "")}>
+          <span className="starter-metric-label">Diff</span>
+          <span
+            className="starter-metric-value"
+            style={{ color: cellDiff >= 0 ? "var(--brew-success)" : undefined }}
+          >
+            <span className={underpitched ? "brew-danger-text" : ""}>
+              {(cellDiff >= 0 ? "+" : "") + cellDiff.toFixed(0)}
+              <span className="starter-metric-unit"> B</span>
+            </span>
+          </span>
+          {underpitched && <span className="starter-warning">Need a starter!</span>}
+        </div>
+      </div>
+
+      {/* ③ Starter steps — always visible, like mash schedule */}
+      <div className="starter-steps-section">
+        {hasSteps && (
+          <div className="starter-sub-label starter-sub-header">
+            <span>Starter</span>
+            <span className="starter-sub-sep">–</span>
+            <select
+              className="starter-model-select"
+              value={starterModelStr}
+              onChange={(e) => handleModelChange(e.target.value)}
+            >
+              <option value="white-none">No Agitation</option>
+              <option value="white-shaking">Shaking</option>
+              <option value="braukaiser">Stir Plate</option>
+            </select>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {steps.map((s, i) => {
+            const res = starterResults.stepResults[i];
+            return (
+              <div key={s.id} className="starter-step-row">
+                <span className="starter-step-num">{i + 1}</span>
+
+                <StarterDatum
+                  label="Size"
+                  unit="L"
+                  value={s.liters}
+                  onChange={(v) => handleUpdateStep(s.id, { liters: v })}
+                  step="0.1"
+                  min="0.1"
+                  stepper
+                />
+
+                <StarterDatum
+                  label="Gravity"
+                  value={s.gravity}
+                  onChange={(v) => handleUpdateStep(s.id, { gravity: v })}
+                  step="0.001"
+                  min="1.000"
+                  stepper
+                />
+
+                <StarterReadout label="DME" value={res?.dmeGrams.toFixed(0) ?? "–"} unit="g" />
+
+                <div className="brew-row-actions">
+                  <button
+                    type="button"
+                    aria-label={`Remove step ${i + 1}`}
+                    className="brew-row-action-btn brew-danger-text"
+                    onClick={() => handleRemoveStep(s.id)}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          <button
+            type="button"
+            className={
+              "brew-btn-primary w-full" + (!underpitched ? " starter-add-faded" : "")
+            }
+            onClick={handleAddStep}
+            disabled={steps.length >= 3}
+          >
+            + Add Starter Step
+          </button>
+        </div>
+      </div>
+    </>
   );
 }

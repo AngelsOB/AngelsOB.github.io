@@ -122,27 +122,16 @@ export default function OtherIngredientsPanel({
                 </select>
               </div>
 
-              {/* Remove */}
-              <button
-                onClick={() => onRemove(ing.id)}
-                className="p-1 brew-danger-text transition shrink-0"
-                aria-label={`Remove ${ing.name}`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-4 h-4"
+              {/* Hover-reveal actions */}
+              <div className="brew-row-actions">
+                <button
+                  onClick={() => onRemove(ing.id)}
+                  className="brew-row-action-btn brew-danger-text"
+                  aria-label={`Remove ${ing.name}`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>

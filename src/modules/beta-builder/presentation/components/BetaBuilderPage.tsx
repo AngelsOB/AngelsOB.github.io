@@ -254,7 +254,7 @@ export default function BetaBuilderPage() {
         </>
       )}
         {/* Header */}
-        <div className="mb-8 brew-animate-in">
+        <div className="mb-8">
           <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
             <div>
               <button
@@ -279,22 +279,28 @@ export default function BetaBuilderPage() {
           </div>
         </div>
 
-        <div className={isReadOnly ? 'pointer-events-none opacity-90' : ''}>
-        {/* Recipe Name & Metadata */}
-        <AccordionSection sectionKey="recipe" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-        <div className="brew-section brew-animate-in brew-stagger-1 space-y-5">
-          <div>
-            <label htmlFor="recipe-name" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
-              Recipe Name
-            </label>
-            <input
-              id="recipe-name"
-              type="text"
-              value={currentRecipe.name}
-              onChange={(e) => updateRecipe({ name: e.target.value })}
-              className="brew-input w-full text-lg font-semibold"
-            />
+        <div className={`brew-main-fade-in ${isReadOnly ? 'pointer-events-none opacity-90' : ''}`}>
+        {currentRecipe?.name && (
+          <div className="mobile-sidebar-title">
+            <span>{currentRecipe.name}</span>
           </div>
+        )}
+        {/* Recipe Name & Metadata */}
+        <div>
+          <AccordionSection sectionKey="recipe" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <div className="brew-section space-y-5">
+            <div>
+              <label htmlFor="recipe-name" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
+                Recipe Name
+              </label>
+              <input
+                id="recipe-name"
+                type="text"
+                value={currentRecipe.name}
+                onChange={(e) => updateRecipe({ name: e.target.value })}
+                className="brew-input w-full text-lg font-semibold"
+              />
+            </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -428,66 +434,85 @@ export default function BetaBuilderPage() {
               className="brew-journal"
             />
           </div>
+          </div>
+          </AccordionSection>
         </div>
-        </AccordionSection>
 
         {/* Equipment Profile */}
-        <AccordionSection sectionKey="equipment" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <EquipmentSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="equipment" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <EquipmentSection />
+          </AccordionSection>
+        </div>
 
         {/* Fermentables */}
-        <AccordionSection sectionKey="grain" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <FermentableSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="grain" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <FermentableSection />
+          </AccordionSection>
+        </div>
 
         {/* Mash Schedule */}
-        <AccordionSection sectionKey="mash" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <MashScheduleSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="mash" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <MashScheduleSection />
+          </AccordionSection>
+        </div>
 
         {/* Hops */}
-        <AccordionSection sectionKey="hops" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <HopSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="hops" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <HopSection />
+          </AccordionSection>
+        </div>
 
         {/* Yeast */}
-        <AccordionSection sectionKey="yeast" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <YeastSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="yeast" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <YeastSection />
+          </AccordionSection>
+        </div>
 
         {/* Water */}
-        <AccordionSection sectionKey="water" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <WaterSection calculations={calculations} recipe={currentRecipe} />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="water" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <WaterSection calculations={calculations} recipe={currentRecipe} />
+          </AccordionSection>
+        </div>
 
         {/* Fermentation */}
-        <AccordionSection sectionKey="fermentation" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <FermentationSection />
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="fermentation" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            <FermentationSection />
+          </AccordionSection>
+        </div>
 
         {/* Brew Day Targets */}
-        <AccordionSection sectionKey="targets" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          {currentRecipe && <BrewDayChecklistSection recipe={currentRecipe} calculations={calculations} />}
-        </AccordionSection>
+        <div>
+          <AccordionSection sectionKey="targets" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+            {currentRecipe && <BrewDayChecklistSection recipe={currentRecipe} calculations={calculations} />}
+          </AccordionSection>
+        </div>
 
         {/* Save Button */}
-          {!isReadOnly && (
-        <div className="brew-section brew-animate-in brew-stagger-9 flex gap-3">
-          <button
-            onClick={() => navigate('/recipes')}
-            className="brew-btn-ghost flex-1 py-3"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="brew-btn-primary flex-1 py-3 text-base"
-          >
-            Save & Close
-          </button>
+        {!isReadOnly && (
+          <div>
+            <div className="brew-section flex gap-3">
+              <button
+                onClick={() => navigate('/recipes')}
+                className="brew-btn-ghost flex-1 py-3"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="brew-btn-primary flex-1 py-3 text-base"
+              >
+                Save & Close
+              </button>
             </div>
-          )}
+          </div>
+        )}
         </div>
 
       {/* Style Selector Modal */}
