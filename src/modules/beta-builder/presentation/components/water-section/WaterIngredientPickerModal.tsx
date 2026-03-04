@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Water Ingredient Picker Modal Component
  *

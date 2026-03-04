@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Hop Section Component
  *

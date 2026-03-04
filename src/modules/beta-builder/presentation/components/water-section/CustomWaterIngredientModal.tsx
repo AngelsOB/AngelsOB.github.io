@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Custom Water Ingredient Modal Component
  *

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 /**
  * Inline hop cone SVG — geometric, craft-brewery feel.
@@ -121,7 +121,7 @@ export default function Logo({ size = "default" }: { size?: "default" | "sm" }) 
       : "text-lg sm:text-xl font-semibold tracking-tight";
 
   return (
-    <Link to="/" className="group inline-flex items-center gap-1.5">
+    <Link href="/" className="group inline-flex items-center gap-1.5">
       <span
         className="transition-transform duration-300 ease-out group-hover:rotate-[-12deg] group-hover:scale-110"
         style={{ color: 'var(--coral-500)' }}

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Beta Builder Page
  *
@@ -6,7 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useRouter } from "next/navigation";
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
 import FermentableSection from './FermentableSection';
@@ -122,7 +124,7 @@ function AccordionSection({
 
 export default function BetaBuilderPage() {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     currentRecipe,
     createNewRecipe,
@@ -217,7 +219,7 @@ export default function BetaBuilderPage() {
           <div className="text-center">
             <p className="mb-4">Version not found.</p>
             <button
-              onClick={() => navigate('/recipes')}
+              onClick={() => router.push('/recipes')}
               className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
             >
               Back to Recipes
@@ -232,7 +234,7 @@ export default function BetaBuilderPage() {
 
   const handleSave = () => {
     saveCurrentRecipe();
-    navigate('/recipes');
+    router.push('/recipes');
   };
 
   return (
@@ -258,7 +260,7 @@ export default function BetaBuilderPage() {
           <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
             <div>
               <button
-                onClick={() => navigate('/recipes')}
+                onClick={() => router.push('/recipes')}
                 className="text-sm font-medium mb-3 flex items-center gap-1.5 transition-colors"
                 style={{ color: 'var(--brew-accent-600)' }}
               >
@@ -270,7 +272,7 @@ export default function BetaBuilderPage() {
             </div>
             {isReadOnly && id && (
               <button
-                onClick={() => navigate(`/recipes/${id}`)}
+                onClick={() => router.push(`/recipes/${id}`)}
                 className="brew-btn-ghost"
               >
                 Open Current Recipe
@@ -499,7 +501,7 @@ export default function BetaBuilderPage() {
           <div>
             <div className="brew-section flex gap-3">
               <button
-                onClick={() => navigate('/recipes')}
+                onClick={() => router.push('/recipes')}
                 className="brew-btn-ghost flex-1 py-3"
               >
                 Cancel

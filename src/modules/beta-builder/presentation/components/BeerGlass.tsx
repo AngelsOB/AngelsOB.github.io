@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * BeerGlass — SVG pint glass visualization colored by SRM value.
  *

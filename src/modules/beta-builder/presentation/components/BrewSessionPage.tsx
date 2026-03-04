@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Brew Session Tracker Page
  *
@@ -6,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useRouter } from "next/navigation";
 import { useBrewSessionStore } from '../stores/brewSessionStore';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
@@ -26,7 +28,7 @@ import {
 
 export default function BrewSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     loadSession,
     currentSession,
@@ -170,7 +172,7 @@ export default function BrewSessionPage() {
 
   const handleSave = () => {
     saveCurrentSession();
-    navigate('/recipes');
+    router.push('/recipes');
   };
 
   const handleNotesChange = (notes: string) => {

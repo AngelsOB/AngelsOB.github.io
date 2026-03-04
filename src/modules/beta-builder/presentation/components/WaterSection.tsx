@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Water Section Component
  *

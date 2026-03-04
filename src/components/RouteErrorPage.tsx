@@ -1,26 +1,15 @@
-import { useRouteError, isRouteErrorResponse, useNavigate } from "react-router-dom";
+'use client';
 
-export default function RouteErrorPage() {
-  const error = useRouteError();
-  const navigate = useNavigate();
+import { useRouter } from "next/navigation";
 
-  let title = "Something went wrong";
-  let message = "An unexpected error occurred.";
-
-  if (isRouteErrorResponse(error)) {
-    if (error.status === 404) {
-      title = "Page not found";
-      message = "The page you're looking for doesn't exist.";
-    } else if (error.status === 500) {
-      title = "Server error";
-      message = "Something went wrong on our end.";
-    } else {
-      title = `Error ${error.status}`;
-      message = error.statusText || message;
-    }
-  } else if (error instanceof Error) {
-    message = import.meta.env.DEV ? error.message : message;
-  }
+export default function RouteErrorPage({
+  title = "Something went wrong",
+  message = "An unexpected error occurred.",
+}: {
+  title?: string;
+  message?: string;
+}) {
+  const router = useRouter();
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-[rgb(var(--bg))] px-4 text-center text-[rgb(var(--text))]">
@@ -43,20 +32,15 @@ export default function RouteErrorPage() {
         <h1 className="text-2xl font-bold text-[var(--fg-strong)]">{title}</h1>
         <p className="mt-2 max-w-md text-[var(--fg-muted)]">{message}</p>
       </div>
-      {import.meta.env.DEV && error instanceof Error && (
-        <pre className="max-w-full overflow-auto rounded-lg bg-red-500/10 p-4 text-left text-sm text-red-400">
-          {error.stack}
-        </pre>
-      )}
       <div className="flex gap-4">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => router.back()}
           className="btn-outline"
         >
           Go back
         </button>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => router.push("/")}
           className="btn-neon"
         >
           Go home

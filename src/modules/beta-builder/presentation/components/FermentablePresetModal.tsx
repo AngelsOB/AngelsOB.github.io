@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Fermentable Preset Modal Component
  *

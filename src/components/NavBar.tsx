@@ -1,64 +1,69 @@
+'use client';
+
 import { useState, useRef, useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import Logo from "./Logo";
 
 const navLinks = [
-  { to: "/calculators", label: "Calculators" },
-  { to: "/recipes", label: "Recipes" },
+  { href: "/calculators", label: "Calculators" },
+  { href: "/recipes", label: "Recipes" },
 ] as const;
 
 function NavLinkItem({
-  to,
+  href,
   label,
   onClick,
 }: {
-  to: string;
+  href: string;
   label: string;
   onClick?: () => void;
 }) {
+  const pathname = usePathname();
+  const isActive = pathname.startsWith(href);
+
   return (
-    <NavLink
-      to={to}
+    <Link
+      href={href}
       onClick={onClick}
-      className={({ isActive }) =>
-        [
-          "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-          isActive
-            ? "bg-[color-mix(in_oklch,var(--coral-600)_15%,transparent)] text-[var(--coral-600)]"
-            : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)]",
-        ].join(" ")
-      }
+      className={[
+        "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+        isActive
+          ? "bg-[color-mix(in_oklch,var(--coral-600)_15%,transparent)] text-[var(--coral-600)]"
+          : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_8%,transparent)]",
+      ].join(" ")}
     >
       {label}
-    </NavLink>
+    </Link>
   );
 }
 
 function MobileNavLinkItem({
-  to,
+  href,
   label,
   onClick,
 }: {
-  to: string;
+  href: string;
   label: string;
   onClick?: () => void;
 }) {
+  const pathname = usePathname();
+  const isActive = pathname.startsWith(href);
+
   return (
-    <NavLink
-      to={to}
+    <Link
+      href={href}
       onClick={onClick}
-      className={({ isActive }) =>
-        [
-          "block px-4 py-3 text-base font-medium transition-colors",
-          isActive
-            ? "bg-[color-mix(in_oklch,var(--coral-600)_12%,transparent)] text-[var(--coral-600)] border-l-2 border-[var(--coral-600)]"
-            : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]",
-        ].join(" ")
-      }
+      className={[
+        "block px-4 py-3 text-base font-medium transition-colors",
+        isActive
+          ? "bg-[color-mix(in_oklch,var(--coral-600)_12%,transparent)] text-[var(--coral-600)] border-l-2 border-[var(--coral-600)]"
+          : "text-[var(--fg-muted)] hover:text-[var(--fg-strong)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]",
+      ].join(" ")}
     >
       {label}
-    </NavLink>
+    </Link>
   );
 }
 
@@ -113,7 +118,7 @@ export default function NavBar() {
           {/* Desktop navigation */}
           <div className="hidden sm:flex sm:items-center sm:gap-1">
             {navLinks.map((link) => (
-              <NavLinkItem key={link.to} to={link.to} label={link.label} />
+              <NavLinkItem key={link.href} href={link.href} label={link.label} />
             ))}
             <div className="ml-2 pl-2 border-l border-[rgb(var(--border))]">
               <ThemeToggle />
@@ -178,8 +183,8 @@ export default function NavBar() {
           <div className="py-2">
             {navLinks.map((link) => (
               <MobileNavLinkItem
-                key={link.to}
-                to={link.to}
+                key={link.href}
+                href={link.href}
                 label={link.label}
                 onClick={closeMobileMenu}
               />

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * AnimatedValue — Smoothly interpolates between number values.
  *

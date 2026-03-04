@@ -1,3 +1,5 @@
+'use client';
+
 // DualUnitInput component with direct unit operation
 import { useEffect, useState } from "react";
 

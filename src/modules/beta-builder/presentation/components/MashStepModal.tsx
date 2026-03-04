@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Mash Step Modal Component
  *

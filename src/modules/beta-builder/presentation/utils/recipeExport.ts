@@ -1,3 +1,5 @@
+'use client';
+
 import type { Recipe, RecipeCalculations, Hop, BrewDayStage, BrewDayChecklistItem } from "../../domain/models/Recipe";
 import { recipeCalculationService, RecipeCalculationService } from "../../domain/services/RecipeCalculationService";
 import { beerXmlExportService } from "../../domain/services/BeerXmlExportService";
