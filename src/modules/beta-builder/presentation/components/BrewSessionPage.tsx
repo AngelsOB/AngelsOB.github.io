@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useBrewSessionStore } from '../stores/brewSessionStore';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
+import { useAuthStore } from '../../../auth/authStore';
 import type { SessionStatus } from '../../domain/models/BrewSession';
 import { type Recipe, type RecipeVersion, deepCloneRecipe } from '../../domain/models/Recipe';
 import { waterChemistryService } from '../../domain/services/WaterChemistryService';
@@ -42,16 +43,18 @@ export default function BrewSessionPage() {
     setCurrentRecipe: setEditorRecipe,
     updateRecipe: updateEditorRecipe,
   } = useRecipeStore();
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
   const saveTimerRef = useRef<number | null>(null);
   const hasPendingSaveRef = useRef(false);
   const editorSnapshotRef = useRef<Recipe | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (sessionId) {
       loadSession(sessionId);
     }
-  }, [sessionId, loadSession]);
+  }, [sessionId, isAuthLoading, loadSession]);
 
   // Update document title with session recipe name
   useEffect(() => {
