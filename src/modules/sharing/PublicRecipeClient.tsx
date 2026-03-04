@@ -11,11 +11,8 @@ import {
   getDoc,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { RecipeCalculationService } from '@/modules/beta-builder/domain/services/RecipeCalculationService';
 import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
-import PublicRecipeView from './PublicRecipeView';
-
-const calcService = new RecipeCalculationService();
+import BetaBuilderPage from '@/modules/beta-builder/presentation/components/BetaBuilderPage';
 
 export default function PublicRecipeClient({ slug }: { slug: string }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -103,15 +100,5 @@ export default function PublicRecipeClient({ slug }: { slug: string }) {
     );
   }
 
-  const calculations = calcService.calculate(recipe);
-
-  return (
-    <div className="px-4 py-8">
-      <PublicRecipeView
-        recipe={recipe}
-        calculations={calculations}
-        ownerName={ownerName}
-      />
-    </div>
-  );
+  return <BetaBuilderPage sharedRecipe={recipe} sharedOwnerName={ownerName} />;
 }

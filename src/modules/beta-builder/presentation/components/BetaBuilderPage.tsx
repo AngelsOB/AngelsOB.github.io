@@ -28,8 +28,14 @@ import SectionSidebar from './SectionSidebar';
 import { SECTIONS, getScribbleLines } from './sidebarData';
 import AnimatedValue from './AnimatedValue';
 import ShareModal from '../../../sharing/ShareModal';
+import ForkButton from '../../../sharing/ForkButton';
 import { useAuthStore } from '../../../auth/authStore';
 import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
+
+interface BetaBuilderPageProps {
+  sharedRecipe?: Recipe;
+  sharedOwnerName?: string;
+}
 
 /**
  * Mobile accordion tile header.
@@ -124,7 +130,7 @@ function AccordionSection({
   );
 }
 
-export default function BetaBuilderPage() {
+export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaBuilderPageProps = {}) {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
   const router = useRouter();
   const {
@@ -145,14 +151,20 @@ export default function BetaBuilderPage() {
   const [showStickyBottom, setShowStickyBottom] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<string | null>("recipe");
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
-  const isReadOnly = Boolean(versionNumber);
+  const isShared = Boolean(sharedRecipe);
+  const isReadOnly = Boolean(versionNumber) || isShared;
 
   const toggleMobileSection = useCallback((key: string) => {
     setMobileOpenSection((prev) => (prev === key ? null : key));
   }, []);
 
-  // Load recipe based on URL param or create new (wait for auth first)
+  // Load recipe based on URL param, shared prop, or create new (wait for auth first)
   useEffect(() => {
+    if (sharedRecipe) {
+      setCurrentRecipe(sharedRecipe);
+      return;
+    }
+
     if (isAuthLoading) return;
 
     if (id && versionNumber) {
@@ -169,13 +181,11 @@ export default function BetaBuilderPage() {
     }
 
     if (id) {
-      // Editing existing recipe
       loadRecipe(id);
     } else {
-      // Creating new recipe
       createNewRecipe();
     }
-  }, [id, versionNumber, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);
+  }, [id, versionNumber, sharedRecipe, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);
 
   // Update document title with recipe name
   useEffect(() => {
@@ -279,16 +289,25 @@ export default function BetaBuilderPage() {
           <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
             <div>
               <button
-                onClick={() => router.push('/recipes')}
+                onClick={() => router.push(isShared ? '/browse' : '/recipes')}
                 className="text-sm font-medium mb-3 flex items-center gap-1.5 transition-colors"
                 style={{ color: 'var(--brew-accent-600)' }}
               >
-                <span className="text-xs">&#8592;</span> Back to Recipes
+                <span className="text-xs">&#8592;</span> {isShared ? 'Back to Browse' : 'Back to Recipes'}
               </button>
               <h1 className="brew-section-title text-3xl">
-                {isReadOnly ? `Version ${versionNumber} (Read-only)` : 'Recipe Builder'}
+                {isShared
+                  ? 'Shared Recipe (Read-only)'
+                  : isReadOnly
+                    ? `Version ${versionNumber} (Read-only)`
+                    : 'Recipe Builder'}
               </h1>
-              {currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
+              {isShared && sharedOwnerName && (
+                <p className="text-xs text-[var(--fg-muted)] mt-1">
+                  by <span className="font-medium">{sharedOwnerName}</span>
+                </p>
+              )}
+              {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
                 <p className="text-xs text-[var(--fg-muted)] mt-1">
                   Forked from <span className="font-medium">{currentRecipe.parentRecipeName}</span>
                   {currentRecipe.parentRecipeOwnerName && (
@@ -298,7 +317,10 @@ export default function BetaBuilderPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {isReadOnly && id && (
+              {isShared && currentRecipe && (
+                <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+              )}
+              {!isShared && isReadOnly && id && (
                 <button
                   onClick={() => router.push(`/recipes/${id}`)}
                   className="brew-btn-ghost"
