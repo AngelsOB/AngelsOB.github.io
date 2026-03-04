@@ -138,6 +138,7 @@ export default function BetaBuilderPage() {
 
   const calculations = useRecipeCalculations(currentRecipe);
   const user = useAuthStore((s) => s.user);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
@@ -150,8 +151,10 @@ export default function BetaBuilderPage() {
     setMobileOpenSection((prev) => (prev === key ? null : key));
   }, []);
 
-  // Load recipe based on URL param or create new
+  // Load recipe based on URL param or create new (wait for auth first)
   useEffect(() => {
+    if (isAuthLoading) return;
+
     if (id && versionNumber) {
       const version = recipeVersionRepository.loadByRecipeIdAndVersion(
         id,
@@ -172,7 +175,7 @@ export default function BetaBuilderPage() {
       // Creating new recipe
       createNewRecipe();
     }
-  }, [id, versionNumber, loadRecipe, createNewRecipe, setCurrentRecipe]);
+  }, [id, versionNumber, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);
 
   // Update document title with recipe name
   useEffect(() => {
