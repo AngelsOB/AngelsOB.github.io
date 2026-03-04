@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Recipe, RecipeVersion } from '../../domain/models/Recipe';
 import type { BrewSession } from '../../domain/models/BrewSession';
@@ -273,7 +274,23 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
             <h3 id="modal-title" className="text-xl font-semibold">Version History: {recipe.name}</h3>
             {recipe.parentRecipeId && (
               <p className="text-sm text-muted mt-1">
-                Variation of: {allRecipes.find(r => r.id === recipe.parentRecipeId)?.name || 'Unknown'}
+                Forked from:{' '}
+                {recipe.parentRecipeShareSlug ? (
+                  <Link
+                    href={`/r/${recipe.parentRecipeShareSlug}`}
+                    className="font-medium underline hover:text-[var(--brew-accent-600)] transition-colors"
+                    onClick={onClose}
+                  >
+                    {recipe.parentRecipeName || allRecipes.find(r => r.id === recipe.parentRecipeId)?.name || 'Unknown'}
+                  </Link>
+                ) : (
+                  <span className="font-medium">
+                    {recipe.parentRecipeName || allRecipes.find(r => r.id === recipe.parentRecipeId)?.name || 'Unknown'}
+                  </span>
+                )}
+                {recipe.parentRecipeOwnerName && (
+                  <span> by {recipe.parentRecipeOwnerName}</span>
+                )}
               </p>
             )}
           </div>

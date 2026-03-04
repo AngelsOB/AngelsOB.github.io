@@ -8,6 +8,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRecipeStore } from '../stores/recipeStore';
 import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
@@ -309,7 +310,18 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
               )}
               {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
                 <p className="text-xs text-[var(--fg-muted)] mt-1">
-                  Forked from <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+                  Forked from{' '}
+                  {currentRecipe.parentRecipeShareSlug ? (
+                    <Link
+                      href={`/r/${currentRecipe.parentRecipeShareSlug}`}
+                      className="font-medium underline hover:text-[var(--brew-accent-600)] transition-colors"
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      {currentRecipe.parentRecipeName}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+                  )}
                   {currentRecipe.parentRecipeOwnerName && (
                     <> by {currentRecipe.parentRecipeOwnerName}</>
                   )}
@@ -343,7 +355,7 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
           </div>
         </div>
 
-        <div className={`brew-main-fade-in ${isReadOnly ? 'pointer-events-none opacity-90' : ''}`}>
+        <div className={`brew-main-fade-in ${isReadOnly ? 'brew-read-only' : ''}`}>
         {currentRecipe?.name && (
           <div className="mobile-sidebar-title">
             <span>{currentRecipe.name}</span>

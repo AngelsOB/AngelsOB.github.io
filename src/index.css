@@ -4821,3 +4821,38 @@
     transition: none !important;
   }
 }
+
+/* ---- Read-only mode (shared recipes, version history) ---- */
+
+.brew-read-only {
+  pointer-events: none;
+  opacity: 0.90;
+}
+
+/* Hide action buttons in read-only mode */
+.brew-read-only .brew-btn-primary,
+.brew-read-only .brew-row-actions,
+.brew-read-only .brew-btn-ghost.brew-danger-text {
+  display: none !important;
+}
+
+/* Hide equipment/mash header action buttons (Select Profile, Save as Custom, Single Infusion, Multi-Step) */
+.brew-read-only [data-accent="equipment"] .brew-btn-ghost,
+.brew-read-only [data-accent="mash"] .brew-btn-ghost {
+  display: none !important;
+}
+
+/* Hide fermentable mode toggle (Amount/%) and target ABV */
+.brew-read-only [data-accent="grain"] > .flex > .flex.items-center.gap-4 > :not(h2) {
+  display: none !important;
+}
+
+/* Hide "Add Addition" button on hop variety cards */
+.brew-read-only .brew-action-add {
+  display: none !important;
+}
+
+/* Hide EmptyState action buttons (the plus-icon clickable variant) */
+.brew-read-only .brew-animate-in > button {
+  display: none !important;
+}

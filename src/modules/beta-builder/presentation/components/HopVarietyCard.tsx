@@ -71,7 +71,7 @@ export default function HopVarietyCard({
       </div>
 
       {/* Add Addition button */}
-      <div className="mt-2 pt-1">
+      <div className="mt-2 pt-1 brew-action-add">
         <button
           onClick={() =>
             onAddAddition(group.varietyName, group.alphaAcid, group.flavor)

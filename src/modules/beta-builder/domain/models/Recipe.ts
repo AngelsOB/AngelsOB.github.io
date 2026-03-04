@@ -219,6 +219,7 @@ export type Recipe = {
   parentVersionNumber?: number; // If this is a variation/fork, which version was forked
   parentRecipeName?: string; // Denormalized parent recipe name (for fork attribution)
   parentRecipeOwnerName?: string; // Denormalized parent recipe owner name (for fork attribution)
+  parentRecipeShareSlug?: string; // Share slug for linking back to the parent public recipe
 
   /** Target batch volume in liters (final packaged volume — fermenter loss is added on top) */
   batchVolumeL: number;
