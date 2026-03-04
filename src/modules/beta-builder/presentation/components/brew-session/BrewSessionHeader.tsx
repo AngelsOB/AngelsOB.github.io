@@ -1,4 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+'use client';
+
+import { useRouter } from "next/navigation";
 import type { SessionStatus } from '../../../domain/models/BrewSession';
 
 interface BrewSessionHeaderProps {
@@ -22,13 +24,13 @@ export function BrewSessionHeader({
   onEditBrewedVersion,
   onSave,
 }: BrewSessionHeaderProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <header className="space-y-3">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate('/recipes')}
+          onClick={() => router.push('/recipes')}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
           <svg

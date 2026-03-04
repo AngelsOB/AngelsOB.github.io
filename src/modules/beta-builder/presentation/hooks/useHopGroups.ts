@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from "react";
 import type { Hop } from "../../domain/models/Recipe";
 import type { HopFlavorProfile } from "../../domain/models/Presets";

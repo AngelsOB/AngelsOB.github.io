@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Yeast Section Component
  *

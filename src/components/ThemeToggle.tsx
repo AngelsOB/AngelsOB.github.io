@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Unified Theme Toggle
  *

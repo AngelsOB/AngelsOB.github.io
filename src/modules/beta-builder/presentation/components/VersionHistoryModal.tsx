@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Version History Modal
  *
@@ -6,7 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from "next/navigation";
 import type { Recipe, RecipeVersion } from '../../domain/models/Recipe';
 import type { BrewSession } from '../../domain/models/BrewSession';
 import { useRecipeStore } from '../stores/recipeStore';
@@ -28,7 +30,7 @@ interface TreeNode {
 }
 
 export default function VersionHistoryModal({ recipe, isOpen, onClose }: VersionHistoryModalProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { loadVersionHistory } = useRecipeStore();
   const [versions, setVersions] = useState<RecipeVersion[]>([]);
   const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
@@ -128,12 +130,12 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                 tabIndex={0}
                 className="mb-4 p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:shadow-md hover:border-[var(--brew-accent-400)] transition-all bg-[rgb(var(--brew-card)/0.6)] cursor-pointer"
                 onClick={() => {
-                  navigate(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
+                  router.push(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    navigate(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
+                    router.push(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                   }
                 }}
               >
@@ -182,11 +184,11 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
                         key={session.id}
                         role="button"
                         tabIndex={0}
-                        onClick={() => navigate(`/recipes/sessions/${session.id}`)}
+                        onClick={() => router.push(`/recipes/sessions/${session.id}`)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            navigate(`/recipes/sessions/${session.id}`);
+                            router.push(`/recipes/sessions/${session.id}`);
                           }
                         }}
                         className="p-3 border border-amber-300 dark:border-amber-700 rounded-lg bg-amber-50 dark:bg-amber-900/20 cursor-pointer hover:shadow-sm transition-shadow"

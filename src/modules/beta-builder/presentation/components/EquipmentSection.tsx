@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Equipment Section Component
  *

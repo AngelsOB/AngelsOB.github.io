@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Recipe Sessions Bar
  *
@@ -6,7 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import type { BrewSession } from "../../domain/models/BrewSession";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
 
@@ -17,7 +19,7 @@ interface RecipeSessionsBarProps {
 export default function RecipeSessionsBar({
   recipeId,
 }: RecipeSessionsBarProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { loadSessionsByRecipeId } = useBrewSessionStore();
   const [sessions, setSessions] = useState<BrewSession[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -72,7 +74,7 @@ export default function RecipeSessionsBar({
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       e.stopPropagation();
-      navigate(`/recipes/sessions/${sessionId}`);
+      router.push(`/recipes/sessions/${sessionId}`);
     }
   };
 
@@ -95,7 +97,7 @@ export default function RecipeSessionsBar({
                 tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/recipes/sessions/${session.id}`);
+                  router.push(`/recipes/sessions/${session.id}`);
                 }}
                 onKeyDown={(e) => handleSessionKeyDown(e, session.id)}
                 className="px-4 py-3 hover:bg-[rgb(var(--bg))] cursor-pointer transition-colors focus:outline-none focus:bg-[rgb(var(--bg))]"

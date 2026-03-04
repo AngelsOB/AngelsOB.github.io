@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Mash Schedule Section Component
  *

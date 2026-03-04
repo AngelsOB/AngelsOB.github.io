@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Fermentation Step Modal Component
  *

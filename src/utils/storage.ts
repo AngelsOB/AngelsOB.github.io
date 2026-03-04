@@ -1,3 +1,5 @@
+'use client';
+
 import { devError } from './logger';
 
 export type StoredValue<T> = {

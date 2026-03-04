@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo, useState } from "react";
 import { dilutionWater, gravityPoints } from "../calculators/dilution";
 

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Source Water Modal Component
  *

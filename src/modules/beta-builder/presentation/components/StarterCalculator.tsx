@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Starter Calculator Component
  *

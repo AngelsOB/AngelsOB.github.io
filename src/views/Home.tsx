@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -78,10 +78,10 @@ export default function Home() {
           </p>
 
           <div className="mt-8 flex items-center gap-3 brew-animate-in brew-stagger-4">
-            <Link to="/recipes" className="brew-btn-primary !px-5 !py-2.5 !rounded-xl">
+            <Link href="/recipes" className="brew-btn-primary !px-5 !py-2.5 !rounded-xl">
               Start a Recipe
             </Link>
-            <Link to="/calculators" className="brew-btn-ghost !px-5 !py-2.5 !rounded-xl">
+            <Link href="/calculators" className="brew-btn-ghost !px-5 !py-2.5 !rounded-xl">
               Open Calculators
             </Link>
           </div>
@@ -93,7 +93,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto space-y-6">
 
           {/* Recipe Builder */}
-          <Link to="/recipes" className="block group">
+          <Link href="/recipes" className="block group">
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="grain"
@@ -177,7 +177,7 @@ export default function Home() {
           </Link>
 
           {/* Calculators */}
-          <Link to="/calculators" className="block group">
+          <Link href="/calculators" className="block group">
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="mash"
@@ -232,7 +232,7 @@ export default function Home() {
           </Link>
 
           {/* Equipment */}
-          <Link to="/recipes" className="block group">
+          <Link href="/recipes" className="block group">
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="equipment"

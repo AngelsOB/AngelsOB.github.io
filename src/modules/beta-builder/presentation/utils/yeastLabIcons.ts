@@ -13,15 +13,20 @@ import omegaFavicon from "../../../../assets/yeast-favicons/omega-favicon.png";
 import whitelabsFavicon from "../../../../assets/yeast-favicons/whitelabs-favicon.jpg";
 import wyeastFavicon from "../../../../assets/yeast-favicons/wyeast-favicon.png";
 
+/** Helper to get the src string from a Next.js image import */
+function src(img: string | { src: string }): string {
+  return typeof img === "string" ? img : img.src;
+}
+
 /** Mapping of laboratory names to their favicon images */
 export const LABORATORY_FAVICONS: Record<string, string> = {
-  "Escarpment Labs": escarpmentFavicon,
-  "Fermentis": fermentisFavicon,
-  "Imperial Yeast": imperialFavicon,
-  "Lallemand": lallemandFavicon,
-  "Omega Yeast": omegaFavicon,
-  "White Labs": whitelabsFavicon,
-  "Wyeast": wyeastFavicon,
+  "Escarpment Labs": src(escarpmentFavicon),
+  "Fermentis": src(fermentisFavicon),
+  "Imperial Yeast": src(imperialFavicon),
+  "Lallemand": src(lallemandFavicon),
+  "Omega Yeast": src(omegaFavicon),
+  "White Labs": src(whitelabsFavicon),
+  "Wyeast": src(wyeastFavicon),
 };
 
 /**

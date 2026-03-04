@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Start Session Modal
  *

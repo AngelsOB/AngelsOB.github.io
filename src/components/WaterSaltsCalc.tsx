@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useState } from "react";
 import Collapsible from "./Collapsible";
 import CalculatorCard from "./CalculatorCard";

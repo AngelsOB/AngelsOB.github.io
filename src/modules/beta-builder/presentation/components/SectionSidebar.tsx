@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import { getScribbleLines, SECTIONS } from "./sidebarData";

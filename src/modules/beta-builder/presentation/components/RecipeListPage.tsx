@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Recipe List Page Component
  *
@@ -11,7 +13,7 @@
 
 import type React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
@@ -38,7 +40,7 @@ type SortOption =
   | "ibu-asc";
 
 export default function RecipeListPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const {
     recipes,
     loadRecipes,
@@ -114,13 +116,13 @@ export default function RecipeListPage() {
   // Handle creating a new recipe
   const handleCreateNew = () => {
     setCurrentRecipe(null);
-    navigate("/recipes/new");
+    router.push("/recipes/new");
   };
 
   // Handle viewing/editing a recipe
   const handleViewRecipe = (recipe: Recipe) => {
     setCurrentRecipe(recipe);
-    navigate(`/recipes/${recipe.id}`);
+    router.push(`/recipes/${recipe.id}`);
   };
 
   // Handle delete confirmation
@@ -463,7 +465,7 @@ function RecipeCard({
   onView: () => void;
   onDelete: (e: React.MouseEvent) => void;
 }) {
-  const navigate = useNavigate();
+  const router = useRouter();
   // Calculate stats for the recipe
   const calculations = useRecipeCalculations(recipe);
   const [isVersionMenuOpen, setIsVersionMenuOpen] = useState(false);
@@ -517,7 +519,7 @@ function RecipeCard({
     e.stopPropagation();
     const session = createSession(recipe);
     saveCurrentSession();
-    navigate(`/recipes/sessions/${session.id}`);
+    router.push(`/recipes/sessions/${session.id}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

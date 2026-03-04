@@ -9,7 +9,7 @@
 
 /* eslint-disable no-console */
 
-const isDev = import.meta.env.DEV;
+const isDev = process.env.NODE_ENV !== "production";
 
 /**
  * Log to console only in development mode.

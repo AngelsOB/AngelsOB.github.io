@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import Logo from "./Logo";
 
 export default function Footer() {
@@ -38,7 +38,7 @@ export default function Footer() {
           {/* Right — nav links */}
           <nav aria-label="Footer navigation" className="flex items-center gap-5">
             <Link
-              to="/recipes"
+              href="/recipes"
               className="text-xs font-medium transition-colors duration-150"
               style={{ color: "var(--fg-muted)" }}
               onMouseEnter={(e) =>
@@ -58,7 +58,7 @@ export default function Footer() {
               }}
             />
             <Link
-              to="/calculators"
+              href="/calculators"
               className="text-xs font-medium transition-colors duration-150"
               style={{ color: "var(--fg-muted)" }}
               onMouseEnter={(e) =>
