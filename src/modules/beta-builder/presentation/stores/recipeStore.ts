@@ -32,9 +32,11 @@ type RecipeStore = {
   currentRecipe: Recipe | null;
   isLoading: boolean;
   error: string | null;
+  /** True once recipes have been fetched from Firestore/localStorage this session */
+  recipesLoaded: boolean;
 
   // Actions (like your manager methods)
-  loadRecipes: () => void;
+  loadRecipes: (force?: boolean) => void;
   loadRecipe: (id: RecipeId) => void;
   createNewRecipe: () => void;
   duplicateRecipe: (id: RecipeId) => void;
@@ -80,21 +82,23 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   currentRecipe: null,
   isLoading: false,
   error: null,
+  recipesLoaded: false,
 
-  // Load all recipes
-  loadRecipes: () => {
+  // Load all recipes (skips Firestore if already loaded unless force=true)
+  loadRecipes: (force?: boolean) => {
+    if (!force && get().recipesLoaded) return;
     set({ isLoading: true, error: null });
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
       firestoreRepo.loadAllAsync().then(
-        (recipes) => set({ recipes, isLoading: false }),
+        (recipes) => set({ recipes, isLoading: false, recipesLoaded: true }),
         (err) => { console.error('[Firestore] Failed to load recipes:', err); set({ error: 'Failed to load recipes', isLoading: false }); },
       );
       return;
     }
     const result = recipeRepository.loadAllSafe();
     if (result.ok) {
-      set({ recipes: result.data, isLoading: false });
+      set({ recipes: result.data, isLoading: false, recipesLoaded: true });
     } else {
       // Data is corrupted but still in localStorage
       const rawData = result.rawData;
@@ -195,8 +199,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           updatedAt: new Date().toISOString(),
         };
         await firestoreRepo.saveAsync(duplicate);
-        const recipes = await firestoreRepo.loadAllAsync();
-        set({ recipes, currentRecipe: duplicate, isLoading: false });
+        set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, isLoading: false });
       }).catch(() => set({ error: 'Failed to duplicate recipe', isLoading: false }));
       return;
     }
@@ -219,12 +222,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         updatedAt: new Date().toISOString(),
       };
 
-      // Save the duplicate
       recipeRepository.save(duplicate);
-
-      // Load all recipes to update the list
-      const recipes = recipeRepository.loadAll();
-      set({ recipes, currentRecipe: duplicate, isLoading: false });
+      set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, isLoading: false });
     } catch {
       set({ error: 'Failed to duplicate recipe', isLoading: false });
     }
@@ -265,8 +264,13 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
       firestoreRepo.saveAsync(recipeToSave).then(
         () => {
-          get().loadRecipes();
-          set({ error: null });
+          // Update local array instead of re-fetching from Firestore
+          const recipes = get().recipes;
+          const idx = recipes.findIndex((r) => r.id === recipeToSave.id);
+          const updated = idx >= 0
+            ? recipes.map((r) => r.id === recipeToSave.id ? recipeToSave : r)
+            : [...recipes, recipeToSave];
+          set({ recipes: updated, error: null });
 
           // Sync publicRecipeIndex in the background for public recipes
           if (recipeToSave.isPublic) {
@@ -291,9 +295,13 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     }
     try {
       recipeRepository.save(current);
-      // Reload recipes list
-      get().loadRecipes();
-      set({ error: null });
+      // Update local array instead of re-reading localStorage
+      const recipes = get().recipes;
+      const idx = recipes.findIndex((r) => r.id === current.id);
+      const updated = idx >= 0
+        ? recipes.map((r) => r.id === current.id ? current : r)
+        : [...recipes, current];
+      set({ recipes: updated, error: null });
     } catch {
       set({ error: 'Failed to save recipe' });
     }
@@ -307,8 +315,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         () => {
           const current = get().currentRecipe;
           if (current?.id === id) set({ currentRecipe: null });
-          get().loadRecipes();
-          set({ error: null });
+          set({ recipes: get().recipes.filter((r) => r.id !== id), error: null });
         },
         () => set({ error: 'Failed to delete recipe' }),
       );
@@ -316,14 +323,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     }
     try {
       recipeRepository.delete(id);
-      // Clear current recipe if it was deleted
       const current = get().currentRecipe;
-      if (current?.id === id) {
-        set({ currentRecipe: null });
-      }
-      // Reload recipes list
-      get().loadRecipes();
-      set({ error: null });
+      if (current?.id === id) set({ currentRecipe: null });
+      set({ recipes: get().recipes.filter((r) => r.id !== id), error: null });
     } catch {
       set({ error: 'Failed to delete recipe' });
     }
@@ -344,11 +346,10 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
       const firestoreRepo = getRecipeRepo();
       if (firestoreRepo) {
-        firestoreRepo.saveAsync(recipe).then(() => get().loadRecipes());
+        firestoreRepo.saveAsync(recipe).then(() => set({ recipes: [...get().recipes, recipe] }));
       } else {
         recipeRepository.save(recipe);
-        const recipes = recipeRepository.loadAll();
-        set({ recipes });
+        set({ recipes: [...get().recipes, recipe] });
       }
       set({ error: null });
       return recipe;
@@ -383,11 +384,10 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       };
       const firestoreRepo = getRecipeRepo();
       if (firestoreRepo) {
-        firestoreRepo.saveAsync(recipe).then(() => get().loadRecipes());
+        firestoreRepo.saveAsync(recipe).then(() => set({ recipes: [...get().recipes, recipe] }));
       } else {
         recipeRepository.save(recipe);
-        const recipes = recipeRepository.loadAll();
-        set({ recipes });
+        set({ recipes: [...get().recipes, recipe] });
       }
       set({ error: null });
       return recipe;
@@ -636,8 +636,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           updatedAt: new Date().toISOString(),
         };
         await firestoreRepo.saveAsync(updatedRecipe);
-        get().loadRecipes();
-        set({ error: null });
+        set({ recipes: get().recipes.map((r) => r.id === recipeId ? updatedRecipe : r), error: null });
       }).catch(() => set({ error: 'Failed to create new version' }));
       return;
     }
@@ -648,7 +647,6 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         return;
       }
 
-      // Save current state as a version snapshot
       const versionSnapshot: RecipeVersion = {
         id: crypto.randomUUID(),
         recipeId: recipe.id,
@@ -660,7 +658,6 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
       recipeVersionRepository.save(versionSnapshot);
 
-      // Increment version number on the main recipe
       const updatedRecipe: Recipe = {
         ...recipe,
         currentVersion: recipe.currentVersion + 1,
@@ -668,10 +665,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       };
 
       recipeRepository.save(updatedRecipe);
-
-      // Reload recipes
-      get().loadRecipes();
-      set({ error: null });
+      set({ recipes: get().recipes.map((r) => r.id === recipeId ? updatedRecipe : r), error: null });
     } catch {
       set({ error: 'Failed to create new version' });
     }
@@ -695,8 +689,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           updatedAt: new Date().toISOString(),
         };
         await firestoreRepo.saveAsync(variation);
-        const recipes = await firestoreRepo.loadAllAsync();
-        set({ recipes, currentRecipe: variation, isLoading: false });
+        set({ recipes: [...get().recipes, variation], currentRecipe: variation, isLoading: false });
       }).catch(() => set({ error: 'Failed to create variation', isLoading: false }));
       return;
     }
@@ -707,7 +700,6 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         return;
       }
 
-      // Create a variation with new ID and parent reference
       const variation: Recipe = {
         ...original,
         id: crypto.randomUUID(),
@@ -719,12 +711,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         updatedAt: new Date().toISOString(),
       };
 
-      // Save the variation
       recipeRepository.save(variation);
-
-      // Load all recipes to update the list
-      const recipes = recipeRepository.loadAll();
-      set({ recipes, currentRecipe: variation, isLoading: false });
+      set({ recipes: [...get().recipes, variation], currentRecipe: variation, isLoading: false });
     } catch {
       set({ error: 'Failed to create variation', isLoading: false });
     }
@@ -764,8 +752,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           updatedAt: new Date().toISOString(),
         };
         await firestoreRepo.saveAsync(restoredRecipe);
-        const recipes = await firestoreRepo.loadAllAsync();
-        set({ recipes, currentRecipe: restoredRecipe, error: null });
+        set({ recipes: get().recipes.map((r) => r.id === recipeId ? restoredRecipe : r), currentRecipe: restoredRecipe, error: null });
       }).catch(() => set({ error: 'Failed to restore version' }));
       return;
     }
@@ -802,10 +789,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       };
 
       recipeRepository.save(restoredRecipe);
-
-      // Reload recipes and set as current
-      const recipes = recipeRepository.loadAll();
-      set({ recipes, currentRecipe: restoredRecipe, error: null });
+      set({ recipes: get().recipes.map((r) => r.id === recipeId ? restoredRecipe : r), currentRecipe: restoredRecipe, error: null });
     } catch {
       set({ error: 'Failed to restore version' });
     }

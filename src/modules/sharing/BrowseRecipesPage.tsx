@@ -39,13 +39,20 @@ export default function BrowseRecipesPage() {
       if (cursor) params.set('after', cursor);
 
       const res = await fetch(`/api/browse?${params}`);
-      if (!res.ok) throw new Error('Failed to load recipes');
+      if (!res.ok) {
+        let serverError = `Server error (${res.status})`;
+        try {
+          const errData = await res.json();
+          serverError = errData.error || serverError;
+        } catch { /* not JSON */ }
+        throw new Error(serverError);
+      }
 
       const data = await res.json();
       setRecipes((prev) => (append ? [...prev, ...data.recipes] : data.recipes));
       setNextCursor(data.nextCursor);
-    } catch {
-      setError('Failed to load recipes. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load recipes. Please try again.');
     } finally {
       loading(false);
     }

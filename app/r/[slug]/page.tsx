@@ -13,19 +13,25 @@ interface PageProps {
 
 async function getRecipeBySlug(slug: string) {
   try {
+    // Query only by shareSlug (single-field index, auto-created).
+    // Avoids needing a composite index on shareSlug + isPublic.
     const snapshot = await adminDb
       .collection('recipes')
       .where('shareSlug', '==', slug)
-      .where('isPublic', '==', true)
       .limit(1)
       .get();
 
     if (snapshot.empty) return null;
 
     const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as Recipe & { ownerId: string };
-  } catch {
-    // Firebase Admin SDK not available (e.g., missing env var in local dev)
+    const data = doc.data();
+
+    // Check isPublic in application code instead of the query
+    if (data.isPublic === false) return null;
+
+    return { id: doc.id, ...data } as Recipe & { ownerId: string };
+  } catch (err) {
+    console.error('[r/slug] Failed to fetch recipe:', err);
     return null;
   }
 }

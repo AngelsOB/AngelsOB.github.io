@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/config/firebase-admin";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
     let q = adminDb
       .collection("publicRecipeIndex")
       .orderBy(orderField, "desc")
-      .limit(limit + 1); // fetch one extra to detect if there's a next page
+      .limit(limit + 1);
 
     if (after) {
       const afterDoc = await adminDb
@@ -51,10 +53,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ recipes, nextCursor });
   } catch (err) {
-    console.error("[browse] Unhandled error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("[browse] Unhandled error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
