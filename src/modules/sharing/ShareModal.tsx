@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import ModalOverlay from '../beta-builder/presentation/components/ModalOverlay';
 import Button from '../../components/Button';
-import { auth } from '@/config/firebase';
 import { toast } from '../../stores/toastStore';
+import { publishRecipe, unpublishRecipe } from './publishService';
+import { useRecipeStore } from '../beta-builder/presentation/stores/recipeStore';
+import { generateShareSlug } from './slugUtils';
+import type { Recipe } from '../beta-builder/domain/models/Recipe';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -34,50 +37,24 @@ export default function ShareModal({
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${shareSlug}`
     : '';
 
-  async function getAuthToken(): Promise<string | null> {
-    const user = auth.currentUser;
-    if (!user) {
-      toast.error('You must be signed in to share recipes');
-      return null;
-    }
-    return user.getIdToken();
-  }
-
   async function handleMakePublic() {
-    const token = await getAuthToken();
-    if (!token) return;
-
     setIsLoading(true);
     try {
-      const res = await fetch('/api/publish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ recipeId }),
-      });
+      const recipes = useRecipeStore.getState().recipes;
+      const recipe = recipes.find((r) => r.id === recipeId);
+      if (!recipe) throw new Error('Recipe not found');
 
-      if (!res.ok) {
-        let errorMsg = 'Failed to publish';
-        try {
-          const data = await res.json();
-          errorMsg = data.error || errorMsg;
-        } catch {
-          // Response wasn't JSON — use status text
-          errorMsg = `Server error (${res.status})`;
-        }
-        throw new Error(errorMsg);
-      }
+      const slug = recipe.shareSlug || generateShareSlug(recipe.name);
+      const now = new Date().toISOString();
 
-      let slug: string;
-      try {
-        const data = await res.json();
-        slug = data.slug;
-      } catch {
-        throw new Error('Invalid response from server');
-      }
+      const recipeToPublish: Recipe = {
+        ...recipe,
+        isPublic: true,
+        shareSlug: slug,
+        publishedAt: recipe.publishedAt || now,
+      };
 
+      await publishRecipe(recipeToPublish);
       onPublished(slug);
       toast.success('Recipe is now public!');
     } catch (err) {
@@ -88,31 +65,9 @@ export default function ShareModal({
   }
 
   async function handleMakePrivate() {
-    const token = await getAuthToken();
-    if (!token) return;
-
     setIsLoading(true);
     try {
-      const res = await fetch('/api/unpublish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ recipeId }),
-      });
-
-      if (!res.ok) {
-        let errorMsg = 'Failed to make private';
-        try {
-          const data = await res.json();
-          errorMsg = data.error || errorMsg;
-        } catch {
-          errorMsg = `Server error (${res.status})`;
-        }
-        throw new Error(errorMsg);
-      }
-
+      await unpublishRecipe(recipeId);
       onUnpublished();
       toast.success('Recipe is now private');
       onClose();
