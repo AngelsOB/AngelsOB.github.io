@@ -35,12 +35,15 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
 
       const originalRecipe = { id: recipeId, ...recipeData } as Recipe & { ownerId?: string };
 
-      // Get owner name from publicRecipeIndex
+      // Get owner name and share slug from publicRecipeIndex
       let parentOwnerName = 'Anonymous Brewer';
+      let parentShareSlug: string | undefined;
       try {
         const indexSnap = await getDoc(doc(db, 'publicRecipeIndex', recipeId));
         if (indexSnap.exists()) {
-          parentOwnerName = indexSnap.data().ownerName || parentOwnerName;
+          const indexData = indexSnap.data();
+          parentOwnerName = indexData.ownerName || parentOwnerName;
+          parentShareSlug = indexData.shareSlug;
         }
       } catch { /* fallback */ }
 
@@ -67,6 +70,7 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
         parentVersionNumber: originalRecipe.currentVersion || 1,
         parentRecipeName: originalRecipe.name,
         parentRecipeOwnerName: parentOwnerName,
+        parentRecipeShareSlug: parentShareSlug,
         createdAt: now,
         updatedAt: now,
       }));
