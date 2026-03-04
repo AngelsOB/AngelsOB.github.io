@@ -170,6 +170,18 @@ export default function BetaBuilderPage() {
     }
   }, [id, versionNumber, loadRecipe, createNewRecipe, setCurrentRecipe]);
 
+  // Update document title with recipe name
+  useEffect(() => {
+    if (currentRecipe?.name) {
+      document.title = `${currentRecipe.name} | BeerApp`;
+    } else {
+      document.title = 'Recipe Builder | BeerApp';
+    }
+    return () => {
+      document.title = 'BeerApp - Homebrewing Recipe Builder & Calculator';
+    };
+  }, [currentRecipe?.name]);
+
   // Sticky header scroll detection
   useEffect(() => {
     let lastScrollY = window.scrollY;

@@ -53,6 +53,16 @@ export default function BrewSessionPage() {
     }
   }, [sessionId, loadSession]);
 
+  // Update document title with session recipe name
+  useEffect(() => {
+    if (currentSession?.recipeName) {
+      document.title = `Brew: ${currentSession.recipeName} | BeerApp`;
+    }
+    return () => {
+      document.title = 'BeerApp - Homebrewing Recipe Builder & Calculator';
+    };
+  }, [currentSession?.recipeName]);
+
   // Flush pending saves on unmount or tab close to prevent data loss
   useEffect(() => {
     const flushPendingSave = () => {

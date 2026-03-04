@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can only read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == userId;
+    }
+
+    // Recipes: public readable, owner-only writable
+    match /recipes/{recipeId} {
+      allow read: if resource.data.isPublic == true;
+      allow read: if request.auth != null
+                   && request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth != null
+                     && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null
+                             && request.auth.uid == resource.data.ownerId;
+    }
+
+    // Recipe versions: follow parent recipe's access
+    match /recipes/{recipeId}/versions/{versionId} {
+      allow read: if get(/databases/$(database)/documents/recipes/$(recipeId))
+                     .data.isPublic == true;
+      allow read: if request.auth != null
+                   && request.auth.uid == get(/databases/$(database)/documents/recipes/$(recipeId))
+                     .data.ownerId;
+      allow write: if request.auth != null
+                    && request.auth.uid == get(/databases/$(database)/documents/recipes/$(recipeId))
+                     .data.ownerId;
+    }
+
+    // Brew sessions: owner-only
+    match /brewSessions/{sessionId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth != null
+                     && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // Equipment profiles: owner-only
+    match /equipment/{profileId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == resource.data.ownerId;
+      allow create: if request.auth != null
+                     && request.resource.data.ownerId == request.auth.uid;
+    }
+
+    // Public recipe index: anyone can read, only server writes
+    // (written via admin SDK from server components/API routes)
+    match /publicRecipeIndex/{recipeId} {
+      allow read: if true;
+      allow write: if false;  // admin SDK bypasses rules
+    }
+  }
+}
