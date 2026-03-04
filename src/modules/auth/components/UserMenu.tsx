@@ -2,12 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../authStore";
+import { usePreferencesStore } from "../preferencesStore";
+import { toast } from "../../../stores/toastStore";
 
 export default function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const defaultRecipePublic = usePreferencesStore((s) => s.defaultRecipePublic);
+  const setDefaultRecipePublic = usePreferencesStore((s) => s.setDefaultRecipePublic);
+  const loadPreferences = usePreferencesStore((s) => s.loadPreferences);
+  const isLoaded = usePreferencesStore((s) => s.isLoaded);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Load preferences when user signs in
+  useEffect(() => {
+    if (user && !isLoaded) {
+      loadPreferences(user.uid);
+    }
+  }, [user, isLoaded, loadPreferences]);
 
   useEffect(() => {
     if (!open) return;
@@ -65,6 +78,30 @@ export default function UserMenu() {
               {user.email}
             </p>
           </div>
+
+          {/* Preferences */}
+          <div className="px-4 py-2.5 border-b border-[rgb(var(--border))]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[var(--fg-muted)]">New recipes</span>
+              <button
+                onClick={() => {
+                  const newValue = !defaultRecipePublic;
+                  setDefaultRecipePublic(newValue, user.uid);
+                  toast.success(
+                    newValue
+                      ? 'New recipes will be public by default'
+                      : 'New recipes will be private by default'
+                  );
+                }}
+                className="text-xs font-medium px-2 py-0.5 rounded-md transition-colors cursor-pointer
+                  hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]"
+                style={{ color: 'var(--brew-accent-600)' }}
+              >
+                {defaultRecipePublic ? 'Public' : 'Private'}
+              </button>
+            </div>
+          </div>
+
           <div className="py-1">
             <button
               onClick={() => {
