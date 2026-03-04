@@ -27,6 +27,8 @@ import StickyStatsBar from './StickyStatsBar';
 import SectionSidebar from './SectionSidebar';
 import { SECTIONS, getScribbleLines } from './sidebarData';
 import AnimatedValue from './AnimatedValue';
+import ShareModal from '../../../sharing/ShareModal';
+import { useAuthStore } from '../../../auth/authStore';
 import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
 
 /**
@@ -135,7 +137,9 @@ export default function BetaBuilderPage() {
   } = useRecipeStore();
 
   const calculations = useRecipeCalculations(currentRecipe);
+  const user = useAuthStore((s) => s.user);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<string | null>("recipe");
@@ -281,15 +285,36 @@ export default function BetaBuilderPage() {
               <h1 className="brew-section-title text-3xl">
                 {isReadOnly ? `Version ${versionNumber} (Read-only)` : 'Recipe Builder'}
               </h1>
+              {currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
+                <p className="text-xs text-[var(--fg-muted)] mt-1">
+                  Forked from <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+                  {currentRecipe.parentRecipeOwnerName && (
+                    <> by {currentRecipe.parentRecipeOwnerName}</>
+                  )}
+                </p>
+              )}
             </div>
-            {isReadOnly && id && (
-              <button
-                onClick={() => router.push(`/recipes/${id}`)}
-                className="brew-btn-ghost"
-              >
-                Open Current Recipe
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {isReadOnly && id && (
+                <button
+                  onClick={() => router.push(`/recipes/${id}`)}
+                  className="brew-btn-ghost"
+                >
+                  Open Current Recipe
+                </button>
+              )}
+              {!isReadOnly && user && id && currentRecipe && (
+                <button
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="brew-btn-ghost flex items-center gap-1.5"
+                >
+                  {currentRecipe.isPublic && (
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                  )}
+                  {currentRecipe.isPublic ? 'Shared' : 'Share'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -536,6 +561,26 @@ export default function BetaBuilderPage() {
         onSelect={(style) => updateRecipe({ style: style || undefined })}
         currentStyle={currentRecipe.style}
       />
+
+      {/* Share Modal */}
+      {user && id && (
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          recipeId={currentRecipe.id}
+          recipeName={currentRecipe.name}
+          isPublic={currentRecipe.isPublic ?? false}
+          shareSlug={currentRecipe.shareSlug}
+          onPublished={(slug) => {
+            updateRecipe({ isPublic: true, shareSlug: slug, publishedAt: new Date().toISOString() });
+            saveCurrentRecipe();
+          }}
+          onUnpublished={() => {
+            updateRecipe({ isPublic: false, shareSlug: undefined, publishedAt: undefined });
+            saveCurrentRecipe();
+          }}
+        />
+      )}
 
     </div>
   );

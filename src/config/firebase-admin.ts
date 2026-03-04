@@ -16,7 +16,16 @@ function getAdminApp() {
   });
 }
 
-const adminApp = getAdminApp();
+// Lazy initialization — avoids crashing during Next.js static build
+// when FIREBASE_ADMIN_KEY is not available.
+export const adminDb = new Proxy({} as ReturnType<typeof getFirestore>, {
+  get(_, prop) {
+    return Reflect.get(getFirestore(getAdminApp()), prop);
+  },
+});
 
-export const adminDb = getFirestore(adminApp);
-export const adminAuth = getAuth(adminApp);
+export const adminAuth = new Proxy({} as ReturnType<typeof getAuth>, {
+  get(_, prop) {
+    return Reflect.get(getAuth(getAdminApp()), prop);
+  },
+});
