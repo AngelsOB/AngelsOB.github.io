@@ -37,7 +37,7 @@ function StarterDatum({
 }: {
   label: string;
   value: number | string;
-  onChange: (v: any) => void;
+  onChange: (v: number | string) => void;
   step?: string;
   min?: string;
   type?: "number" | "date" | "select";
