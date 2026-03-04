@@ -2,7 +2,7 @@
  * Equipment Section Component
  *
  * Displays equipment settings with profile selection.
- * All values are directly editable.
+ * All values are directly editable via machined datum readouts.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +11,42 @@ import { useEquipmentStore } from '../stores/equipmentStore';
 import type { EquipmentProfile } from '../../domain/models/Equipment';
 import { EquipmentProfileModal } from './EquipmentProfileModal';
 import { CustomEquipmentModal } from './CustomEquipmentModal';
+
+function EquipDatum({
+  id,
+  label,
+  unit,
+  value,
+  onChange,
+  step,
+  small,
+}: {
+  id: string;
+  label: string;
+  unit: string;
+  value: number;
+  onChange: (v: number) => void;
+  step: string;
+  small?: boolean;
+}) {
+  return (
+    <div className={"equip-datum" + (small ? " is-small" : "")}>
+      <label htmlFor={id} className="equip-datum-label">{label}</label>
+      <div className="equip-datum-value">
+        <input
+          id={id}
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="equip-datum-input"
+          step={step}
+          min="0"
+        />
+        <span className="equip-datum-unit">{unit}</span>
+      </div>
+    </div>
+  );
+}
 
 export const EquipmentSection: React.FC = () => {
   const recipe = useRecipeStore((state) => state.currentRecipe);
@@ -49,7 +85,6 @@ export const EquipmentSection: React.FC = () => {
   );
 
   const handleSelectProfile = (profile: EquipmentProfile) => {
-    // Apply the profile to the recipe
     updateRecipe({
       equipmentProfileName: profile.name,
       batchVolumeL: profile.batchSizeL,
@@ -74,302 +109,184 @@ export const EquipmentSection: React.FC = () => {
 
   const handleSaveCustomProfile = async (profile: EquipmentProfile) => {
     await saveCustomProfile(profile);
-    // Update recipe to reference the new profile
     updateRecipe({
       equipmentProfileName: profile.name,
+    });
+  };
+
+  const updateEquip = (field: string, value: number) => {
+    updateRecipe({
+      equipment: { ...recipe.equipment, [field]: value },
     });
   };
 
   return (
     <div className="brew-section brew-animate-in brew-stagger-1" data-accent="equipment">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="brew-section-title">
-          Equipment & Volumes
-        </h2>
+      <div className="flex items-center justify-between">
+        <h3 className="brew-section-title">Equipment & Volumes</h3>
         <div className="flex gap-2">
           {hasUnsavedChanges && (
             <button
               onClick={() => setIsCustomModalOpen(true)}
-              className="brew-btn-ghost text-xs px-3 py-1.5"
-              style={{ borderColor: 'var(--brew-accent-400)', color: 'var(--brew-accent-700)' }}
+              className="brew-btn-ghost text-xs px-3 py-1"
             >
               Save as Custom
             </button>
           )}
           <button
             onClick={() => setIsPickerOpen(true)}
-            className="brew-btn-primary text-xs px-3 py-1.5"
+            className="brew-btn-ghost text-xs px-3 py-1"
           >
             {currentProfile ? currentProfile.name : 'Select Profile'}
           </button>
         </div>
       </div>
 
-      {/* Basic Settings */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div>
-          <label htmlFor="equipment-batch-volume" className="block text-sm font-semibold mb-2">
-            Batch Volume (L)
-          </label>
-          <input
-            id="equipment-batch-volume"
-            type="number"
-            value={recipe.batchVolumeL}
-            onChange={(e) =>
-              updateRecipe({ batchVolumeL: parseFloat(e.target.value) || 0 })
-            }
-            className="brew-input w-full"
-            step="0.1"
-          />
-        </div>
-        <div>
-          <label htmlFor="equipment-mash-efficiency" className="block text-sm font-semibold mb-2">
-            Mash Efficiency (%)
-          </label>
-          <input
-            id="equipment-mash-efficiency"
-            type="number"
-            value={recipe.equipment.mashEfficiencyPercent}
-            onChange={(e) =>
-              updateRecipe({
-                equipment: {
-                  ...recipe.equipment,
-                  mashEfficiencyPercent: parseFloat(e.target.value) || 0,
-                },
-              })
-            }
-            className="brew-input w-full"
-            step="1"
-          />
-        </div>
-        <div>
-          <label htmlFor="equipment-boil-time" className="block text-sm font-semibold mb-2">
-            Boil Time (min)
-          </label>
-          <input
-            id="equipment-boil-time"
-            type="number"
-            value={recipe.equipment.boilTimeMin}
-            onChange={(e) =>
-              updateRecipe({
-                equipment: {
-                  ...recipe.equipment,
-                  boilTimeMin: parseFloat(e.target.value) || 0,
-                },
-              })
-            }
-            className="brew-input w-full"
-            step="1"
-          />
-        </div>
+      {/* Hero readouts */}
+      <div className="equip-hero-grid">
+        <EquipDatum
+          id="equipment-batch-volume"
+          label="Batch Volume"
+          unit="L"
+          value={recipe.batchVolumeL}
+          onChange={(v) => updateRecipe({ batchVolumeL: v })}
+          step="0.1"
+        />
+        <EquipDatum
+          id="equipment-mash-efficiency"
+          label="Efficiency"
+          unit="%"
+          value={recipe.equipment.mashEfficiencyPercent}
+          onChange={(v) => updateEquip('mashEfficiencyPercent', v)}
+          step="1"
+        />
+        <EquipDatum
+          id="equipment-boil-time"
+          label="Boil Time"
+          unit="min"
+          value={recipe.equipment.boilTimeMin}
+          onChange={(v) => updateEquip('boilTimeMin', v)}
+          step="1"
+        />
       </div>
 
-      {/* Advanced Settings - Collapsible */}
-      <details className="group">
-        <summary className="cursor-pointer text-sm font-medium mb-4 transition-colors brew-link">
-          Advanced Equipment Settings
+      {/* Advanced Settings */}
+      <details className="equip-advanced">
+        <summary className="equip-advanced-toggle">
+          <svg className="equip-advanced-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+          Advanced Settings
         </summary>
 
-        <div className="grid grid-cols-3 gap-4 pl-4 border-l-2" style={{ borderColor: 'var(--brew-accent-300)' }}>
-          <div>
-            <label htmlFor="equipment-boil-off-rate" className="block text-xs font-semibold mb-2">
-              Boil-Off Rate (L/hr)
-            </label>
-            <input
-              id="equipment-boil-off-rate"
-              type="number"
-              value={recipe.equipment.boilOffRateLPerHour}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    boilOffRateLPerHour: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
-              step="0.1"
-            />
-          </div>
-          <div>
-            <label htmlFor="equipment-mash-thickness" className="block text-xs font-semibold mb-2">
-              Mash Thickness (L/kg)
-            </label>
-            <input
+        {/* Mash System */}
+        <div className="equip-group">
+          <span className="equip-group-label">Mash System</span>
+          <div className="equip-detail-grid">
+            <EquipDatum
               id="equipment-mash-thickness"
-              type="number"
+              label="Thickness"
+              unit="L/kg"
               value={recipe.equipment.mashThicknessLPerKg}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    mashThicknessLPerKg: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('mashThicknessLPerKg', v)}
               step="0.1"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-grain-absorption" className="block text-xs font-semibold mb-2">
-              Grain Absorption (L/kg)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-grain-absorption"
-              type="number"
+              label="Grain Absorb."
+              unit="L/kg"
               value={recipe.equipment.grainAbsorptionLPerKg}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    grainAbsorptionLPerKg: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('grainAbsorptionLPerKg', v)}
               step="0.01"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-mash-tun-deadspace" className="block text-xs font-semibold mb-2">
-              Mash Tun Deadspace (L)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-mash-tun-deadspace"
-              type="number"
+              label="Tun Deadspace"
+              unit="L"
               value={recipe.equipment.mashTunDeadspaceLiters}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    mashTunDeadspaceLiters: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('mashTunDeadspaceLiters', v)}
               step="0.1"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-mash-tun-loss" className="block text-xs font-semibold mb-2">
-              Mash Tun Loss (L)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-mash-tun-loss"
-              type="number"
+              label="Tun Loss"
+              unit="L"
               value={recipe.equipment.mashTunLossLiters ?? 0}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    mashTunLossLiters: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('mashTunLossLiters', v)}
               step="0.1"
+              small
             />
           </div>
-          <div>
-            <label htmlFor="equipment-kettle-loss" className="block text-xs font-semibold mb-2">
-              Kettle Loss (L)
-            </label>
-            <input
+        </div>
+
+        {/* Kettle */}
+        <div className="equip-group">
+          <span className="equip-group-label">Kettle</span>
+          <div className="equip-detail-grid">
+            <EquipDatum
+              id="equipment-boil-off-rate"
+              label="Boil-Off"
+              unit="L/hr"
+              value={recipe.equipment.boilOffRateLPerHour}
+              onChange={(v) => updateEquip('boilOffRateLPerHour', v)}
+              step="0.1"
+              small
+            />
+            <EquipDatum
               id="equipment-kettle-loss"
-              type="number"
+              label="Kettle Loss"
+              unit="L"
               value={recipe.equipment.kettleLossLiters}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    kettleLossLiters: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('kettleLossLiters', v)}
               step="0.1"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-hop-absorption" className="block text-xs font-semibold mb-2">
-              Hop Absorption (L/kg)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-hop-absorption"
-              type="number"
+              label="Hop Absorb."
+              unit="L/kg"
               value={recipe.equipment.hopsAbsorptionLPerKg}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    hopsAbsorptionLPerKg: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('hopsAbsorptionLPerKg', v)}
               step="0.1"
+              small
             />
           </div>
-          <div>
-            <label htmlFor="equipment-chiller-loss" className="block text-xs font-semibold mb-2">
-              Chiller Loss (L)
-            </label>
-            <input
+        </div>
+
+        {/* Cooling & Fermenter */}
+        <div className="equip-group">
+          <span className="equip-group-label">Cooling & Fermenter</span>
+          <div className="equip-detail-grid">
+            <EquipDatum
               id="equipment-chiller-loss"
-              type="number"
+              label="Chiller Loss"
+              unit="L"
               value={recipe.equipment.chillerLossLiters}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    chillerLossLiters: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('chillerLossLiters', v)}
               step="0.1"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-fermenter-loss" className="block text-xs font-semibold mb-2">
-              Fermenter Loss (L)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-fermenter-loss"
-              type="number"
+              label="Fermenter Loss"
+              unit="L"
               value={recipe.equipment.fermenterLossLiters}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    fermenterLossLiters: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('fermenterLossLiters', v)}
               step="0.1"
+              small
             />
-          </div>
-          <div>
-            <label htmlFor="equipment-cooling-shrinkage" className="block text-xs font-semibold mb-2">
-              Cooling Shrinkage (%)
-            </label>
-            <input
+            <EquipDatum
               id="equipment-cooling-shrinkage"
-              type="number"
+              label="Shrinkage"
+              unit="%"
               value={recipe.equipment.coolingShrinkagePercent}
-              onChange={(e) =>
-                updateRecipe({
-                  equipment: {
-                    ...recipe.equipment,
-                    coolingShrinkagePercent: parseFloat(e.target.value) || 0,
-                  },
-                })
-              }
-              className="brew-input w-full py-1 px-2"
+              onChange={(v) => updateEquip('coolingShrinkagePercent', v)}
               step="0.1"
+              small
             />
           </div>
         </div>

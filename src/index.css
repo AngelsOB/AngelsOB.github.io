@@ -1649,20 +1649,27 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 19vw;
+  width: 22vw;
   height: 100vh;
   z-index: 40;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
-  padding: 16px 0 24px 1.5vw;
+  padding: 16px 0 24px;
   pointer-events: none;
   display: none;
 }
 
 @media (min-width: 768px) {
   .section-sidebar {
+    padding-left: 1vw;
     display: block;
+  }
+}
+
+@media (min-width: 1280px) {
+  .section-sidebar {
+    padding-left: 1.4vw;
   }
 }
 
@@ -1674,9 +1681,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-start;
-  padding-top: 188px; /* Clear navbar + page header to align with first brew-section */
+  padding-top: 124px; /* Clear navbar + page header without pushing tiles too low */
   padding-bottom: 120px; /* Ensure last tile isn't cut off at bottom */
 }
 
@@ -1688,7 +1695,7 @@
   padding: 0 4px 8px;
   transform: rotate(-2deg);
   word-break: break-word;
-  width: 16.5vw;
+  width: 17.5vw;
   text-align: center;
 }
 .section-sidebar-title > span {
@@ -1755,7 +1762,7 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: flex-start;
-  width: 16.5vw;
+  width: 17.5vw;
   min-width: 25px;
   min-height: 88px;
   padding: 28px 10px 34px 10px;
@@ -1776,14 +1783,14 @@
    * Combined with transforms for a playful, organic feel.
    */
   transition:
-    height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-    min-height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 0.35s cubic-bezier(0.3, 1.4, 0.6, 1),
+    min-height 0.35s cubic-bezier(0.3, 1.4, 0.6, 1),
     width 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     border-radius 0.6s ease,
     filter 0.25s ease,
     opacity 0.5s ease,
     box-shadow 0.15s ease,
-    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform 0.35s cubic-bezier(0.34, 1.96, 0.64, 1);
 }
 
 /* Noise texture + top-lit 3D surface gradient */
@@ -1839,7 +1846,7 @@
 .section-sidebar-item.is-active {
   opacity: 1;
   transform: scale(1);
-  width: 17.5vw;
+  width: 18.5vw;
   min-height: 320px;
   border-radius: 16px;
   border-color: color-mix(in oklch, var(--sidebar-accent) 50%, transparent);
@@ -2018,6 +2025,23 @@
 /* Equipment: extra gap between the volume cluster and the boil/eff line */
 .section-sidebar-item.is-active .sidebar-scribble-line:has(.sidebar-scribble-equipment) {
   margin-bottom: 24px;
+}
+/* Mash strike temp: keep this annotation quieter than mash steps */
+.sidebar-scribble-line:has(.sidebar-scribble-mash-strike) {
+  font-size: clamp(11px, 1.35vw, 15px);
+  opacity: 0.48;
+}
+.section-sidebar-item.is-active .sidebar-scribble-line:has(.sidebar-scribble-mash-strike) {
+  font-size: clamp(12px, 1.5vw, 17px);
+  opacity: 0;
+}
+.sidebar-scribble-mash-strike {
+  display: inline-block;
+  margin-top: 16px;
+  opacity: 0.75;
+}
+.sidebar-scribble-line:has(.sidebar-scribble-mash-strike) strong {
+  font-size: 1.35em;
 }
 
 /* Per-line rotation + offset via custom props — survives animation */
@@ -2222,11 +2246,17 @@
 /* When sidebar is visible, shift main content to clear it */
 @media (min-width: 768px) {
   .has-section-sidebar {
-    padding-left: 17vw;
+    padding-left: 20vw;
     padding-right: 2vw;
     max-width: none !important;
     margin-left: 0 !important;
     margin-right: auto !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  .has-section-sidebar {
+    padding-left: 18vw;
   }
 }
 
@@ -2244,12 +2274,17 @@
 /* When sidebar is visible, shift footer to clear it too */
 @media (min-width: 768px) {
   :has(.has-section-sidebar) > footer {
-    padding-left: 17vw;
+    padding-left: 22vw;
+  }
+}
+@media (min-width: 1280px) {
+  :has(.has-section-sidebar) > footer {
+    padding-left: 18vw;
   }
 }
 @media (min-width: 1600px) {
   :has(.has-section-sidebar) > footer {
-    padding-left: 10vw;
+    padding-left: 19vw;
   }
 }
 
@@ -2264,8 +2299,50 @@
 .mobile-accordion-tile {
   display: none;
 }
+.mobile-sidebar-title {
+  display: none;
+}
 
 @media (max-width: 767px) {
+  .mobile-sidebar-title {
+    display: block;
+    font-family: var(--font-handwritten);
+    font-size: clamp(1.6rem, 7.5vw, 2.25rem);
+    line-height: 1.05;
+    color: var(--fg-strong);
+    text-align: center;
+    transform: rotate(-1.8deg);
+    margin: 4px 0 10px;
+    padding: 0 10px;
+    word-break: break-word;
+  }
+  .mobile-sidebar-title > span {
+    position: relative;
+    display: inline-block;
+  }
+  .mobile-sidebar-title > span::before,
+  .mobile-sidebar-title > span::after {
+    content: "";
+    position: absolute;
+    left: 2%;
+    right: 2%;
+    background: currentColor;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .mobile-sidebar-title > span::before {
+    bottom: 1px;
+    height: 2px;
+    opacity: 0.9;
+  }
+  .mobile-sidebar-title > span::after {
+    bottom: -2px;
+    left: 8%;
+    right: 6%;
+    height: 1.5px;
+    opacity: 0.45;
+  }
+
   /* ── Accordion tile header ── */
   .mobile-accordion-tile {
     all: unset;
@@ -3543,7 +3620,6 @@
     opacity: 0.8;
   }
 
-
   /* Range tick labels — positioned at range start/end below the track */
   .style-strip-tick {
     position: absolute;
@@ -3684,10 +3760,810 @@
   .dark .brew-alert-warning {
     background: color-mix(in oklch, var(--brew-warning) 6%, rgb(var(--brew-card) / 0.35));
   }
+
+  /* ---- Hover-reveal row actions (shared across builder) ---- */
+
+  .brew-row-actions {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    flex-shrink: 0;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 200ms ease, opacity 150ms ease, padding 200ms ease;
+  }
+  /* Show on row hover or focus-within */
+  .brew-ingredient-row:hover > .brew-row-actions,
+  .brew-ingredient-row:focus-within > .brew-row-actions,
+  .mash-step-card:hover > .brew-row-actions,
+  .mash-step-card:focus-within > .brew-row-actions,
+  .starter-step-row:hover > .brew-row-actions,
+  .starter-step-row:focus-within > .brew-row-actions,
+  .yeast-card:hover > .brew-row-actions,
+  .yeast-card:focus-within > .brew-row-actions,
+  .brew-row-hover:hover > .brew-row-actions,
+  .brew-row-hover:focus-within > .brew-row-actions,
+  .brew-row-actions-parent:hover > * > .brew-row-actions,
+  .brew-row-actions-parent:focus-within > * > .brew-row-actions {
+    max-width: 120px;
+    opacity: 1;
+    padding-left: 4px;
+  }
+  /* Always visible on touch devices */
+  @media (hover: none) {
+    .brew-row-actions {
+      max-width: 120px;
+      opacity: 1;
+      padding-left: 4px;
+    }
+  }
+
+  .brew-row-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 150ms ease, background 150ms ease;
+    cursor: pointer;
+  }
+  .brew-row-action-btn:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.08);
+  }
+  .dark .brew-row-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ---- Mash schedule — machined step cards ---- */
+
+  .mash-step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mash-step-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgb(var(--brew-card) / 0.45);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-right: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 150ms ease;
+  }
+  .mash-step-card:hover {
+    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-card);
+  }
+  .dark .mash-step-card {
+    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border-top-color: rgba(0, 0, 0, 0.15);
+    border-bottom-color: rgba(255, 255, 255, 0.03);
+    border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  .dark .mash-step-card:hover {
+    background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
+  }
+
+  .mash-step-index {
+    flex-shrink: 0;
+    font-family: var(--font-handwritten);
+    font-size: 16px;
+    color: var(--brew-accent-500);
+    opacity: 0.6;
+    line-height: 1;
+  }
+
+  .mash-step-name {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .mash-step-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    color: var(--fg-muted);
+    opacity: 0.7;
+  }
+
+  .mash-step-datum {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+  .mash-step-datum-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-wide);
+    color: var(--fg-muted);
+    opacity: 0.6;
+    line-height: 1;
+  }
+  .mash-step-datum-value {
+    font-family: var(--font-handwritten);
+    font-size: 18px;
+    color: var(--fg-strong);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .mash-step-datum-accent {
+    font-size: 14px;
+    color: var(--brew-accent-600);
+  }
+  .dark .mash-step-datum-accent {
+    color: var(--brew-accent-400);
+  }
+
+  /* ---- Equipment — machined panel readouts ---- */
+
+  .equip-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .equip-datum {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 14px 8px 10px;
+    border-radius: 10px;
+    background: rgb(var(--brew-card) / 0.45);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-right: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 150ms ease;
+  }
+  .equip-datum:focus-within {
+    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-card);
+  }
+  .dark .equip-datum {
+    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border-top-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+    border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 8px rgba(255, 255, 255, 0.02),
+      0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  .dark .equip-datum:focus-within {
+    background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
+  }
+
+  .equip-datum.is-small {
+    padding: 10px 6px 8px;
+  }
+
+  .equip-datum-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    color: var(--fg-muted);
+    opacity: 0.7;
+    line-height: 1;
+  }
+
+  .equip-datum-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .equip-datum-input {
+    font-family: var(--font-handwritten);
+    font-size: 28px;
+    color: var(--fg-strong);
+    line-height: 1.1;
+    background: transparent;
+    border: none;
+    text-align: center;
+    width: 90px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .equip-datum-input::-webkit-inner-spin-button,
+  .equip-datum-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .equip-datum.is-small .equip-datum-input {
+    font-size: 20px;
+    width: 72px;
+  }
+
+  .equip-datum-unit {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    opacity: 0.5;
+  }
+  .equip-datum.is-small .equip-datum-unit {
+    font-size: 11px;
+  }
+
+  /* Advanced section toggle */
+  .equip-advanced {
+    margin-top: 16px;
+  }
+  .equip-advanced-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--brew-accent-600);
+    transition: color 150ms ease;
+    list-style: none;
+  }
+  .equip-advanced-toggle::-webkit-details-marker {
+    display: none;
+  }
+  .dark .equip-advanced-toggle {
+    color: var(--brew-accent-400);
+  }
+  .equip-advanced-toggle:hover {
+    color: var(--brew-accent-700);
+  }
+  .dark .equip-advanced-toggle:hover {
+    color: var(--brew-accent-300);
+  }
+
+  .equip-advanced-chevron {
+    transition: transform 200ms ease;
+    flex-shrink: 0;
+  }
+  .equip-advanced[open] > .equip-advanced-toggle > .equip-advanced-chevron {
+    transform: rotate(90deg);
+  }
+
+  /* Grouped advanced settings */
+  .equip-group {
+    margin-top: 14px;
+  }
+  .equip-group-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    color: var(--fg-muted);
+    opacity: 0.45;
+    margin-bottom: 6px;
+  }
+  .equip-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+  }
+
+  /* ---- Yeast — selected strain card ---- */
+
+  .yeast-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: rgb(var(--brew-card) / 0.45);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-right: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 150ms ease;
+  }
+  .yeast-card:hover {
+    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      var(--shadow-card);
+  }
+  .dark .yeast-card {
+    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border-top-color: rgba(0, 0, 0, 0.15);
+    border-bottom-color: rgba(255, 255, 255, 0.03);
+    border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.03),
+      0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  .dark .yeast-card:hover {
+    background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
+  }
+
+  .yeast-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .yeast-card-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--fg-strong);
+  }
+  .yeast-card-lab {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    font-weight: 500;
+    color: var(--fg-muted);
+    opacity: 0.7;
+  }
+
+  /* ---- Yeast stack: fused card + starter sections ---- */
+
+  .yeast-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Yeast card → flat bottom when source bar follows */
+  .yeast-stack > .yeast-card:has(+ .starter-source-bar) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+    padding-bottom: 10px;
+  }
+
+  /* ---- Starter calculator — always-visible layout ---- */
+
+  /* Yeast source bar — fused into bottom of yeast card as one unit */
+  .starter-source-bar {
+    padding: 8px 16px 14px;
+    border-radius: 0 0 10px 10px;
+    /* Same bg as yeast-card to form one visual unit */
+    background: rgb(var(--brew-card) / 0.45);
+    border-top: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 8%, rgb(var(--brew-border-subtle)));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-right: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .dark .starter-source-bar {
+    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border-top-color: color-mix(in oklch, var(--brew-accent-700) 12%, transparent);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+    border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    box-shadow:
+      0 0 8px rgba(255, 255, 255, 0.02),
+      0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Dashboard + steps: spaced below the fused card */
+  .yeast-stack > .starter-dashboard {
+    margin-top: 8px;
+  }
+  .yeast-stack > .starter-steps-section {
+    margin-top: 8px;
+  }
+
+  /* Stretch datum cards inside source bar */
+  .starter-source-bar .equip-datum {
+    align-items: stretch;
+  }
+  .starter-source-bar .equip-datum-label {
+    text-align: center;
+  }
+  .starter-source-bar .equip-datum.is-small .equip-datum-input {
+    width: 100%;
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .starter-source-bar .equip-datum.is-small select.equip-datum-input {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-align-last: center;
+  }
+  .starter-source-bar .equip-datum-input[type="date"] {
+    font-size: 14px;
+    text-align: center;
+  }
+  .dark .starter-source-bar .equip-datum-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  /* Top dashboard: horizontal metric strip */
+  .starter-dashboard {
+    display: flex;
+    gap: 6px;
+  }
+  .starter-dashboard .starter-metric {
+    flex: 1;
+    align-items: center;
+  }
+
+  /* Danger state for metric card (underpitched) */
+  .starter-metric.is-danger {
+    border-color: color-mix(in oklch, var(--brew-danger) 25%, rgb(var(--brew-border-subtle)));
+    background: color-mix(in oklch, var(--brew-danger) 5%, rgb(var(--brew-card) / 0.55));
+  }
+  .dark .starter-metric.is-danger {
+    border-color: color-mix(in oklch, var(--brew-danger) 30%, transparent);
+    background: color-mix(in oklch, var(--brew-danger) 8%, color-mix(in oklch, var(--brew-accent-950) 45%, transparent));
+  }
+
+  /* Starter steps section */
+  .starter-steps-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Section header label */
+  .starter-sub-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    color: var(--fg-muted);
+    margin-bottom: 8px;
+  }
+  .starter-sub-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .starter-sub-sep {
+    opacity: 0.35;
+  }
+  .starter-model-select {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-strong);
+    background: rgb(var(--brew-card) / 0.4);
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 15%, rgb(var(--brew-border-subtle)));
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 4px 22px 4px 8px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%23888' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+  .starter-model-select:hover {
+    background: rgb(var(--brew-card) / 0.6);
+    border-color:
+      color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
+  }
+  .starter-model-select:focus {
+    outline: none;
+    border-color: var(--brew-accent-500);
+  }
+  .dark .starter-model-select {
+    background: color-mix(in oklch, var(--brew-accent-950) 30%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 20%, transparent);
+    color: var(--fg-strong);
+  }
+  .dark .starter-model-select:hover {
+    background: color-mix(in oklch, var(--brew-accent-950) 45%, transparent);
+  }
+  .starter-model-select option {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 13px;
+  }
+
+  /* Yeast source grid — stretches full width, regular font */
+  .starter-input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .starter-input-grid .equip-datum-input {
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    width: 100%;
+  }
+  .starter-input-grid select.equip-datum-input {
+    font-size: 15px;
+    text-align: left;
+    padding: 0 4px;
+    cursor: pointer;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Readout card (DME, etc.) */
+  .starter-readout {
+    cursor: default;
+  }
+
+  /* Starter step inputs — handwritten numbers (override is-small 20px) */
+  .starter-step-row .equip-datum.is-small .equip-datum-input {
+    font-family: var(--font-handwritten);
+    font-weight: 400;
+    font-size: 32px;
+    width: 100%;
+  }
+  .starter-step-row select.equip-datum-input {
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    padding: 0 4px;
+    cursor: pointer;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Starter step readout — handwritten */
+  .starter-step-row .starter-readout-value {
+    font-family: var(--font-handwritten);
+    font-size: 28px;
+    color: var(--fg-strong);
+    line-height: 1.1;
+  }
+
+  /* Stepper: buttons sit on top of the card, full height */
+  .starter-step-row .equip-datum:has(.starter-stepper) {
+    position: relative;
+  }
+
+  /* Stepper control */
+  .starter-stepper {
+    display: contents;
+  }
+  .starter-stepper-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 0;
+    background: rgb(var(--brew-card) / 0.35);
+    color: var(--fg-muted);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+    line-height: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    z-index: 1;
+  }
+  .starter-stepper-btn:first-child {
+    left: 0;
+    border-right: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-radius: 10px 0 0 10px;
+  }
+  .starter-stepper-btn:last-child {
+    right: 0;
+    border-left: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-radius: 0 10px 10px 0;
+  }
+  .starter-stepper-btn:hover {
+    background: color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)));
+    color: var(--fg-strong);
+  }
+  .starter-stepper-btn:active {
+    background: color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)));
+  }
+  .starter-stepper-center {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 1px;
+  }
+  .starter-stepper-input {
+    text-align: center;
+  }
+  .starter-stepper-unit {
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+  /* Hide number input spinners inside stepper */
+  .starter-stepper-input::-webkit-inner-spin-button,
+  .starter-stepper-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .starter-stepper-input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  .dark .starter-stepper-btn {
+    background: color-mix(in oklch, var(--brew-accent-900) 35%, transparent);
+    color: var(--fg-muted);
+  }
+  .dark .starter-stepper-btn:first-child {
+    border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+  }
+  .dark .starter-stepper-btn:last-child {
+    border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+  }
+  .dark .starter-stepper-btn:hover {
+    background: color-mix(in oklch, var(--brew-accent-800) 45%, transparent);
+    color: var(--fg-strong);
+  }
+
+  /* Dashboard metric cards — prominent readouts */
+  .starter-metric {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 16px 8px;
+    border-radius: 10px;
+    background: rgb(var(--brew-card) / 0.55);
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 1px 3px rgba(0, 0, 0, 0.06);
+    min-width: 80px;
+    transition: background 200ms ease, box-shadow 200ms ease;
+  }
+  .dark .starter-metric {
+    background: color-mix(in oklch, var(--brew-accent-950) 45%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 8px rgba(255, 255, 255, 0.02),
+      0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  .starter-metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--brew-tracking-widest);
+    color: var(--fg-muted);
+    opacity: 0.65;
+    line-height: 1;
+  }
+  .starter-metric-value {
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 26px;
+    color: var(--fg-strong);
+    line-height: 1.1;
+    white-space: nowrap;
+    transition: transform 200ms ease;
+  }
+  .starter-metric-unit {
+    font-family: var(--font-body, sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    opacity: 0.5;
+  }
+
+  /* Flash animation when metric values change */
+  .starter-metric.is-flash .starter-metric-value {
+    animation: starter-metric-pulse 500ms ease-out;
+  }
+  @keyframes starter-metric-pulse {
+    0% { transform: scale(1.15); opacity: 0.6; }
+    40% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  /* Starter step row — grid for alignment (Size, Gravity, DME) */
+  .starter-step-row {
+    display: grid;
+    grid-template-columns: 18px 1fr 1fr 1fr auto;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .starter-step-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--brew-accent-500);
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Warning scribble text — floats above the metric card */
+  .starter-warning {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    font-family: var(--font-handwritten);
+    font-size: 18px;
+    color: var(--brew-danger);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Dimmed add-starter button when already above cell count */
+  .starter-add-faded {
+    opacity: 0.5;
+    transition: opacity 150ms ease;
+  }
+  .starter-add-faded:hover {
+    opacity: 0.9;
+  }
 }
 
-/* Brew theme animations — safe: no transform (avoids creating containing blocks) */
-@keyframes brew-fade-in {
+/* Brew theme animations — initial load stagger */
+@keyframes brew-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes brew-quick-fade {
   from {
     opacity: 0;
   }
@@ -3696,8 +4572,41 @@
   }
 }
 
+@keyframes brew-slide-in-left {
+  from {
+    transform: translateX(-120vw);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes brew-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .brew-animate-in {
-  animation: brew-fade-in 0.35s ease-out backwards;
+  animation: brew-fade-in-up 0.28s ease-out backwards;
+}
+.brew-main-fade-in {
+  animation: brew-quick-fade 160ms ease-out backwards;
+}
+.brew-animate-in-left {
+  animation: brew-slide-in-left 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.brew-animate-in-right {
+  animation: brew-slide-in-right 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+/* Sidebar-only entrance: slower + wider stagger for a calmer cascade */
+.sidebar-animate-in-left {
+  animation: brew-slide-in-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 .brew-stagger-1 {
   animation-delay: 0.04s;
@@ -3725,6 +4634,43 @@
 }
 .brew-stagger-9 {
   animation-delay: 0.36s;
+}
+.brew-stagger-10 {
+  animation-delay: 0.4s;
+}
+/* Keep all main sections synchronized (with first sidebar section tile). */
+.brew-stagger-sync {
+  animation-delay: 0.06s;
+}
+.sidebar-stagger-1 {
+  animation-delay: 0.03s;
+}
+.sidebar-stagger-2 {
+  animation-delay: 0.06s;
+}
+.sidebar-stagger-3 {
+  animation-delay: 0.09s;
+}
+.sidebar-stagger-4 {
+  animation-delay: 0.12s;
+}
+.sidebar-stagger-5 {
+  animation-delay: 0.15s;
+}
+.sidebar-stagger-6 {
+  animation-delay: 0.18s;
+}
+.sidebar-stagger-7 {
+  animation-delay: 0.21s;
+}
+.sidebar-stagger-8 {
+  animation-delay: 0.24s;
+}
+.sidebar-stagger-9 {
+  animation-delay: 0.27s;
+}
+.sidebar-stagger-10 {
+  animation-delay: 0.3s;
 }
 
 /* Subtle pulse for active/selected states */
@@ -3812,7 +4758,10 @@
   .brew-chip,
   .brew-chip-active,
   .brew-picker-row,
-  .section-sidebar-item {
+  .section-sidebar-item,
+  .equip-datum,
+  .equip-advanced-chevron,
+  .yeast-card {
     transition: none !important;
   }
   .card-glass:hover,
@@ -3839,7 +4788,11 @@
   .section-sidebar-item:active {
     transform: none !important;
   }
-  .brew-animate-in {
+  .brew-animate-in,
+  .brew-main-fade-in,
+  .brew-animate-in-left,
+  .brew-animate-in-right,
+  .sidebar-animate-in-left {
     animation: none !important;
   }
   .brew-gauge-animated,

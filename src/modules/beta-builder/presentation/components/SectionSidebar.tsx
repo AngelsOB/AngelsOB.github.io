@@ -193,67 +193,70 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
     <nav ref={sidebarRef} className="section-sidebar" aria-label="Recipe sections">
       <div className="section-sidebar-track">
         {recipe?.name && (
-          <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}><span>{recipe.name}</span></div>
+          <div className="sidebar-animate-in-left sidebar-stagger-1">
+            <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}><span>{recipe.name}</span></div>
+          </div>
         )}
         {SECTIONS.map((section, i) => {
           const isActive = i === activeIndex;
           const scribbleLines = getScribbleLines(section.accent, recipe, calculations);
 
           return (
-            <button
-              key={section.id}
-              ref={(el) => {
-                itemRefs.current[i] = el;
-              }}
-              className={"section-sidebar-item" + (isActive ? " is-active" : "")}
-              style={
-                {
-                  backgroundColor: section.bg,
-                  "--sidebar-accent": section.bg,
-                } as React.CSSProperties
-              }
-              onClick={() => handleClick(i)}
-              aria-current={isActive ? "true" : undefined}
-              title={section.label}
-            >
-              <span className="section-sidebar-number" style={{ color: section.text }}>
-                {section.number}
-              </span>
-              <span
-                className="section-sidebar-dot"
-                style={{
-                  backgroundColor: section.text,
-                  top: `${getDotTop(isActive)}px`,
-                  opacity: isActive ? 1 : 0,
-                  transform: isActive ? "scale(1)" : "scale(0)",
+            <div key={section.id} className={`sidebar-animate-in-left sidebar-stagger-${i + 2}`}>
+              <button
+                ref={(el) => {
+                  itemRefs.current[i] = el;
                 }}
-              />
-              {scribbleLines.length > 0 && (
-                <span className="sidebar-scribble" style={{ color: section.text }}>
-                  {scribbleLines.map((line, j) => {
-                    // Pseudo-random per-line nudges for organic scribble feel
-                    const seed = (j * 7 + i * 13) % 11;
-                    const marginTop = seed % 3 === 0 ? 2 : seed % 3 === 1 ? -1 : 0;
-                    return (
-                      <span
-                        key={j}
-                        className="sidebar-scribble-line"
-                        style={{
-                          animationDelay: `${j * 40}ms`,
-                          marginTop: `${marginTop}px`,
-                        }}
-                      >
-                        {line}
-                      </span>
-                    );
-                  })}
+                className={"section-sidebar-item" + (isActive ? " is-active" : "")}
+                style={
+                  {
+                    backgroundColor: section.bg,
+                    "--sidebar-accent": section.bg,
+                  } as React.CSSProperties
+                }
+                onClick={() => handleClick(i)}
+                aria-current={isActive ? "true" : undefined}
+                title={section.label}
+              >
+                <span className="section-sidebar-number" style={{ color: section.text }}>
+                  {section.number}
                 </span>
-              )}
-              <span className="section-sidebar-label" style={{ color: section.text }}>
-                <span className="section-sidebar-label-full">{section.label}</span>
-                <span className="section-sidebar-label-short">{section.shortLabel}</span>
-              </span>
-            </button>
+                <span
+                  className="section-sidebar-dot"
+                  style={{
+                    backgroundColor: section.text,
+                    top: `${getDotTop(isActive)}px`,
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? "scale(1)" : "scale(0)",
+                  }}
+                />
+                {scribbleLines.length > 0 && (
+                  <span className="sidebar-scribble" style={{ color: section.text }}>
+                    {scribbleLines.map((line, j) => {
+                      // Pseudo-random per-line nudges for organic scribble feel
+                      const seed = (j * 7 + i * 13) % 11;
+                      const marginTop = seed % 3 === 0 ? 2 : seed % 3 === 1 ? -1 : 0;
+                      return (
+                        <span
+                          key={j}
+                          className="sidebar-scribble-line"
+                          style={{
+                            animationDelay: `${j * 40}ms`,
+                            marginTop: `${marginTop}px`,
+                          }}
+                        >
+                          {line}
+                        </span>
+                      );
+                    })}
+                  </span>
+                )}
+                <span className="section-sidebar-label" style={{ color: section.text }}>
+                  <span className="section-sidebar-label-full">{section.label}</span>
+                  <span className="section-sidebar-label-short">{section.shortLabel}</span>
+                </span>
+              </button>
+            </div>
           );
         })}
       </div>

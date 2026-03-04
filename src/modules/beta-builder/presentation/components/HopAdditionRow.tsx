@@ -8,7 +8,7 @@ type HopAdditionRowProps = {
 
 export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionRowProps) {
   return (
-    <div className="flex items-center gap-1.5 py-0.5 group/row">
+    <div className="brew-row-hover flex items-center py-0.5">
       {/* Unified row container: type pill + timing + weight in one shared surface */}
       <div
         className="flex items-center gap-0 flex-1 min-w-0 rounded-lg overflow-hidden"
@@ -158,14 +158,16 @@ export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionR
         </div>
       </div>
 
-      {/* Remove */}
-      <button
-        onClick={() => onRemove(hop.id)}
-        className="brew-danger-text text-sm font-bold shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-40 group-hover/row:opacity-100 transition-opacity"
-        aria-label={`Remove ${hop.name} ${hop.type} addition`}
-      >
-        &times;
-      </button>
+      {/* Hover-reveal actions — morphs inline */}
+      <div className="brew-row-actions">
+        <button
+          onClick={() => onRemove(hop.id)}
+          className="brew-row-action-btn brew-danger-text"
+          aria-label={`Remove ${hop.name} ${hop.type} addition`}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
     </div>
   );
 }

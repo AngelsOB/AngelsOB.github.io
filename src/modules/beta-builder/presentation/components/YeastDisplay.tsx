@@ -1,19 +1,16 @@
 /**
  * Yeast Display Component
  *
- * Displays selected yeast information with laboratory branding,
- * inline attenuation editing, and change button.
+ * Machined card showing selected yeast with lab badge,
+ * name/lab info, and editable attenuation datum readout.
  */
 
 import YeastLabBadge from "./YeastLabBadge";
 import type { Yeast } from "../../domain/models/Recipe";
 
 interface YeastDisplayProps {
-  /** The currently selected yeast */
   yeast: Yeast;
-  /** Callback when user wants to change yeast */
   onChangeYeast: () => void;
-  /** Callback when attenuation is updated */
   onUpdateAttenuation: (attenuation: number) => void;
 }
 
@@ -23,54 +20,45 @@ export default function YeastDisplay({
   onUpdateAttenuation,
 }: YeastDisplayProps) {
   return (
-    <div className="brew-ingredient-row">
-      <div className="grid grid-cols-12 gap-4 items-center">
-        {/* Name and Laboratory */}
-        <div className="col-span-6 flex items-start gap-4">
-          <div className="mt-1">
-            <YeastLabBadge laboratory={yeast.laboratory} size="md" />
-          </div>
-          <div>
-            <span className="font-medium text-lg block" style={{ color: 'var(--fg-strong)' }}>{yeast.name}</span>
-            {yeast.laboratory && (
-              <div className="text-sm font-medium text-muted">
-                {yeast.laboratory}
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="yeast-card">
+      <YeastLabBadge laboratory={yeast.laboratory} size="md" />
 
-        {/* Attenuation */}
-        <div className="col-span-5">
-          <label htmlFor="yeast-attenuation" className="text-xs font-semibold block mb-1">
-            Attenuation
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              id="yeast-attenuation"
-              type="number"
-              value={(yeast.attenuation * 100).toFixed(0)}
-              onChange={(e) =>
-                onUpdateAttenuation((parseFloat(e.target.value) || 0) / 100)
-              }
-              className="brew-input w-24"
-              step="1"
-              min="0"
-              max="100"
-            />
-            <span className="text-sm font-medium">%</span>
-          </div>
-        </div>
+      <div className="yeast-card-info">
+        <span className="yeast-card-name">{yeast.name}</span>
+        {yeast.laboratory && (
+          <span className="yeast-card-lab">{yeast.laboratory}</span>
+        )}
+      </div>
 
-        {/* Change Button */}
-        <div className="col-span-1 text-right">
-          <button
-            onClick={onChangeYeast}
-            className="brew-link text-sm font-medium"
-          >
-            Change
-          </button>
+      {/* Attenuation datum readout */}
+      <div className="equip-datum is-small">
+        <label htmlFor="yeast-attenuation" className="equip-datum-label">Attenuation</label>
+        <div className="equip-datum-value">
+          <input
+            id="yeast-attenuation"
+            type="number"
+            value={(yeast.attenuation * 100).toFixed(0)}
+            onChange={(e) =>
+              onUpdateAttenuation((parseFloat(e.target.value) || 0) / 100)
+            }
+            className="equip-datum-input"
+            step="1"
+            min="0"
+            max="100"
+          />
+          <span className="equip-datum-unit">%</span>
         </div>
+      </div>
+
+      {/* Hover-reveal change action */}
+      <div className="brew-row-actions">
+        <button
+          onClick={onChangeYeast}
+          className="brew-row-action-btn brew-link"
+          aria-label="Change yeast"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+        </button>
       </div>
     </div>
   );
