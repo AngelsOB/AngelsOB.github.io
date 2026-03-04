@@ -265,7 +265,7 @@ export default function StarterCalculator({
                 label="Amount"
                 unit="L"
                 value={slurryLiters}
-                onChange={setSlurryLiters}
+                onChange={(v) => setSlurryLiters(v as number)}
                 step="0.1"
                 min="0"
               />
@@ -273,17 +273,17 @@ export default function StarterCalculator({
                 label="Density"
                 unit="B/mL"
                 value={slurryBillionPerMl}
-                onChange={setSlurryBillionPerMl}
+                onChange={(v) => setSlurryBillionPerMl(v as number)}
                 step="0.1"
                 min="0"
               />
             </>
           ) : yeastType === "dry" ? (
-            <StarterDatum label="Packs" value={packs} onChange={setPacks} step="1" min="0" />
+            <StarterDatum label="Packs" value={packs} onChange={(v) => setPacks(v as number)} step="1" min="0" />
           ) : (
             <>
-              <StarterDatum label="Packs" value={packs} onChange={setPacks} step="1" min="0" />
-              <StarterDatum label="Mfg Date" type="date" value={mfgDate} onChange={setMfgDate} />
+              <StarterDatum label="Packs" value={packs} onChange={(v) => setPacks(v as number)} step="1" min="0" />
+              <StarterDatum label="Mfg Date" type="date" value={mfgDate} onChange={(v) => setMfgDate(v as string)} />
             </>
           )}
         </div>
@@ -349,7 +349,7 @@ export default function StarterCalculator({
                   label="Size"
                   unit="L"
                   value={s.liters}
-                  onChange={(v) => handleUpdateStep(s.id, { liters: v })}
+                  onChange={(v) => handleUpdateStep(s.id, { liters: v as number })}
                   step="0.1"
                   min="0.1"
                   stepper
@@ -358,7 +358,7 @@ export default function StarterCalculator({
                 <StarterDatum
                   label="Gravity"
                   value={s.gravity}
-                  onChange={(v) => handleUpdateStep(s.id, { gravity: v })}
+                  onChange={(v) => handleUpdateStep(s.id, { gravity: v as number })}
                   step="0.001"
                   min="1.000"
                   stepper
