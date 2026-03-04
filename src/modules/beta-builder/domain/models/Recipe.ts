@@ -215,8 +215,10 @@ export type Recipe = {
 
   /** Version control */
   currentVersion: number; // Current version number (starts at 1)
-  parentRecipeId?: string; // If this is a variation, the ID of the parent recipe
-  parentVersionNumber?: number; // If this is a variation, which version was forked
+  parentRecipeId?: string; // If this is a variation/fork, the ID of the parent recipe
+  parentVersionNumber?: number; // If this is a variation/fork, which version was forked
+  parentRecipeName?: string; // Denormalized parent recipe name (for fork attribution)
+  parentRecipeOwnerName?: string; // Denormalized parent recipe owner name (for fork attribution)
 
   /** Target batch volume in liters (final packaged volume — fermenter loss is added on top) */
   batchVolumeL: number;
@@ -291,6 +293,11 @@ export type Recipe = {
 
   /** Brew day checklist — per-recipe overrides (optional, defaults generated at export time) */
   brewDayChecklist?: BrewDayChecklistItem[];
+
+  /** Sharing */
+  isPublic?: boolean;
+  shareSlug?: string;
+  publishedAt?: string;
 
   /** Timestamps */
   createdAt: string;
