@@ -1,9 +1,53 @@
-'use client';
-
+import type { Metadata } from "next";
 import "../src/index.css";
-import NavBar from "../src/components/NavBar";
-import Footer from "../src/components/Footer";
-import Toaster from "../src/components/Toaster";
+import ClientShell from "./ClientShell";
+
+export const metadata: Metadata = {
+  title: {
+    default: "BeerApp - Homebrewing Recipe Builder & Calculator",
+    template: "%s | BeerApp",
+  },
+  description:
+    "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more. Free brewing calculator for all-grain and extract brewers.",
+  keywords: [
+    "homebrewing",
+    "beer recipe",
+    "brewing calculator",
+    "ABV calculator",
+    "IBU calculator",
+    "water chemistry",
+    "mash pH",
+    "BJCP styles",
+    "craft beer",
+  ],
+  authors: [{ name: "BeerApp" }],
+  openGraph: {
+    type: "website",
+    title: "BeerApp - Homebrewing Recipe Builder & Calculator",
+    description:
+      "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
+    siteName: "BeerApp",
+    images: ["/og-image.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BeerApp - Homebrewing Recipe Builder & Calculator",
+    description:
+      "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
+    images: ["/og-image.svg"],
+  },
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
+  manifest: "/manifest.json",
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
+    "apple-mobile-web-app-title": "BeerApp",
+    "theme-color": "#F5A623",
+  },
+};
 
 export default function RootLayout({
   children,
@@ -13,7 +57,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Google Fonts: Caveat + Rock Salt (handwritten) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -24,42 +67,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Shadows+Into+Light&family=Rock+Salt&display=swap"
           rel="stylesheet"
         />
-
-        {/* Favicon and Icons */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
-
-        {/* PWA Manifest */}
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#F5A623" />
-        <meta
-          name="apple-mobile-web-app-capable"
-          content="yes"
-        />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
-        <meta name="apple-mobile-web-app-title" content="BeerApp" />
       </head>
       <body>
-        <div className="min-h-dvh text-[rgb(var(--text))] transition-colors">
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[rgb(var(--accent))] focus:text-white focus:rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--coral-600)]"
-          >
-            Skip to main content
-          </a>
-          <NavBar />
-          <main
-            id="main-content"
-            className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6"
-          >
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-        </div>
+        <ClientShell>{children}</ClientShell>
       </body>
     </html>
   );
