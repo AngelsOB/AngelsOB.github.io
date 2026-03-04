@@ -16,6 +16,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
+import { useAuthStore } from "../../../auth/authStore";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import {
   downloadTextFile,
@@ -41,6 +42,9 @@ type SortOption =
 
 export default function RecipeListPage() {
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const {
     recipes,
     loadRecipes,
@@ -159,6 +163,26 @@ export default function RecipeListPage() {
           {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
         </span>
       </div>
+
+      {/* Local-only banner for unauthenticated users */}
+      {!isAuthLoading && !user && (
+        <div className="brew-alert-warning mb-6 flex items-center gap-4 px-4 py-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: 'var(--brew-warning)' }}>
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4"/>
+            <path d="M12 16h.01"/>
+          </svg>
+          <p className="flex-1 text-sm">
+            Your recipes are saved locally on this device. Sign in to sync across devices and share with others.
+          </p>
+          <button
+            onClick={signInWithGoogle}
+            className="brew-btn-ghost whitespace-nowrap text-sm px-3 py-1"
+          >
+            Sign in
+          </button>
+        </div>
+      )}
 
       {/* Search and Controls */}
       <div className="brew-section mb-6">
