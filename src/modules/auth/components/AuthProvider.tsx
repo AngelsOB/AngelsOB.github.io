@@ -26,8 +26,8 @@ export default function AuthProvider({
       setUser(user);
       setLoading(false);
 
-      // Re-fetch data from the correct repo (localStorage or Firestore)
-      useRecipeStore.getState().loadRecipes();
+      // Auth changed (login/logout) — force re-fetch from the correct repo
+      useRecipeStore.getState().loadRecipes(true);
       useEquipmentStore.getState().loadProfiles();
       useBrewSessionStore.getState().loadSessions();
     });
