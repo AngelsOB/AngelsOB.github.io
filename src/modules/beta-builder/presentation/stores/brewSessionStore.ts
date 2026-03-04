@@ -14,7 +14,14 @@ import type {
 } from '../../domain/models/BrewSession';
 import { type Recipe, deepCloneRecipe } from '../../domain/models/Recipe';
 import { brewSessionRepository } from '../../domain/repositories/BrewSessionRepository';
+import { FirestoreBrewSessionRepository } from '../../domain/repositories/FirestoreBrewSessionRepository';
 import { brewSessionCalculationService } from '../../domain/services/BrewSessionCalculationService';
+import { useAuthStore } from '../../../auth/authStore';
+
+function getSessionRepo() {
+  const user = useAuthStore.getState().user;
+  return user ? new FirestoreBrewSessionRepository(user.uid) : null;
+}
 
 type BrewSessionStore = {
   // State
@@ -47,6 +54,14 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
   // Load all sessions
   loadSessions: () => {
     set({ isLoading: true, error: null });
+    const firestoreRepo = getSessionRepo();
+    if (firestoreRepo) {
+      firestoreRepo.loadAllAsync().then(
+        (sessions) => set({ sessions, isLoading: false }),
+        () => set({ error: 'Failed to load sessions', isLoading: false }),
+      );
+      return;
+    }
     try {
       const sessions = brewSessionRepository.loadAll();
       set({ sessions, isLoading: false });
@@ -58,6 +73,14 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
   // Load a specific session
   loadSession: (id: SessionId) => {
     set({ isLoading: true, error: null });
+    const firestoreRepo = getSessionRepo();
+    if (firestoreRepo) {
+      firestoreRepo.loadByIdAsync(id).then(
+        (session) => set({ currentSession: session, isLoading: false }),
+        () => set({ error: 'Failed to load session', isLoading: false }),
+      );
+      return;
+    }
     try {
       const session = brewSessionRepository.loadById(id);
       set({ currentSession: session, isLoading: false });
@@ -68,6 +91,14 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
 
   // Load sessions for a recipe
   loadSessionsByRecipeId: (recipeId: string): BrewSession[] => {
+    const firestoreRepo = getSessionRepo();
+    if (firestoreRepo) {
+      // Trigger async load and return empty — store will update via loadSessions
+      firestoreRepo.loadByRecipeIdAsync(recipeId).then(
+        (sessions) => set({ sessions }),
+      );
+      return [];
+    }
     try {
       return brewSessionRepository.loadByRecipeId(recipeId);
     } catch {
@@ -169,6 +200,14 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
     const current = get().currentSession;
     if (!current) return;
 
+    const firestoreRepo = getSessionRepo();
+    if (firestoreRepo) {
+      firestoreRepo.saveAsync(current).then(
+        () => { get().loadSessions(); set({ error: null }); },
+        () => set({ error: 'Failed to save session' }),
+      );
+      return;
+    }
     try {
       brewSessionRepository.save(current);
       // Reload sessions list
@@ -181,6 +220,19 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
 
   // Delete a session
   deleteSession: (id: SessionId) => {
+    const firestoreRepo = getSessionRepo();
+    if (firestoreRepo) {
+      firestoreRepo.deleteAsync(id).then(
+        () => {
+          const current = get().currentSession;
+          if (current?.id === id) set({ currentSession: null });
+          get().loadSessions();
+          set({ error: null });
+        },
+        () => set({ error: 'Failed to delete session' }),
+      );
+      return;
+    }
     try {
       brewSessionRepository.delete(id);
       // Clear current session if it was deleted

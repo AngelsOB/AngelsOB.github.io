@@ -5,6 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import Logo from "./Logo";
+import SignInButton from "../modules/auth/components/SignInButton";
+import UserMenu from "../modules/auth/components/UserMenu";
+import { useAuthStore } from "../modules/auth/authStore";
 
 const navLinks = [
   { href: "/calculators", label: "Calculators" },
@@ -71,6 +74,8 @@ export default function NavBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const user = useAuthStore((s) => s.user);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
 
   // Close menu on Escape key
   useEffect(() => {
@@ -120,13 +125,15 @@ export default function NavBar() {
             {navLinks.map((link) => (
               <NavLinkItem key={link.href} href={link.href} label={link.label} />
             ))}
-            <div className="ml-2 pl-2 border-l border-[rgb(var(--border))]">
+            <div className="ml-2 pl-2 border-l border-[rgb(var(--border))] flex items-center gap-2">
               <ThemeToggle />
+              {!isAuthLoading && (user ? <UserMenu /> : <SignInButton />)}
             </div>
           </div>
 
-          {/* Mobile menu button and theme toggle */}
+          {/* Mobile menu button, auth, and theme toggle */}
           <div className="flex items-center gap-2 sm:hidden">
+            {!isAuthLoading && (user ? <UserMenu /> : <SignInButton />)}
             <ThemeToggle />
             <button
               ref={buttonRef}

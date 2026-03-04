@@ -8,6 +8,13 @@
 import { create } from 'zustand';
 import type { EquipmentProfile } from '../../domain/models/Equipment';
 import { EquipmentRepository } from '../../domain/repositories/EquipmentRepository';
+import { FirestoreEquipmentRepository } from '../../domain/repositories/FirestoreEquipmentRepository';
+import { useAuthStore } from '../../../auth/authStore';
+
+function getEquipmentRepo() {
+  const user = useAuthStore.getState().user;
+  return user ? new FirestoreEquipmentRepository(user.uid) : null;
+}
 
 interface EquipmentStore {
   // State
@@ -32,7 +39,9 @@ export const useEquipmentStore = create<EquipmentStore>((set) => ({
   loadProfiles: async () => {
     set({ isLoading: true, error: null });
     try {
-      const profiles = await EquipmentRepository.loadAll();
+      const firestoreRepo = getEquipmentRepo();
+      const repo = firestoreRepo ?? EquipmentRepository;
+      const profiles = await repo.loadAll();
       set({ profiles, isLoading: false });
     } catch (error) {
       set({
@@ -45,9 +54,10 @@ export const useEquipmentStore = create<EquipmentStore>((set) => ({
   // Save a custom profile
   saveCustomProfile: async (profile: EquipmentProfile) => {
     try {
-      await EquipmentRepository.saveCustomProfile(profile);
-      // Reload profiles to include the new one
-      const profiles = await EquipmentRepository.loadAll();
+      const firestoreRepo = getEquipmentRepo();
+      const repo = firestoreRepo ?? EquipmentRepository;
+      await repo.saveCustomProfile(profile);
+      const profiles = await repo.loadAll();
       set({ profiles, error: null });
     } catch (error) {
       set({
@@ -59,9 +69,10 @@ export const useEquipmentStore = create<EquipmentStore>((set) => ({
   // Delete a custom profile
   deleteCustomProfile: async (name: string) => {
     try {
-      await EquipmentRepository.deleteCustomProfile(name);
-      // Reload profiles
-      const profiles = await EquipmentRepository.loadAll();
+      const firestoreRepo = getEquipmentRepo();
+      const repo = firestoreRepo ?? EquipmentRepository;
+      await repo.deleteCustomProfile(name);
+      const profiles = await repo.loadAll();
       set({ profiles, error: null });
     } catch (error) {
       set({
@@ -72,7 +83,12 @@ export const useEquipmentStore = create<EquipmentStore>((set) => ({
 
   // Clear cache
   clearCache: () => {
-    EquipmentRepository.clearCache();
+    const firestoreRepo = getEquipmentRepo();
+    if (firestoreRepo) {
+      firestoreRepo.clearCache();
+    } else {
+      EquipmentRepository.clearCache();
+    }
     set({ profiles: [] });
   },
 }));
