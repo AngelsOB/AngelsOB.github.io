@@ -7,6 +7,10 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/config/firebase";
 
+const isMobile = () =>
+  typeof navigator !== "undefined" &&
+  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -25,19 +29,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   signInWithGoogle: async () => {
+    // Mobile browsers don't support popups reliably — use redirect
+    if (isMobile()) {
+      await signInWithRedirect(auth, googleProvider);
+      return;
+    }
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error: unknown) {
-      // If popup is blocked (e.g. Safari), fall back to redirect
-      if (
-        error instanceof Error &&
-        "code" in error &&
-        (error as { code: string }).code === "auth/popup-blocked"
-      ) {
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        throw error;
-      }
+    } catch {
+      // Any popup failure (blocked, closed, etc.) — fall back to redirect
+      await signInWithRedirect(auth, googleProvider);
     }
   },
 
