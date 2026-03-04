@@ -19,7 +19,7 @@ import { toast } from '../../../../stores/toastStore';
 import { useAuthStore } from '../../../auth/authStore';
 import { generateShareSlug } from '../../../sharing/slugUtils';
 import { usePreferencesStore } from '../../../auth/preferencesStore';
-import { auth } from '@/config/firebase';
+import { syncPublicIndex } from '../../../sharing/publishService';
 
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;
@@ -274,19 +274,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
           // Sync publicRecipeIndex in the background for public recipes
           if (recipeToSave.isPublic) {
-            const user = auth.currentUser;
-            if (user) {
-              user.getIdToken().then((token) => {
-                fetch('/api/publish', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({ recipeId: recipeToSave.id }),
-                }).catch(() => { /* fire-and-forget */ });
-              }).catch(() => { /* ignore token errors */ });
-            }
+            syncPublicIndex(recipeToSave);
           }
         },
         (err) => { console.error('[Firestore] Failed to save recipe:', err); set({ error: 'Failed to save recipe' }); },

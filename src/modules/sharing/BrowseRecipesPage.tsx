@@ -2,6 +2,18 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  startAfter,
+  type QueryDocumentSnapshot,
+  type DocumentData,
+  type QueryConstraint,
+} from 'firebase/firestore';
+import { db } from '@/config/firebase';
 import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
 
 type BrowseRecipe = {
@@ -19,38 +31,56 @@ type BrowseRecipe = {
 
 type SortOption = 'newest' | 'popular';
 
+const PAGE_SIZE = 24;
+
 export default function BrowseRecipesPage() {
   const router = useRouter();
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [sort, setSort] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchRecipes(cursor: string | null, sortBy: SortOption, append: boolean) {
+  async function fetchRecipes(afterDoc: QueryDocumentSnapshot<DocumentData> | null, sortBy: SortOption, append: boolean) {
     const loading = append ? setIsLoadingMore : setIsLoading;
     loading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({ limit: '24', sort: sortBy });
-      if (cursor) params.set('after', cursor);
+      const orderField = sortBy === 'popular' ? 'forkCount' : 'publishedAt';
+      const constraints: QueryConstraint[] = [orderBy(orderField, 'desc')];
+      if (afterDoc) constraints.push(startAfter(afterDoc));
+      constraints.push(limit(PAGE_SIZE + 1));
 
-      const res = await fetch(`/api/browse?${params}`);
-      if (!res.ok) {
-        let serverError = `Server error (${res.status})`;
-        try {
-          const errData = await res.json();
-          serverError = errData.error || serverError;
-        } catch { /* not JSON */ }
-        throw new Error(serverError);
-      }
+      const q = query(collection(db, 'publicRecipeIndex'), ...constraints);
+      const snapshot = await getDocs(q);
+      const docs = snapshot.docs;
 
-      const data = await res.json();
-      setRecipes((prev) => (append ? [...prev, ...data.recipes] : data.recipes));
-      setNextCursor(data.nextCursor);
+      const hasNext = docs.length > PAGE_SIZE;
+      const resultDocs = hasNext ? docs.slice(0, PAGE_SIZE) : docs;
+
+      const newRecipes: BrowseRecipe[] = resultDocs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || '',
+          style: data.style || '',
+          ownerName: data.ownerName || 'Anonymous Brewer',
+          shareSlug: data.shareSlug || '',
+          stats: data.stats || {},
+          tags: data.tags || [],
+          hopNames: data.hopNames || [],
+          publishedAt: data.publishedAt || '',
+          forkCount: data.forkCount || 0,
+        };
+      });
+
+      setRecipes((prev) => (append ? [...prev, ...newRecipes] : newRecipes));
+      setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
+      setHasMore(hasNext);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load recipes. Please try again.');
     } finally {
@@ -59,6 +89,7 @@ export default function BrowseRecipesPage() {
   }
 
   useEffect(() => {
+    setLastDoc(null);
     fetchRecipes(null, sort, false);
   }, [sort]);
 
@@ -200,10 +231,10 @@ export default function BrowseRecipesPage() {
           </div>
 
           {/* Load More */}
-          {nextCursor && !searchQuery && (
+          {hasMore && !searchQuery && (
             <div className="mt-8 text-center">
               <button
-                onClick={() => fetchRecipes(nextCursor, sort, true)}
+                onClick={() => fetchRecipes(lastDoc, sort, true)}
                 disabled={isLoadingMore}
                 className="brew-btn-ghost px-8 py-3"
               >
