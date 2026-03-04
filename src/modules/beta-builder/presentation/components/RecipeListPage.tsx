@@ -500,6 +500,16 @@ function RecipeCard({
     downloadTextFile(`${sanitizeFileName(recipe.name)}.xml`, xml, "text/xml");
   };
 
+  const handleCopyShareLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (recipe.shareSlug) {
+      navigator.clipboard.writeText(`${window.location.origin}/r/${recipe.shareSlug}`);
+      toast.success('Share link copied to clipboard');
+    } else {
+      toast.error('Recipe is private — open it and make it public to share');
+    }
+  };
+
   const handleNewVersion = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowNewVersionDialog(true);
@@ -667,6 +677,16 @@ function RecipeCard({
                       className="brew-menu-item w-full text-left"
                     >
                       Export BeerXML
+                    </button>
+                    <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
+                    <button
+                      onClick={(e) => {
+                        handleCopyShareLink(e);
+                        setIsVersionMenuOpen(false);
+                      }}
+                      className="brew-menu-item w-full text-left"
+                    >
+                      Copy Share Link
                     </button>
                     <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
                     <button

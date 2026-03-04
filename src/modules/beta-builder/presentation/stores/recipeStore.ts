@@ -17,6 +17,9 @@ import { beerXmlImportService } from '../../domain/services/BeerXmlImportService
 import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
 import { toast } from '../../../../stores/toastStore';
 import { useAuthStore } from '../../../auth/authStore';
+import { generateShareSlug } from '../../../sharing/slugUtils';
+import { usePreferencesStore } from '../../../auth/preferencesStore';
+import { auth } from '@/config/firebase';
 
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;
@@ -135,12 +138,14 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
   // Create a new recipe with defaults
   createNewRecipe: () => {
+    const defaultPublic = usePreferencesStore.getState().defaultRecipePublic;
     const newRecipe: Recipe = {
       id: crypto.randomUUID(),
       name: 'New Recipe',
       style: undefined,
       notes: undefined,
       tags: [],
+      isPublic: defaultPublic,
       currentVersion: 1,
       batchVolumeL: 20,
       equipment: {
@@ -245,8 +250,41 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
-      firestoreRepo.saveAsync(current).then(
-        () => { get().loadRecipes(); set({ error: null }); },
+      // Auto-generate slug for public recipes that don't have one
+      let recipeToSave = current;
+      const needsSlug = current.isPublic !== false && !current.shareSlug;
+      if (needsSlug) {
+        recipeToSave = {
+          ...current,
+          isPublic: true,
+          shareSlug: generateShareSlug(current.name),
+          publishedAt: current.publishedAt || new Date().toISOString(),
+        };
+        set({ currentRecipe: recipeToSave });
+      }
+
+      firestoreRepo.saveAsync(recipeToSave).then(
+        () => {
+          get().loadRecipes();
+          set({ error: null });
+
+          // Sync publicRecipeIndex in the background for public recipes
+          if (recipeToSave.isPublic) {
+            const user = auth.currentUser;
+            if (user) {
+              user.getIdToken().then((token) => {
+                fetch('/api/publish', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ recipeId: recipeToSave.id }),
+                }).catch(() => { /* fire-and-forget */ });
+              }).catch(() => { /* ignore token errors */ });
+            }
+          }
+        },
         (err) => { console.error('[Firestore] Failed to save recipe:', err); set({ error: 'Failed to save recipe' }); },
       );
       return;

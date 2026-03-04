@@ -70,7 +70,7 @@ export class FirestoreRecipeRepository {
     const clean = JSON.parse(JSON.stringify({
       ...data,
       ownerId: this.userId,
-      isPublic: (data as Record<string, unknown>).isPublic ?? false,
+      isPublic: (data as Record<string, unknown>).isPublic ?? true,
       updatedAt: new Date().toISOString(),
     }));
     await setDoc(docRef, clean);

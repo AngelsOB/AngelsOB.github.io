@@ -31,7 +31,7 @@ export default function ShareModal({
   const [copied, setCopied] = useState(false);
 
   const shareUrl = shareSlug
-    ? `${window.location.origin}/r/${shareSlug}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/r/${shareSlug}`
     : '';
 
   async function getAuthToken(): Promise<string | null> {
@@ -43,7 +43,7 @@ export default function ShareModal({
     return user.getIdToken();
   }
 
-  async function handlePublish() {
+  async function handleMakePublic() {
     const token = await getAuthToken();
     if (!token) return;
 
@@ -59,13 +59,27 @@ export default function ShareModal({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to publish');
+        let errorMsg = 'Failed to publish';
+        try {
+          const data = await res.json();
+          errorMsg = data.error || errorMsg;
+        } catch {
+          // Response wasn't JSON — use status text
+          errorMsg = `Server error (${res.status})`;
+        }
+        throw new Error(errorMsg);
       }
 
-      const { slug } = await res.json();
+      let slug: string;
+      try {
+        const data = await res.json();
+        slug = data.slug;
+      } catch {
+        throw new Error('Invalid response from server');
+      }
+
       onPublished(slug);
-      toast.success('Recipe published! Share the link with anyone.');
+      toast.success('Recipe is now public!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to publish recipe');
     } finally {
@@ -73,7 +87,7 @@ export default function ShareModal({
     }
   }
 
-  async function handleUnpublish() {
+  async function handleMakePrivate() {
     const token = await getAuthToken();
     if (!token) return;
 
@@ -89,15 +103,21 @@ export default function ShareModal({
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to unpublish');
+        let errorMsg = 'Failed to make private';
+        try {
+          const data = await res.json();
+          errorMsg = data.error || errorMsg;
+        } catch {
+          errorMsg = `Server error (${res.status})`;
+        }
+        throw new Error(errorMsg);
       }
 
       onUnpublished();
       toast.success('Recipe is now private');
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to unpublish recipe');
+      toast.error(err instanceof Error ? err.message : 'Failed to make recipe private');
     } finally {
       setIsLoading(false);
     }
@@ -114,17 +134,16 @@ export default function ShareModal({
     <ModalOverlay isOpen={isOpen} onClose={onClose} size="md">
       <div className="p-6 space-y-5">
         <h2 id="share-modal-title" className="text-lg font-bold text-[var(--fg-strong)]">
-          {isPublic ? 'Recipe Shared' : 'Share Recipe'}
+          Share Recipe
         </h2>
 
-        {isPublic ? (
-          /* Published state */
+        {isPublic && shareSlug ? (
+          /* Public — show the link */
           <div className="space-y-4">
             <p className="text-sm text-[var(--fg-muted)]">
               <strong>{recipeName}</strong> is public. Anyone with the link can view it.
             </p>
 
-            {/* Share URL */}
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -142,16 +161,15 @@ export default function ShareModal({
               </Button>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-between items-center pt-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleUnpublish}
+                onClick={handleMakePrivate}
                 loading={isLoading}
                 className="text-red-600 dark:text-red-400"
               >
-                Unshare
+                Make Private
               </Button>
               <Button variant="tonal" size="sm" onClick={onClose}>
                 Done
@@ -159,11 +177,10 @@ export default function ShareModal({
             </div>
           </div>
         ) : (
-          /* Unpublished state */
+          /* Private — offer to make public */
           <div className="space-y-4">
             <p className="text-sm text-[var(--fg-muted)]">
-              Make <strong>{recipeName}</strong> public? Anyone with the link will be able
-              to view and fork this recipe.
+              <strong>{recipeName}</strong> is private. Make it public to get a shareable link.
             </p>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -173,10 +190,10 @@ export default function ShareModal({
               <Button
                 variant="neon"
                 size="sm"
-                onClick={handlePublish}
+                onClick={handleMakePublic}
                 loading={isLoading}
               >
-                Publish
+                Make Public
               </Button>
             </div>
           </div>
