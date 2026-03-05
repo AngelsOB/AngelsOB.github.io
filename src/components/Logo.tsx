@@ -6,12 +6,7 @@ import Link from "next/link";
  */
 function HopIcon({ className = "" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 28"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 28" fill="none" className={className} aria-hidden="true">
       {/* Central leaf / petal shapes — stacked like a hop cone */}
       {/* Bottom pair */}
       <ellipse
@@ -90,14 +85,7 @@ function HopIcon({ className = "" }: { className?: string }) {
         opacity="0.8"
       />
       {/* Tip */}
-      <ellipse
-        cx="12"
-        cy="4.8"
-        rx="3"
-        ry="2.2"
-        fill="currentColor"
-        opacity="0.95"
-      />
+      <ellipse cx="12" cy="4.8" rx="3" ry="2.2" fill="currentColor" opacity="0.95" />
       {/* Tiny stem */}
       <line
         x1="12"
@@ -123,16 +111,16 @@ export default function Logo({ size = "default" }: { size?: "default" | "sm" }) 
   return (
     <Link href="/" className="group inline-flex items-center gap-1.5">
       <span
-        className="transition-transform duration-300 ease-out group-hover:rotate-[-12deg] group-hover:scale-110"
-        style={{ color: 'var(--coral-500)' }}
+        className="transition-transform duration-300 ease-out group-hover:scale-110 group-hover:rotate-[-12deg]"
+        style={{ color: "var(--coral-500)" }}
       >
         <HopIcon className={iconSize} />
       </span>
       <span
         className={`${textSize} bg-clip-text text-transparent`}
-        style={{ backgroundImage: 'linear-gradient(to right, var(--coral-400), var(--coral-600))' }}
+        style={{ backgroundImage: "linear-gradient(to right, var(--coral-400), var(--coral-600))" }}
       >
-        Beer App
+        Brewing.It
       </span>
     </Link>
   );

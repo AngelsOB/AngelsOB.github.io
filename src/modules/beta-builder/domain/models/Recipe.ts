@@ -295,6 +295,9 @@ export type Recipe = {
   /** Brew day checklist — per-recipe overrides (optional, defaults generated at export time) */
   brewDayChecklist?: BrewDayChecklistItem[];
 
+  /** Source — distinguishes bundled seed recipes from user recipes */
+  source?: 'official' | 'community';
+
   /** Sharing */
   isPublic?: boolean;
   shareSlug?: string;

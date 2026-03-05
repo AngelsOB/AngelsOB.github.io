@@ -40,7 +40,7 @@ const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
     id: r.id,
     name: r.name,
     style: r.style || '',
-    ownerName: 'BeerApp',
+    ownerName: 'The Brewing.It Team',
     shareSlug: '',
     stats: { og: c.og, fg: c.fg, ibu: c.ibu, srm: c.srm, abv: c.abv },
     tags: r.tags || [],

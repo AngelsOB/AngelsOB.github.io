@@ -3781,8 +3781,8 @@
   .mash-step-card:focus-within > .brew-row-actions,
   .starter-step-row:hover > .brew-row-actions,
   .starter-step-row:focus-within > .brew-row-actions,
-  .yeast-card:hover > .brew-row-actions,
-  .yeast-card:focus-within > .brew-row-actions,
+  .yeast-card-header:hover > .brew-row-actions,
+  .yeast-card-header:focus-within > .brew-row-actions,
   .hop-variety-card:hover > .brew-row-actions,
   .hop-variety-card:focus-within > .brew-row-actions,
   .hop-addition-row:hover > .brew-row-actions,
@@ -4081,9 +4081,7 @@
 
   .yeast-card {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    flex-direction: column;
     border-radius: 10px;
     background: rgb(var(--brew-card) / 0.45);
     border: 1px solid
@@ -4110,17 +4108,44 @@
     background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
   }
 
+  .yeast-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
   .yeast-card-info {
-    flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
+  .yeast-card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .yeast-card-name {
     font-weight: 600;
     font-size: 15px;
     color: var(--fg-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .yeast-att-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+    color: var(--brew-accent-800);
+  }
+  .dark .yeast-att-badge {
+    background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
+    color: var(--brew-accent-300);
   }
   .yeast-card-lab {
     font-size: 10px;
@@ -4131,6 +4156,38 @@
     opacity: 0.7;
   }
 
+  .yeast-header-inputs {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .yeast-header-inputs .equip-datum {
+    align-items: stretch;
+  }
+  .yeast-header-inputs .equip-datum-label {
+    text-align: center;
+  }
+  .yeast-header-inputs .equip-datum.is-small .equip-datum-input {
+    width: 100%;
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .yeast-header-inputs .equip-datum.is-small select.equip-datum-input {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-align-last: center;
+  }
+  .yeast-header-inputs .equip-datum-input[type="date"] {
+    font-size: 14px;
+    text-align: center;
+  }
+  .dark .yeast-header-inputs .equip-datum-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
   /* ---- Yeast stack: fused card + starter sections ---- */
 
   .yeast-stack {
@@ -4138,41 +4195,9 @@
     flex-direction: column;
   }
 
-  /* Yeast card → flat bottom when source bar follows */
-  .yeast-stack > .yeast-card:has(+ .starter-source-bar) {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-bottom: none;
-    padding-bottom: 10px;
-  }
   /* ---- Starter calculator — always-visible layout ---- */
 
-  /* Yeast source bar — fused into bottom of yeast card as one unit */
-  .starter-source-bar {
-    padding: 8px 16px 14px;
-    border-radius: 0 0 10px 10px;
-    /* Same bg as yeast-card to form one visual unit */
-    background: rgb(var(--brew-card) / 0.45);
-    border: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    border-top-color:
-      color-mix(in oklch, var(--brew-accent-300) 8%, rgb(var(--brew-border-subtle)));
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  }
-  .dark .starter-source-bar {
-    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-    border-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
-    border-top-color: color-mix(in oklch, var(--brew-accent-700) 12%, transparent);
-    box-shadow:
-      0 0 8px rgba(255, 255, 255, 0.02),
-      0 1px 2px rgba(0, 0, 0, 0.12);
-  }
-  /* Source bar → no top border when fused below yeast card */
-  .yeast-stack > .yeast-card + .starter-source-bar {
-    border-top: none;
-  }
-
-  /* Dashboard + steps: spaced below the fused card */
+  /* Dashboard + steps: spaced below the card */
   .yeast-stack > .starter-dashboard {
     margin-top: 8px;
   }
@@ -4180,32 +4205,6 @@
     margin-top: 8px;
   }
 
-  /* Stretch datum cards inside source bar */
-  .starter-source-bar .equip-datum {
-    align-items: stretch;
-  }
-  .starter-source-bar .equip-datum-label {
-    text-align: center;
-  }
-  .starter-source-bar .equip-datum.is-small .equip-datum-input {
-    width: 100%;
-    font-family: inherit;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .starter-source-bar .equip-datum.is-small select.equip-datum-input {
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    text-align-last: center;
-  }
-  .starter-source-bar .equip-datum-input[type="date"] {
-    font-size: 14px;
-    text-align: center;
-  }
-  .dark .starter-source-bar .equip-datum-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  }
 
   /* Top dashboard: horizontal metric strip */
   .starter-dashboard {
