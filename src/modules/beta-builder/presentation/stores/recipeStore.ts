@@ -145,13 +145,28 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
   // Load a specific recipe (uses in-memory cache, then IndexedDB cache, then network)
   loadRecipe: (id: RecipeId) => {
-    // 1. Check in-memory cache first
+    // 1. Already displaying this recipe (e.g. set by RecipeListPage before navigation)
+    if (get().currentRecipe?.id === id) {
+      set({ isLoading: false, error: null });
+      // Still refresh from network in the background if auth is ready
+      const firestoreRepo = getRecipeRepo();
+      if (firestoreRepo) {
+        firestoreRepo.loadByIdAsync(id).then(
+          (recipe) => { if (recipe) set({ currentRecipe: recipe }); },
+          () => { /* silent — we already have the recipe displayed */ },
+        );
+      }
+      return;
+    }
+
+    // 2. Check recipes array cache
     const cached = get().recipes.find((r) => r.id === id);
     if (cached) {
       set({ currentRecipe: cached, isLoading: false, error: null });
       return;
     }
 
+    // 3. Need to fetch — show loading
     set({ isLoading: true, error: null });
 
     const firestoreRepo = getRecipeRepo();
@@ -165,24 +180,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       firestoreRepo.loadByIdAsync(id).then(
         (recipe) => set({ currentRecipe: recipe, isLoading: false }),
         () => {
-          // Only show error if we don't already have cached data displayed
           if (!get().currentRecipe || get().currentRecipe?.id !== id) {
             set({ error: 'Failed to load recipe', isLoading: false });
           }
         },
       );
-      return;
-    }
-
-    // If auth hasn't resolved yet, try loading from IndexedDB cache directly
-    // (Firestore persistence stores docs by path, so this works without auth)
-    if (useAuthStore.getState().isLoading) {
-      const tempRepo = new FirestoreRecipeRepository('');
-      tempRepo.loadByIdFromCache(id).then((cachedRecipe) => {
-        if (cachedRecipe && (!get().currentRecipe || get().currentRecipe?.id !== id)) {
-          set({ currentRecipe: cachedRecipe, isLoading: false });
-        }
-      });
       return;
     }
 
