@@ -63,6 +63,7 @@ export default function RecipeListPage() {
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showImportMenu, setShowImportMenu] = useState(false);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   // Close import menu on outside click
   useEffect(() => {
@@ -470,12 +471,13 @@ export default function RecipeListPage() {
             <div key={recipe.id} className="flex flex-col overflow-visible">
               <Link
                 href={`/recipes/${recipe.id}`}
-                onClick={() => handlePreloadRecipe(recipe)}
+                onClick={() => { handlePreloadRecipe(recipe); setNavigatingId(recipe.id); }}
                 className="contents"
               >
                 <RecipeCard
                   recipe={recipe}
                   onDelete={(e) => handleDeleteClick(recipe.id, e)}
+                  isNavigating={navigatingId === recipe.id}
                 />
               </Link>
               <RecipeSessionsBar recipeId={recipe.id} />
@@ -515,9 +517,11 @@ export default function RecipeListPage() {
 function RecipeCard({
   recipe,
   onDelete,
+  isNavigating,
 }: {
   recipe: Recipe;
   onDelete: (e: React.MouseEvent) => void;
+  isNavigating?: boolean;
 }) {
   const router = useRouter();
   // Calculate stats for the recipe
@@ -595,6 +599,11 @@ function RecipeCard({
         } as React.CSSProperties
       }
     >
+      {isNavigating && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/80 backdrop-blur-[1px]">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
+        </div>
+      )}
       <div className="rounded-xl bg-[rgb(var(--brew-card))]">
         {/* SRM Color Strip */}
         {calculations && (
