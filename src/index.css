@@ -3782,6 +3782,10 @@
   .starter-step-row:focus-within > .brew-row-actions,
   .yeast-card:hover > .brew-row-actions,
   .yeast-card:focus-within > .brew-row-actions,
+  .hop-variety-card:hover > .brew-row-actions,
+  .hop-variety-card:focus-within > .brew-row-actions,
+  .hop-addition-row:hover > .brew-row-actions,
+  .hop-addition-row:focus-within > .brew-row-actions,
   .brew-row-hover:hover > .brew-row-actions,
   .brew-row-hover:focus-within > .brew-row-actions,
   .brew-row-actions-parent:hover > * > .brew-row-actions,
@@ -4855,4 +4859,502 @@
 /* Hide EmptyState action buttons (the plus-icon clickable variant) */
 .brew-read-only .brew-animate-in > button {
   display: none !important;
+}
+
+/* ═════════════════════════════════════════
+   HOP SECTION — Variety cards, addition rows, flavor panel
+   ═════════════════════════════════════════ */
+
+.hop-variety-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: rgb(var(--brew-card) / 0.45);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 1px solid
+    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  border-right: 1px solid
+    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    all 150ms ease,
+    transform 200ms ease;
+}
+.hop-variety-card:hover {
+  background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+  border-color: color-mix(in oklch, var(--brew-accent-400) 40%, rgb(var(--brew-border)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--shadow-card);
+  transform: translateY(-1px);
+}
+.dark .hop-variety-card {
+  background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+  border-top-color: rgba(255, 255, 255, 0.06);
+  border-bottom-color: rgba(0, 0, 0, 0.15);
+  border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+  border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.dark .hop-variety-card:hover {
+  background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
+}
+
+.hop-variety-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(var(--brew-border-subtle));
+}
+
+.hop-variety-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg-strong);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hop-variety-aa-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+  color: var(--brew-accent-800);
+}
+.dark .hop-variety-aa-badge {
+  background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
+  color: var(--brew-accent-300);
+}
+
+.hop-variety-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 4px;
+}
+.hop-variety-stats {
+  font-size: 12px;
+  color: var(--fg-muted);
+  letter-spacing: 0.02em;
+}
+.hop-variety-stats-value {
+  font-family: var(--font-handwritten);
+  font-size: 18px;
+  color: var(--fg-strong);
+  opacity: 0.7;
+}
+.hop-variety-stats-total {
+  font-family: var(--font-handwritten);
+  font-size: 28px;
+  color: var(--fg-strong);
+}
+.hop-variety-stats-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  margin-right: 12px;
+}
+.hop-variety-stats-sep {
+  margin: 0 8px;
+  opacity: 0.4;
+}
+
+/* Hop addition row — card-style with datum readouts */
+.hop-addition-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--brew-accent-900) 10%, rgb(var(--brew-card-inset) / 0.35));
+  border: 1px solid
+    color-mix(in oklch, var(--brew-accent-700) 10%, rgb(var(--brew-border-subtle)));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  transition: all 150ms ease;
+}
+.hop-addition-row:hover {
+  background: color-mix(in oklch, var(--brew-accent-100) 10%, rgb(var(--brew-card) / 0.5));
+}
+.dark .hop-addition-row {
+  background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-700) 18%, transparent);
+}
+.dark .hop-addition-row:hover {
+  background: color-mix(in oklch, var(--brew-accent-900) 40%, transparent);
+}
+
+/* Type selector badge */
+.hop-addition-type {
+  appearance: none;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 18px 4px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  color: var(--brew-accent-800);
+  background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23777' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 8px 5px;
+  transition: background 150ms ease;
+}
+.hop-addition-type:hover {
+  background-color: color-mix(in oklch, var(--brew-accent-200) 60%, transparent);
+}
+.dark .hop-addition-type {
+  color: var(--brew-accent-300);
+  background-color: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
+}
+.dark .hop-addition-type:hover {
+  background-color: color-mix(in oklch, var(--brew-accent-700) 45%, transparent);
+}
+
+/* Datum readout inside addition rows */
+.hop-addition-datum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.hop-addition-datum-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  opacity: 0.6;
+  line-height: 1;
+}
+.hop-addition-datum-value {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.hop-addition-datum-input {
+  font-family: var(--font-handwritten);
+  font-size: 22px;
+  color: var(--fg-strong);
+  line-height: 1.1;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  text-align: center;
+  width: 52px;
+  outline: none;
+  transition: background 120ms ease;
+  -moz-appearance: textfield;
+}
+.hop-addition-datum-input:focus {
+  background: color-mix(in oklch, var(--brew-accent-100) 20%, transparent);
+}
+.dark .hop-addition-datum-input:focus {
+  background: color-mix(in oklch, var(--brew-accent-800) 25%, transparent);
+}
+.hop-addition-datum-input::-webkit-inner-spin-button,
+.hop-addition-datum-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hop-addition-datum-input.is-narrow {
+  width: 40px;
+}
+.hop-addition-datum-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  opacity: 0.5;
+}
+
+/* Vertical chevron stepper — hidden until row hover */
+.hop-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+  align-self: center;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-width 200ms ease,
+    opacity 150ms ease,
+    margin 200ms ease;
+  margin-left: 0;
+}
+.hop-addition-row:hover .hop-stepper,
+.hop-addition-row:focus-within .hop-stepper {
+  max-width: 24px;
+  opacity: 1;
+  margin-left: 4px;
+}
+@media (hover: none) {
+  .hop-stepper {
+    max-width: 24px;
+    opacity: 1;
+    margin-left: 4px;
+  }
+}
+.hop-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  opacity: 0.45;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background 120ms ease,
+    opacity 120ms ease;
+  border-radius: 3px;
+  padding: 0;
+  line-height: 1;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.hop-stepper-btn:hover {
+  color: var(--fg-strong);
+  opacity: 1;
+  background: color-mix(in oklch, var(--brew-accent-300) 20%, transparent);
+}
+.hop-stepper-btn:active {
+  background: color-mix(in oklch, var(--brew-accent-300) 35%, transparent);
+}
+.dark .hop-stepper-btn:hover {
+  background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
+  color: var(--fg-strong);
+}
+.dark .hop-stepper-btn:active {
+  background: color-mix(in oklch, var(--brew-accent-700) 45%, transparent);
+}
+
+.hop-addition-spacer {
+  flex: 1;
+}
+
+.hop-add-addition-btn {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: var(--brew-accent-600);
+  background: transparent;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+.hop-add-addition-btn:hover {
+  background: color-mix(in oklch, var(--brew-accent-100) 30%, transparent);
+}
+.dark .hop-add-addition-btn {
+  color: var(--brew-accent-400);
+}
+.dark .hop-add-addition-btn:hover {
+  background: color-mix(in oklch, var(--brew-accent-800) 30%, transparent);
+}
+
+/* Total line — handwritten value */
+.hop-total-value {
+  font-family: var(--font-handwritten);
+  font-size: 20px;
+  color: var(--fg-strong);
+}
+.hop-total-unit {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.5;
+}
+
+/* Radar chart animations */
+@keyframes hop-radar-enter {
+  0% { opacity: 0; transform: scale(0.3); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes hop-radar-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+@keyframes hop-radar-web-in {
+  0% { opacity: 0; stroke-dashoffset: 1200; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
+}
+@keyframes hop-radar-axis-in {
+  0% { opacity: 0; }
+  100% { opacity: 0.3; }
+}
+/* Web background — rings draw in sequentially */
+.hop-radar-ring {
+  stroke-dasharray: 1200;
+  animation: hop-radar-web-in 800ms ease-out both;
+}
+.hop-radar-axis {
+  animation: hop-radar-axis-in 500ms ease-out both;
+}
+/* Series polygon — grows from center with bounce */
+.hop-radar-series {
+  transform-origin: center;
+  animation: hop-radar-enter 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.hop-radar-polygon {
+  animation: hop-radar-breathe 4s ease-in-out 1s infinite;
+}
+
+.hop-flavor-panel {
+  margin-top: 24px;
+  padding: 8px 12px 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35));
+  border: 1px solid
+    color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+.dark .hop-flavor-panel {
+  background: color-mix(in oklch, var(--brew-accent-950) 50%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+}
+
+/* Radar legend — machined inset box matching equip-datum */
+.hop-radar-legend-wrap {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgb(var(--brew-card) / 0.45);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 1px solid
+    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  border-right: 1px solid
+    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.dark .hop-radar-legend-wrap {
+  background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+  border-top-color: rgba(255, 255, 255, 0.06);
+  border-bottom-color: rgba(0, 0, 0, 0.15);
+  border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+  border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.hop-radar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+  transition: opacity 200ms ease, color 150ms ease;
+}
+.hop-radar-legend-item:hover {
+  color: var(--fg-strong);
+}
+.hop-radar-legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Flavor view toggle (Preset / Estimated) — machined segmented control */
+.hop-flavor-toggle {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  padding: 3px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  background: color-mix(in oklch, var(--brew-accent-100) 30%, rgb(var(--brew-card-inset)));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-300) 25%, transparent);
+  box-shadow: inset 0 2px 4px color-mix(in oklch, var(--brew-accent-900) 8%, transparent);
+  gap: 2px;
+}
+.hop-flavor-toggle button {
+  position: relative;
+  padding: 5px 14px;
+  font-weight: 500;
+  color: var(--brew-accent-700);
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 100ms ease;
+}
+.hop-flavor-toggle button:hover:not(.is-active) {
+  color: var(--brew-accent-800);
+  background: color-mix(in oklch, var(--brew-accent-200) 25%, transparent);
+}
+.hop-flavor-toggle button.is-active {
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(to bottom, var(--brew-accent-400), var(--brew-accent-500));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-600) 80%, var(--brew-accent-500));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 0 0 color-mix(in oklch, var(--brew-accent-700) 60%, black),
+    0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.hop-flavor-toggle button.is-active:active {
+  transform: translateY(1px);
+  background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-600));
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0px 0 0 transparent;
+}
+/* Dark mode */
+.dark .hop-flavor-toggle {
+  background: color-mix(in oklch, var(--brew-accent-950) 60%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-800) 30%, transparent);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.dark .hop-flavor-toggle button {
+  color: var(--brew-accent-400);
+}
+.dark .hop-flavor-toggle button:hover:not(.is-active) {
+  color: var(--brew-accent-300);
+  background: color-mix(in oklch, var(--brew-accent-800) 30%, transparent);
+}
+.dark .hop-flavor-toggle button.is-active {
+  color: white;
+  background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-600));
+  border-color: var(--brew-accent-400);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 0 0 rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.25);
 }

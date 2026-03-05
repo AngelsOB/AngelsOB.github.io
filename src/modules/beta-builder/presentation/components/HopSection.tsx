@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Hop Section Component
  *
@@ -252,7 +250,7 @@ export default function HopSection() {
       ) : (
         <div className="space-y-3">
           {/* Variety cards in 2-column grid on desktop */}
-          <div className={`grid grid-cols-1 ${hopGroups.length >= 2 ? 'lg:grid-cols-2' : ''} gap-3`}>
+          <div className={`grid grid-cols-1 ${hopGroups.length >= 2 ? 'lg:grid-cols-2' : ''} gap-3 items-start`}>
             {hopGroups.map((group) => (
               <HopVarietyCard
                 key={group.varietyName}
@@ -265,36 +263,33 @@ export default function HopSection() {
           </div>
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
+          <div className="flex justify-between items-baseline pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
             <span className="font-semibold text-strong">Total Hops</span>
-            <span className="font-semibold text-strong">{totalHopGrams} g</span>
+            <span className="hop-total-value">{totalHopGrams} <span className="hop-total-unit">g</span></span>
           </div>
 
           {/* Hop Flavor Visualizer */}
           {currentRecipe.hops.length > 0 && (
-            <div className="mt-6 p-4 rounded-xl" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-semibold">Hop Flavor Profile</h3>
-                <div className="flex gap-2">
+            <div className="hop-flavor-panel relative">
+              {/* Overlay header — sits on top of chart */}
+              <div className="absolute top-3 left-4 right-4 flex justify-between items-center z-10 pointer-events-none">
+                <h3 className="text-sm font-semibold pointer-events-auto">
+                  {flavorViewMode === "combined"
+                    ? "Estimated Recipe Aroma Profile"
+                    : "Individual Hop Flavor Profiles"}
+                </h3>
+                <div className="hop-flavor-toggle pointer-events-auto">
                   <button
                     onClick={() => setFlavorViewMode("individual")}
-                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                      flavorViewMode === "individual"
-                        ? "brew-btn-primary py-1"
-                        : "brew-btn-ghost py-1"
-                    }`}
+                    className={flavorViewMode === "individual" ? "is-active" : ""}
                   >
-                    Preset
+                    By Hop
                   </button>
                   <button
                     onClick={() => setFlavorViewMode("combined")}
-                    className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                      flavorViewMode === "combined"
-                        ? "brew-btn-primary py-1"
-                        : "brew-btn-ghost py-1"
-                    }`}
+                    className={flavorViewMode === "combined" ? "is-active" : ""}
                   >
-                    Estimated
+                    Recipe
                   </button>
                 </div>
               </div>
@@ -313,18 +308,12 @@ export default function HopSection() {
                         .filter((s, i, arr) => arr.findIndex((x) => x.name === s.name) === i)
                 }
                 maxValue={5}
-                size={280}
                 emptyHint="No flavor data available"
-                title={
-                  flavorViewMode === "combined"
-                    ? "Estimated final aroma emphasis"
-                    : "Base hop profiles"
-                }
                 colorStrategy={flavorViewMode === "combined" ? "dominant" : "index"}
                 showLegend={flavorViewMode === "individual"}
+                legendPosition="side"
                 labelColorize={true}
-                outerPadding={72}
-                ringRadius={100}
+                responsive
               />
             </div>
           )}
