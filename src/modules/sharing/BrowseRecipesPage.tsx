@@ -8,6 +8,7 @@ import {
   orderBy,
   limit,
   getDocs,
+  getDocsFromCache,
   startAfter,
   type QueryDocumentSnapshot,
   type DocumentData,
@@ -38,52 +39,28 @@ export default function BrowseRecipesPage() {
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [sort, setSort] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Try API route first (HTTP-cached via CDN), fall back to client Firestore
-  const fetchRecipes = useCallback(async (cursor: string | null, sortBy: SortOption, append: boolean) => {
+  const fetchRecipes = useCallback(async (afterDoc: QueryDocumentSnapshot<DocumentData> | null, sortBy: SortOption, append: boolean) => {
     const loading = append ? setIsLoadingMore : setIsLoading;
-    loading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({
-        sort: sortBy,
-        limit: String(PAGE_SIZE),
-      });
-      if (cursor) params.set('after', cursor);
+      const orderField = sortBy === 'popular' ? 'forkCount' : 'publishedAt';
+      const constraints: QueryConstraint[] = [orderBy(orderField, 'desc')];
+      if (append && afterDoc) constraints.push(startAfter(afterDoc));
+      constraints.push(limit(PAGE_SIZE + 1));
 
-      const res = await fetch(`/api/browse?${params}`);
-      if (!res.ok) throw new Error('API unavailable');
+      const q = query(collection(db, 'publicRecipeIndex'), ...constraints);
 
-      const data = await res.json();
-      const newRecipes: BrowseRecipe[] = data.recipes;
-
-      setRecipes((prev) => (append ? [...prev, ...newRecipes] : newRecipes));
-      setNextCursor(data.nextCursor);
-      setLastDoc(null); // not needed when using API
-      setHasMore(!!data.nextCursor);
-    } catch {
-      // Fallback: query Firestore directly (works in local dev without admin SDK)
-      try {
-        const orderField = sortBy === 'popular' ? 'forkCount' : 'publishedAt';
-        const constraints: QueryConstraint[] = [orderBy(orderField, 'desc')];
-        if (append && lastDoc) constraints.push(startAfter(lastDoc));
-        constraints.push(limit(PAGE_SIZE + 1));
-
-        const q = query(collection(db, 'publicRecipeIndex'), ...constraints);
-        const snapshot = await getDocs(q);
-        const docs = snapshot.docs;
-
+      const mapDocs = (docs: QueryDocumentSnapshot<DocumentData>[]) => {
         const hasNext = docs.length > PAGE_SIZE;
         const resultDocs = hasNext ? docs.slice(0, PAGE_SIZE) : docs;
-
-        const newRecipes: BrowseRecipe[] = resultDocs.map((d) => {
+        const mapped: BrowseRecipe[] = resultDocs.map((d) => {
           const data = d.data();
           return {
             id: d.id,
@@ -98,21 +75,39 @@ export default function BrowseRecipesPage() {
             forkCount: data.forkCount || 0,
           };
         });
+        return { mapped, resultDocs, hasNext };
+      };
 
-        setRecipes((prev) => (append ? [...prev, ...newRecipes] : newRecipes));
-        setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
-        setNextCursor(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1].id : null);
-        setHasMore(hasNext);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load recipes. Please try again.');
+      // Try IndexedDB cache first for instant display
+      if (!append) {
+        try {
+          const cachedSnapshot = await getDocsFromCache(q);
+          if (!cachedSnapshot.empty) {
+            const { mapped, resultDocs, hasNext } = mapDocs(cachedSnapshot.docs);
+            setRecipes(mapped);
+            setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
+            setHasMore(hasNext);
+            setIsLoading(false);
+          }
+        } catch { /* Cache miss — continue to network */ }
       }
+
+      // Always fetch fresh from network
+      loading(true);
+      const snapshot = await getDocs(q);
+      const { mapped, resultDocs, hasNext } = mapDocs(snapshot.docs);
+
+      setRecipes((prev) => (append ? [...prev, ...mapped] : mapped));
+      setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
+      setHasMore(hasNext);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load recipes. Please try again.');
     } finally {
       loading(false);
     }
-  }, [lastDoc]);
+  }, []);
 
   useEffect(() => {
-    setNextCursor(null);
     setLastDoc(null);
     fetchRecipes(null, sort, false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,7 +170,7 @@ export default function BrowseRecipesPage() {
         <div className="brew-section py-8 text-center">
           <p className="text-[var(--brew-danger)] mb-4">{error}</p>
           <button
-            onClick={() => { setNextCursor(null); fetchRecipes(null, sort, false); }}
+            onClick={() => { setLastDoc(null); fetchRecipes(null, sort, false); }}
             className="brew-btn-primary"
           >
             Retry
@@ -183,8 +178,8 @@ export default function BrowseRecipesPage() {
         </div>
       )}
 
-      {/* Loading skeleton */}
-      {isLoading && !error && (
+      {/* Loading skeleton — only when we have nothing to show yet */}
+      {isLoading && !error && recipes.length === 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-xl bg-[rgb(var(--brew-card))] animate-pulse">
@@ -243,7 +238,7 @@ export default function BrowseRecipesPage() {
       )}
 
       {/* Recipe grid */}
-      {!isLoading && !error && filteredRecipes.length > 0 && (
+      {!error && filteredRecipes.length > 0 && (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
@@ -259,7 +254,7 @@ export default function BrowseRecipesPage() {
           {hasMore && !searchQuery && (
             <div className="mt-8 text-center">
               <button
-                onClick={() => fetchRecipes(nextCursor, sort, true)}
+                onClick={() => fetchRecipes(lastDoc, sort, true)}
                 disabled={isLoadingMore}
                 className="brew-btn-ghost px-8 py-3"
               >
