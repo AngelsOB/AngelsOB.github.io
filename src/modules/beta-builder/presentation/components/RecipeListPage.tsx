@@ -13,6 +13,7 @@
 
 import type React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
@@ -123,10 +124,9 @@ export default function RecipeListPage() {
     router.push("/recipes/new");
   };
 
-  // Handle viewing/editing a recipe
-  const handleViewRecipe = (recipe: Recipe) => {
+  // Pre-set recipe in store before navigation so BetaBuilderPage renders instantly
+  const handlePreloadRecipe = (recipe: Recipe) => {
     setCurrentRecipe(recipe);
-    router.push(`/recipes/${recipe.id}`);
   };
 
   // Handle delete confirmation
@@ -468,11 +468,16 @@ export default function RecipeListPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredAndSortedRecipes.map((recipe) => (
             <div key={recipe.id} className="flex flex-col overflow-visible">
-              <RecipeCard
-                recipe={recipe}
-                onView={() => handleViewRecipe(recipe)}
-                onDelete={(e) => handleDeleteClick(recipe.id, e)}
-              />
+              <Link
+                href={`/recipes/${recipe.id}`}
+                onClick={() => handlePreloadRecipe(recipe)}
+                className="contents"
+              >
+                <RecipeCard
+                  recipe={recipe}
+                  onDelete={(e) => handleDeleteClick(recipe.id, e)}
+                />
+              </Link>
               <RecipeSessionsBar recipeId={recipe.id} />
             </div>
           ))}
@@ -509,11 +514,9 @@ export default function RecipeListPage() {
 // Recipe Card Component
 function RecipeCard({
   recipe,
-  onView,
   onDelete,
 }: {
   recipe: Recipe;
-  onView: () => void;
   onDelete: (e: React.MouseEvent) => void;
 }) {
   const router = useRouter();
@@ -583,20 +586,9 @@ function RecipeCard({
     router.push(`/recipes/sessions/${session.id}`);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onView();
-    }
-  };
-
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onView}
-      onKeyDown={handleKeyDown}
-      className={`group brew-recipe-card relative cursor-pointer overflow-visible focus:ring-2 focus:ring-[var(--brew-accent-400)] focus:ring-offset-2 focus:outline-none ${isVersionMenuOpen ? "z-30" : "z-10"}`}
+      className={`group brew-recipe-card relative cursor-pointer overflow-visible ${isVersionMenuOpen ? "z-30" : "z-10"}`}
       style={
         {
           "--card-srm": calculations ? srmToRgb(calculations.srm) : "rgb(220, 190, 140)",
