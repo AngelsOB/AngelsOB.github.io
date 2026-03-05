@@ -621,7 +621,12 @@ function RecipeCard({
             >
               {recipe.name}
             </h3>
-            <div className="relative flex shrink-0 items-center gap-2">
+            <div
+              className="relative flex shrink-0 items-center gap-2"
+              onClickCapture={(e) => {
+                e.preventDefault();
+              }}
+            >
               <button
                 onClick={handleStartSession}
                 className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
@@ -664,6 +669,10 @@ function RecipeCard({
                 // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                 <div
                   className="absolute right-0 top-full -m-4 mt-2 z-20 p-4"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onMouseLeave={() => setIsVersionMenuOpen(false)}
                 >
                   <div className="w-40 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">

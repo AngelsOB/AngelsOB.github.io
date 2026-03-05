@@ -18,6 +18,7 @@ import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService
 import { toast } from '../../../../stores/toastStore';
 import { useAuthStore } from '../../../auth/authStore';
 import { generateShareSlug } from '../../../sharing/slugUtils';
+import { unpublishRecipe } from '../../../sharing/publishService';
 import { usePreferencesStore } from '../../../auth/preferencesStore';
 import { syncPublicIndex } from '../../../sharing/publishService';
 
@@ -347,8 +348,13 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   deleteRecipe: (id: RecipeId) => {
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
+      const recipe = get().recipes.find((r) => r.id === id);
       firestoreRepo.deleteAsync(id).then(
         () => {
+          // Also remove from publicRecipeIndex if the recipe was published
+          if (recipe?.isPublic) {
+            unpublishRecipe(id).catch(() => {});
+          }
           const current = get().currentRecipe;
           if (current?.id === id) set({ currentRecipe: null });
           set({ recipes: get().recipes.filter((r) => r.id !== id), error: null });
