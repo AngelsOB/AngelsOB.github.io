@@ -313,7 +313,7 @@ function BrowseCard({
       style={{ '--card-srm': srmColor } as React.CSSProperties}
     >
       {isNavigating && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/80 backdrop-blur-[1px]">
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
@@ -334,7 +334,7 @@ function BrowseCard({
             </h3>
             {recipe.source === 'official' && (
               <span className="shrink-0 rounded-full bg-[var(--brew-accent-200)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brew-accent-700)]">
-                Style Guide
+                Example Recipe
               </span>
             )}
           </div>
