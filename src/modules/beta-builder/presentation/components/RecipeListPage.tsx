@@ -651,6 +651,7 @@ function RecipeCard({
               </button>
               <button
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setIsVersionMenuOpen((prev) => !prev);
                 }}

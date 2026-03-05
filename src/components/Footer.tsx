@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="relative mt-12">
       {/* Decorative divider — accent-tinted gradient line */}
       <div
-        className="h-px mx-auto max-w-5xl"
+        className="mx-auto h-px max-w-5xl"
         style={{
           background: `linear-gradient(
             90deg,
@@ -19,8 +19,8 @@ export default function Footer() {
         }}
       />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start">
           {/* Left — branding */}
           <div className="text-center sm:text-left">
             <Logo size="sm" />
@@ -31,7 +31,7 @@ export default function Footer() {
                 letterSpacing: "0.04em",
               }}
             >
-              Built for brewers who care about the details.
+              The only tab you need on brew day.
             </p>
           </div>
 
@@ -41,32 +41,23 @@ export default function Footer() {
               href="/recipes"
               className="text-xs font-medium transition-colors duration-150"
               style={{ color: "var(--fg-muted)" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "var(--coral-500)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "var(--fg-muted)")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--coral-500)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg-muted)")}
             >
               Recipes
             </Link>
             <span
-              className="w-px h-3"
+              className="h-3 w-px"
               style={{
-                background:
-                  "color-mix(in oklch, var(--fg-muted) 30%, transparent)",
+                background: "color-mix(in oklch, var(--fg-muted) 30%, transparent)",
               }}
             />
             <Link
               href="/calculators"
               className="text-xs font-medium transition-colors duration-150"
               style={{ color: "var(--fg-muted)" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "var(--coral-500)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "var(--fg-muted)")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--coral-500)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg-muted)")}
             >
               Calculators
             </Link>
