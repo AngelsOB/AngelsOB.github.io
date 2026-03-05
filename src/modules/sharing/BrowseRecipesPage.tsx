@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   collection,
   query,
@@ -16,6 +16,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
+import { SEED_RECIPES } from '@/data/seed-recipes';
+import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 
 type BrowseRecipe = {
   id: string;
@@ -28,14 +30,32 @@ type BrowseRecipe = {
   hopNames: string[];
   publishedAt: string;
   forkCount: number;
+  source?: 'official' | 'community';
 };
+
+const calc = new RecipeCalculationService();
+const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
+  const c = calc.calculate(r);
+  return {
+    id: r.id,
+    name: r.name,
+    style: r.style || '',
+    ownerName: 'BeerApp',
+    shareSlug: '',
+    stats: { og: c.og, fg: c.fg, ibu: c.ibu, srm: c.srm, abv: c.abv },
+    tags: r.tags || [],
+    hopNames: r.hops.map((h) => h.name),
+    publishedAt: r.createdAt,
+    forkCount: 0,
+    source: 'official',
+  };
+});
 
 type SortOption = 'newest' | 'popular';
 
 const PAGE_SIZE = 24;
 
 export default function BrowseRecipesPage() {
-  const router = useRouter();
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -113,10 +133,12 @@ export default function BrowseRecipesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sort]);
 
+  const allRecipes = useMemo(() => [...seedBrowseRecipes, ...recipes], [recipes]);
+
   const filteredRecipes = useMemo(() => {
-    if (!searchQuery) return recipes;
+    if (!searchQuery) return allRecipes;
     const q = searchQuery.toLowerCase();
-    return recipes.filter(
+    return allRecipes.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.style.toLowerCase().includes(q) ||
@@ -124,7 +146,7 @@ export default function BrowseRecipesPage() {
         r.tags.some((t) => t.toLowerCase().includes(q)) ||
         r.hopNames.some((h) => h.toLowerCase().includes(q))
     );
-  }, [recipes, searchQuery]);
+  }, [allRecipes, searchQuery]);
 
   return (
     <div className="brew-theme mx-auto max-w-6xl px-2 py-6">
@@ -199,7 +221,7 @@ export default function BrowseRecipesPage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && !error && recipes.length === 0 && (
+      {!isLoading && !error && allRecipes.length === 0 && (
         <div className="brew-section py-12 text-center">
           <svg
             className="mx-auto mb-4 opacity-30"
@@ -225,7 +247,7 @@ export default function BrowseRecipesPage() {
       )}
 
       {/* No search results */}
-      {!isLoading && !error && recipes.length > 0 && filteredRecipes.length === 0 && (
+      {!isLoading && !error && allRecipes.length > 0 && filteredRecipes.length === 0 && (
         <div className="brew-section py-10 text-center">
           <p className="mb-1 text-lg font-semibold" style={{ color: 'var(--fg-strong)' }}>
             No matches for &ldquo;{searchQuery}&rdquo;
@@ -242,11 +264,17 @@ export default function BrowseRecipesPage() {
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
-              <BrowseCard
+              <Link
                 key={recipe.id}
-                recipe={recipe}
-                onClick={() => router.push(`/r/${recipe.shareSlug}`)}
-              />
+                href={
+                  recipe.source === 'official'
+                    ? `/r/seed/${recipe.id}`
+                    : `/r/${recipe.shareSlug}`
+                }
+                className="contents"
+              >
+                <BrowseCard recipe={recipe} />
+              </Link>
             ))}
           </div>
 
@@ -270,26 +298,14 @@ export default function BrowseRecipesPage() {
 
 function BrowseCard({
   recipe,
-  onClick,
 }: {
   recipe: BrowseRecipe;
-  onClick: () => void;
 }) {
   const srmColor = recipe.stats.srm != null ? srmToRgb(recipe.stats.srm) : 'rgb(220, 190, 140)';
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="group brew-recipe-card relative cursor-pointer overflow-visible z-10
-        focus:ring-2 focus:ring-[var(--brew-accent-400)] focus:ring-offset-2 focus:outline-none"
+      className="group brew-recipe-card relative cursor-pointer overflow-visible z-10"
       style={{ '--card-srm': srmColor } as React.CSSProperties}
     >
       <div className="rounded-xl bg-[rgb(var(--brew-card))]">
@@ -298,14 +314,21 @@ function BrowseCard({
 
         {/* Header */}
         <div className="border-b border-[rgb(var(--brew-border))] p-4">
-          <h3
-            className="min-w-0 truncate font-extrabold tracking-tight"
-            style={{
-              fontSize: `${Math.max(1, Math.min(1.5, 2.1 - recipe.name.length * 0.035))}rem`,
-            }}
-          >
-            {recipe.name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3
+              className="min-w-0 truncate font-extrabold tracking-tight"
+              style={{
+                fontSize: `${Math.max(1, Math.min(1.5, 2.1 - recipe.name.length * 0.035))}rem`,
+              }}
+            >
+              {recipe.name}
+            </h3>
+            {recipe.source === 'official' && (
+              <span className="shrink-0 rounded-full bg-[var(--brew-accent-200)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brew-accent-700)]">
+                Style Guide
+              </span>
+            )}
+          </div>
           {recipe.style && (
             <p className="text-muted truncate text-xs italic">{recipe.style}</p>
           )}

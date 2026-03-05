@@ -7,8 +7,10 @@ import {
   where,
   limit,
   getDocs,
+  getDocsFromCache,
   doc,
   getDoc,
+  getDocFromCache,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
@@ -21,53 +23,62 @@ export default function PublicRecipeClient({ slug }: { slug: string }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    async function loadFromSource(useCache: boolean) {
+      const getDocsFn = useCache ? getDocsFromCache : getDocs;
+      const getDocFn = useCache ? getDocFromCache : getDoc;
+
+      const indexQuery = query(
+        collection(db, 'publicRecipeIndex'),
+        where('shareSlug', '==', slug),
+        limit(1)
+      );
+      const indexSnap = await getDocsFn(indexQuery);
+      if (indexSnap.empty) return null;
+
+      const indexDoc = indexSnap.docs[0];
+      const indexData = indexDoc.data();
+      const recipeSnap = await getDocFn(doc(db, 'recipes', indexDoc.id));
+      if (!recipeSnap.exists()) return null;
+
+      const recipeData = recipeSnap.data();
+      if (recipeData.isPublic === false) return null;
+
+      return {
+        recipe: { id: recipeSnap.id, ...recipeData } as Recipe,
+        ownerName: indexData.ownerName || 'Anonymous Brewer',
+      };
+    }
+
     async function load() {
+      // Try IndexedDB cache first for instant display
       try {
-        // Step 1: Look up recipe ID via publicRecipeIndex (allow read: if true)
-        const indexQuery = query(
-          collection(db, 'publicRecipeIndex'),
-          where('shareSlug', '==', slug),
-          limit(1)
-        );
-        const indexSnap = await getDocs(indexQuery);
-
-        if (indexSnap.empty) {
-          setNotFound(true);
+        const cached = await loadFromSource(true);
+        if (cached) {
+          setRecipe(cached.recipe);
+          setOwnerName(cached.ownerName);
           setIsLoading(false);
-          return;
         }
+      } catch { /* cache miss */ }
 
-        const indexDoc = indexSnap.docs[0];
-        const indexData = indexDoc.data();
-        const recipeId = indexDoc.id;
-
-        // Step 2: Fetch the full recipe by ID (allowed since isPublic == true)
-        const recipeSnap = await getDoc(doc(db, 'recipes', recipeId));
-
-        if (!recipeSnap.exists()) {
+      // Always fetch fresh from network
+      try {
+        const fresh = await loadFromSource(false);
+        if (fresh) {
+          setRecipe(fresh.recipe);
+          setOwnerName(fresh.ownerName);
+        } else if (!recipe) {
           setNotFound(true);
-          setIsLoading(false);
-          return;
         }
-
-        const recipeData = recipeSnap.data();
-        if (recipeData.isPublic === false) {
-          setNotFound(true);
-          setIsLoading(false);
-          return;
-        }
-
-        setRecipe({ id: recipeSnap.id, ...recipeData } as Recipe);
-        setOwnerName(indexData.ownerName || 'Anonymous Brewer');
       } catch (err) {
         console.error('[PublicRecipeClient] Failed to load recipe:', err);
-        setNotFound(true);
+        if (!recipe) setNotFound(true);
       } finally {
         setIsLoading(false);
       }
     }
 
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   if (isLoading) {
