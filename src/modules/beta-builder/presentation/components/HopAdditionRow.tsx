@@ -6,159 +6,178 @@ type HopAdditionRowProps = {
   onRemove: (id: string) => void;
 };
 
-export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionRowProps) {
+/**
+ * Datum readout for hop addition values — handwritten font, label above,
+ * with vertically-stacked chevron stepper buttons beside the value.
+ */
+function HopDatum({
+  label,
+  value,
+  unit,
+  onChange,
+  step,
+  min,
+  max,
+  narrow,
+  ariaLabel,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  onChange: (v: number) => void;
+  step: string;
+  min: string;
+  max?: string;
+  narrow?: boolean;
+  ariaLabel: string;
+}) {
+  const stepNum = parseFloat(step);
+  const minNum = parseFloat(min);
+  const maxNum = max !== undefined ? parseFloat(max) : Infinity;
+  const decimals = step.split(".")[1]?.length ?? 0;
+
+  const nudge = (dir: 1 | -1) => {
+    const next = value + dir * stepNum;
+    const rounded = parseFloat(next.toFixed(decimals));
+    if (rounded >= minNum && rounded <= maxNum) onChange(rounded);
+  };
+
   return (
-    <div className="brew-row-hover flex items-center py-0.5">
-      {/* Unified row container: type pill + timing + weight in one shared surface */}
-      <div
-        className="flex items-center gap-0 flex-1 min-w-0 rounded-lg overflow-hidden"
-        style={{
-          background: "color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.4))",
-          border: "1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))",
-          boxShadow: "var(--shadow-inset)",
-        }}
-      >
-        {/* Type selector as compact pill */}
-        <select
-          value={hop.type}
-          onChange={(e) =>
-            onUpdate(hop.id, { type: e.target.value as Hop["type"] })
-          }
-          className="appearance-none bg-transparent text-xs font-semibold pl-2.5 pr-5 py-1.5 border-r border-[rgb(var(--brew-border-subtle))] cursor-pointer shrink-0 focus:outline-none"
-          style={{
-            color: "var(--brew-accent-700)",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 6px center",
-            backgroundSize: "8px 5px",
-          }}
-          aria-label="Hop addition type"
-        >
-          <option value="boil">Boil</option>
-          <option value="whirlpool">Whirlpool</option>
-          <option value="dry hop">Dry Hop</option>
-          <option value="first wort">First Wort</option>
-          <option value="mash">Mash Hop</option>
-        </select>
-
-        {/* Timing section — inline values with embedded labels */}
-        <div className="flex items-center gap-0 flex-1 min-w-0">
-          {hop.type === "boil" && (
-            <div className="flex items-center">
-              <input
-                type="number"
-                value={hop.timeMinutes || 0}
-                onChange={(e) =>
-                  onUpdate(hop.id, { timeMinutes: parseFloat(e.target.value) || 0 })
-                }
-                className="bg-transparent text-xs w-[40px] py-1.5 px-2 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-                style={{ color: "var(--fg-strong)" }}
-                step="5"
-                min="0"
-                aria-label="Boil time minutes"
-              />
-              <span className="text-[10px] text-muted pr-2">min</span>
-            </div>
-          )}
-
-          {hop.type === "whirlpool" && (
-            <>
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  value={hop.temperatureC || 80}
-                  onChange={(e) =>
-                    onUpdate(hop.id, { temperatureC: parseFloat(e.target.value) || 80 })
-                  }
-                  className="bg-transparent text-xs w-[44px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-                  style={{ color: "var(--fg-strong)" }}
-                  step="5"
-                  min="40"
-                  max="100"
-                  aria-label="Whirlpool temperature"
-                />
-                <span className="text-[10px] text-muted">°C</span>
-              </div>
-              <span className="text-[10px] text-muted px-0.5">/</span>
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  value={hop.whirlpoolTimeMinutes || 15}
-                  onChange={(e) =>
-                    onUpdate(hop.id, { whirlpoolTimeMinutes: parseFloat(e.target.value) || 0 })
-                  }
-                  className="bg-transparent text-xs w-[44px] py-1.5 px-1.5 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-                  style={{ color: "var(--fg-strong)" }}
-                  step="5"
-                  min="0"
-                  aria-label="Whirlpool time minutes"
-                />
-                <span className="text-[10px] text-muted pr-1">min</span>
-              </div>
-            </>
-          )}
-
-          {hop.type === "dry hop" && (
-            <>
-              <div className="flex items-center">
-                <span className="text-[10px] text-muted pl-2">day</span>
-                <input
-                  type="number"
-                  value={hop.dryHopStartDay ?? 0}
-                  onChange={(e) =>
-                    onUpdate(hop.id, { dryHopStartDay: parseFloat(e.target.value) || 0 })
-                  }
-                  className="bg-transparent text-xs w-[40px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-                  style={{ color: "var(--fg-strong)" }}
-                  step="1"
-                  min="0"
-                  aria-label="Dry hop start day"
-                />
-              </div>
-              <span className="text-[10px] text-muted px-0.5">for</span>
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  value={hop.dryHopDays ?? 3}
-                  onChange={(e) =>
-                    onUpdate(hop.id, { dryHopDays: parseFloat(e.target.value) || 0 })
-                  }
-                  className="bg-transparent text-xs w-[40px] py-1.5 px-1 text-center focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-                  style={{ color: "var(--fg-strong)" }}
-                  step="1"
-                  min="0"
-                  aria-label="Dry hop duration days"
-                />
-                <span className="text-[10px] text-muted pr-1">days</span>
-              </div>
-            </>
-          )}
-
-          {/* Empty space for types with no timing */}
-          {(hop.type === "first wort" || hop.type === "mash") && (
-            <div className="flex-1 py-1.5" />
-          )}
-        </div>
-
-        {/* Weight — right-aligned inside the shared container */}
-        <div className="flex items-center border-l border-[rgb(var(--brew-border-subtle))] shrink-0">
-          <input
-            type="number"
-            value={hop.grams}
-            onChange={(e) =>
-              onUpdate(hop.id, { grams: parseFloat(e.target.value) || 0 })
-            }
-            className="bg-transparent text-xs w-[44px] py-1.5 px-1.5 text-right font-medium focus:outline-none focus:bg-[color-mix(in_oklch,var(--brew-accent-100)_20%,transparent)] rounded"
-            style={{ color: "var(--fg-strong)" }}
-            step="1"
-            min="0"
-            aria-label="Weight in grams"
-          />
-          <span className="text-[10px] text-muted pr-2">g</span>
+    <div className="hop-addition-datum">
+      <span className="hop-addition-datum-label">{label}</span>
+      <div className="hop-addition-datum-value">
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className={"hop-addition-datum-input" + (narrow ? " is-narrow" : "")}
+          step={step}
+          min={min}
+          max={max}
+          aria-label={ariaLabel}
+        />
+        <span className="hop-addition-datum-unit">{unit}</span>
+        <div className="hop-stepper">
+          <button
+            type="button"
+            className="hop-stepper-btn"
+            onClick={() => nudge(1)}
+            aria-label={`Increase ${label}`}
+            tabIndex={-1}
+          >
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5 5 1 9 5"/></svg>
+          </button>
+          <button
+            type="button"
+            className="hop-stepper-btn"
+            onClick={() => nudge(-1)}
+            aria-label={`Decrease ${label}`}
+            tabIndex={-1}
+          >
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1 5 5 9 1"/></svg>
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Hover-reveal actions — morphs inline */}
+export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionRowProps) {
+  return (
+    <div className="hop-addition-row">
+      {/* Type selector badge */}
+      <select
+        value={hop.type}
+        onChange={(e) =>
+          onUpdate(hop.id, { type: e.target.value as Hop["type"] })
+        }
+        className="hop-addition-type"
+        aria-label="Hop addition type"
+      >
+        <option value="boil">Boil</option>
+        <option value="whirlpool">Whirlpool</option>
+        <option value="dry hop">Dry Hop</option>
+        <option value="first wort">First Wort</option>
+        <option value="mash">Mash Hop</option>
+      </select>
+
+      {/* Timing datums — vary by type */}
+      {hop.type === "boil" && (
+        <HopDatum
+          label="Time"
+          value={hop.timeMinutes || 0}
+          unit="min"
+          onChange={(v) => onUpdate(hop.id, { timeMinutes: v })}
+          step="5"
+          min="0"
+          ariaLabel="Boil time minutes"
+        />
+      )}
+
+      {hop.type === "whirlpool" && (
+        <>
+          <HopDatum
+            label="Temp"
+            value={hop.temperatureC || 80}
+            unit="°C"
+            onChange={(v) => onUpdate(hop.id, { temperatureC: v })}
+            step="5"
+            min="40"
+            max="100"
+            ariaLabel="Whirlpool temperature"
+          />
+          <HopDatum
+            label="Time"
+            value={hop.whirlpoolTimeMinutes || 15}
+            unit="min"
+            onChange={(v) => onUpdate(hop.id, { whirlpoolTimeMinutes: v })}
+            step="5"
+            min="0"
+            ariaLabel="Whirlpool time minutes"
+          />
+        </>
+      )}
+
+      {hop.type === "dry hop" && (
+        <>
+          <HopDatum
+            label="Start"
+            value={hop.dryHopStartDay ?? 0}
+            unit="day"
+            onChange={(v) => onUpdate(hop.id, { dryHopStartDay: v })}
+            step="1"
+            min="0"
+            narrow
+            ariaLabel="Dry hop start day"
+          />
+          <HopDatum
+            label="Duration"
+            value={hop.dryHopDays ?? 3}
+            unit="days"
+            onChange={(v) => onUpdate(hop.id, { dryHopDays: v })}
+            step="1"
+            min="0"
+            narrow
+            ariaLabel="Dry hop duration days"
+          />
+        </>
+      )}
+
+      {/* Spacer — pushes weight to the right */}
+      <div className="hop-addition-spacer" />
+
+      {/* Weight datum — always present */}
+      <HopDatum
+        label="Weight"
+        value={hop.grams}
+        unit="g"
+        onChange={(v) => onUpdate(hop.id, { grams: v })}
+        step="1"
+        min="0"
+        ariaLabel="Weight in grams"
+      />
+
+      {/* Hover-reveal delete */}
       <div className="brew-row-actions">
         <button
           onClick={() => onRemove(hop.id)}

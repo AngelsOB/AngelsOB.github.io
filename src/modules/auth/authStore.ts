@@ -1,15 +1,10 @@
 import { create } from "zustand";
 import {
   signInWithPopup,
-  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/config/firebase";
-
-const isMobile = () =>
-  typeof navigator !== "undefined" &&
-  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 interface AuthState {
   user: User | null;
@@ -29,17 +24,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   signInWithGoogle: async () => {
-    // Mobile browsers don't support popups reliably — use redirect
-    if (isMobile()) {
-      await signInWithRedirect(auth, googleProvider);
-      return;
-    }
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch {
-      // Any popup failure (blocked, closed, etc.) — fall back to redirect
-      await signInWithRedirect(auth, googleProvider);
-    }
+    // signInWithPopup works on both desktop and mobile.
+    // signInWithRedirect is broken on most mobile browsers due to
+    // third-party cookie restrictions (silently fails).
+    await signInWithPopup(auth, googleProvider);
   },
 
   signOut: async () => {
