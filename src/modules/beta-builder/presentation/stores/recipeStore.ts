@@ -148,14 +148,6 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     // 1. Already displaying this recipe (e.g. set by RecipeListPage before navigation)
     if (get().currentRecipe?.id === id) {
       set({ isLoading: false, error: null });
-      // Still refresh from network in the background if auth is ready
-      const firestoreRepo = getRecipeRepo();
-      if (firestoreRepo) {
-        firestoreRepo.loadByIdAsync(id).then(
-          (recipe) => { if (recipe) set({ currentRecipe: recipe }); },
-          () => { /* silent — we already have the recipe displayed */ },
-        );
-      }
       return;
     }
 
