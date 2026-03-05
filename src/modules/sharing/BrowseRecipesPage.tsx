@@ -64,6 +64,7 @@ export default function BrowseRecipesPage() {
   const [sort, setSort] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   const fetchRecipes = useCallback(async (afterDoc: QueryDocumentSnapshot<DocumentData> | null, sortBy: SortOption, append: boolean) => {
     const loading = append ? setIsLoadingMore : setIsLoading;
@@ -271,9 +272,10 @@ export default function BrowseRecipesPage() {
                     ? `/r/seed/${recipe.id}`
                     : `/r/${recipe.shareSlug}`
                 }
+                onClick={() => setNavigatingId(recipe.id)}
                 className="contents"
               >
-                <BrowseCard recipe={recipe} />
+                <BrowseCard recipe={recipe} isNavigating={navigatingId === recipe.id} />
               </Link>
             ))}
           </div>
@@ -298,8 +300,10 @@ export default function BrowseRecipesPage() {
 
 function BrowseCard({
   recipe,
+  isNavigating,
 }: {
   recipe: BrowseRecipe;
+  isNavigating?: boolean;
 }) {
   const srmColor = recipe.stats.srm != null ? srmToRgb(recipe.stats.srm) : 'rgb(220, 190, 140)';
 
@@ -308,6 +312,11 @@ function BrowseCard({
       className="group brew-recipe-card relative cursor-pointer overflow-visible z-10"
       style={{ '--card-srm': srmColor } as React.CSSProperties}
     >
+      {isNavigating && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/80 backdrop-blur-[1px]">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
+        </div>
+      )}
       <div className="rounded-xl bg-[rgb(var(--brew-card))]">
         {/* SRM Color Strip */}
         <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
