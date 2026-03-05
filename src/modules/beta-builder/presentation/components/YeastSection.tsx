@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Yeast Section Component
  *
@@ -68,8 +66,7 @@ export default function YeastSection() {
     const newYeast: Yeast = {
       id: crypto.randomUUID(),
       name: preset.name,
-      // attenuationPercent in presets is percentage (75 for 75%), convert to decimal
-      attenuation: (preset.attenuationPercent || 75) / 100,
+      attenuation: preset.attenuationPercent || 0.75,
       laboratory: preset.category,
     };
     setYeast(newYeast);

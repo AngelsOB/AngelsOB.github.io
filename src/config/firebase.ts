@@ -1,6 +1,11 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBRRrpGLHdbEQ1qz-1sfndlEVtCdxgR0LI",
@@ -15,5 +20,17 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// initializeFirestore enables IndexedDB persistence for instant cache hits.
+// Try/catch handles HMR re-evaluation (initializeFirestore throws if called twice).
+export const db = (() => {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  } catch {
+    return getFirestore(app);
+  }
+})();
 export const googleProvider = new GoogleAuthProvider();

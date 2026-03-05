@@ -4,7 +4,9 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromCache,
   getDocs,
+  getDocsFromCache,
   setDoc,
   deleteDoc,
   query,
@@ -42,6 +44,51 @@ export class FirestoreRecipeRepository {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe);
+  }
+
+  /**
+   * Stale-while-revalidate: returns cached data instantly via callback,
+   * then fetches fresh data from the network and returns it.
+   */
+  async loadAllWithCache(
+    onCacheHit: (recipes: Recipe[]) => void,
+  ): Promise<Recipe[]> {
+    const q = query(
+      this.recipesRef,
+      where("ownerId", "==", this.userId),
+      orderBy("updatedAt", "desc"),
+    );
+
+    // Step 1: Try IndexedDB cache (instant, no network)
+    try {
+      const cachedSnapshot = await getDocsFromCache(q);
+      if (!cachedSnapshot.empty) {
+        onCacheHit(
+          cachedSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe),
+        );
+      }
+    } catch {
+      // Cache miss or IndexedDB unavailable — continue to network
+    }
+
+    // Step 2: Always fetch fresh from network
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe);
+  }
+
+  /**
+   * Try to load a single recipe from IndexedDB cache (no network).
+   * Returns null on cache miss.
+   */
+  async loadByIdFromCache(id: RecipeId): Promise<Recipe | null> {
+    try {
+      const docRef = doc(this.recipesRef, id);
+      const snap = await getDocFromCache(docRef);
+      if (snap.exists()) return { id: snap.id, ...snap.data() } as Recipe;
+    } catch {
+      // Cache miss
+    }
+    return null;
   }
 
   loadById(_id: RecipeId): Recipe | null {

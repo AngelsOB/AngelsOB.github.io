@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Equipment Section Component
  *
@@ -22,6 +20,7 @@ function EquipDatum({
   onChange,
   step,
   small,
+  stepper,
 }: {
   id: string;
   label: string;
@@ -30,21 +29,52 @@ function EquipDatum({
   onChange: (v: number) => void;
   step: string;
   small?: boolean;
+  stepper?: boolean;
 }) {
+  const stepNum = parseFloat(step);
+  const decimals = step.split(".")[1]?.length ?? 0;
+
+  const nudge = (dir: 1 | -1) => {
+    const next = value + dir * stepNum;
+    const rounded = parseFloat(next.toFixed(decimals));
+    if (rounded >= 0) onChange(rounded);
+  };
+
   return (
     <div className={"equip-datum" + (small ? " is-small" : "")}>
       <label htmlFor={id} className="equip-datum-label">{label}</label>
       <div className="equip-datum-value">
-        <input
-          id={id}
-          type="number"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="equip-datum-input"
-          step={step}
-          min="0"
-        />
-        <span className="equip-datum-unit">{unit}</span>
+        {stepper ? (
+          <div className="starter-stepper">
+            <button type="button" className="starter-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`}>−</button>
+            <div className="starter-stepper-center">
+              <input
+                id={id}
+                type="number"
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+                className="equip-datum-input starter-stepper-input"
+                step={step}
+                min="0"
+              />
+              <span className="equip-datum-unit starter-stepper-unit">{unit}</span>
+            </div>
+            <button type="button" className="starter-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`}>+</button>
+          </div>
+        ) : (
+          <>
+            <input
+              id={id}
+              type="number"
+              value={value}
+              onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+              className="equip-datum-input"
+              step={step}
+              min="0"
+            />
+            <span className="equip-datum-unit">{unit}</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -154,6 +184,7 @@ export const EquipmentSection: React.FC = () => {
           value={recipe.batchVolumeL}
           onChange={(v) => updateRecipe({ batchVolumeL: v })}
           step="0.1"
+          stepper
         />
         <EquipDatum
           id="equipment-mash-efficiency"
@@ -162,6 +193,7 @@ export const EquipmentSection: React.FC = () => {
           value={recipe.equipment.mashEfficiencyPercent}
           onChange={(v) => updateEquip('mashEfficiencyPercent', v)}
           step="1"
+          stepper
         />
         <EquipDatum
           id="equipment-boil-time"
@@ -170,6 +202,7 @@ export const EquipmentSection: React.FC = () => {
           value={recipe.equipment.boilTimeMin}
           onChange={(v) => updateEquip('boilTimeMin', v)}
           step="1"
+          stepper
         />
       </div>
 
@@ -194,6 +227,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('mashThicknessLPerKg', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-grain-absorption"
@@ -203,6 +237,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('grainAbsorptionLPerKg', v)}
               step="0.01"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-mash-tun-deadspace"
@@ -212,6 +247,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('mashTunDeadspaceLiters', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-mash-tun-loss"
@@ -221,6 +257,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('mashTunLossLiters', v)}
               step="0.1"
               small
+              stepper
             />
           </div>
         </div>
@@ -237,6 +274,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('boilOffRateLPerHour', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-kettle-loss"
@@ -246,6 +284,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('kettleLossLiters', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-hop-absorption"
@@ -255,6 +294,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('hopsAbsorptionLPerKg', v)}
               step="0.1"
               small
+              stepper
             />
           </div>
         </div>
@@ -271,6 +311,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('chillerLossLiters', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-fermenter-loss"
@@ -280,6 +321,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('fermenterLossLiters', v)}
               step="0.1"
               small
+              stepper
             />
             <EquipDatum
               id="equipment-cooling-shrinkage"
@@ -289,6 +331,7 @@ export const EquipmentSection: React.FC = () => {
               onChange={(v) => updateEquip('coolingShrinkagePercent', v)}
               step="0.1"
               small
+              stepper
             />
           </div>
         </div>
