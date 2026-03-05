@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Beta Builder Page
@@ -7,31 +7,31 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useRecipeStore } from '../stores/recipeStore';
-import { useRecipeCalculations } from '../hooks/useRecipeCalculations';
-import FermentableSection from './FermentableSection';
-import MashScheduleSection from './MashScheduleSection';
-import HopSection from './HopSection';
-import YeastSection from './YeastSection';
-import WaterSection from './WaterSection';
-import FermentationSection from './FermentationSection';
-import { EquipmentSection } from './EquipmentSection';
-import StyleSelectorModal from './StyleSelectorModal';
-import StyleRangeComparison from './StyleRangeComparison';
-import { srmToRgb } from '../../utils/srmColorUtils';
-import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
-import BrewDayChecklistSection from './BrewDayChecklistSection';
-import StickyStatsBar from './StickyStatsBar';
-import SectionSidebar from './SectionSidebar';
-import { SECTIONS, getScribbleLines } from './sidebarData';
-import AnimatedValue from './AnimatedValue';
-import ShareModal from '../../../sharing/ShareModal';
-import ForkButton from '../../../sharing/ForkButton';
-import { useAuthStore } from '../../../auth/authStore';
-import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
+import { useRecipeStore } from "../stores/recipeStore";
+import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
+import FermentableSection from "./FermentableSection";
+import MashScheduleSection from "./MashScheduleSection";
+import HopSection from "./HopSection";
+import YeastSection from "./YeastSection";
+import WaterSection from "./WaterSection";
+import FermentationSection from "./FermentationSection";
+import { EquipmentSection } from "./EquipmentSection";
+import StyleSelectorModal from "./StyleSelectorModal";
+import StyleRangeComparison from "./StyleRangeComparison";
+import { srmToRgb } from "../../utils/srmColorUtils";
+import { recipeVersionRepository } from "../../domain/repositories/RecipeVersionRepository";
+import BrewDayChecklistSection from "./BrewDayChecklistSection";
+import StickyStatsBar from "./StickyStatsBar";
+import SectionSidebar from "./SectionSidebar";
+import { SECTIONS, getScribbleLines } from "./sidebarData";
+import AnimatedValue from "./AnimatedValue";
+import ShareModal from "../../../sharing/ShareModal";
+import ForkButton from "../../../sharing/ForkButton";
+import { useAuthStore } from "../../../auth/authStore";
+import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
@@ -57,9 +57,7 @@ function MobileAccordionTile({
   return (
     <button
       className={"mobile-accordion-tile" + (isOpen ? " is-open" : "")}
-      style={
-        { backgroundColor: section.bg, "--sidebar-accent": section.bg } as React.CSSProperties
-      }
+      style={{ backgroundColor: section.bg, "--sidebar-accent": section.bg } as React.CSSProperties}
       onClick={onToggle}
       aria-expanded={isOpen}
     >
@@ -72,7 +70,9 @@ function MobileAccordionTile({
       {!isOpen && scribbleLines.length > 0 && (
         <span className="mobile-accordion-preview" style={{ color: section.text }}>
           {scribbleLines.map((line, i) => (
-            <span key={i} className="mobile-accordion-preview-line">{line}</span>
+            <span key={i} className="mobile-accordion-preview-line">
+              {line}
+            </span>
           ))}
         </span>
       )}
@@ -131,7 +131,10 @@ function AccordionSection({
   );
 }
 
-export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaBuilderPageProps = {}) {
+export default function BetaBuilderPage({
+  sharedRecipe,
+  sharedOwnerName,
+}: BetaBuilderPageProps = {}) {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
   const router = useRouter();
   const {
@@ -171,10 +174,7 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
 
     if (id && versionNumber) {
       if (isAuthLoading) return; // version history needs auth
-      const version = recipeVersionRepository.loadByRecipeIdAndVersion(
-        id,
-        Number(versionNumber)
-      );
+      const version = recipeVersionRepository.loadByRecipeIdAndVersion(id, Number(versionNumber));
       if (version) {
         setCurrentRecipe({ ...version.recipeSnapshot, id });
       } else {
@@ -190,17 +190,25 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
       // Only create new recipe after auth resolves (needs user context)
       createNewRecipe();
     }
-  }, [id, versionNumber, sharedRecipe, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);
+  }, [
+    id,
+    versionNumber,
+    sharedRecipe,
+    isAuthLoading,
+    loadRecipe,
+    createNewRecipe,
+    setCurrentRecipe,
+  ]);
 
   // Update document title with recipe name
   useEffect(() => {
     if (currentRecipe?.name) {
-      document.title = `${currentRecipe.name} | BeerApp`;
+      document.title = `${currentRecipe.name} | Brewing.It`;
     } else {
-      document.title = 'Recipe Builder | BeerApp';
+      document.title = "Recipe Builder | Brewing.It";
     }
     return () => {
-      document.title = 'BeerApp - Homebrewing Recipe Builder & Calculator';
+      document.title = "Brewing.It - Homebrewing Recipe Builder & Calculator";
     };
   }, [currentRecipe?.name]);
 
@@ -238,9 +246,9 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
       lastScrollY = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -248,13 +256,13 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
 
   if (!currentRecipe) {
     return (
-      <div className="max-w-4xl mx-auto py-4">
+      <div className="mx-auto max-w-4xl py-4">
         {isReadOnly ? (
           <div className="text-center">
             <p className="mb-4">Version not found.</p>
             <button
-              onClick={() => router.push('/recipes')}
-              className="px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+              onClick={() => router.push("/recipes")}
+              className="rounded-md border border-[rgb(var(--border))] px-4 py-2 hover:bg-[rgb(var(--bg))]"
             >
               Back to Recipes
             </button>
@@ -268,20 +276,16 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
 
   const handleSave = () => {
     saveCurrentRecipe();
-    router.push('/recipes');
+    router.push("/recipes");
   };
 
   return (
-    <div className="brew-theme has-section-sidebar max-w-4xl mx-auto py-6 px-4">
+    <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-4 py-6">
       <SectionSidebar recipe={currentRecipe} calculations={calculations} />
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
-          <StickyStatsBar
-            calculations={calculations}
-            position="top"
-            isVisible={showStickyTop}
-          />
+          <StickyStatsBar calculations={calculations} position="top" isVisible={showStickyTop} />
           <StickyStatsBar
             calculations={calculations}
             position="bottom"
@@ -289,77 +293,75 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
           />
         </>
       )}
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
-            <div>
-              <button
-                onClick={() => router.push(isShared ? '/browse' : '/recipes')}
-                className="text-sm font-medium mb-3 flex items-center gap-1.5 transition-colors"
-                style={{ color: 'var(--brew-accent-600)' }}
-              >
-                <span className="text-xs">&#8592;</span> {isShared ? 'Back to Browse' : 'Back to Recipes'}
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
+          <div>
+            <button
+              onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+              className="mb-3 flex items-center gap-1.5 text-sm font-medium transition-colors"
+              style={{ color: "var(--brew-accent-600)" }}
+            >
+              <span className="text-xs">&#8592;</span>{" "}
+              {isShared ? "Back to Browse" : "Back to Recipes"}
+            </button>
+            <h1 className="brew-section-title text-3xl">
+              {isShared
+                ? "Shared Recipe (Read-only)"
+                : isReadOnly
+                  ? `Version ${versionNumber} (Read-only)`
+                  : "Recipe Builder"}
+            </h1>
+            {isShared && sharedOwnerName && (
+              <p className="mt-1 text-xs text-[var(--fg-muted)]">
+                by <span className="font-medium">{sharedOwnerName}</span>
+              </p>
+            )}
+            {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
+              <p className="mt-1 text-xs text-[var(--fg-muted)]">
+                Forked from{" "}
+                {currentRecipe.parentRecipeShareSlug ? (
+                  <Link
+                    href={`/r/${currentRecipe.parentRecipeShareSlug}`}
+                    className="font-medium underline transition-colors hover:text-[var(--brew-accent-600)]"
+                    style={{ pointerEvents: "auto" }}
+                  >
+                    {currentRecipe.parentRecipeName}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+                )}
+                {currentRecipe.parentRecipeOwnerName && (
+                  <> by {currentRecipe.parentRecipeOwnerName}</>
+                )}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isShared && currentRecipe && (
+              <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+            )}
+            {!isShared && isReadOnly && id && (
+              <button onClick={() => router.push(`/recipes/${id}`)} className="brew-btn-ghost">
+                Open Current Recipe
               </button>
-              <h1 className="brew-section-title text-3xl">
-                {isShared
-                  ? 'Shared Recipe (Read-only)'
-                  : isReadOnly
-                    ? `Version ${versionNumber} (Read-only)`
-                    : 'Recipe Builder'}
-              </h1>
-              {isShared && sharedOwnerName && (
-                <p className="text-xs text-[var(--fg-muted)] mt-1">
-                  by <span className="font-medium">{sharedOwnerName}</span>
-                </p>
-              )}
-              {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
-                <p className="text-xs text-[var(--fg-muted)] mt-1">
-                  Forked from{' '}
-                  {currentRecipe.parentRecipeShareSlug ? (
-                    <Link
-                      href={`/r/${currentRecipe.parentRecipeShareSlug}`}
-                      className="font-medium underline hover:text-[var(--brew-accent-600)] transition-colors"
-                      style={{ pointerEvents: 'auto' }}
-                    >
-                      {currentRecipe.parentRecipeName}
-                    </Link>
-                  ) : (
-                    <span className="font-medium">{currentRecipe.parentRecipeName}</span>
-                  )}
-                  {currentRecipe.parentRecipeOwnerName && (
-                    <> by {currentRecipe.parentRecipeOwnerName}</>
-                  )}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {isShared && currentRecipe && (
-                <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
-              )}
-              {!isShared && isReadOnly && id && (
-                <button
-                  onClick={() => router.push(`/recipes/${id}`)}
-                  className="brew-btn-ghost"
-                >
-                  Open Current Recipe
-                </button>
-              )}
-              {!isReadOnly && user && id && currentRecipe && (
-                <button
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="brew-btn-ghost flex items-center gap-1.5"
-                >
-                  {currentRecipe.isPublic && (
-                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-                  )}
-                  {currentRecipe.isPublic ? 'Shared' : 'Share'}
-                </button>
-              )}
-            </div>
+            )}
+            {!isReadOnly && user && id && currentRecipe && (
+              <button
+                onClick={() => setIsShareModalOpen(true)}
+                className="brew-btn-ghost flex items-center gap-1.5"
+              >
+                {currentRecipe.isPublic && (
+                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                )}
+                {currentRecipe.isPublic ? "Shared" : "Share"}
+              </button>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className={`brew-main-fade-in ${isReadOnly ? 'brew-read-only' : ''}`}>
+      <div className={`brew-main-fade-in ${isReadOnly ? "brew-read-only" : ""}`}>
         {currentRecipe?.name && (
           <div className="mobile-sidebar-title">
             <span>{currentRecipe.name}</span>
@@ -367,210 +369,284 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
         )}
         {/* Recipe Name & Metadata */}
         <div>
-          <AccordionSection sectionKey="recipe" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-          <div className="brew-section space-y-5">
-            <div>
-              <label htmlFor="recipe-name" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
-                Recipe Name
-              </label>
-              <input
-                id="recipe-name"
-                type="text"
-                value={currentRecipe.name}
-                onChange={(e) => updateRecipe({ name: e.target.value })}
-                className="brew-input w-full text-lg font-semibold"
-              />
+          <AccordionSection
+            sectionKey="recipe"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
+            <div className="brew-section space-y-5">
+              <div>
+                <label
+                  htmlFor="recipe-name"
+                  className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
+                >
+                  Recipe Name
+                </label>
+                <input
+                  id="recipe-name"
+                  type="text"
+                  value={currentRecipe.name}
+                  onChange={(e) => updateRecipe({ name: e.target.value })}
+                  className="brew-input w-full text-lg font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span
+                    id="bjcp-style-label"
+                    className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
+                  >
+                    BJCP Style
+                  </span>
+                  <button
+                    aria-labelledby="bjcp-style-label"
+                    onClick={() => setIsStyleModalOpen(true)}
+                    className="brew-btn-ghost w-full text-left"
+                  >
+                    {currentRecipe.style || <span className="text-muted">Select a style...</span>}
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="recipe-tags"
+                    className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
+                  >
+                    Tags
+                  </label>
+                  <input
+                    id="recipe-tags"
+                    type="text"
+                    value={currentRecipe.tags?.join(", ") || ""}
+                    onChange={(e) => {
+                      const tags = e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter((t) => t.length > 0);
+                      updateRecipe({ tags: tags.length > 0 ? tags : [] });
+                    }}
+                    placeholder="e.g., hoppy, sessionable"
+                    className="brew-input w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Calculated Values - Gauge Style */}
+              {calculations && (
+                <div
+                  ref={calculatedValuesRef}
+                  className="scrollbar-hide -mx-1 overflow-x-auto px-1"
+                >
+                  <div className="grid grid-cols-4 gap-3 sm:min-w-max sm:grid-cols-7">
+                    {/* ABV */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">ABV</div>
+                      <div className="brew-gauge-value">
+                        <AnimatedValue value={calculations.abv} decimals={1} suffix="%" />
+                      </div>
+                    </div>
+
+                    {/* OG */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">OG</div>
+                      <div className="brew-gauge-value">
+                        <AnimatedValue value={calculations.og} decimals={3} />
+                      </div>
+                    </div>
+
+                    {/* FG */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">FG</div>
+                      <div className="brew-gauge-value">
+                        <AnimatedValue value={calculations.fg} decimals={3} />
+                      </div>
+                    </div>
+
+                    {/* IBU */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">IBU</div>
+                      <div className="brew-gauge-value">
+                        <AnimatedValue value={calculations.ibu} decimals={0} />
+                      </div>
+                    </div>
+
+                    {/* SRM with Color Background - the showpiece */}
+                    <div
+                      className="brew-srm-swatch"
+                      style={{ backgroundColor: srmToRgb(calculations.srm) }}
+                    >
+                      <div className="relative z-10 mb-1 text-[10px] font-semibold tracking-widest text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        SRM
+                      </div>
+                      <div
+                        className="relative z-10 text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+                        style={{ fontVariantNumeric: "tabular-nums lining-nums" }}
+                      >
+                        <AnimatedValue value={calculations.srm} decimals={1} />
+                      </div>
+                    </div>
+
+                    {/* Calories */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">Cal</div>
+                      <div className="brew-gauge-value text-lg">
+                        <AnimatedValue value={calculations.calories} decimals={0} />
+                      </div>
+                      <div className="text-muted text-[9px]">per 12 oz</div>
+                    </div>
+
+                    {/* Carbs */}
+                    <div className="brew-gauge">
+                      <div className="brew-gauge-label">Carbs</div>
+                      <div className="brew-gauge-value text-lg">
+                        <AnimatedValue value={calculations.carbsG} decimals={1} suffix="g" />
+                      </div>
+                      <div className="text-muted text-[9px]">per 12 oz</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* BJCP Style Range Comparison */}
+              {calculations && currentRecipe.style && (
+                <div className="pt-2">
+                  <StyleRangeComparison
+                    styleCode={currentRecipe.style}
+                    abv={calculations.abv}
+                    og={calculations.og}
+                    fg={calculations.fg}
+                    ibu={calculations.ibu}
+                    srm={calculations.srm}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="recipe-notes"
+                  className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
+                >
+                  Notes
+                </label>
+                <textarea
+                  id="recipe-notes"
+                  value={currentRecipe.notes || ""}
+                  onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
+                  placeholder="Brew notes, tasting notes, recipe inspiration..."
+                  rows={3}
+                  className="brew-journal"
+                />
+              </div>
             </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span id="bjcp-style-label" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
-                BJCP Style
-              </span>
-              <button
-                aria-labelledby="bjcp-style-label"
-                onClick={() => setIsStyleModalOpen(true)}
-                className="brew-btn-ghost w-full text-left"
-              >
-                {currentRecipe.style || <span className="text-muted">Select a style...</span>}
-              </button>
-            </div>
-
-            <div>
-              <label htmlFor="recipe-tags" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
-                Tags
-              </label>
-              <input
-                id="recipe-tags"
-                type="text"
-                value={currentRecipe.tags?.join(', ') || ''}
-                onChange={(e) => {
-                  const tags = e.target.value
-                    .split(',')
-                    .map(t => t.trim())
-                    .filter(t => t.length > 0);
-                  updateRecipe({ tags: tags.length > 0 ? tags : [] });
-                }}
-                placeholder="e.g., hoppy, sessionable"
-                className="brew-input w-full"
-              />
-            </div>
-          </div>
-
-          {/* Calculated Values - Gauge Style */}
-          {calculations && (
-            <div ref={calculatedValuesRef} className="overflow-x-auto scrollbar-hide -mx-1 px-1">
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:min-w-max">
-              {/* ABV */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">ABV</div>
-                <div className="brew-gauge-value">
-                  <AnimatedValue value={calculations.abv} decimals={1} suffix="%" />
-                </div>
-              </div>
-
-              {/* OG */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">OG</div>
-                <div className="brew-gauge-value">
-                  <AnimatedValue value={calculations.og} decimals={3} />
-                </div>
-              </div>
-
-              {/* FG */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">FG</div>
-                <div className="brew-gauge-value">
-                  <AnimatedValue value={calculations.fg} decimals={3} />
-                </div>
-              </div>
-
-              {/* IBU */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">IBU</div>
-                <div className="brew-gauge-value">
-                  <AnimatedValue value={calculations.ibu} decimals={0} />
-                </div>
-              </div>
-
-              {/* SRM with Color Background - the showpiece */}
-              <div
-                className="brew-srm-swatch"
-                style={{ backgroundColor: srmToRgb(calculations.srm) }}
-              >
-                <div className="relative z-10 text-[10px] font-semibold uppercase tracking-widest text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] mb-1">
-                  SRM
-                </div>
-                <div className="relative z-10 text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]" style={{ fontVariantNumeric: 'tabular-nums lining-nums' }}>
-                  <AnimatedValue value={calculations.srm} decimals={1} />
-                </div>
-              </div>
-
-              {/* Calories */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">Cal</div>
-                <div className="brew-gauge-value text-lg">
-                  <AnimatedValue value={calculations.calories} decimals={0} />
-                </div>
-                <div className="text-[9px] text-muted">per 12 oz</div>
-              </div>
-
-              {/* Carbs */}
-              <div className="brew-gauge">
-                <div className="brew-gauge-label">Carbs</div>
-                <div className="brew-gauge-value text-lg">
-                  <AnimatedValue value={calculations.carbsG} decimals={1} suffix="g" />
-                </div>
-                <div className="text-[9px] text-muted">per 12 oz</div>
-              </div>
-            </div>
-            </div>
-          )}
-
-          {/* BJCP Style Range Comparison */}
-          {calculations && currentRecipe.style && (
-            <div className="pt-2">
-              <StyleRangeComparison
-                styleCode={currentRecipe.style}
-                abv={calculations.abv}
-                og={calculations.og}
-                fg={calculations.fg}
-                ibu={calculations.ibu}
-                srm={calculations.srm}
-              />
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="recipe-notes" className="block text-xs font-semibold uppercase tracking-wider mb-2 text-muted">
-              Notes
-            </label>
-            <textarea
-              id="recipe-notes"
-              value={currentRecipe.notes || ''}
-              onChange={(e) => updateRecipe({ notes: e.target.value || undefined })}
-              placeholder="Brew notes, tasting notes, recipe inspiration..."
-              rows={3}
-              className="brew-journal"
-            />
-          </div>
-          </div>
           </AccordionSection>
         </div>
 
         {/* Equipment Profile */}
         <div>
-          <AccordionSection sectionKey="equipment" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="equipment"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <EquipmentSection />
           </AccordionSection>
         </div>
 
         {/* Fermentables */}
         <div>
-          <AccordionSection sectionKey="grain" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="grain"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <FermentableSection />
           </AccordionSection>
         </div>
 
         {/* Mash Schedule */}
         <div>
-          <AccordionSection sectionKey="mash" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="mash"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <MashScheduleSection />
           </AccordionSection>
         </div>
 
         {/* Hops */}
         <div>
-          <AccordionSection sectionKey="hops" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="hops"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <HopSection />
           </AccordionSection>
         </div>
 
         {/* Yeast */}
         <div>
-          <AccordionSection sectionKey="yeast" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="yeast"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <YeastSection />
           </AccordionSection>
         </div>
 
         {/* Water */}
         <div>
-          <AccordionSection sectionKey="water" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="water"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <WaterSection calculations={calculations} recipe={currentRecipe} />
           </AccordionSection>
         </div>
 
         {/* Fermentation */}
         <div>
-          <AccordionSection sectionKey="fermentation" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
+          <AccordionSection
+            sectionKey="fermentation"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
             <FermentationSection />
           </AccordionSection>
         </div>
 
         {/* Brew Day Targets */}
         <div>
-          <AccordionSection sectionKey="targets" recipe={currentRecipe} calculations={calculations} mobileOpen={mobileOpenSection} onToggle={toggleMobileSection}>
-            {currentRecipe && <BrewDayChecklistSection recipe={currentRecipe} calculations={calculations} />}
+          <AccordionSection
+            sectionKey="targets"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
+            {currentRecipe && (
+              <BrewDayChecklistSection recipe={currentRecipe} calculations={calculations} />
+            )}
           </AccordionSection>
         </div>
 
@@ -579,21 +655,18 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
           <div>
             <div className="brew-section flex gap-3">
               <button
-                onClick={() => router.push('/recipes')}
+                onClick={() => router.push("/recipes")}
                 className="brew-btn-ghost flex-1 py-3"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleSave}
-                className="brew-btn-primary flex-1 py-3 text-base"
-              >
+              <button onClick={handleSave} className="brew-btn-primary flex-1 py-3 text-base">
                 Save & Close
               </button>
             </div>
           </div>
         )}
-        </div>
+      </div>
 
       {/* Style Selector Modal */}
       <StyleSelectorModal
@@ -613,7 +686,11 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
           isPublic={currentRecipe.isPublic ?? false}
           shareSlug={currentRecipe.shareSlug}
           onPublished={(slug) => {
-            updateRecipe({ isPublic: true, shareSlug: slug, publishedAt: new Date().toISOString() });
+            updateRecipe({
+              isPublic: true,
+              shareSlug: slug,
+              publishedAt: new Date().toISOString(),
+            });
             saveCurrentRecipe();
           }}
           onUnpublished={() => {
@@ -622,7 +699,6 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
           }}
         />
       )}
-
     </div>
   );
 }

@@ -79,12 +79,6 @@ export default function YeastSection() {
     saveYeastPreset(preset);
   };
 
-  // Handle updating yeast attenuation
-  const handleUpdateAttenuation = (attenuation: number) => {
-    if (!currentYeast) return;
-    updateYeast(currentYeast.id, { attenuation });
-  };
-
   // Handle starter info changes from StarterCalculator
   const handleStarterChange = useCallback(
     (starterInfo: StarterInfo) => {
@@ -175,20 +169,31 @@ export default function YeastSection() {
         />
       ) : (
         <div className="yeast-stack">
-          <YeastDisplay
-            yeast={currentYeast}
-            onChangeYeast={() => setIsPickerOpen(true)}
-            onUpdateAttenuation={handleUpdateAttenuation}
-          />
-
-          {/* Starter Calculator */}
-          {calculations && (
+          {calculations ? (
             <StarterCalculator
               starterInfo={currentYeast.starter}
               batchVolumeL={currentRecipe?.batchVolumeL || 20}
               og={calculations.og}
               onStarterChange={handleStarterChange}
-            />
+              onChangeYeast={() => setIsPickerOpen(true)}
+            >
+              <YeastDisplay yeast={currentYeast} />
+            </StarterCalculator>
+          ) : (
+            <div className="yeast-card">
+              <div className="yeast-card-header">
+                <YeastDisplay yeast={currentYeast} />
+                <div className="brew-row-actions">
+                  <button
+                    onClick={() => setIsPickerOpen(true)}
+                    className="brew-row-action-btn brew-link"
+                    aria-label="Change yeast"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}

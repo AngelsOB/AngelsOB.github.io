@@ -22,6 +22,8 @@ interface StarterCalculatorProps {
   batchVolumeL: number;
   og: number;
   onStarterChange: (info: StarterInfo) => void;
+  onChangeYeast?: () => void;
+  children?: React.ReactNode;
 }
 
 /* ---- Datum-card helpers (equipment-style cards) ---- */
@@ -123,6 +125,8 @@ export default function StarterCalculator({
   batchVolumeL,
   og,
   onStarterChange,
+  onChangeYeast,
+  children,
 }: StarterCalculatorProps) {
   const [yeastType, setYeastType] = useState<YeastType>(starterInfo?.yeastType ?? "liquid-100");
   const [packs, setPacks] = useState<number>(starterInfo?.packs ?? 1);
@@ -245,48 +249,50 @@ export default function StarterCalculator({
 
   return (
     <>
-      {/* ① Yeast source — always visible, fused into yeast card */}
-      <div className="starter-source-bar">
-        <div className="starter-input-grid">
-          <StarterDatum
-            label="Type"
-            type="select"
-            value={yeastType}
-            onChange={(v) => setYeastType(v as YeastType)}
-            options={[
-              { value: "liquid-100", label: "Liquid 100B" },
-              { value: "liquid-200", label: "Liquid 200B" },
-              { value: "dry", label: "Dry 11g" },
-              { value: "slurry", label: "Slurry" },
-            ]}
-          />
+      {/* ① Yeast card — single header row with name + inputs */}
+      <div className="yeast-card">
+        <div className="yeast-card-header">
+          {children}
 
-          {yeastType === "slurry" ? (
-            <>
-              <StarterDatum
-                label="Amount"
-                unit="L"
-                value={slurryLiters}
-                onChange={(v) => setSlurryLiters(v as number)}
-                step="0.1"
-                min="0"
-              />
-              <StarterDatum
-                label="Density"
-                unit="B/mL"
-                value={slurryBillionPerMl}
-                onChange={(v) => setSlurryBillionPerMl(v as number)}
-                step="0.1"
-                min="0"
-              />
-            </>
-          ) : yeastType === "dry" ? (
-            <StarterDatum label="Packs" value={packs} onChange={(v) => setPacks(v as number)} step="1" min="0" />
-          ) : (
-            <>
+          <div className="yeast-header-inputs">
+            <StarterDatum
+              label="Type"
+              type="select"
+              value={yeastType}
+              onChange={(v) => setYeastType(v as YeastType)}
+              options={[
+                { value: "liquid-100", label: "Liquid 100B" },
+                { value: "liquid-200", label: "Liquid 200B" },
+                { value: "dry", label: "Dry 11g" },
+                { value: "slurry", label: "Slurry" },
+              ]}
+            />
+
+            {yeastType === "slurry" ? (
+              <>
+                <StarterDatum label="Amount" unit="L" value={slurryLiters} onChange={(v) => setSlurryLiters(v as number)} step="0.1" min="0" />
+                <StarterDatum label="Density" unit="B/mL" value={slurryBillionPerMl} onChange={(v) => setSlurryBillionPerMl(v as number)} step="0.1" min="0" />
+              </>
+            ) : yeastType === "dry" ? (
               <StarterDatum label="Packs" value={packs} onChange={(v) => setPacks(v as number)} step="1" min="0" />
-              <StarterDatum label="Mfg Date" type="date" value={mfgDate} onChange={(v) => setMfgDate(v as string)} />
-            </>
+            ) : (
+              <>
+                <StarterDatum label="Packs" value={packs} onChange={(v) => setPacks(v as number)} step="1" min="0" />
+                <StarterDatum label="Mfg Date" type="date" value={mfgDate} onChange={(v) => setMfgDate(v as string)} />
+              </>
+            )}
+          </div>
+
+          {onChangeYeast && (
+            <div className="brew-row-actions">
+              <button
+                onClick={onChangeYeast}
+                className="brew-row-action-btn brew-link"
+                aria-label="Change yeast"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+              </button>
+            </div>
           )}
         </div>
       </div>
