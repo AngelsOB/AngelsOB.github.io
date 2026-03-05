@@ -2522,6 +2522,7 @@
   /* Add bottom spacing after expanded section content */
   .mobile-accordion-body.is-open .mobile-accordion-body-inner {
     padding-bottom: 8px;
+    overflow: visible;
   }
 
   /*
@@ -3838,14 +3839,10 @@
     padding: 10px 12px;
     border-radius: 10px;
     background: rgb(var(--brew-card) / 0.45);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    border-right: 1px solid
+    border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
       0 1px 2px rgba(0, 0, 0, 0.04);
     transition: all 150ms ease;
   }
@@ -3857,10 +3854,7 @@
   }
   .dark .mash-step-card {
     background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-    border-top-color: rgba(0, 0, 0, 0.15);
-    border-bottom-color: rgba(255, 255, 255, 0.03);
-    border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
-    border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.03),
       0 1px 2px rgba(0, 0, 0, 0.12);
@@ -3938,17 +3932,14 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 14px 8px 10px;
+    padding: 14px 8px 12px;
     border-radius: 10px;
+    overflow: visible;
     background: rgb(var(--brew-card) / 0.45);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    border-right: 1px solid
+    border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
       0 1px 2px rgba(0, 0, 0, 0.04);
     transition: all 150ms ease;
   }
@@ -3960,10 +3951,7 @@
   }
   .dark .equip-datum {
     background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-    border-top-color: rgba(255, 255, 255, 0.06);
-    border-bottom-color: rgba(0, 0, 0, 0.15);
-    border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
-    border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
       0 0 8px rgba(255, 255, 255, 0.02),
@@ -4080,8 +4068,13 @@
   }
   .equip-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 6px;
+  }
+  /* Narrower stepper buttons on small datum cards */
+  .equip-datum.is-small .starter-stepper-btn {
+    width: 24px;
+    font-size: 14px;
   }
 
   /* ---- Yeast — selected strain card ---- */
@@ -4093,14 +4086,10 @@
     padding: 14px 16px;
     border-radius: 10px;
     background: rgb(var(--brew-card) / 0.45);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    border-right: 1px solid
+    border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
       0 1px 2px rgba(0, 0, 0, 0.04);
     transition: all 150ms ease;
   }
@@ -4112,10 +4101,7 @@
   }
   .dark .yeast-card {
     background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-    border-top-color: rgba(0, 0, 0, 0.15);
-    border-bottom-color: rgba(255, 255, 255, 0.03);
-    border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
-    border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.03),
       0 1px 2px rgba(0, 0, 0, 0.12);
@@ -4159,7 +4145,6 @@
     border-bottom: none;
     padding-bottom: 10px;
   }
-
   /* ---- Starter calculator — always-visible layout ---- */
 
   /* Yeast source bar — fused into bottom of yeast card as one unit */
@@ -4168,24 +4153,23 @@
     border-radius: 0 0 10px 10px;
     /* Same bg as yeast-card to form one visual unit */
     background: rgb(var(--brew-card) / 0.45);
-    border-top: 1px solid
+    border: 1px solid
+      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+    border-top-color:
       color-mix(in oklch, var(--brew-accent-300) 8%, rgb(var(--brew-border-subtle)));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    border-right: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
   .dark .starter-source-bar {
     background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
+    border-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
     border-top-color: color-mix(in oklch, var(--brew-accent-700) 12%, transparent);
-    border-bottom-color: rgba(255, 255, 255, 0.04);
-    border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
-    border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
     box-shadow:
       0 0 8px rgba(255, 255, 255, 0.02),
       0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+  /* Source bar → no top border when fused below yeast card */
+  .yeast-stack > .yeast-card + .starter-source-bar {
+    border-top: none;
   }
 
   /* Dashboard + steps: spaced below the fused card */
@@ -4368,7 +4352,7 @@
   }
 
   /* Stepper: buttons sit on top of the card, full height */
-  .starter-step-row .equip-datum:has(.starter-stepper) {
+  .equip-datum:has(.starter-stepper) {
     position: relative;
   }
 
@@ -4386,12 +4370,12 @@
     justify-content: center;
     border: none;
     border-radius: 0;
-    background: rgb(var(--brew-card) / 0.35);
+    background: transparent;
     color: var(--fg-muted);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 120ms ease, color 120ms ease;
+    transition: color 120ms ease;
     line-height: 1;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -4400,20 +4384,44 @@
   }
   .starter-stepper-btn:first-child {
     left: 0;
-    border-right: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     border-radius: 10px 0 0 10px;
+    background: linear-gradient(to left, transparent, rgb(var(--brew-card) / 0.5));
   }
   .starter-stepper-btn:last-child {
     right: 0;
-    border-left: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     border-radius: 0 10px 10px 0;
+    background: linear-gradient(to right, transparent, rgb(var(--brew-card) / 0.5));
   }
   .starter-stepper-btn:hover {
-    background: color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)));
     color: var(--fg-strong);
   }
-  .starter-stepper-btn:active {
-    background: color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)));
+  .starter-stepper-btn:first-child:hover {
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)))
+    );
+  }
+  .starter-stepper-btn:last-child:hover {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)))
+    );
+  }
+  .starter-stepper-btn:first-child:active {
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)))
+    );
+  }
+  .starter-stepper-btn:last-child:active {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)))
+    );
   }
   .starter-stepper-center {
     display: flex;
@@ -4438,8 +4446,37 @@
     -moz-appearance: textfield;
   }
   .dark .starter-stepper-btn {
-    background: color-mix(in oklch, var(--brew-accent-900) 35%, transparent);
     color: var(--fg-muted);
+  }
+  .dark .starter-stepper-btn:first-child {
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-900) 35%, transparent)
+    );
+  }
+  .dark .starter-stepper-btn:last-child {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-900) 35%, transparent)
+    );
+  }
+  .dark .starter-stepper-btn:first-child:hover {
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-800) 45%, transparent)
+    );
+    color: var(--fg-strong);
+  }
+  .dark .starter-stepper-btn:last-child:hover {
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--brew-accent-800) 45%, transparent)
+    );
+    color: var(--fg-strong);
   }
   .dark .starter-stepper-btn:first-child {
     border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
@@ -4869,14 +4906,10 @@
   padding: 16px;
   border-radius: 10px;
   background: rgb(var(--brew-card) / 0.45);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 1px solid
-    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-  border-right: 1px solid
+  border: 1px solid
     color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 1px 2px rgba(0, 0, 0, 0.04);
   transition:
     all 150ms ease,
@@ -4892,10 +4925,7 @@
 }
 .dark .hop-variety-card {
   background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-  border-top-color: rgba(255, 255, 255, 0.06);
-  border-bottom-color: rgba(0, 0, 0, 0.15);
-  border-left-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
-  border-right-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 1px 2px rgba(0, 0, 0, 0.12);
@@ -5244,22 +5274,15 @@
   padding: 10px 12px;
   border-radius: 10px;
   background: rgb(var(--brew-card) / 0.45);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 1px solid
-    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-  border-right: 1px solid
+  border: 1px solid
     color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .dark .hop-radar-legend-wrap {
   background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-  border-top-color: rgba(255, 255, 255, 0.06);
-  border-bottom-color: rgba(0, 0, 0, 0.15);
-  border-left-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
-  border-right-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-700) 30%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 1px 2px rgba(0, 0, 0, 0.12);

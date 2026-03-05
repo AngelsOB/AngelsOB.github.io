@@ -84,18 +84,45 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   error: null,
   recipesLoaded: false,
 
-  // Load all recipes (skips Firestore if already loaded unless force=true)
+  // Load all recipes with stale-while-revalidate pattern
   loadRecipes: (force?: boolean) => {
     if (!force && get().recipesLoaded) return;
-    set({ isLoading: true, error: null });
+
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
-      firestoreRepo.loadAllAsync().then(
-        (recipes) => set({ recipes, isLoading: false, recipesLoaded: true }),
-        (err) => { console.error('[Firestore] Failed to load recipes:', err); set({ error: 'Failed to load recipes', isLoading: false }); },
+      // Only show loading spinner when we have no recipes at all
+      if (get().recipes.length === 0) {
+        set({ isLoading: true, error: null });
+      }
+
+      firestoreRepo.loadAllWithCache(
+        // Cache hit callback — show stale data immediately
+        (cachedRecipes) => {
+          set({
+            recipes: cachedRecipes,
+            isLoading: false,
+            recipesLoaded: true,
+          });
+        },
+      ).then(
+        // Network response — update with fresh data
+        (freshRecipes) => {
+          set({
+            recipes: freshRecipes,
+            isLoading: false,
+            recipesLoaded: true,
+          });
+        },
+        (err) => {
+          console.error('[Firestore] Failed to load recipes:', err);
+          // If we already displayed cached data, don't show error
+          if (get().recipesLoaded) return;
+          set({ error: 'Failed to load recipes', isLoading: false });
+        },
       );
       return;
     }
+    set({ isLoading: true, error: null });
     const result = recipeRepository.loadAllSafe();
     if (result.ok) {
       set({ recipes: result.data, isLoading: false, recipesLoaded: true });
@@ -116,22 +143,49 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     }
   },
 
-  // Load a specific recipe (uses already-fetched list when available)
+  // Load a specific recipe (uses in-memory cache, then IndexedDB cache, then network)
   loadRecipe: (id: RecipeId) => {
+    // 1. Check in-memory cache first
     const cached = get().recipes.find((r) => r.id === id);
     if (cached) {
       set({ currentRecipe: cached, isLoading: false, error: null });
       return;
     }
+
     set({ isLoading: true, error: null });
+
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
+      // Try IndexedDB cache first for instant display, then fetch fresh
+      firestoreRepo.loadByIdFromCache(id).then((cachedRecipe) => {
+        if (cachedRecipe) {
+          set({ currentRecipe: cachedRecipe, isLoading: false });
+        }
+      });
       firestoreRepo.loadByIdAsync(id).then(
         (recipe) => set({ currentRecipe: recipe, isLoading: false }),
-        () => set({ error: 'Failed to load recipe', isLoading: false }),
+        () => {
+          // Only show error if we don't already have cached data displayed
+          if (!get().currentRecipe || get().currentRecipe?.id !== id) {
+            set({ error: 'Failed to load recipe', isLoading: false });
+          }
+        },
       );
       return;
     }
+
+    // If auth hasn't resolved yet, try loading from IndexedDB cache directly
+    // (Firestore persistence stores docs by path, so this works without auth)
+    if (useAuthStore.getState().isLoading) {
+      const tempRepo = new FirestoreRecipeRepository('');
+      tempRepo.loadByIdFromCache(id).then((cachedRecipe) => {
+        if (cachedRecipe && (!get().currentRecipe || get().currentRecipe?.id !== id)) {
+          set({ currentRecipe: cachedRecipe, isLoading: false });
+        }
+      });
+      return;
+    }
+
     try {
       const recipe = recipeRepository.loadById(id);
       set({ currentRecipe: recipe, isLoading: false });

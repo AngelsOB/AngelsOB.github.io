@@ -159,16 +159,18 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
     setMobileOpenSection((prev) => (prev === key ? null : key));
   }, []);
 
-  // Load recipe based on URL param, shared prop, or create new (wait for auth first)
+  // Load recipe based on URL param, shared prop, or create new.
+  // For recipes with an ID, we load immediately (from IndexedDB cache) without
+  // waiting for auth. When auth resolves, AuthProvider calls loadRecipes(true)
+  // which refreshes the data from the network.
   useEffect(() => {
     if (sharedRecipe) {
       setCurrentRecipe(sharedRecipe);
       return;
     }
 
-    if (isAuthLoading) return;
-
     if (id && versionNumber) {
+      if (isAuthLoading) return; // version history needs auth
       const version = recipeVersionRepository.loadByRecipeIdAndVersion(
         id,
         Number(versionNumber)
@@ -182,8 +184,10 @@ export default function BetaBuilderPage({ sharedRecipe, sharedOwnerName }: BetaB
     }
 
     if (id) {
+      // Load immediately — store will use IndexedDB cache if auth isn't ready yet
       loadRecipe(id);
-    } else {
+    } else if (!isAuthLoading) {
+      // Only create new recipe after auth resolves (needs user context)
       createNewRecipe();
     }
   }, [id, versionNumber, sharedRecipe, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);

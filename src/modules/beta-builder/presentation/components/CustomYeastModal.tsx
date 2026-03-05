@@ -43,7 +43,7 @@ export default function CustomYeastModal({
     const newPreset: YeastPreset = {
       name: name.trim(),
       category: category.trim(),
-      attenuationPercent,
+      attenuationPercent: attenuationPercent / 100,
     };
 
     onSave(newPreset);

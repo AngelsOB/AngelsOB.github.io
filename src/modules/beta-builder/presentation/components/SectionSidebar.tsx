@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import { getScribbleLines, SECTIONS } from "./sidebarData";
@@ -196,7 +194,9 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
       <div className="section-sidebar-track">
         {recipe?.name && (
           <div className="sidebar-animate-in-left sidebar-stagger-1">
-            <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}><span>{recipe.name}</span></div>
+            <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}>
+              <span>{recipe.name}</span>
+            </div>
           </div>
         )}
         {SECTIONS.map((section, i) => {
