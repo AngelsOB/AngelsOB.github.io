@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMemo, useState } from "react";
 import { dilutionWater, gravityPoints } from "../calculators/dilution";
@@ -24,18 +24,14 @@ export default function DilutionCalculator() {
       return { error: "Fill in all three fields" };
 
     if (vol <= 0) return { error: "Current volume must be > 0" };
-    if (currentSG < 1.0 || currentSG > 1.2)
-      return { error: "Current gravity out of range" };
-    if (targetSG < 1.0 || targetSG > 1.2)
-      return { error: "Target gravity out of range" };
-    if (targetSG >= currentSG)
-      return { error: "Target OG must be lower than current gravity" };
+    if (currentSG < 1.0 || currentSG > 1.2) return { error: "Current gravity out of range" };
+    if (targetSG < 1.0 || targetSG > 1.2) return { error: "Target gravity out of range" };
+    if (targetSG >= currentSG) return { error: "Target OG must be lower than current gravity" };
 
     const water = dilutionWater(vol, currentSG, targetSG);
     const totalVol = vol + water;
 
-    if (!Number.isFinite(water) || water <= 0)
-      return { error: "Invalid result" };
+    if (!Number.isFinite(water) || water <= 0) return { error: "Invalid result" };
 
     return {
       error: null,
@@ -48,20 +44,20 @@ export default function DilutionCalculator() {
 
   return (
     <div className="brew-section" data-accent="water">
-      <div className="flex items-baseline gap-3 mb-2">
+      <div className="mb-2 flex items-baseline gap-3">
         <h2 className="brew-section-title">Sparge / Dilution</h2>
-        <span className="text-xs text-muted">water addition</span>
+        <span className="text-muted text-xs">water addition</span>
       </div>
 
-      <p className="text-sm text-muted mb-5 leading-relaxed">
-        Add the right amount of water to hit your target OG &mdash; pre-boil
-        for sparge adjustments, or just before knockout for precision.
+      <p className="text-muted mb-5 text-sm leading-relaxed">
+        Hit your target OG every time. <br />
+        Use pre-boil for sparge adjustments, or just before knockout for absolute precision.
       </p>
 
       {/* Inputs — 3 across on desktop, stacked on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+      <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <label className="block">
-          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+          <div className="text-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
             Current Vol
           </div>
           <div className="relative">
@@ -75,14 +71,14 @@ export default function DilutionCalculator() {
               onChange={(e) => setVolumeInput(e.target.value)}
               placeholder="20"
             />
-            <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] text-muted opacity-50">
+            <span className="text-muted pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[10px] opacity-50">
               L
             </span>
           </div>
         </label>
 
         <label className="block">
-          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+          <div className="text-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
             Current SG
           </div>
           <input
@@ -98,8 +94,8 @@ export default function DilutionCalculator() {
           />
         </label>
 
-        <label className="col-span-2 sm:col-span-1 block">
-          <div className="text-xs font-semibold text-muted mb-1.5 uppercase tracking-wider">
+        <label className="col-span-2 block sm:col-span-1">
+          <div className="text-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
             Target OG
           </div>
           <input
@@ -118,7 +114,7 @@ export default function DilutionCalculator() {
 
       {/* Results */}
       {calc.error ? (
-        <div className="text-sm text-muted">{calc.error}</div>
+        <div className="text-muted text-sm">{calc.error}</div>
       ) : (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -126,7 +122,7 @@ export default function DilutionCalculator() {
               <div className="brew-gauge-label">Water to Add</div>
               <div className="brew-gauge-value text-3xl tabular-nums">
                 {calc.water!.toFixed(2)}
-                <span className="text-sm font-normal text-muted ml-1">L</span>
+                <span className="text-muted ml-1 text-sm font-normal">L</span>
               </div>
             </div>
 
@@ -134,16 +130,15 @@ export default function DilutionCalculator() {
               <div className="brew-gauge-label">Total Volume</div>
               <div className="brew-gauge-value tabular-nums">
                 {calc.totalVol!.toFixed(2)}
-                <span className="text-sm font-normal text-muted ml-1">L</span>
+                <span className="text-muted ml-1 text-sm font-normal">L</span>
               </div>
             </div>
           </div>
 
           {/* Formula breakdown */}
-          <div className="text-[11px] text-muted opacity-50 font-mono tabular-nums">
-            {calc.currentPts!.toFixed(1)} pts &times; {parseNum(volumeInput)!} L
-            = {calc.targetPts!.toFixed(1)} pts &times;{" "}
-            {calc.totalVol!.toFixed(2)} L
+          <div className="text-muted font-mono text-[11px] tabular-nums opacity-50">
+            {calc.currentPts!.toFixed(1)} pts &times; {parseNum(volumeInput)!} L ={" "}
+            {calc.targetPts!.toFixed(1)} pts &times; {calc.totalVol!.toFixed(2)} L
           </div>
         </div>
       )}
