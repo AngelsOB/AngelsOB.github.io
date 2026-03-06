@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Recipes",
   description:
     "Browse and manage your homebrewing recipes. Create, duplicate, and track brew sessions.",
+  robots: { index: false, follow: false },
 };
 
 export default function RecipesPage() {
