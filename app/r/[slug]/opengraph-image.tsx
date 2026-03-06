@@ -43,7 +43,8 @@ function srmToHex(srm: number): string {
   const r = Math.round(lo[1] + (hi[1] - lo[1]) * t)
   const g = Math.round(lo[2] + (hi[2] - lo[2]) * t)
   const b = Math.round(lo[3] + (hi[3] - lo[3]) * t)
-  return `rgb(${r},${g},${b})`
+  const hex = (v: number) => v.toString(16).padStart(2, '0')
+  return `#${hex(r)}${hex(g)}${hex(b)}`
 }
 
 export default async function Image({
