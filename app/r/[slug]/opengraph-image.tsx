@@ -91,7 +91,7 @@ export default async function Image({
             opacity: 0.4,
           }}
         >
-          brewing.it
+          brewing.it.com
         </div>
       </div>
     ),

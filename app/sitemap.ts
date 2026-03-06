@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600 // regenerate hourly
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it'
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
   const { adminDb } = await import('@/config/firebase-admin')
 
   // Static routes

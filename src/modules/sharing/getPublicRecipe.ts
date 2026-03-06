@@ -47,7 +47,7 @@ export function buildRecipeJsonLd(
   ownerName: string,
   slug: string,
 ) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
 
   return {
     '@context': 'https://schema.org',
