@@ -14,8 +14,95 @@ import { useState } from "react";
 import { useRecipeStore } from "../stores/recipeStore";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
 import EmptyState from "../../../../components/EmptyState";
+import ScalableText from "../../../../components/ScalableText";
 import MashStepModal from "./MashStepModal";
 import type { MashStep } from "../../domain/models/Recipe";
+
+/* ── Inline stepper helper ─────────────────────────────── */
+const chevronUp = <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5 5 1 9 5"/></svg>;
+const chevronDown = <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1 5 5 9 1"/></svg>;
+
+function MashDatum({
+  label, value, unit, onChange, step, min, max, ariaLabel,
+}: {
+  label: string; value: number; unit: string;
+  onChange: (v: number) => void;
+  step: number; min: number; max?: number; ariaLabel: string;
+}) {
+  const decimals = String(step).split('.')[1]?.length ?? 0;
+  const nudge = (dir: 1 | -1) => {
+    const next = parseFloat((value + dir * step).toFixed(decimals));
+    if (next < min) return;
+    if (max !== undefined && next > max) return;
+    onChange(next);
+  };
+
+  return (
+    <div className="mash-step-datum">
+      <span className="mash-step-datum-label">{label}</span>
+      <div className="mash-step-datum-value">
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="mash-step-datum-input"
+          step={step}
+          min={min}
+          max={max}
+          aria-label={ariaLabel}
+        />
+        <span className="mash-step-datum-unit">{unit}</span>
+        <div className="mash-stepper">
+          <button type="button" className="mash-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`} tabIndex={-1}>{chevronUp}</button>
+          <button type="button" className="mash-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`} tabIndex={-1}>{chevronDown}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MashStepRow({ step, index, onUpdate, onEdit, onRemove }: {
+  step: MashStep; index: number;
+  onUpdate: (id: string, updates: Partial<MashStep>) => void;
+  onEdit: () => void; onRemove: () => void;
+}) {
+  return (
+    <div className="brew-ingredient-row flex items-center gap-2">
+      <span className="mash-step-index">{index + 1}</span>
+      <ScalableText className="font-semibold min-w-[5rem]" minScale={0.55}>
+        {step.name}
+      </ScalableText>
+      <div className="flex-1" />
+      <MashDatum
+        label="Temp"
+        value={step.temperatureC}
+        unit="°C"
+        onChange={(v) => onUpdate(step.id, { temperatureC: v })}
+        step={0.5}
+        min={0}
+        max={100}
+        ariaLabel="Temperature in Celsius"
+      />
+      <MashDatum
+        label="Time"
+        value={step.durationMinutes}
+        unit="min"
+        onChange={(v) => onUpdate(step.id, { durationMinutes: v })}
+        step={5}
+        min={1}
+        ariaLabel="Duration in minutes"
+      />
+      <div className="brew-row-actions">
+        <button onClick={onEdit} className="brew-row-action-btn brew-link" aria-label={`Edit ${step.name}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+        </button>
+        <button onClick={onRemove} className="brew-row-action-btn brew-danger-text" aria-label={`Remove ${step.name}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function MashScheduleSection() {
   const {
@@ -56,49 +143,42 @@ export default function MashScheduleSection() {
   };
 
   // Handle generating default schedules
-  const handleGenerateSingleInfusion = () => {
+  const replaceSchedule = (steps: MashStep[]) => {
     if (currentRecipe.mashSteps.length > 0) {
       if (!confirm("This will replace your current mash schedule. Continue?")) {
         return;
       }
-      // Clear existing steps
       currentRecipe.mashSteps.forEach(step => removeMashStep(step.id));
     }
-
-    const defaultStep = mashScheduleService.generateDefaultSingleInfusion(currentRecipe);
-    addMashStep(defaultStep);
+    steps.forEach(step => addMashStep(step));
   };
 
-  const handleGenerateMultiStep = () => {
-    if (currentRecipe.mashSteps.length > 0) {
-      if (!confirm("This will replace your current mash schedule. Continue?")) {
-        return;
-      }
-      // Clear existing steps
-      currentRecipe.mashSteps.forEach(step => removeMashStep(step.id));
-    }
+  const handleGenerateSingleInfusion = () => {
+    replaceSchedule([mashScheduleService.generateDefaultSingleInfusion()]);
+  };
 
-    const defaultSteps = mashScheduleService.generateDefaultMultiStep(currentRecipe);
-    defaultSteps.forEach(step => addMashStep(step));
+  const handleGenerateStepMash = () => {
+    replaceSchedule(mashScheduleService.generateStepMash());
+  };
+
+  const handleGenerateDecoction = () => {
+    replaceSchedule(mashScheduleService.generateDecoction());
   };
 
   return (
     <div className="brew-section brew-animate-in brew-stagger-3 space-y-4" data-accent="mash">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="mash-section-header">
         <h3 className="brew-section-title">Mash Schedule</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={handleGenerateSingleInfusion}
-            className="brew-btn-ghost text-xs px-3 py-1"
-          >
+        <div className="mash-generate-buttons">
+          <button onClick={handleGenerateSingleInfusion} className="brew-btn-ghost text-xs px-3 py-1">
             Single Infusion
           </button>
-          <button
-            onClick={handleGenerateMultiStep}
-            className="brew-btn-ghost text-xs px-3 py-1"
-          >
-            Multi-Step
+          <button onClick={handleGenerateStepMash} className="brew-btn-ghost text-xs px-3 py-1">
+            Step Mash
+          </button>
+          <button onClick={handleGenerateDecoction} className="brew-btn-ghost text-xs px-3 py-1">
+            Decoction
           </button>
         </div>
       </div>
@@ -112,56 +192,14 @@ export default function MashScheduleSection() {
       ) : (
         <div className="mash-step-list">
           {currentRecipe.mashSteps.map((step, index) => (
-            <div key={step.id} className="mash-step-card">
-              {/* Step index */}
-              <span className="mash-step-index">{index + 1}</span>
-
-              {/* Name & Type */}
-              <div className="mash-step-name">
-                <span className="font-semibold">{step.name}</span>
-                <span className="mash-step-type">{step.type}</span>
-              </div>
-
-              {/* Temperature */}
-              <div className="mash-step-datum">
-                <span className="mash-step-datum-label">Temp</span>
-                <span className="mash-step-datum-value">{step.temperatureC}°C</span>
-              </div>
-
-              {/* Duration */}
-              <div className="mash-step-datum">
-                <span className="mash-step-datum-label">Time</span>
-                <span className="mash-step-datum-value">{step.durationMinutes} min</span>
-              </div>
-
-              {/* Infusion Info (only for infusion steps) */}
-              {step.type === "infusion" && step.infusionVolumeLiters && step.infusionTempC && (
-                <div className="mash-step-datum">
-                  <span className="mash-step-datum-label">Infusion</span>
-                  <span className="mash-step-datum-value mash-step-datum-accent">
-                    {step.infusionVolumeLiters.toFixed(1)}L @ {step.infusionTempC.toFixed(0)}°
-                  </span>
-                </div>
-              )}
-
-              {/* Actions — hover-reveal */}
-              <div className="brew-row-actions">
-                <button
-                  onClick={() => handleOpenEditModal(step)}
-                  className="brew-row-action-btn brew-link"
-                  aria-label={`Edit ${step.name}`}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                </button>
-                <button
-                  onClick={() => removeMashStep(step.id)}
-                  className="brew-row-action-btn brew-danger-text"
-                  aria-label={`Remove ${step.name}`}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-              </div>
-            </div>
+            <MashStepRow
+              key={step.id}
+              step={step}
+              index={index}
+              onUpdate={updateMashStep}
+              onEdit={() => handleOpenEditModal(step)}
+              onRemove={() => removeMashStep(step.id)}
+            />
           ))}
         </div>
       )}

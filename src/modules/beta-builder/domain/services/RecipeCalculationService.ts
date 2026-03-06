@@ -158,11 +158,15 @@ export class RecipeCalculationService {
   }
 
   /**
-   * Compute effective attenuation from yeast base + process adjustments.
+   * Compute effective attenuation from yeast base + mash adjustments.
    *
-   * Factors: mash temperature (ref 66 °C), decoction bonus, mash duration
-   * (ref 60 min), fermentation temperature (ref 20 °C), fermentation duration
-   * (ref 10 days). Result clamped to [0.60, 0.95].
+   * Factors: mash temperature (ref 66 °C, ~1%/°C per Braukaiser) and
+   * mash duration (ref 60 min, capped ±3%). Result clamped to [0.60, 0.95].
+   *
+   * Fermentation temperature, fermentation duration, and decoction bonuses
+   * were removed — fermentation has a terminal gravity determined by wort
+   * composition, not time or temp, and controlled experiments (Brulosophy)
+   * found no measurable attenuation difference from decoction with modern malts.
    */
   private computeEffectiveAttenuation(recipe: Recipe): number {
     const baseAtt = recipe.yeasts.length > 0
@@ -172,49 +176,19 @@ export class RecipeCalculationService {
     // Mash adjustments
     let stepTimeTotal = 0;
     let tempAdjAcc = 0;
-    let decoAdjAcc = 0;
     for (const step of recipe.mashSteps) {
       const t = Math.max(0, step.durationMinutes || 0);
       stepTimeTotal += t;
       // Braukaiser research: ~1% attenuation change per °C (6% over 64→70°C)
       tempAdjAcc += (66 - (step.temperatureC || 66)) * 0.01 * t;
-      if (step.type === 'decoction') decoAdjAcc += 0.005 * t;
     }
     const avgTempAdj = stepTimeTotal > 0 ? tempAdjAcc / stepTimeTotal : 0;
-    const avgDecoAdj = stepTimeTotal > 0 ? decoAdjAcc / stepTimeTotal : 0;
     const totalMashTime = stepTimeTotal > 0 ? stepTimeTotal : 60;
     const mashTimeAdj = Math.max(-0.03, Math.min(0.03, ((totalMashTime - 60) / 15) * 0.005));
 
-    // Fermentation adjustments
-    const { fermentTempC, fermentDays } = this.computeFermentMetrics(recipe);
-    const fermTempAdj = (fermentTempC - 20) * 0.004;
-    const fermDaysAdj = (fermentDays - 10) * 0.002;
-
     return Math.max(0.6, Math.min(0.95,
-      baseAtt + avgTempAdj + avgDecoAdj + mashTimeAdj + fermTempAdj + fermDaysAdj,
+      baseAtt + avgTempAdj + mashTimeAdj,
     ));
-  }
-
-  /**
-   * Derive weighted-average fermentation temperature and total ferment days
-   * from primary/secondary fermentation steps. Ignores cold-crash, conditioning,
-   * and diacetyl-rest steps since those don't contribute to attenuation.
-   */
-  private computeFermentMetrics(recipe: Recipe): { fermentTempC: number; fermentDays: number } {
-    const attenuativeTypes = new Set(['primary', 'secondary']);
-    const steps = recipe.fermentationSteps.filter(s => attenuativeTypes.has(s.type));
-
-    const totalDays = steps.reduce((sum, s) => sum + Math.max(0, s.durationDays || 0), 0);
-    if (totalDays <= 0) return { fermentTempC: 20, fermentDays: 10 };
-
-    const weightedTemp = steps.reduce(
-      (sum, s) => sum + Math.max(0, s.durationDays || 0) * (s.temperatureC ?? 20), 0,
-    );
-
-    return {
-      fermentTempC: weightedTemp / totalDays,
-      fermentDays: totalDays,
-    };
   }
 
   /**

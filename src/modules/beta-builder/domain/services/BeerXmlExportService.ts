@@ -1,4 +1,4 @@
-import type { Recipe, Hop, MashStep } from '../models/Recipe';
+import type { Recipe, Hop } from '../models/Recipe';
 
 const escapeXml = (str: string): string =>
   str
@@ -23,12 +23,6 @@ const hopUseMap: Record<Hop['type'], string> = {
   'first wort': 'First Wort',
   whirlpool: 'Aroma',
   mash: 'Mash',
-};
-
-const mashStepTypeMap: Record<MashStep['type'], string> = {
-  infusion: 'Infusion',
-  temperature: 'Temperature',
-  decoction: 'Decoction',
 };
 
 class BeerXmlExportService {
@@ -118,12 +112,9 @@ class BeerXmlExportService {
       lines.push('          <MASH_STEP>');
       lines.push(`            <NAME>${escapeXml(s.name)}</NAME>`);
       lines.push(`            <VERSION>1</VERSION>`);
-      lines.push(`            <TYPE>${mashStepTypeMap[s.type]}</TYPE>`);
+      lines.push(`            <TYPE>Temperature</TYPE>`);
       lines.push(`            <STEP_TEMP>${s.temperatureC}</STEP_TEMP>`);
       lines.push(`            <STEP_TIME>${s.durationMinutes}</STEP_TIME>`);
-      if (s.infusionVolumeLiters != null) {
-        lines.push(`            <INFUSE_AMOUNT>${s.infusionVolumeLiters}</INFUSE_AMOUNT>`);
-      }
       lines.push('          </MASH_STEP>');
     }
     lines.push('        </MASH_STEPS>');
