@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { uid } from "@/utils/uid";
 import type { FermentationStep, FermentationStepType } from '../../domain/models/Recipe';
 import ModalOverlay from './ModalOverlay';
 import Input from '@components/Input';
@@ -67,7 +68,7 @@ export default function FermentationStepModal({ isOpen, onClose, onSave, editing
 
   const handleSave = () => {
     const step: FermentationStep = {
-      id: editingStep?.id || crypto.randomUUID(),
+      id: editingStep?.id || uid(),
       name,
       type: stepType,
       durationDays,

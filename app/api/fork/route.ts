@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { uid } from "@/utils/uid";
 import { adminDb, adminAuth } from "@/config/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Create the forked recipe
     const now = new Date().toISOString();
-    const newId = crypto.randomUUID();
+    const newId = uid();
     const originalRecipe = { id: recipeId, ...recipeData } as Recipe;
 
     // Get original owner name for attribution

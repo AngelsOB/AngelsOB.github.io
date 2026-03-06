@@ -76,6 +76,7 @@ export default function CustomHopModal({
               placeholder="e.g., Custom Hop Blend"
               fullWidth
               autoFocus
+              data-autofocus
             />
           </div>
 

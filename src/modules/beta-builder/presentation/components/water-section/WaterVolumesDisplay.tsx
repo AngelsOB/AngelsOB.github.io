@@ -45,7 +45,7 @@ export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
       </h3>
 
       {/* ── Volume cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-3">
         {/* Mash Water */}
         <div className="rounded-lg p-4" style={cardStyle}>
           <div className="text-sm mb-1 font-medium brew-link">Mash Water</div>
@@ -124,7 +124,7 @@ export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
       {/* ── Boil concentration strip ── */}
       {hasGravity && (
         <div
-          className="mt-3 rounded-lg px-4 py-2.5 flex items-center gap-3 overflow-x-auto"
+          className="mt-3 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap"
           style={{
             ...cardStyle,
             background: "color-mix(in oklch, var(--brew-accent-900) 10%, rgb(var(--brew-card-inset) / 0.2))",

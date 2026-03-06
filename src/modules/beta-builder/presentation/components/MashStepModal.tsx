@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { uid } from "@/utils/uid";
 import type { MashStep, MashStepType, Recipe } from "../../domain/models/Recipe";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
 import ModalOverlay from "./ModalOverlay";
@@ -118,7 +119,7 @@ export default function MashStepModal({
     }
 
     const newStep: MashStep = {
-      id: existingStep?.id ?? crypto.randomUUID(),
+      id: existingStep?.id ?? uid(),
       name: stepName.trim(),
       type: stepType,
       temperatureC: temperature,

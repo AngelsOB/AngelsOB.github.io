@@ -333,6 +333,7 @@ export default function HopFlavorRadar({
               className="hop-radar-legend-item"
               style={{ opacity: dimmed ? 0.4 : 1 }}
               onMouseEnter={() => setHighlightIdx(i)}
+              onClick={() => setHighlightIdx(highlightIdx === i ? null : i)}
             >
               <span
                 className="hop-radar-legend-swatch"

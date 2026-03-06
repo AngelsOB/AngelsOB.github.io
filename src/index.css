@@ -2355,7 +2355,7 @@
     border-radius: 14px;
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    overflow: clip;
     margin-bottom: 6px;
     /* 3D raised surface — matches desktop sidebar tiles */
     border: 1px solid color-mix(in oklch, var(--sidebar-accent) 30%, transparent);
@@ -2467,14 +2467,15 @@
     flex: 1;
     min-width: 0;
     font-family: var(--font-handwritten);
-    font-size: 13px;
-    line-height: 1.2;
-    opacity: 0.6;
+    font-size: 15px;
+    line-height: 1.4;
+    opacity: 0.88;
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    padding-bottom: 2px;
   }
   .mobile-accordion-preview-line {
     display: block;
@@ -2490,6 +2491,41 @@
   }
   .mobile-accordion-preview .sidebar-scribble-equipment {
     justify-content: flex-end;
+  }
+
+  /* Reset hop summary transforms — desktop sidebar offsets clip inside tiles */
+  .mobile-accordion-preview .sidebar-hop-ibu,
+  .mobile-accordion-preview .sidebar-hop-total {
+    transform: none;
+  }
+  .mobile-accordion-preview .sidebar-hop-summary {
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  /* Reset yeast lab absolute positioning inside tiles */
+  .mobile-accordion-preview .sidebar-yeast-lab {
+    position: static;
+    transform: none;
+    font-size: 0.75em;
+    opacity: 0.7;
+  }
+  .mobile-accordion-preview .sidebar-scribble-yeast {
+    align-items: flex-end;
+  }
+  /* Starter scribble summary in yeast tile */
+  .mobile-accordion-preview .sidebar-yeast-starter {
+    font-size: 0.85em;
+    opacity: 0.8;
+  }
+  /* Boost equipment mash/sparge volumes — too faint at desktop opacity */
+  .mobile-accordion-preview .sidebar-equip-volumes {
+    opacity: 0.8;
+    font-size: 0.8em;
+  }
+  /* Boost mash strike line — desktop opacity compounds too low */
+  .mobile-accordion-preview .sidebar-scribble-mash-strike {
+    margin-top: 4px;
+    opacity: 1;
   }
 
   /* Chevron indicator */
@@ -2522,7 +2558,8 @@
   /* Add bottom spacing after expanded section content */
   .mobile-accordion-body.is-open .mobile-accordion-body-inner {
     padding-bottom: 8px;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   /*
@@ -3022,6 +3059,10 @@
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     color: var(--fg-strong);
     box-shadow: var(--shadow-inset);
+    /* Prevent iOS Safari auto-zoom on focus (requires >= 16px) */
+    @media (max-width: 767px) {
+      font-size: 16px;
+    }
   }
   .dark .brew-input {
     background: color-mix(in oklch, var(--brew-accent-900) 20%, rgb(var(--brew-card-inset) / 0.35));
@@ -3382,6 +3423,7 @@
     box-shadow: var(--shadow-inset);
     min-height: 100px;
     resize: vertical;
+    field-sizing: content;
   }
   .dark .brew-journal {
     border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.08));
@@ -3795,12 +3837,18 @@
     opacity: 1;
     padding-left: 4px;
   }
-  /* Always visible on touch devices */
-  @media (hover: none) {
+  /* Always visible on narrow screens (no hover available) */
+  @media (max-width: 767px) {
     .brew-row-actions {
       max-width: 120px;
-      opacity: 1;
+      opacity: 0.35;
       padding-left: 4px;
+      transition: opacity 150ms ease;
+    }
+    /* Full opacity on tap / focus */
+    .brew-row-actions:has(:focus),
+    .brew-row-actions:has(:active) {
+      opacity: 1;
     }
   }
 
@@ -4342,12 +4390,20 @@
     text-overflow: ellipsis;
   }
 
-  /* Starter step readout — handwritten */
+  /* Starter step readout (DME) — regular font, vertically centered in card */
+  .starter-step-row .equip-datum.starter-readout {
+    justify-content: center;
+  }
+  .starter-step-row .equip-datum.starter-readout .equip-datum-value {
+    align-items: center;
+  }
   .starter-step-row .starter-readout-value {
-    font-family: var(--font-handwritten);
-    font-size: 28px;
+    font-family: inherit;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
     color: var(--fg-strong);
-    line-height: 1.1;
+    line-height: 1;
   }
 
   /* Stepper: buttons sit on top of the card, full height */
@@ -4554,7 +4610,7 @@
   /* Starter step row — grid for alignment (Size, Gravity, DME) */
   .starter-step-row {
     display: grid;
-    grid-template-columns: 18px 1fr 1fr 1fr auto;
+    grid-template-columns: 18px 0.65fr 1fr 0.5fr auto;
     gap: 6px;
     align-items: stretch;
   }
@@ -4872,11 +4928,99 @@
   }
 }
 
+/* ---- Mobile section layout fixes (narrow viewports) ---- */
+
+/* Stat gauge grid — responsive columns */
+.brew-gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .brew-gauge-grid {
+    grid-template-columns: repeat(7, 1fr);
+    min-width: max-content;
+  }
+}
+@media (max-width: 420px) {
+  .brew-gauge-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .brew-gauge {
+    padding: 10px 6px !important;
+  }
+  .brew-gauge-value {
+    font-size: 18px !important;
+  }
+  .brew-srm-swatch .relative.z-10.text-3xl {
+    font-size: 22px !important;
+  }
+}
+
+/* Fermentation step metrics — responsive */
+.brew-ferm-step-metrics {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+@media (max-width: 500px) {
+  .brew-ferm-step-metrics {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* Yeast card header — stack inputs when they can't fit beside yeast name */
+@media (max-width: 640px) {
+  .yeast-card-header {
+    flex-wrap: wrap !important;
+  }
+  .yeast-header-inputs {
+    margin-left: 0 !important;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* Water volume cards — smaller text on narrow screens */
+@media (max-width: 420px) {
+  [data-accent="water"] .grid.grid-cols-2 .text-2xl {
+    font-size: 20px;
+  }
+  [data-accent="water"] .grid.grid-cols-2 .rounded-lg {
+    padding: 12px;
+  }
+}
+
+/* Section padding — tighter on narrow screens */
+@media (max-width: 420px) {
+  .brew-section {
+    padding: 16px !important;
+  }
+}
+
 /* ---- Read-only mode (shared recipes, version history) ---- */
 
 .brew-read-only {
-  pointer-events: none;
   opacity: 0.90;
+}
+
+/* Disable interactions on inputs/controls but keep accordion tiles clickable */
+.brew-read-only input,
+.brew-read-only select,
+.brew-read-only textarea,
+.brew-read-only .brew-btn,
+.brew-read-only .brew-btn-primary,
+.brew-read-only .brew-btn-ghost,
+.brew-read-only .brew-btn-outline {
+  pointer-events: none;
+}
+
+/* Re-enable mobile accordion tiles so sections can expand/collapse */
+.brew-read-only .mobile-accordion-tile {
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Hide action buttons in read-only mode */
@@ -5193,6 +5337,36 @@
 
 .hop-addition-spacer {
   flex: 1;
+}
+
+/* Hop rows — compact on narrow screens (must be after base rules) */
+@media (max-width: 420px) {
+  .hop-addition-row {
+    flex-wrap: wrap;
+    gap: 2px 6px;
+    padding: 6px 8px;
+  }
+  .hop-addition-type {
+    font-size: 9px;
+    padding: 4px 14px 4px 6px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .hop-addition-datum {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .hop-addition-datum-input {
+    font-size: 18px;
+    width: 36px;
+  }
+  .hop-addition-datum-input.is-narrow {
+    width: 30px;
+  }
+  .hop-addition-spacer {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 .hop-add-addition-btn {

@@ -57,6 +57,7 @@ export default function CustomWaterIngredientModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="Ingredient name"
               autoFocus
+              data-autofocus
               className="brew-input w-full"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleAdd();

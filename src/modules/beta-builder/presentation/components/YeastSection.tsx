@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { uid } from "@/utils/uid";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
 import EmptyState from "../../../../components/EmptyState";
@@ -64,7 +65,7 @@ export default function YeastSection() {
   // Handle selecting a yeast from preset
   const handleSelectFromPreset = (preset: YeastPreset) => {
     const newYeast: Yeast = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: preset.name,
       attenuation: preset.attenuationPercent || 0.75,
       laboratory: preset.category,

@@ -14,6 +14,7 @@
  */
 
 import { useMemo, useEffect, useState, useRef, useCallback } from "react";
+import { uid } from "@/utils/uid";
 import type { YeastType, StarterStep, StarterInfo } from "../../domain/models/Recipe";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
 
@@ -229,7 +230,7 @@ export default function StarterCalculator({
     setSteps((xs) => [
       ...xs,
       {
-        id: crypto.randomUUID(),
+        id: uid(),
         liters: 2,
         gravity: 1.036,
         model: strToModel(starterModelStr),

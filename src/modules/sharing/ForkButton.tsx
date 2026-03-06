@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { uid } from "@/utils/uid";
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
@@ -49,7 +50,7 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
 
       // Create forked recipe
       const now = new Date().toISOString();
-      const newId = crypto.randomUUID();
+      const newId = uid();
 
       // Strip sharing fields and rebuild
       const {

@@ -440,7 +440,7 @@ export default function BetaBuilderPage({
                   ref={calculatedValuesRef}
                   className="scrollbar-hide -mx-1 overflow-x-auto px-1"
                 >
-                  <div className="grid grid-cols-4 gap-3 sm:min-w-max sm:grid-cols-7">
+                  <div className="brew-gauge-grid">
                     {/* ABV */}
                     <div className="brew-gauge">
                       <div className="brew-gauge-label">ABV</div>

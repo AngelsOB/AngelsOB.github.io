@@ -112,6 +112,7 @@ export default function PresetPickerModal<T>({
               onChange={(e) => onSearchChange(e.target.value)}
               className="brew-input flex-1"
               autoFocus
+              data-autofocus
             />
             {filterContent && (
               <button

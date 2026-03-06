@@ -100,15 +100,19 @@ export default function ModalOverlay({
       // Store currently focused element to restore later
       previousActiveElement.current = document.activeElement as HTMLElement;
 
-      // Focus first focusable element in modal after render
+      // Focus [autofocus] element if present, otherwise first focusable element
       requestAnimationFrame(() => {
         if (modalRef.current) {
-          const focusable = getFocusableElements(modalRef.current);
-          if (focusable.length > 0) {
-            focusable[0].focus();
+          const autoFocusEl = modalRef.current.querySelector<HTMLElement>('[data-autofocus]');
+          if (autoFocusEl) {
+            autoFocusEl.focus();
           } else {
-            // If no focusable elements, focus the modal itself
-            modalRef.current.focus();
+            const focusable = getFocusableElements(modalRef.current);
+            if (focusable.length > 0) {
+              focusable[0].focus();
+            } else {
+              modalRef.current.focus();
+            }
           }
         }
       });

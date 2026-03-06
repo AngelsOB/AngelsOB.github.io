@@ -98,6 +98,7 @@ export default function WaterIngredientPickerModal({
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search ingredients..."
           autoFocus
+          data-autofocus
           className="brew-input w-full mb-3"
         />
         <div className="flex flex-wrap gap-1.5">
