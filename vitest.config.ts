@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'tests/**/*.test.ts'],
     exclude: ['node_modules', 'dist'],
     coverage: {
       provider: 'v8',
@@ -15,6 +15,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@/': '/src/',
       '@components': '/src/components',
       '@pages': '/src/views',
       '@calculators': '/src/calculators',

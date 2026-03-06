@@ -1,0 +1,104 @@
+import { describe, test, expect } from 'vitest'
+import { existsSync, readFileSync } from 'fs'
+import { resolve } from 'path'
+import robots from '../app/robots'
+
+const publicDir = resolve(__dirname, '..', 'public')
+const appDir = resolve(__dirname, '..', 'app')
+
+// ── robots.txt ──────────────────────────────────────────────────────────
+
+describe('SEO: robots.txt', () => {
+  const result = robots()
+  const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules
+
+  test('targets all user agents', () => {
+    expect(rule.userAgent).toBe('*')
+  })
+
+  test('allows root', () => {
+    expect(rule.allow).toBe('/')
+  })
+
+  test('disallows auth-gated /recipes/ path', () => {
+    expect(rule.disallow).toContain('/recipes/')
+  })
+
+  test('disallows /api/ path', () => {
+    expect(rule.disallow).toContain('/api/')
+  })
+
+  test('does NOT disallow public recipe paths (/r/)', () => {
+    const disallowed = Array.isArray(rule.disallow)
+      ? rule.disallow
+      : [rule.disallow]
+    const blocksPublicRecipes = disallowed.some(
+      (d) => d === '/r/' || d === '/r'
+    )
+    expect(blocksPublicRecipes).toBe(false)
+  })
+
+  test('references sitemap', () => {
+    expect(result.sitemap).toMatch(/\/sitemap\.xml$/)
+  })
+})
+
+// ── sitemap config ──────────────────────────────────────────────────────
+
+describe('SEO: sitemap config', () => {
+  test('exports force-dynamic and hourly revalidation', async () => {
+    const mod = await import('../app/sitemap')
+    expect(mod.dynamic).toBe('force-dynamic')
+    expect(mod.revalidate).toBe(3600)
+    expect(typeof mod.default).toBe('function')
+  })
+})
+
+// ── PWA icons ───────────────────────────────────────────────────────────
+
+describe('SEO: PWA icon assets', () => {
+  test('icon-192.png exists', () => {
+    expect(existsSync(resolve(publicDir, 'icon-192.png'))).toBe(true)
+  })
+
+  test('icon-512.png exists', () => {
+    expect(existsSync(resolve(publicDir, 'icon-512.png'))).toBe(true)
+  })
+
+  test('apple-touch-icon.png exists', () => {
+    expect(existsSync(resolve(publicDir, 'apple-touch-icon.png'))).toBe(true)
+  })
+
+  test('every icon in manifest.json exists on disk', () => {
+    const manifest = JSON.parse(
+      readFileSync(resolve(publicDir, 'manifest.json'), 'utf-8')
+    )
+    for (const icon of manifest.icons) {
+      const iconPath = resolve(publicDir, icon.src.replace(/^\//, ''))
+      expect(existsSync(iconPath), `Missing icon: ${icon.src}`).toBe(true)
+    }
+  })
+})
+
+// ── Seed recipe ID consistency ──────────────────────────────────────────
+
+describe('SEO: sitemap seed IDs match seed-recipes data', () => {
+  test('hardcoded sitemap IDs equal actual SEED_RECIPES IDs', async () => {
+    const { SEED_RECIPES } = await import('../src/data/seed-recipes')
+    const actualIds = SEED_RECIPES.map((r) => r.id)
+
+    // Extract the hardcoded array from sitemap.ts source
+    const sitemapSource = readFileSync(
+      resolve(appDir, 'sitemap.ts'),
+      'utf-8'
+    )
+    const match = sitemapSource.match(/seedRecipeIds\s*=\s*\[([^\]]+)\]/)
+    expect(match).not.toBeNull()
+
+    const sitemapIds = match![1]
+      .match(/'([^']+)'/g)!
+      .map((s) => s.replace(/'/g, ''))
+
+    expect(sitemapIds).toEqual(actualIds)
+  })
+})

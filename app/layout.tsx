@@ -3,6 +3,12 @@ import "../src/index.css";
 import ClientShell from "./ClientShell";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it"
+  ),
+  alternates: {
+    canonical: "./",
+  },
   title: {
     default: "BeerApp - Homebrewing Recipe Builder & Calculator",
     template: "%s | BeerApp",
@@ -38,7 +44,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
   other: {
