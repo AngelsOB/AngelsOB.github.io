@@ -5,7 +5,7 @@ export const alt = 'Recipe preview'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-/** Inline SRM→hex so this server component has zero client deps. */
+/** Inline SRM to hex — pure function, zero deps. */
 function srmToHex(srm: number): string {
   const s = Math.max(1, Math.min(40, srm))
   const table: [number, number, number, number][] = [
@@ -43,8 +43,31 @@ function srmToHex(srm: number): string {
   const r = Math.round(lo[1] + (hi[1] - lo[1]) * t)
   const g = Math.round(lo[2] + (hi[2] - lo[2]) * t)
   const b = Math.round(lo[3] + (hi[3] - lo[3]) * t)
-  const hex = (v: number) => v.toString(16).padStart(2, '0')
-  return `#${hex(r)}${hex(g)}${hex(b)}`
+  const toHex = (v: number) => v.toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+function fallback(text = 'Recipe Not Found') {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#1a1a2e',
+          color: '#64748b',
+          fontSize: 36,
+          fontFamily: 'sans-serif',
+        }}
+      >
+        {text}
+      </div>
+    ),
+    { ...size },
+  )
 }
 
 export default async function Image({
@@ -58,10 +81,16 @@ export default async function Image({
   try {
     result = await getPublicRecipe(slug)
   } catch {
-    result = null
+    return fallback()
   }
 
-  if (!result) {
+  if (!result) return fallback()
+
+  try {
+    const { recipe, calc, ownerName } = result
+    const beerColor = srmToHex(calc.srm)
+    const styleName = recipe.style ? recipe.style.toUpperCase() : ''
+
     return new ImageResponse(
       (
         <div
@@ -69,153 +98,108 @@ export default async function Image({
             width: '100%',
             height: '100%',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(145deg, #0f0f1e 0%, #1a1a2e 40%, #16213e 100%)',
-            color: '#64748b',
-            fontSize: 36,
+            background: 'linear-gradient(135deg, #0f0f1e 0%, #16213e 100%)',
             fontFamily: 'sans-serif',
           }}
         >
-          Recipe Not Found
-        </div>
-      ),
-      { ...size },
-    )
-  }
+          {/* SRM color accent bar — left edge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 8,
+              height: '100%',
+              background: beerColor,
+              display: 'flex',
+            }}
+          />
 
-  const { recipe, calc, ownerName } = result
-  const beerColor = srmToHex(calc.srm)
-
-  const stats: { label: string; value: string }[] = [
-    { label: 'ABV', value: `${calc.abv.toFixed(1)}%` },
-    { label: 'IBU', value: `${Math.round(calc.ibu)}` },
-    { label: 'OG', value: calc.og.toFixed(3) },
-    { label: 'SRM', value: calc.srm.toFixed(1) },
-  ]
-
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          background: 'linear-gradient(145deg, #0f0f1e 0%, #1a1a2e 40%, #16213e 100%)',
-          fontFamily: 'sans-serif',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* SRM color accent bar — left edge */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: 8,
-            height: '100%',
-            background: beerColor,
-            display: 'flex',
-          }}
-        />
-
-        {/* Subtle glow from beer color */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '30%',
-            left: -60,
-            width: 300,
-            height: 300,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${beerColor}22 0%, transparent 70%)`,
-            display: 'flex',
-          }}
-        />
-
-        {/* Main content area */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            width: '100%',
-            height: '100%',
-            padding: '56px 72px 48px 72px',
-          }}
-        >
-          {/* Top section */}
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Style badge + beer color swatch */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-              {/* Beer color circle */}
+          {/* Main content area */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              width: '100%',
+              height: '100%',
+              padding: '56px 72px 48px 72px',
+            }}
+          >
+            {/* Top section */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* Style badge + beer color swatch */}
               <div
                 style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  background: beerColor,
-                  border: '2px solid rgba(255,255,255,0.15)',
-                  boxShadow: `0 0 20px ${beerColor}44`,
                   display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: 28,
                 }}
-              />
-
-              {recipe.style && (
+              >
+                {/* Beer color circle */}
                 <div
                   style={{
-                    fontSize: 20,
-                    color: '#94a3b8',
-                    fontWeight: 500,
-                    letterSpacing: 1,
-                    textTransform: 'uppercase',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    background: beerColor,
+                    border: '2px solid rgba(255,255,255,0.15)',
+                    display: 'flex',
+                    marginRight: 16,
                   }}
-                >
-                  {recipe.style}
-                </div>
-              )}
-            </div>
+                />
 
-            {/* Recipe name */}
-            <div
-              style={{
-                fontSize: recipe.name.length > 30 ? 44 : 56,
-                fontWeight: 800,
-                color: '#ffffff',
-                lineHeight: 1.15,
-                letterSpacing: -1,
-                maxWidth: '90%',
-              }}
-            >
-              {recipe.name}
-            </div>
+                {styleName ? (
+                  <div
+                    style={{
+                      fontSize: 20,
+                      color: '#94a3b8',
+                      fontWeight: 500,
+                      letterSpacing: 1,
+                    }}
+                  >
+                    {styleName}
+                  </div>
+                ) : null}
+              </div>
 
-            {/* Brewer name */}
-            <div
-              style={{
-                fontSize: 20,
-                color: '#64748b',
-                marginTop: 16,
-                fontWeight: 400,
-              }}
-            >
-              by {ownerName}
-            </div>
-          </div>
-
-          {/* Bottom: Stats row */}
-          <div style={{ display: 'flex', gap: 20 }}>
-            {stats.map((stat) => (
+              {/* Recipe name */}
               <div
-                key={stat.label}
+                style={{
+                  fontSize: recipe.name.length > 30 ? 44 : 56,
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  lineHeight: 1.2,
+                  display: 'flex',
+                }}
+              >
+                {recipe.name}
+              </div>
+
+              {/* Brewer name */}
+              <div
+                style={{
+                  fontSize: 20,
+                  color: '#64748b',
+                  marginTop: 16,
+                  display: 'flex',
+                }}
+              >
+                {`by ${ownerName}`}
+              </div>
+            </div>
+
+            {/* Bottom: Stats row */}
+            <div style={{ display: 'flex', gap: 20 }}>
+              {/* ABV */}
+              <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   padding: '20px 36px',
                   borderRadius: 16,
-                  background: 'rgba(255,255,255,0.04)',
+                  background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   minWidth: 130,
                 }}
@@ -224,12 +208,13 @@ export default async function Image({
                   style={{
                     fontSize: 36,
                     fontWeight: 700,
-                    color: stat.label === 'SRM' ? beerColor : '#ffffff',
+                    color: '#ffffff',
                     lineHeight: 1,
                     marginBottom: 8,
+                    display: 'flex',
                   }}
                 >
-                  {stat.value}
+                  {`${calc.abv.toFixed(1)}%`}
                 </div>
                 <div
                   style={{
@@ -237,44 +222,160 @@ export default async function Image({
                     color: '#64748b',
                     fontWeight: 500,
                     letterSpacing: 2,
-                    textTransform: 'uppercase',
+                    display: 'flex',
                   }}
                 >
-                  {stat.label}
+                  ABV
                 </div>
               </div>
-            ))}
+
+              {/* IBU */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '20px 36px',
+                  borderRadius: 16,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  minWidth: 130,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 36,
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    lineHeight: 1,
+                    marginBottom: 8,
+                    display: 'flex',
+                  }}
+                >
+                  {`${Math.round(calc.ibu)}`}
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: '#64748b',
+                    fontWeight: 500,
+                    letterSpacing: 2,
+                    display: 'flex',
+                  }}
+                >
+                  IBU
+                </div>
+              </div>
+
+              {/* OG */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '20px 36px',
+                  borderRadius: 16,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  minWidth: 130,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 36,
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    lineHeight: 1,
+                    marginBottom: 8,
+                    display: 'flex',
+                  }}
+                >
+                  {calc.og.toFixed(3)}
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: '#64748b',
+                    fontWeight: 500,
+                    letterSpacing: 2,
+                    display: 'flex',
+                  }}
+                >
+                  OG
+                </div>
+              </div>
+
+              {/* SRM */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '20px 36px',
+                  borderRadius: 16,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  minWidth: 130,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 36,
+                    fontWeight: 700,
+                    color: beerColor,
+                    lineHeight: 1,
+                    marginBottom: 8,
+                    display: 'flex',
+                  }}
+                >
+                  {calc.srm.toFixed(1)}
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    color: '#64748b',
+                    fontWeight: 500,
+                    letterSpacing: 2,
+                    display: 'flex',
+                  }}
+                >
+                  SRM
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom accent bar */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: 600,
+              height: 4,
+              background: `linear-gradient(90deg, ${beerColor}, transparent)`,
+              display: 'flex',
+            }}
+          />
+
+          {/* Watermark */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 36,
+              fontSize: 16,
+              color: 'rgba(148,163,184,0.35)',
+              display: 'flex',
+            }}
+          >
+            brewing.it.com
           </div>
         </div>
-
-        {/* Bottom accent bar */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            background: `linear-gradient(90deg, ${beerColor} 0%, transparent 60%)`,
-            display: 'flex',
-          }}
-        />
-
-        {/* Watermark */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 20,
-            right: 36,
-            fontSize: 16,
-            color: 'rgba(148,163,184,0.35)',
-            fontWeight: 400,
-          }}
-        >
-          brewing.it.com
-        </div>
-      </div>
-    ),
-    { ...size },
-  )
+      ),
+      { ...size },
+    )
+  } catch {
+    return fallback()
+  }
 }
