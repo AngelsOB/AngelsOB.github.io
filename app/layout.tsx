@@ -33,14 +33,12 @@ export const metadata: Metadata = {
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
     siteName: "BeerApp",
-    images: ["/og-image.svg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "BeerApp - Homebrewing Recipe Builder & Calculator",
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
-    images: ["/og-image.svg"],
   },
   icons: {
     icon: "/favicon.svg",
