@@ -1,6 +1,23 @@
 import Link from "next/link";
 import Logo from "./Logo";
 
+const footerSections = [
+  {
+    title: "Brew",
+    links: [
+      { href: "/recipes/new", label: "Recipe Builder" },
+      { href: "/browse", label: "Browse Recipes" },
+      { href: "/calculators", label: "Calculators" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { href: "/recipes", label: "My Recipes" },
+    ],
+  },
+] as const;
+
 export default function Footer() {
   return (
     <footer className="relative mt-12">
@@ -20,7 +37,7 @@ export default function Footer() {
       />
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start">
+        <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:items-start">
           {/* Left — branding */}
           <div className="text-center sm:text-left">
             <Logo size="sm" />
@@ -35,32 +52,40 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Right — nav links */}
-          <nav aria-label="Footer navigation" className="flex items-center gap-5">
-            <Link
-              href="/recipes"
-              className="text-xs font-medium transition-colors duration-150"
-              style={{ color: "var(--fg-muted)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--coral-500)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg-muted)")}
-            >
-              Recipes
-            </Link>
-            <span
-              className="h-3 w-px"
-              style={{
-                background: "color-mix(in oklch, var(--fg-muted) 30%, transparent)",
-              }}
-            />
-            <Link
-              href="/calculators"
-              className="text-xs font-medium transition-colors duration-150"
-              style={{ color: "var(--fg-muted)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--coral-500)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg-muted)")}
-            >
-              Calculators
-            </Link>
+          {/* Right — link columns */}
+          <nav
+            aria-label="Footer navigation"
+            className="flex gap-12 sm:gap-16"
+          >
+            {footerSections.map((section) => (
+              <div key={section.title}>
+                <h4
+                  className="text-[11px] font-semibold uppercase tracking-wider mb-3"
+                  style={{ color: "var(--fg-muted)" }}
+                >
+                  {section.title}
+                </h4>
+                <ul className="space-y-2">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-xs font-medium transition-colors duration-150"
+                        style={{ color: "var(--fg-muted)" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = "var(--coral-500)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "var(--fg-muted)")
+                        }
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </nav>
         </div>
       </div>
