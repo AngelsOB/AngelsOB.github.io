@@ -4,7 +4,7 @@ import ClientShell from "./ClientShell";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it"
+    process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it.com"
   ),
   alternates: {
     canonical: "./",
