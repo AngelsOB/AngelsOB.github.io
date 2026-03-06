@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState, useMemo } from "react";
+import { uid } from "@/utils/uid";
 import { createPortal } from "react-dom";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
@@ -56,7 +57,7 @@ export default function HopSection() {
   // Handle adding a hop from preset
   const handleAddFromPreset = (preset: HopPreset) => {
     const newHop: Hop = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: preset.name,
       alphaAcid: preset.alphaAcidPercent,
       grams: 30, // Default weight
@@ -211,7 +212,7 @@ export default function HopSection() {
     flavor?: HopFlavorProfile
   ) => {
     const newHop: Hop = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: varietyName,
       alphaAcid,
       grams: 30,

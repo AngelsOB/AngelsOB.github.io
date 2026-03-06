@@ -152,6 +152,7 @@ export default function FermentablePresetModal({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="brew-input flex-1"
                 autoFocus
+                data-autofocus
               />
               <button
                 onClick={() => setShowFilters(!showFilters)}

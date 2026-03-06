@@ -82,6 +82,7 @@ export default function CustomFermentableModal({
               placeholder="e.g., Custom Pale Malt"
               fullWidth
               autoFocus
+              data-autofocus
             />
           </div>
 

@@ -9,6 +9,7 @@
  */
 
 import { create } from 'zustand';
+import { uid } from "@/utils/uid";
 import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion, OtherIngredient } from '../../domain/models/Recipe';
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { FirestoreRecipeRepository } from '../../domain/repositories/FirestoreRecipeRepository';
@@ -193,7 +194,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   createNewRecipe: () => {
     const defaultPublic = usePreferencesStore.getState().defaultRecipePublic;
     const newRecipe: Recipe = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'New Recipe',
       style: undefined,
       notes: undefined,
@@ -239,7 +240,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         }
         const duplicate: Recipe = {
           ...original,
-          id: crypto.randomUUID(),
+          id: uid(),
           name: `${original.name} (Copy)`,
           currentVersion: 1,
           parentRecipeId: undefined,
@@ -262,7 +263,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Create a copy with new ID and updated timestamps
       const duplicate: Recipe = {
         ...original,
-        id: crypto.randomUUID(),
+        id: uid(),
         name: `${original.name} (Copy)`,
         currentVersion: 1,
         parentRecipeId: undefined,
@@ -417,7 +418,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const recipe: Recipe = {
         ...parsed,
         hops,
-        id: crypto.randomUUID(),
+        id: uid(),
         currentVersion: 1,
         parentRecipeId: undefined,
         parentVersionNumber: undefined,
@@ -664,7 +665,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       firestoreRepo.loadByIdAsync(recipeId).then(async (recipe) => {
         if (!recipe) { set({ error: 'Recipe not found' }); return; }
         const versionSnapshot: RecipeVersion = {
-          id: crypto.randomUUID(),
+          id: uid(),
           recipeId: recipe.id,
           versionNumber: recipe.currentVersion,
           createdAt: new Date().toISOString(),
@@ -690,7 +691,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
 
       const versionSnapshot: RecipeVersion = {
-        id: crypto.randomUUID(),
+        id: uid(),
         recipeId: recipe.id,
         versionNumber: recipe.currentVersion,
         createdAt: new Date().toISOString(),
@@ -722,7 +723,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         if (!original) { set({ error: 'Recipe not found', isLoading: false }); return; }
         const variation: Recipe = {
           ...original,
-          id: crypto.randomUUID(),
+          id: uid(),
           name: newName,
           currentVersion: 1,
           parentRecipeId: original.id,
@@ -744,7 +745,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
       const variation: Recipe = {
         ...original,
-        id: crypto.randomUUID(),
+        id: uid(),
         name: newName,
         currentVersion: 1,
         parentRecipeId: original.id,
@@ -779,7 +780,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         const version = recipeVersionRepository.loadByRecipeIdAndVersion(recipeId, versionNumber);
         if (!version) { set({ error: 'Version not found' }); return; }
         const currentSnapshot: RecipeVersion = {
-          id: crypto.randomUUID(),
+          id: uid(),
           recipeId: currentRecipe.id,
           versionNumber: currentRecipe.currentVersion,
           createdAt: new Date().toISOString(),
@@ -813,7 +814,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
       // First, save current state as a version before restoring
       const currentSnapshot: RecipeVersion = {
-        id: crypto.randomUUID(),
+        id: uid(),
         recipeId: currentRecipe.id,
         versionNumber: currentRecipe.currentVersion,
         createdAt: new Date().toISOString(),

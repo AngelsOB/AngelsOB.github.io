@@ -102,14 +102,14 @@ export default function FermentationSection() {
             >
               <div className="flex-1 min-w-0">
                 {/* Header row with badge, name, duration, and temperature */}
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
                   <span className="brew-chip-active text-xs font-semibold px-2 py-1">
                     {STEP_TYPE_LABELS[step.type] || step.type}
                   </span>
                   <span className="text-sm font-bold">{step.name}</span>
 
                   {/* Duration and Temperature */}
-                  <div className="flex gap-2 ml-auto">
+                  <div className="brew-ferm-step-metrics">
                     <div className="px-3 py-1.5 rounded-md" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
                       <div className="text-xs text-muted">Duration</div>
                       <div className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--fg-strong)' }}>

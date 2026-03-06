@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState, useMemo } from "react";
+import { uid } from "@/utils/uid";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
 import EmptyState from "../../../../components/EmptyState";
@@ -68,7 +69,7 @@ export default function FermentableSection() {
       });
     } else {
       const newFermentable: Fermentable = {
-        id: crypto.randomUUID(),
+        id: uid(),
         name: preset.name,
         weightKg: 1.0,
         colorLovibond: preset.colorLovibond,

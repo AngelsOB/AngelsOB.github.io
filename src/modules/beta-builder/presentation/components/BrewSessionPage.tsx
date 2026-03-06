@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { uid } from "@/utils/uid";
 import { useParams, useRouter } from "next/navigation";
 import { useBrewSessionStore } from '../stores/brewSessionStore';
 import { useRecipeStore } from '../stores/recipeStore';
@@ -160,7 +161,7 @@ export default function BrewSessionPage() {
     };
 
     const brewedVersion: RecipeVersion = {
-      id: crypto.randomUUID(),
+      id: uid(),
       recipeId: currentSession.recipeId,
       versionNumber,
       createdAt: now,

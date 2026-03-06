@@ -10,6 +10,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { uid } from "@/utils/uid";
 import type { RecipeCalculations, OtherIngredientCategory } from "../../domain/models/Recipe";
 import type { Recipe } from "../../domain/models/Recipe";
 import {
@@ -118,7 +119,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
 
   const handleAddFromPreset = (name: string, category: OtherIngredientCategory) => {
     addOtherIngredient({
-      id: crypto.randomUUID(),
+      id: uid(),
       name,
       category,
       amount: 1,
@@ -129,7 +130,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
 
   const handleAddCustomIngredient = (name: string, category: OtherIngredientCategory) => {
     addOtherIngredient({
-      id: crypto.randomUUID(),
+      id: uid(),
       name,
       category,
       amount: 1,
@@ -150,7 +151,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
     } else {
       // Add as a new water-agent ingredient
       addOtherIngredient({
-        id: crypto.randomUUID(),
+        id: uid(),
         name,
         category: "water-agent",
         amount,

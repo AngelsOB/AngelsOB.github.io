@@ -49,7 +49,7 @@ export default function PhAdjustmentsSection({
           boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)',
         }}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div
               className="text-3xl font-bold"

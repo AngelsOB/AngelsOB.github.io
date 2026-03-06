@@ -65,13 +65,13 @@ export default function WaterChemistrySection({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
           Water Chemistry
         </h3>
 
         {/* Final Water Metrics - Inline */}
-        <div className="flex items-center gap-3 flex-1 justify-center">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted">Final:</span>
           {ION_LABELS.map((ion) => {
             const finalValue = Math.round(finalProfile[ion]);

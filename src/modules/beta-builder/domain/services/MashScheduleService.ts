@@ -12,6 +12,7 @@
  */
 
 import type { MashStep, Recipe } from '../models/Recipe';
+import { uid } from "@/utils/uid";
 
 export class MashScheduleService {
   /**
@@ -172,7 +173,7 @@ export class MashScheduleService {
     const strikeTemp = this.calculateStrikeTemp(targetTemp, mashThickness, 20, totalGrainKg);
 
     return {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'Saccharification',
       type: 'infusion',
       temperatureC: targetTemp,
@@ -199,7 +200,7 @@ export class MashScheduleService {
     const step1StrikeTemp = this.calculateStrikeTemp(step1Temp, mashThickness, grainTemp, totalGrainKg);
 
     const step1: MashStep = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'Protein Rest',
       type: 'infusion',
       temperatureC: step1Temp,
@@ -210,7 +211,7 @@ export class MashScheduleService {
 
     // Step 2: Saccharification (66°C) - temperature rest, no infusion
     const step2: MashStep = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'Saccharification',
       type: 'temperature',
       temperatureC: 66,
@@ -219,7 +220,7 @@ export class MashScheduleService {
 
     // Step 3: Mash Out (76°C) - temperature rest to halt enzyme activity
     const step3: MashStep = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'Mash Out',
       type: 'temperature',
       temperatureC: 76,

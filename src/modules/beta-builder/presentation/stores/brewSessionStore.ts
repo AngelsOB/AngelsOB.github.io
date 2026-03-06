@@ -6,6 +6,7 @@
  */
 
 import { create } from 'zustand';
+import { uid } from "@/utils/uid";
 import type {
   BrewSession,
   SessionId,
@@ -110,7 +111,7 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
   // Create a new session from a recipe
   createSession: (recipe: Recipe): BrewSession => {
     const newSession: BrewSession = {
-      id: crypto.randomUUID(),
+      id: uid(),
       recipeId: recipe.id,
       recipeVersionNumber: recipe.currentVersion,
       recipeName: recipe.name,

@@ -87,6 +87,7 @@ export default function StyleSelectorModal({
             placeholder="Search styles by name or code..."
             className="brew-input w-full"
             autoFocus
+            data-autofocus
           />
         </div>
 

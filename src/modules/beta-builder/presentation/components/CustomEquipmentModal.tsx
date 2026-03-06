@@ -104,6 +104,7 @@ export const CustomEquipmentModal = ({
               placeholder="e.g., My Custom Setup"
               fullWidth
               autoFocus
+              data-autofocus
             />
           </div>
 

@@ -76,6 +76,7 @@ export default function CustomYeastModal({
               placeholder="e.g., Custom House Blend"
               fullWidth
               autoFocus
+              data-autofocus
             />
           </div>
 

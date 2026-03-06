@@ -1,4 +1,5 @@
 import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast, OtherIngredient, OtherIngredientCategory } from '../models/Recipe';
+import { uid } from "@/utils/uid";
 import { hopEnrichmentService } from './HopEnrichmentService';
 
 const text = (parent: Element | null, tag: string): string | undefined => {
@@ -57,7 +58,7 @@ class BeerXmlImportService {
         const yieldPct = yieldToPpg(toNumber(text(f, 'YIELD')));
         const ppg = potential ?? yieldPct ?? 36;
         fermentables.push({
-          id: crypto.randomUUID(),
+          id: uid(),
           name: text(f, 'NAME') || 'Fermentable',
           weightKg: amtKg,
           colorLovibond: colorLov,
@@ -89,7 +90,7 @@ class BeerXmlImportService {
         const hopName = text(h, 'NAME') || 'Hop';
 
         hops.push(hopEnrichmentService.enrichHop({
-          id: crypto.randomUUID(),
+          id: uid(),
           name: hopName,
           alphaAcid: alpha,
           grams: amountG,
@@ -113,7 +114,7 @@ class BeerXmlImportService {
         const attDecimal =
           attenuationPct != null ? (attenuationPct > 1 ? attenuationPct / 100 : attenuationPct) : undefined;
         yeasts.push({
-          id: crypto.randomUUID(),
+          id: uid(),
           name: text(yeastEl, 'NAME') || 'Yeast',
           attenuation: attDecimal ?? 0.75,
           laboratory: text(yeastEl, 'LABORATORY'),
@@ -128,7 +129,7 @@ class BeerXmlImportService {
       const stepEls = Array.from(mashParent.getElementsByTagName('MASH_STEP'));
       stepEls.forEach((s, idx) => {
         mashSteps.push({
-          id: crypto.randomUUID(),
+          id: uid(),
           name: text(s, 'NAME') || `Step ${idx + 1}`,
           type: (text(s, 'TYPE')?.toLowerCase() === 'decoction'
             ? 'decoction'
@@ -147,7 +148,7 @@ class BeerXmlImportService {
     const primaryDays = toNumber(text(recipeEl, 'PRIMARY_AGE')) ?? 10;
     const primaryTempC = toNumber(text(recipeEl, 'PRIMARY_TEMP')) ?? 20;
     fermentationSteps.push({
-      id: crypto.randomUUID(),
+      id: uid(),
       name: 'Primary',
       type: 'primary',
       durationDays: primaryDays,
@@ -158,7 +159,7 @@ class BeerXmlImportService {
     const secondaryTempC = toNumber(text(recipeEl, 'SECONDARY_TEMP')) ?? primaryTempC;
     if (secondaryDays && secondaryDays > 0) {
       fermentationSteps.push({
-        id: crypto.randomUUID(),
+        id: uid(),
         name: 'Secondary',
         type: 'secondary',
         durationDays: secondaryDays,
@@ -170,7 +171,7 @@ class BeerXmlImportService {
     const tertiaryTempC = toNumber(text(recipeEl, 'TERTIARY_TEMP')) ?? secondaryTempC ?? primaryTempC;
     if (tertiaryDays && tertiaryDays > 0) {
       fermentationSteps.push({
-        id: crypto.randomUUID(),
+        id: uid(),
         name: 'Tertiary',
         type: 'conditioning',
         durationDays: tertiaryDays,
@@ -182,7 +183,7 @@ class BeerXmlImportService {
     const conditioningTempC = toNumber(text(recipeEl, 'AGE_TEMP')) ?? tertiaryTempC ?? secondaryTempC ?? primaryTempC;
     if (conditioningDays && conditioningDays > 0) {
       fermentationSteps.push({
-        id: crypto.randomUUID(),
+        id: uid(),
         name: 'Conditioning',
         type: 'conditioning',
         durationDays: conditioningDays,
@@ -213,7 +214,7 @@ class BeerXmlImportService {
         else if (typeStr.includes('herb')) category = 'herb';
 
         otherIngredients.push({
-          id: crypto.randomUUID(),
+          id: uid(),
           name: text(m, 'NAME') || 'Misc',
           category,
           amount: amountKg * 1000, // BeerXML stores in kg, convert to g
@@ -225,7 +226,7 @@ class BeerXmlImportService {
     }
 
     const recipe: Recipe = {
-      id: crypto.randomUUID(),
+      id: uid(),
       name,
       style: styleName,
       notes: text(recipeEl, 'NOTES'),

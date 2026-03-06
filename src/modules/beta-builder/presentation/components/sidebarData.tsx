@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
+import { starterCalculationService } from "../../domain/services/StarterCalculationService";
 
 /**
  * Generate handwritten "margin scribble" lines for each sidebar section.
@@ -80,7 +81,7 @@ export function getScribbleLines(
           : f.name;
         return (
           <>
-            {shortName} <strong>{pct}%</strong>
+            {shortName}{"\u00A0"}<strong>{pct}%</strong>
           </>
         );
       });
@@ -166,7 +167,7 @@ export function getScribbleLines(
       if (recipe.yeasts.length === 0) return [];
       const y = recipe.yeasts[0];
       const att = Math.round(y.attenuation * 100);
-      return [
+      const lines: React.ReactNode[] = [
         <span className="sidebar-scribble-yeast">
           {y.laboratory && <span className="sidebar-yeast-lab">{y.laboratory}</span>}
           <span>
@@ -174,6 +175,21 @@ export function getScribbleLines(
           </span>
         </span>,
       ];
+      if (y.starter && y.starter.steps.length > 0) {
+        const steps = y.starter.steps;
+        const totalL = steps.reduce((s, st) => s + st.liters, 0);
+        const totalDme = steps.reduce(
+          (s, st) => s + starterCalculationService.dmeGramsForGravity(st.liters, st.gravity),
+          0
+        );
+        const og = steps[0].gravity;
+        lines.push(
+          <span className="sidebar-yeast-starter">
+            Starter: <strong>{totalL}</strong>L @ <strong>{og.toFixed(3)}</strong> · <strong>{Math.round(totalDme)}</strong>g DME
+          </span>
+        );
+      }
+      return lines;
     }
     case "water": {
       const left: React.ReactNode[] = [];

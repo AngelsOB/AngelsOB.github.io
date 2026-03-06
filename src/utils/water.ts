@@ -1,4 +1,5 @@
 import { loadJson, saveJson } from "./storage";
+import { uid } from "@/utils/uid";
 // Basic water chemistry helpers for salt additions and ion profiles
 
 export type WaterProfile = {
@@ -409,7 +410,7 @@ export function saveNewWaterProfile(
   profile: WaterProfile
 ): SavedWaterProfile {
   const list = loadSavedWaterProfiles();
-  const item: SavedWaterProfile = { id: crypto.randomUUID(), name, profile };
+  const item: SavedWaterProfile = { id: uid(), name, profile };
   const next = [item, ...list];
   saveJson(SAVED_WATER_PROFILES_KEY, next);
   return item;
