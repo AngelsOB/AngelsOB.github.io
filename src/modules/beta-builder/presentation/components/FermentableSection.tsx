@@ -23,6 +23,7 @@ import CustomFermentableModal from "./CustomFermentableModal";
 import PresetPickerModal from "./PresetPickerModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 import { srmToRgb } from "../../utils/srmColorUtils";
+import ScalableText from "../../../../components/ScalableText";
 
 export default function FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
@@ -222,27 +223,21 @@ export default function FermentableSection() {
 
   return (
     <div className="brew-section brew-animate-in brew-stagger-2" data-accent="grain">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
         <div className="flex items-center gap-4">
           <h2 className="brew-section-title">Fermentables</h2>
-          {/* Mode Toggle */}
-          <div className="flex items-center rounded-lg border border-[rgb(var(--brew-border-subtle))] overflow-hidden text-xs">
+          {/* Mode Toggle — machined segmented control (matches hop flavor toggle) */}
+          <div className="hop-flavor-toggle">
             <button
               type="button"
-              className={`px-3 py-1.5 transition-colors ${
-                mode === "amount" ? "font-semibold" : ""
-              }`}
-              style={mode === "amount" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
+              className={mode === "amount" ? "is-active" : ""}
               onClick={() => setMode("amount")}
             >
               Amount
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 transition-colors ${
-                mode === "percent" ? "font-semibold" : ""
-              }`}
-              style={mode === "percent" ? { background: 'color-mix(in oklch, var(--brew-accent-200) 40%, transparent)', color: 'var(--brew-accent-800)' } : { background: 'rgb(var(--brew-card-inset))' }}
+              className={mode === "percent" ? "is-active" : ""}
               onClick={() => setMode("percent")}
             >
               %
@@ -290,133 +285,114 @@ export default function FermentableSection() {
               ? (fermentable.weightKg / totalGrainKg) * 100
               : 0;
 
+            const editableValue = mode === "amount"
+              ? fermentable.weightKg
+              : (percentById[fermentable.id] ?? 0);
+
+            const step = mode === "amount" ? 0.25 : 1;
+            const decimals = mode === "amount" ? 2 : 1;
+
+            const nudge = (dir: 1 | -1) => {
+              const next = editableValue + dir * step;
+              const rounded = parseFloat(next.toFixed(decimals));
+              if (rounded < 0) return;
+              if (mode === "amount") {
+                updateFermentable(fermentable.id, { weightKg: rounded });
+              } else {
+                setPercentById((prev) => ({ ...prev, [fermentable.id]: Math.min(100, rounded) }));
+              }
+            };
+
             return (
               <div
                 key={fermentable.id}
-                className="brew-ingredient-row flex items-center"
+                className="brew-ingredient-row flex items-center gap-2"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 gap-2 lg:gap-2 items-center flex-1 min-w-0">
-                {/* Name - full width on mobile, 4 cols on desktop */}
-                <div className="col-span-2 sm:col-span-4 lg:col-span-4 flex items-center">
-                  <span className="font-medium flex items-center gap-2">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0 ring-1 ring-black/10"
-                      style={{ background: srmToRgb(fermentable.colorLovibond) }}
-                      title={`${fermentable.colorLovibond}°L`}
-                    />
+                {/* Name + vertically stacked chips */}
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0">
+                  <ScalableText className="font-medium min-w-[8rem]" minScale={0.65}>
                     {fermentable.name}
                     {fermentable.originCode && (
-                      <span className="text-xs text-muted font-normal">
+                      <span className="text-xs text-muted font-normal ml-1">
                         {getCountryFlag(fermentable.originCode)}
                       </span>
                     )}
-                  </span>
-                </div>
-
-                {/* Weight/Percent - Inline Editable */}
-                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
-                  <label htmlFor={`fermentable-weight-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">
-                    {mode === "amount" ? "Weight" : "Percent"}
-                  </label>
-                  {mode === "amount" ? (
-                    <div className="flex items-center gap-1">
-                      <input
-                        id={`fermentable-weight-${fermentable.id}`}
-                        type="number"
-                        value={fermentable.weightKg}
-                        onChange={(e) =>
-                          updateFermentable(fermentable.id, {
-                            weightKg: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        className="brew-input w-full py-1 px-2"
-                        step="0.1"
-                        min="0"
+                  </ScalableText>
+                  <div className="flex flex-row gap-1 shrink-0">
+                    <span className="fermentable-chip">
+                      <span
+                        className="fermentable-chip-srm"
+                        style={{ background: srmToRgb(fermentable.colorLovibond) }}
                       />
-                      <span className="text-xs font-medium">kg</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <input
-                        id={`fermentable-weight-${fermentable.id}`}
-                        type="number"
-                        value={percentById[fermentable.id] ?? 0}
-                        onChange={(e) =>
-                          setPercentById((prev) => ({
-                            ...prev,
-                            [fermentable.id]: parseFloat(e.target.value) || 0,
-                          }))
-                        }
-                        className="brew-input w-full py-1 px-2"
-                        step="0.1"
-                        min="0"
-                        max="100"
-                      />
-                      <span className="text-xs font-medium">%</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Color - Inline Editable */}
-                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
-                  <label htmlFor={`fermentable-color-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">Color</label>
-                  <div className="flex items-center gap-1">
-                    <input
-                      id={`fermentable-color-${fermentable.id}`}
-                      type="number"
-                      value={fermentable.colorLovibond}
-                      onChange={(e) =>
-                        updateFermentable(fermentable.id, {
-                          colorLovibond: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="brew-input w-full py-1 px-2"
-                      step="1"
-                      min="0"
-                    />
-                    <span className="text-xs font-medium">°L</span>
+                      {fermentable.colorLovibond}°L
+                    </span>
+                    <span className="fermentable-chip">
+                      {fermentable.ppg} PPG
+                    </span>
                   </div>
                 </div>
 
-                {/* PPG - Inline Editable */}
-                <div className="col-span-1 sm:col-span-1 lg:col-span-2">
-                  <label htmlFor={`fermentable-ppg-${fermentable.id}`} className="text-xs font-medium block mb-1 lg:hidden">PPG</label>
-                  <div className="flex items-center gap-1">
+                {/* Spacer */}
+                <div className="fermentable-spacer" />
+
+                {/* Editable datum (handwritten) */}
+                <div className="fermentable-datum">
+                  <span className="fermentable-datum-label">
+                    {mode === "amount" ? "Weight" : "%"}
+                  </span>
+                  <div className="fermentable-datum-value">
                     <input
-                      id={`fermentable-ppg-${fermentable.id}`}
+                      id={`fermentable-value-${fermentable.id}`}
                       type="number"
-                      value={fermentable.ppg}
-                      onChange={(e) =>
-                        updateFermentable(fermentable.id, {
-                          ppg: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="brew-input w-full py-1 px-2"
-                      step="0.1"
+                      value={editableValue}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value) || 0;
+                        if (mode === "amount") {
+                          updateFermentable(fermentable.id, { weightKg: v });
+                        } else {
+                          setPercentById((prev) => ({ ...prev, [fermentable.id]: v }));
+                        }
+                      }}
+                      className="fermentable-datum-input"
+                      step={step}
                       min="0"
+                      max={mode === "percent" ? "100" : undefined}
+                      aria-label={mode === "amount" ? "Weight in kg" : "Percentage"}
                     />
-                    <span className="text-xs font-medium whitespace-nowrap">PPG</span>
+                    <span className="fermentable-datum-unit">
+                      {mode === "amount" ? "kg" : "%"}
+                    </span>
+                    <div className="fermentable-stepper">
+                      <button
+                        type="button"
+                        className="fermentable-stepper-btn"
+                        onClick={() => nudge(1)}
+                        aria-label="Increase"
+                        tabIndex={-1}
+                      >
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5 5 1 9 5"/></svg>
+                      </button>
+                      <button
+                        type="button"
+                        className="fermentable-stepper-btn"
+                        onClick={() => nudge(-1)}
+                        aria-label="Decrease"
+                        tabIndex={-1}
+                      >
+                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1 5 5 9 1"/></svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Percentage or Weight display (depends on mode) */}
-                <div className="col-span-1 sm:col-span-1 lg:col-span-1 text-right">
-                  <span className="text-xs font-medium block mb-1 lg:hidden">
-                    {mode === "amount" ? "%" : "Weight"}
-                  </span>
-                  {mode === "amount" ? (
-                    <span className="text-sm font-medium">
-                      {percentage.toFixed(1)}%
-                    </span>
-                  ) : (
-                    <span className="text-sm font-medium whitespace-nowrap">
-                      {fermentable.weightKg.toFixed(2)} kg
-                    </span>
-                  )}
-                </div>
-                </div>{/* end grid */}
+                {/* Computed display (system font) */}
+                <span className="fermentable-computed">
+                  {mode === "amount"
+                    ? `${percentage.toFixed(1)}%`
+                    : `${fermentable.weightKg.toFixed(2)} kg`}
+                </span>
 
-                {/* Hover-reveal actions — morphs inline */}
+                {/* Hover-reveal actions */}
                 <div className="brew-row-actions">
                   <button
                     onClick={() => handleEditFermentable(fermentable.id)}
@@ -438,9 +414,9 @@ export default function FermentableSection() {
           })}
 
           {/* Total */}
-          <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
+          <div className="flex justify-between items-baseline pt-2 border-t border-[rgb(var(--brew-border-subtle))] mt-2">
             <span className="font-semibold text-strong">Total</span>
-            <span className="font-semibold text-strong">{totalGrainKg.toFixed(2)} kg</span>
+            <span className="fermentable-total-value">{totalGrainKg.toFixed(2)} <span className="fermentable-total-unit">kg</span></span>
           </div>
         </div>
       )}

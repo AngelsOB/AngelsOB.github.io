@@ -164,14 +164,12 @@ export const SEED_RECIPES: Recipe[] = [
       {
         id: 'seed-ipa-mash-1',
         name: 'Saccharification',
-        type: 'infusion',
         temperatureC: 65,
         durationMinutes: 60,
       },
       {
         id: 'seed-ipa-mash-2',
         name: 'Mash Out',
-        type: 'temperature',
         temperatureC: 76,
         durationMinutes: 10,
       },
@@ -334,14 +332,12 @@ export const SEED_RECIPES: Recipe[] = [
       {
         id: 'seed-saison-mash-1',
         name: 'Saccharification',
-        type: 'infusion',
         temperatureC: 65,
         durationMinutes: 60,
       },
       {
         id: 'seed-saison-mash-2',
         name: 'Mash Out',
-        type: 'temperature',
         temperatureC: 76,
         durationMinutes: 10,
       },
@@ -482,14 +478,12 @@ export const SEED_RECIPES: Recipe[] = [
       {
         id: 'seed-stout-mash-1',
         name: 'Saccharification',
-        type: 'infusion',
         temperatureC: 67,
         durationMinutes: 60,
       },
       {
         id: 'seed-stout-mash-2',
         name: 'Mash Out',
-        type: 'temperature',
         temperatureC: 76,
         durationMinutes: 10,
       },

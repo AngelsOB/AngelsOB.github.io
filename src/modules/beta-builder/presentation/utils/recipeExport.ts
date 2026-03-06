@@ -386,12 +386,12 @@ export const generateRecipeMarkdown = (
   if (recipe.mashSteps.length === 0) {
     lines.push("_No mash steps_");
   } else {
-    lines.push("| Step | Type | Temperature | Duration |");
-    lines.push("|:--|:--|--:|--:|");
+    lines.push("| Step | Temperature | Duration |");
+    lines.push("|:--|--:|--:|");
     recipe.mashSteps.forEach((s) => {
       const tempF = cToF(s.temperatureC);
       lines.push(
-        `| ${s.name || capitalize(s.type)} | ${capitalize(s.type)} | ${fmt(s.temperatureC, 0)}°C (${fmt(tempF, 0)}°F) | ${fmt(s.durationMinutes, 0)} min |`
+        `| ${s.name} | ${fmt(s.temperatureC, 0)}°C (${fmt(tempF, 0)}°F) | ${fmt(s.durationMinutes, 0)} min |`
       );
     });
   }

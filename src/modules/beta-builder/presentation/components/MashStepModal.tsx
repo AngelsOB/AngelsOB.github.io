@@ -5,19 +5,17 @@
  *
  * Modal for adding/editing mash steps with form fields for:
  * - Step name
- * - Step type (infusion, temperature, decoction)
  * - Temperature target
  * - Duration
- * - Infusion volume (for infusion steps)
+ * - Decoction volume (optional)
  */
 
 import { useState, useEffect } from "react";
 import { uid } from "@/utils/uid";
-import type { MashStep, MashStepType, Recipe } from "../../domain/models/Recipe";
+import type { MashStep, Recipe } from "../../domain/models/Recipe";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
 import ModalOverlay from "./ModalOverlay";
 import Input from "@components/Input";
-import Select from "@components/Select";
 import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
 
@@ -38,70 +36,28 @@ export default function MashStepModal({
 }: MashStepModalProps) {
   // Form state
   const [stepName, setStepName] = useState("");
-  const [stepType, setStepType] = useState<MashStepType>("infusion");
-  const [temperature, setTemperature] = useState(66);
+  const [temperature, setTemperature] = useState(67);
   const [duration, setDuration] = useState(60);
-  const [infusionVolume, setInfusionVolume] = useState<number | null>(null);
+  const [decoctionVolume, setDecoctionVolume] = useState<number | null>(null);
 
   // Calculate total grain weight
   const totalGrainKg = recipe.fermentables.reduce((sum, f) => sum + f.weightKg, 0);
-  const mashThickness = recipe.equipment.mashThicknessLPerKg;
-  const grainAbsorption = recipe.equipment.grainAbsorptionLPerKg;
 
   // Load existing step data when editing
   useEffect(() => {
     if (existingStep) {
       setStepName(existingStep.name);
-      setStepType(existingStep.type);
       setTemperature(existingStep.temperatureC);
       setDuration(existingStep.durationMinutes);
-      setInfusionVolume(existingStep.infusionVolumeLiters ?? null);
+      setDecoctionVolume(existingStep.decoctionVolumeLiters ?? null);
     } else {
       // Reset form for new step
       setStepName("");
-      setStepType("infusion");
-      setTemperature(66);
+      setTemperature(67);
       setDuration(60);
-      setInfusionVolume(null);
+      setDecoctionVolume(null);
     }
   }, [existingStep, isOpen]);
-
-  // Calculate default infusion volume
-  const defaultInfusionVolume = totalGrainKg * mashThickness;
-
-  // Calculate strike/infusion temperature
-  const calculatedInfusionTemp = () => {
-    if (stepType !== "infusion" || totalGrainKg === 0) return null;
-
-    const volume = infusionVolume ?? defaultInfusionVolume;
-
-    if (recipe.mashSteps.length === 0 && !existingStep) {
-      // First step = strike water
-      return mashScheduleService.calculateStrikeTemp(
-        temperature,
-        mashThickness,
-        20,
-        totalGrainKg
-      );
-    } else {
-      // Subsequent infusion
-      const currentVolume = mashScheduleService.calculateMashVolumeAtStep(
-        recipe.mashSteps,
-        totalGrainKg,
-        grainAbsorption
-      );
-      const lastStep = recipe.mashSteps[recipe.mashSteps.length - 1];
-      const currentTemp = lastStep?.temperatureC ?? 20;
-
-      return mashScheduleService.calculateInfusionTemp(
-        currentTemp,
-        temperature,
-        currentVolume,
-        volume,
-        totalGrainKg
-      );
-    }
-  };
 
   const handleSave = () => {
     if (!stepName.trim()) {
@@ -109,23 +65,12 @@ export default function MashStepModal({
       return;
     }
 
-    // Calculate infusion temp for infusion steps
-    let infusionTemp: number | undefined;
-    let finalInfusionVolume: number | undefined;
-
-    if (stepType === "infusion") {
-      finalInfusionVolume = infusionVolume ?? defaultInfusionVolume;
-      infusionTemp = calculatedInfusionTemp() ?? undefined;
-    }
-
     const newStep: MashStep = {
       id: existingStep?.id ?? uid(),
       name: stepName.trim(),
-      type: stepType,
       temperatureC: temperature,
       durationMinutes: duration,
-      infusionVolumeLiters: finalInfusionVolume,
-      infusionTempC: infusionTemp,
+      ...(decoctionVolume != null && decoctionVolume > 0 ? { decoctionVolumeLiters: decoctionVolume } : {}),
     };
 
     // Validate
@@ -143,13 +88,10 @@ export default function MashStepModal({
     onClose();
     // Reset form
     setStepName("");
-    setStepType("infusion");
-    setTemperature(66);
+    setTemperature(67);
     setDuration(60);
-    setInfusionVolume(null);
+    setDecoctionVolume(null);
   };
-
-  const infusionTempDisplay = calculatedInfusionTemp();
 
   return (
     <ModalOverlay isOpen={isOpen} onClose={handleClose} size="2xl">
@@ -175,28 +117,6 @@ export default function MashStepModal({
               placeholder="e.g., Saccharification, Protein Rest, Mash Out"
               fullWidth
             />
-          </div>
-
-          {/* Step Type */}
-          <div>
-            <label htmlFor="mash-step-type" className="block text-sm font-semibold mb-2">
-              Step Type *
-            </label>
-            <Select
-              id="mash-step-type"
-              value={stepType}
-              onChange={(e) => setStepType(e.target.value as MashStepType)}
-              fullWidth
-            >
-              <option value="infusion">Infusion - Add hot water (changes volume)</option>
-              <option value="temperature">Temperature - Rest at temp (no water added)</option>
-              <option value="decoction">Decoction - Boil portion of mash</option>
-            </Select>
-            <p className="text-xs mt-1">
-              {stepType === "infusion" && "Adds hot water to raise mash temperature. Water volume auto-calculated based on your grain bill."}
-              {stepType === "temperature" && "Rests at target temperature using direct heat or insulation. No water added."}
-              {stepType === "decoction" && "Remove portion of mash, boil it, return to raise temperature."}
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -234,46 +154,28 @@ export default function MashStepModal({
             </div>
           </div>
 
-          {/* Infusion Volume (for infusion steps only) */}
-          {stepType === "infusion" && (
-            <div>
-              <label htmlFor="mash-step-infusion-volume" className="block text-sm font-semibold mb-2">
-                Infusion Volume (Liters) - Optional
-              </label>
-              <Input
-                id="mash-step-infusion-volume"
-                type="number"
-                value={infusionVolume ?? ""}
-                onChange={(e) => setInfusionVolume(e.target.value ? parseFloat(e.target.value) : null)}
-                placeholder={`Auto: ${defaultInfusionVolume.toFixed(1)} L (based on mash thickness)`}
-                fullWidth
-                step={0.1}
-                min={0}
-              />
-              <p className="text-xs mt-1">
-                Leave empty for auto-calculation. Only override if you're doing a specific step mash regimen.
-              </p>
-            </div>
-          )}
-
-          {/* Calculated Infusion Temperature Display */}
-          {stepType === "infusion" && totalGrainKg > 0 && infusionTempDisplay && (
-            <div className="p-4 rounded-lg backdrop-blur-sm" style={{ background: 'color-mix(in oklch, var(--brew-info) 10%, rgb(var(--brew-card) / 0.5))', border: '1px solid color-mix(in oklch, var(--brew-info) 25%, transparent)' }}>
-              <p className="font-semibold mb-1" style={{ color: 'var(--fg-strong)' }}>Calculated Infusion Temperature:</p>
-              <p className="text-lg font-bold" style={{ color: 'var(--brew-info)' }}>{infusionTempDisplay.toFixed(1)}°C</p>
-              <p className="text-sm mt-2" style={{ color: 'var(--brew-info)' }}>
-                {recipe.mashSteps.length === 0 && !existingStep
-                  ? "Strike water temperature for initial infusion"
-                  : "Infusion water temperature to reach target mash temp"}
-              </p>
-            </div>
-          )}
+          {/* Decoction Volume (optional) */}
+          <div>
+            <label htmlFor="mash-step-decoction-volume" className="block text-sm font-semibold mb-2">
+              Decoction Volume (Liters) - Optional
+            </label>
+            <Input
+              id="mash-step-decoction-volume"
+              type="number"
+              value={decoctionVolume ?? ""}
+              onChange={(e) => setDecoctionVolume(e.target.value ? parseFloat(e.target.value) : null)}
+              placeholder="Only for decoction steps"
+              fullWidth
+              step={0.1}
+              min={0}
+            />
+          </div>
 
           {/* Warning if no grains */}
           {totalGrainKg === 0 && (
             <div className="brew-alert-warning">
               <p className="text-sm">
-                Add fermentables first to enable infusion temperature calculations
+                Add fermentables first to enable mash calculations
               </p>
             </div>
           )}
@@ -284,47 +186,53 @@ export default function MashStepModal({
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
-                  setStepName("Protein Rest");
-                  setStepType("infusion");
-                  setTemperature(50);
+                  setStepName("Acid Rest");
+                  setTemperature(40);
                   setDuration(15);
                 }}
                 className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
-                Protein Rest (50°C, 15 min)
+                Acid Rest (40°C, 15 min)
               </button>
               <button
                 onClick={() => {
-                  setStepName("Saccharification");
-                  setStepType("infusion");
-                  setTemperature(66);
-                  setDuration(60);
+                  setStepName("Protein Rest");
+                  setTemperature(52);
+                  setDuration(15);
                 }}
                 className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
-                Saccharification (66°C, 60 min)
-              </button>
-              <button
-                onClick={() => {
-                  setStepName("Mash Out");
-                  setStepType("temperature");
-                  setTemperature(76);
-                  setDuration(10);
-                }}
-                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
-              >
-                Mash Out (76°C, 10 min)
+                Protein Rest (52°C, 15 min)
               </button>
               <button
                 onClick={() => {
                   setStepName("Beta Rest");
-                  setStepType("temperature");
                   setTemperature(63);
                   setDuration(30);
                 }}
                 className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
               >
                 Beta Rest (63°C, 30 min)
+              </button>
+              <button
+                onClick={() => {
+                  setStepName("Alpha Rest");
+                  setTemperature(70);
+                  setDuration(15);
+                }}
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
+              >
+                Alpha Rest (70°C, 15 min)
+              </button>
+              <button
+                onClick={() => {
+                  setStepName("Mash Out");
+                  setTemperature(76);
+                  setDuration(10);
+                }}
+                className="brew-chip px-3 py-2 text-sm rounded-lg text-left"
+              >
+                Mash Out (76°C, 10 min)
               </button>
             </div>
           </div>

@@ -106,14 +106,14 @@ function AccordionSection({
   sectionKey: string;
   recipe: Recipe | null;
   calculations: RecipeCalculations | null;
-  mobileOpen: string | null;
+  mobileOpen: Set<string>;
   onToggle: (key: string) => void;
   children: React.ReactNode;
 }) {
   const section = SECTIONS.find((s) => s.accent === sectionKey);
   if (!section) return <>{children}</>;
 
-  const isOpen = mobileOpen === sectionKey;
+  const isOpen = mobileOpen.has(sectionKey);
   const scribbleLines = getScribbleLines(sectionKey, recipe, calculations);
 
   return (
@@ -153,13 +153,21 @@ export default function BetaBuilderPage({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
-  const [mobileOpenSection, setMobileOpenSection] = useState<string | null>("recipe");
+  const [mobileOpenSection, setMobileOpenSection] = useState<Set<string>>(() => new Set(["recipe"]));
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
   const isShared = Boolean(sharedRecipe);
   const isReadOnly = Boolean(versionNumber) || isShared;
 
   const toggleMobileSection = useCallback((key: string) => {
-    setMobileOpenSection((prev) => (prev === key ? null : key));
+    setMobileOpenSection((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   }, []);
 
   // Load recipe based on URL param, shared prop, or create new.
@@ -280,7 +288,7 @@ export default function BetaBuilderPage({
   };
 
   return (
-    <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-4 py-6">
+    <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-1 sm:px-4 py-6">
       <SectionSidebar recipe={currentRecipe} calculations={calculations} />
       {/* Sticky Stats Bars */}
       {calculations && (

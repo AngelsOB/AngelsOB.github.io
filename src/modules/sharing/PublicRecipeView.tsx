@@ -272,7 +272,6 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-[var(--fg-muted)] border-b border-[var(--brew-accent-200)]">
                   <th className="pb-2">Step</th>
-                  <th className="pb-2">Type</th>
                   <th className="pb-2 text-right">Temperature</th>
                   <th className="pb-2 text-right">Duration</th>
                 </tr>
@@ -280,8 +279,7 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
               <tbody>
                 {recipe.mashSteps.map((s) => (
                   <tr key={s.id} className="border-b border-[var(--brew-accent-100)]">
-                    <td className="py-2 font-medium">{s.name || s.type}</td>
-                    <td className="py-2 text-[var(--fg-muted)] capitalize">{s.type}</td>
+                    <td className="py-2 font-medium">{s.name}</td>
                     <td className="py-2 text-right text-[var(--fg-muted)]">
                       {fmt(s.temperatureC, 0)}°C ({fmt(cToF(s.temperatureC), 0)}°F)
                     </td>

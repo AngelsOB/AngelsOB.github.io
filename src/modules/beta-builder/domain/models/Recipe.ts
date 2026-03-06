@@ -96,27 +96,16 @@ export type Yeast = {
 };
 
 /**
- * Mash step types
- */
-export type MashStepType = 'infusion' | 'temperature' | 'decoction';
-
-/**
  * A single step in the mash schedule
  */
 export type MashStep = {
   id: string;
-  /** Step name (e.g., "Protein Rest", "Saccharification") */
+  /** Step name (e.g., "Protein Rest", "Beta Rest", "Mash Out") */
   name: string;
-  /** Step type */
-  type: MashStepType;
   /** Target temperature in Celsius */
   temperatureC: number;
   /** Step duration in minutes */
   durationMinutes: number;
-  /** Infusion water volume in liters (for infusion steps) */
-  infusionVolumeLiters?: number;
-  /** Infusion water temperature in Celsius (for infusion steps) */
-  infusionTempC?: number;
   /** Decoction volume in liters (for decoction steps) */
   decoctionVolumeLiters?: number;
 };

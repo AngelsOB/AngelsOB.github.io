@@ -131,14 +131,8 @@ class BeerXmlImportService {
         mashSteps.push({
           id: uid(),
           name: text(s, 'NAME') || `Step ${idx + 1}`,
-          type: (text(s, 'TYPE')?.toLowerCase() === 'decoction'
-            ? 'decoction'
-            : text(s, 'TYPE')?.toLowerCase() === 'temperature'
-            ? 'temperature'
-            : 'infusion') as MashStep['type'],
           temperatureC: toNumber(text(s, 'STEP_TEMP')) ?? 66,
           durationMinutes: toNumber(text(s, 'STEP_TIME')) ?? 60,
-          infusionVolumeLiters: toNumber(text(s, 'INFUSE_AMOUNT')),
         });
       });
     }

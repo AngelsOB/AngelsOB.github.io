@@ -417,7 +417,7 @@ describe('Recipe Calculation Service', () => {
         ],
         yeasts: [yeast],
         mashSteps: [
-          { id: 's1', name: 'Sacch Rest', temperatureC: 67, durationMinutes: 60, type: 'infusion' },
+          { id: 's1', name: 'Sacch Rest', temperatureC: 67, durationMinutes: 60 },
         ],
         fermentationSteps: [
           { id: 'fs1', name: 'Primary', type: 'primary', temperatureC: 18, durationDays: 14 },

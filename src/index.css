@@ -3814,13 +3814,14 @@
     max-width: 0;
     overflow: hidden;
     opacity: 0;
-    transition: max-width 200ms ease, opacity 150ms ease, padding 200ms ease;
+    transition:
+      max-width 200ms ease,
+      opacity 150ms ease,
+      padding 200ms ease;
   }
   /* Show on row hover or focus-within */
   .brew-ingredient-row:hover > .brew-row-actions,
   .brew-ingredient-row:focus-within > .brew-row-actions,
-  .mash-step-card:hover > .brew-row-actions,
-  .mash-step-card:focus-within > .brew-row-actions,
   .starter-step-row:hover > .brew-row-actions,
   .starter-step-row:focus-within > .brew-row-actions,
   .yeast-card-header:hover > .brew-row-actions,
@@ -3861,7 +3862,9 @@
     border-radius: 5px;
     line-height: 1;
     opacity: 0.5;
-    transition: opacity 150ms ease, background 150ms ease;
+    transition:
+      opacity 150ms ease,
+      background 150ms ease;
     cursor: pointer;
   }
   .brew-row-action-btn:hover {
@@ -3872,7 +3875,30 @@
     background: rgba(255, 255, 255, 0.1);
   }
 
-  /* ---- Mash schedule — machined step cards ---- */
+  /* ---- Mash schedule — header + machined step cards ---- */
+
+  .mash-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .mash-generate-buttons {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  @media (max-width: 540px) {
+    .mash-section-header {
+      flex-wrap: wrap;
+    }
+    .mash-generate-buttons {
+      width: 100%;
+    }
+    .mash-generate-buttons > button {
+      flex: 1;
+    }
+  }
 
   .mash-step-list {
     display: flex;
@@ -3880,36 +3906,6 @@
     gap: 6px;
   }
 
-  .mash-step-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: rgb(var(--brew-card) / 0.45);
-    border: 1px solid
-      color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 1px 2px rgba(0, 0, 0, 0.04);
-    transition: all 150ms ease;
-  }
-  .mash-step-card:hover {
-    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      var(--shadow-card);
-  }
-  .dark .mash-step-card {
-    background: color-mix(in oklch, var(--brew-accent-950) 40%, transparent);
-    border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.03),
-      0 1px 2px rgba(0, 0, 0, 0.12);
-  }
-  .dark .mash-step-card:hover {
-    background: color-mix(in oklch, var(--brew-accent-900) 50%, transparent);
-  }
 
   .mash-step-index {
     flex-shrink: 0;
@@ -3920,21 +3916,6 @@
     line-height: 1;
   }
 
-  .mash-step-name {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .mash-step-type {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: var(--brew-tracking-widest);
-    color: var(--fg-muted);
-    opacity: 0.7;
-  }
-
   .mash-step-datum {
     flex-shrink: 0;
     display: flex;
@@ -3943,27 +3924,109 @@
     gap: 1px;
   }
   .mash-step-datum-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: var(--brew-tracking-wide);
+    letter-spacing: 0.06em;
     color: var(--fg-muted);
     opacity: 0.6;
     line-height: 1;
   }
   .mash-step-datum-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+  }
+  .mash-step-datum-input {
     font-family: var(--font-handwritten);
-    font-size: 18px;
+    font-size: 28px;
     color: var(--fg-strong);
-    line-height: 1.1;
-    white-space: nowrap;
+    line-height: 1;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    width: 64px;
+    height: 34px;
+    padding: 0;
+    outline: none;
+    transition: background 120ms ease;
+    -moz-appearance: textfield;
   }
-  .mash-step-datum-accent {
-    font-size: 14px;
-    color: var(--brew-accent-600);
+  .mash-step-datum-input:focus {
+    background: color-mix(in oklch, var(--brew-accent-100) 20%, transparent);
   }
-  .dark .mash-step-datum-accent {
-    color: var(--brew-accent-400);
+  .dark .mash-step-datum-input:focus {
+    background: color-mix(in oklch, var(--brew-accent-800) 25%, transparent);
+  }
+  .mash-step-datum-input::-webkit-inner-spin-button,
+  .mash-step-datum-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .mash-step-datum-unit {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    margin-left: 2px;
+  }
+
+  /* Vertical chevron stepper — hidden until row hover */
+  .mash-stepper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    height: 34px;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-width 200ms ease,
+      opacity 150ms ease,
+      margin 200ms ease;
+    margin-left: 0;
+  }
+  .brew-ingredient-row:hover .mash-stepper,
+  .brew-ingredient-row:focus-within .mash-stepper {
+    max-width: 24px;
+    opacity: 1;
+    margin-left: 4px;
+  }
+  @media (hover: none) {
+    .mash-stepper {
+      max-width: 24px;
+      opacity: 1;
+      margin-left: 4px;
+    }
+  }
+  .mash-stepper-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 14px;
+    border-radius: 3px;
+    color: var(--fg-muted);
+    transition: all 100ms ease;
+    opacity: 0.5;
+  }
+  .mash-stepper-btn:hover {
+    opacity: 1;
+    background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+    color: var(--brew-accent-700);
+  }
+  .dark .mash-stepper-btn:hover {
+    background: color-mix(in oklch, var(--brew-accent-700) 45%, transparent);
+    color: var(--brew-accent-300);
+  }
+
+  @media (max-width: 420px) {
+    .mash-step-datum-input {
+      font-size: 22px;
+      width: 52px;
+    }
   }
 
   /* ---- Equipment — machined panel readouts ---- */
@@ -3973,6 +4036,11 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-top: 16px;
+  }
+  @media (max-width: 420px) {
+    .equip-hero-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .equip-datum {
@@ -4190,6 +4258,7 @@
     flex-shrink: 0;
     background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
     color: var(--brew-accent-800);
+    transform: translateY(-8px);
   }
   .dark .yeast-att-badge {
     background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
@@ -4253,7 +4322,6 @@
     margin-top: 8px;
   }
 
-
   /* Top dashboard: horizontal metric strip */
   .starter-dashboard {
     display: flex;
@@ -4271,7 +4339,11 @@
   }
   .dark .starter-metric.is-danger {
     border-color: color-mix(in oklch, var(--brew-danger) 30%, transparent);
-    background: color-mix(in oklch, var(--brew-danger) 8%, color-mix(in oklch, var(--brew-accent-950) 45%, transparent));
+    background: color-mix(
+      in oklch,
+      var(--brew-danger) 8%,
+      color-mix(in oklch, var(--brew-accent-950) 45%, transparent)
+    );
   }
 
   /* Starter steps section */
@@ -4316,12 +4388,13 @@
     background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%23888' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
-    transition: border-color 150ms ease, background 150ms ease;
+    transition:
+      border-color 150ms ease,
+      background 150ms ease;
   }
   .starter-model-select:hover {
     background: rgb(var(--brew-card) / 0.6);
-    border-color:
-      color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
+    border-color: color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
   }
   .starter-model-select:focus {
     outline: none;
@@ -4560,7 +4633,9 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       0 1px 3px rgba(0, 0, 0, 0.06);
     min-width: 80px;
-    transition: background 200ms ease, box-shadow 200ms ease;
+    transition:
+      background 200ms ease,
+      box-shadow 200ms ease;
   }
   .dark .starter-metric {
     background: color-mix(in oklch, var(--brew-accent-950) 45%, transparent);
@@ -4602,9 +4677,17 @@
     animation: starter-metric-pulse 500ms ease-out;
   }
   @keyframes starter-metric-pulse {
-    0% { transform: scale(1.15); opacity: 0.6; }
-    40% { transform: scale(1.02); opacity: 1; }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1.15);
+      opacity: 0.6;
+    }
+    40% {
+      transform: scale(1.02);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 
   /* Starter step row — grid for alignment (Size, Gravity, DME) */
@@ -4994,16 +5077,16 @@
 }
 
 /* Section padding — tighter on narrow screens */
-@media (max-width: 420px) {
+@media (max-width: 700px) {
   .brew-section {
-    padding: 16px !important;
+    padding: 6px !important;
   }
 }
 
 /* ---- Read-only mode (shared recipes, version history) ---- */
 
 .brew-read-only {
-  opacity: 0.90;
+  opacity: 0.9;
 }
 
 /* Disable interactions on inputs/controls but keep accordion tiles clickable */
@@ -5052,6 +5135,179 @@
 }
 
 /* ═════════════════════════════════════════
+   FERMENTABLE SECTION — Datum inputs, chips
+   ═════════════════════════════════════════ */
+
+/* Chips for Color (°L) and PPG — mirrors hop-variety-aa-badge / yeast-att-badge */
+.fermentable-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+  color: var(--brew-accent-800);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.3;
+  transform: translateY(-8px);
+}
+.dark .fermentable-chip {
+  background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
+  color: var(--brew-accent-300);
+}
+@media (max-width: 640px) {
+  .fermentable-chip {
+    transform: translateY(2px);
+  }
+}
+
+/* SRM dot inside color chip */
+.fermentable-chip-srm {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* Datum readout — handwritten editable values */
+.fermentable-datum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.fermentable-datum-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  opacity: 0.6;
+  line-height: 1;
+}
+.fermentable-datum-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.fermentable-datum-input {
+  font-family: var(--font-handwritten);
+  font-size: 28px;
+  color: var(--fg-strong);
+  line-height: 1;
+  width: 64px;
+  height: 34px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  padding: 0;
+  transition: background 120ms ease;
+  -moz-appearance: textfield;
+}
+.fermentable-datum-input::-webkit-inner-spin-button,
+.fermentable-datum-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.fermentable-datum-input:focus {
+  background: color-mix(in oklch, var(--brew-accent-100) 20%, transparent);
+  outline: none;
+}
+.dark .fermentable-datum-input:focus {
+  background: color-mix(in oklch, var(--brew-accent-800) 25%, transparent);
+}
+.fermentable-datum-unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  margin-left: 2px;
+}
+
+/* Stepper buttons — appear on row hover, vertically centered beside value */
+.fermentable-stepper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 34px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 200ms ease,
+    opacity 150ms ease,
+    margin 200ms ease;
+  margin-left: 0;
+}
+.brew-ingredient-row:hover .fermentable-stepper,
+.brew-ingredient-row:focus-within .fermentable-stepper {
+  max-width: 24px;
+  opacity: 1;
+  margin-left: 4px;
+}
+.fermentable-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 14px;
+  border-radius: 3px;
+  color: var(--fg-muted);
+  transition: all 100ms ease;
+  opacity: 0.5;
+}
+.fermentable-stepper-btn:hover {
+  opacity: 1;
+  background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
+  color: var(--brew-accent-700);
+}
+.dark .fermentable-stepper-btn:hover {
+  background: color-mix(in oklch, var(--brew-accent-700) 45%, transparent);
+  color: var(--brew-accent-300);
+}
+
+/* Computed display (system font) */
+.fermentable-computed {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  min-width: 56px;
+  text-align: right;
+}
+
+/* Total line — handwritten value */
+.fermentable-total-value {
+  font-family: var(--font-handwritten);
+  font-size: 20px;
+  color: var(--fg-strong);
+}
+.fermentable-total-unit {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.5;
+}
+
+/* Spacer */
+.fermentable-spacer {
+  flex: 1;
+}
+
+/* Responsive */
+@media (max-width: 420px) {
+  .fermentable-datum-input {
+    font-size: 22px;
+    width: 52px;
+  }
+}
+
+/* ═════════════════════════════════════════
    HOP SECTION — Variety cards, addition rows, flavor panel
    ═════════════════════════════════════════ */
 
@@ -5059,8 +5315,7 @@
   padding: 16px;
   border-radius: 10px;
   background: rgb(var(--brew-card) / 0.45);
-  border: 1px solid
-    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 1px 2px rgba(0, 0, 0, 0.04);
@@ -5114,6 +5369,7 @@
   flex-shrink: 0;
   background: color-mix(in oklch, var(--brew-accent-200) 40%, transparent);
   color: var(--brew-accent-800);
+  transform: translateY(-8px);
 }
 .dark .hop-variety-aa-badge {
   background: color-mix(in oklch, var(--brew-accent-800) 40%, transparent);
@@ -5164,8 +5420,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   background: color-mix(in oklch, var(--brew-accent-900) 10%, rgb(var(--brew-card-inset) / 0.35));
-  border: 1px solid
-    color-mix(in oklch, var(--brew-accent-700) 10%, rgb(var(--brew-border-subtle)));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-700) 10%, rgb(var(--brew-border-subtle)));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
   transition: all 150ms ease;
 }
@@ -5404,21 +5659,45 @@
 
 /* Radar chart animations */
 @keyframes hop-radar-enter {
-  0% { opacity: 0; transform: scale(0.3); }
-  60% { opacity: 1; transform: scale(1.04); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 @keyframes hop-radar-breathe {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 @keyframes hop-radar-web-in {
-  0% { opacity: 0; stroke-dashoffset: 1200; }
-  100% { opacity: 1; stroke-dashoffset: 0; }
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1200;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
 }
 @keyframes hop-radar-axis-in {
-  0% { opacity: 0; }
-  100% { opacity: 0.3; }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.3;
+  }
 }
 /* Web background — rings draw in sequentially */
 .hop-radar-ring {
@@ -5443,8 +5722,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35));
-  border: 1px solid
-    color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
 .dark .hop-flavor-panel {
@@ -5457,8 +5735,7 @@
   padding: 10px 12px;
   border-radius: 10px;
   background: rgb(var(--brew-card) / 0.45);
-  border: 1px solid
-    color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+  border: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 1px 2px rgba(0, 0, 0, 0.04);
@@ -5481,7 +5758,9 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--fg-muted);
-  transition: opacity 200ms ease, color 150ms ease;
+  transition:
+    opacity 200ms ease,
+    color 150ms ease;
 }
 .hop-radar-legend-item:hover {
   color: var(--fg-strong);
