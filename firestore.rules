@@ -15,8 +15,10 @@ service cloud.firestore {
                    && request.auth.uid == resource.data.ownerId;
       allow create: if request.auth != null
                      && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if request.auth != null
-                             && request.auth.uid == resource.data.ownerId;
+      allow update: if request.auth != null
+                     && request.auth.uid == resource.data.ownerId;
+      allow delete: if request.auth != null
+                     && request.auth.uid == resource.data.ownerId;
     }
 
     // Recipe versions: follow parent recipe's access

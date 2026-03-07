@@ -16,18 +16,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing recipeId' }, { status: 400 });
     }
 
-    // Verify ownership
+    // Verify ownership and delete
     const recipeRef = adminDb.collection('recipes').doc(recipeId);
     const recipeSnap = await recipeRef.get();
-    if (!recipeSnap.exists) {
-      return NextResponse.json({ error: 'Recipe not found' }, { status: 404 });
+    if (recipeSnap.exists) {
+      if (recipeSnap.data()?.ownerId !== decoded.uid) {
+        return NextResponse.json({ error: 'Not your recipe' }, { status: 403 });
+      }
+      await recipeRef.delete();
     }
-    if (recipeSnap.data()?.ownerId !== decoded.uid) {
-      return NextResponse.json({ error: 'Not your recipe' }, { status: 403 });
-    }
-
-    // Delete recipe
-    await recipeRef.delete();
+    // If document doesn't exist, that's fine — it's already gone
 
     // Also delete from publicRecipeIndex if it exists
     const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);

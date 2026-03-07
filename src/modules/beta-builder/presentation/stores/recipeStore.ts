@@ -368,6 +368,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         }),
       ).then((res) => {
         if (!res?.ok) throw new Error('Server delete failed');
+        // Clear local Firestore cache (best-effort, may fail with permission denied)
+        const firestoreRepo = getRecipeRepo();
+        firestoreRepo?.deleteAsync(id).catch(() => {});
       }).catch((err) => {
         console.error('[API] Failed to delete recipe:', err);
         // Rollback on failure
