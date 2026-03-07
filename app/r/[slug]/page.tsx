@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       openGraph: {
         title: `${recipe.name} — BeerApp`,
         description,
+        url: `/r/${slug}`,
         type: 'article',
         siteName: 'BeerApp',
       },
@@ -60,8 +61,8 @@ export default async function PublicRecipePage({ params }: PageProps) {
 
   if (!result) return notFound()
 
-  const { recipe, calc, ownerName } = result
-  const jsonLd = buildRecipeJsonLd(recipe, calc, ownerName, slug)
+  const { recipe, calc, ownerName, ownerId, ratingAvg, ratingCount } = result
+  const jsonLd = buildRecipeJsonLd(recipe, calc, ownerName, slug, ratingAvg, ratingCount)
 
   return (
     <>
@@ -71,7 +72,14 @@ export default async function PublicRecipePage({ params }: PageProps) {
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
-      <PublicRecipeClient recipe={recipe} ownerName={ownerName} slug={slug} />
+      <PublicRecipeClient
+        recipe={recipe}
+        ownerName={ownerName}
+        ownerId={ownerId}
+        slug={slug}
+        ratingAvg={ratingAvg}
+        ratingCount={ratingCount}
+      />
     </>
   )
 }

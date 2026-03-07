@@ -6,32 +6,15 @@ import {
   collection,
   query,
   orderBy,
-  limit,
   getDocs,
   getDocsFromCache,
-  startAfter,
   type QueryDocumentSnapshot,
   type DocumentData,
-  type QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
 import { SEED_RECIPES } from '@/data/seed-recipes';
 import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
-
-type BrowseRecipe = {
-  id: string;
-  name: string;
-  style: string;
-  ownerName: string;
-  shareSlug: string;
-  stats: { og?: number; fg?: number; ibu?: number; srm?: number; abv?: number };
-  tags: string[];
-  hopNames: string[];
-  publishedAt: string;
-  forkCount: number;
-  source?: 'official' | 'community';
-};
+import { BrowseCard, type BrowseRecipe } from './BrowseCard';
 
 const calc = new RecipeCalculationService();
 const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
@@ -51,103 +34,106 @@ const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
   };
 });
 
-type SortOption = 'newest' | 'popular';
-
-const PAGE_SIZE = 24;
+type SortOption = 'newest' | 'popular' | 'top-rated';
 
 export default function BrowseRecipesPage() {
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [sort, setSort] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [styleFilter, setStyleFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
-  const fetchRecipes = useCallback(async (afterDoc: QueryDocumentSnapshot<DocumentData> | null, sortBy: SortOption, append: boolean) => {
-    const loading = append ? setIsLoadingMore : setIsLoading;
+  const fetchRecipes = useCallback(async () => {
     setError(null);
 
+    const mapDocs = (docs: QueryDocumentSnapshot<DocumentData>[]) =>
+      docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          name: data.name || '',
+          style: data.style || '',
+          ownerName: data.ownerName || 'Anonymous Brewer',
+          ownerId: data.ownerId || '',
+          shareSlug: data.shareSlug || '',
+          stats: data.stats || {},
+          tags: data.tags || [],
+          hopNames: data.hopNames || [],
+          publishedAt: data.publishedAt || '',
+          forkCount: data.forkCount || 0,
+          ratingSum: data.ratingSum || 0,
+          ratingCount: data.ratingCount || 0,
+          ratingAvg: data.ratingCount > 0 ? (data.ratingSum || 0) / data.ratingCount : 0,
+        } as BrowseRecipe;
+      });
+
+    // Try IndexedDB cache first for instant display
+    const q = query(collection(db, 'publicRecipeIndex'), orderBy('publishedAt', 'desc'));
     try {
-      const orderField = sortBy === 'popular' ? 'forkCount' : 'publishedAt';
-      const constraints: QueryConstraint[] = [orderBy(orderField, 'desc')];
-      if (append && afterDoc) constraints.push(startAfter(afterDoc));
-      constraints.push(limit(PAGE_SIZE + 1));
-
-      const q = query(collection(db, 'publicRecipeIndex'), ...constraints);
-
-      const mapDocs = (docs: QueryDocumentSnapshot<DocumentData>[]) => {
-        const hasNext = docs.length > PAGE_SIZE;
-        const resultDocs = hasNext ? docs.slice(0, PAGE_SIZE) : docs;
-        const mapped: BrowseRecipe[] = resultDocs.map((d) => {
-          const data = d.data();
-          return {
-            id: d.id,
-            name: data.name || '',
-            style: data.style || '',
-            ownerName: data.ownerName || 'Anonymous Brewer',
-            shareSlug: data.shareSlug || '',
-            stats: data.stats || {},
-            tags: data.tags || [],
-            hopNames: data.hopNames || [],
-            publishedAt: data.publishedAt || '',
-            forkCount: data.forkCount || 0,
-          };
-        });
-        return { mapped, resultDocs, hasNext };
-      };
-
-      // Try IndexedDB cache first for instant display
-      if (!append) {
-        try {
-          const cachedSnapshot = await getDocsFromCache(q);
-          if (!cachedSnapshot.empty) {
-            const { mapped, resultDocs, hasNext } = mapDocs(cachedSnapshot.docs);
-            setRecipes(mapped);
-            setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
-            setHasMore(hasNext);
-            setIsLoading(false);
-          }
-        } catch { /* Cache miss — continue to network */ }
+      const cachedSnapshot = await getDocsFromCache(q);
+      if (!cachedSnapshot.empty) {
+        setRecipes(mapDocs(cachedSnapshot.docs));
+        setIsLoading(false);
       }
+    } catch { /* Cache miss — continue to network */ }
 
-      // Always fetch fresh from network
-      loading(true);
+    // Always fetch fresh from network
+    try {
+      setIsLoading(true);
       const snapshot = await getDocs(q);
-      const { mapped, resultDocs, hasNext } = mapDocs(snapshot.docs);
-
-      setRecipes((prev) => (append ? [...prev, ...mapped] : mapped));
-      setLastDoc(resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null);
-      setHasMore(hasNext);
+      setRecipes(mapDocs(snapshot.docs));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load recipes. Please try again.');
     } finally {
-      loading(false);
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    setLastDoc(null);
-    fetchRecipes(null, sort, false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sort]);
+    fetchRecipes();
+  }, [fetchRecipes]);
 
-  const allRecipes = useMemo(() => [...seedBrowseRecipes, ...recipes], [recipes]);
+  const allRecipes = useMemo(() => {
+    const sorted = [...recipes].sort((a, b) => {
+      if (sort === 'top-rated') {
+        const diff = (b.ratingAvg || 0) - (a.ratingAvg || 0);
+        if (diff !== 0) return diff;
+        return (b.ratingCount || 0) - (a.ratingCount || 0);
+      }
+      if (sort === 'popular') return (b.forkCount || 0) - (a.forkCount || 0);
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
+    return [...seedBrowseRecipes, ...sorted];
+  }, [recipes, sort]);
+
+  const availableStyles = useMemo(() => {
+    const styles = new Set<string>();
+    for (const r of allRecipes) {
+      if (r.style) styles.add(r.style);
+    }
+    return Array.from(styles).sort();
+  }, [allRecipes]);
 
   const filteredRecipes = useMemo(() => {
-    if (!searchQuery) return allRecipes;
-    const q = searchQuery.toLowerCase();
-    return allRecipes.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        r.style.toLowerCase().includes(q) ||
-        r.ownerName.toLowerCase().includes(q) ||
-        r.tags.some((t) => t.toLowerCase().includes(q)) ||
-        r.hopNames.some((h) => h.toLowerCase().includes(q))
-    );
-  }, [allRecipes, searchQuery]);
+    let result = allRecipes;
+    if (styleFilter) {
+      result = result.filter((r) => r.style === styleFilter);
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          r.style.toLowerCase().includes(q) ||
+          r.ownerName.toLowerCase().includes(q) ||
+          r.tags.some((t) => t.toLowerCase().includes(q)) ||
+          r.hopNames.some((h) => h.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [allRecipes, searchQuery, styleFilter]);
 
   return (
     <div className="brew-theme mx-auto max-w-6xl px-2 py-6">
@@ -172,6 +158,22 @@ export default function BrowseRecipesPage() {
             />
           </div>
           <div className="flex items-center gap-2">
+            <label htmlFor="browse-style" className="text-sm font-medium whitespace-nowrap">
+              Style:
+            </label>
+            <select
+              id="browse-style"
+              value={styleFilter}
+              onChange={(e) => setStyleFilter(e.target.value)}
+              className="brew-input"
+            >
+              <option value="">All Styles</option>
+              {availableStyles.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
             <label htmlFor="browse-sort" className="text-sm font-medium whitespace-nowrap">
               Sort by:
             </label>
@@ -182,6 +184,7 @@ export default function BrowseRecipesPage() {
               className="brew-input"
             >
               <option value="newest">Newest</option>
+              <option value="top-rated">Top Rated</option>
               <option value="popular">Most Forked</option>
             </select>
           </div>
@@ -193,7 +196,7 @@ export default function BrowseRecipesPage() {
         <div className="brew-section py-8 text-center">
           <p className="text-[var(--brew-danger)] mb-4">{error}</p>
           <button
-            onClick={() => { setLastDoc(null); fetchRecipes(null, sort, false); }}
+            onClick={() => fetchRecipes()}
             className="brew-btn-primary"
           >
             Retry
@@ -280,145 +283,9 @@ export default function BrowseRecipesPage() {
             ))}
           </div>
 
-          {/* Load More */}
-          {hasMore && !searchQuery && (
-            <div className="mt-8 text-center">
-              <button
-                onClick={() => fetchRecipes(lastDoc, sort, true)}
-                disabled={isLoadingMore}
-                className="brew-btn-ghost px-8 py-3"
-              >
-                {isLoadingMore ? 'Loading...' : 'Load More'}
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>
   );
 }
 
-function BrowseCard({
-  recipe,
-  isNavigating,
-}: {
-  recipe: BrowseRecipe;
-  isNavigating?: boolean;
-}) {
-  const srmColor = recipe.stats.srm != null ? srmToRgb(recipe.stats.srm) : 'rgb(220, 190, 140)';
-
-  return (
-    <div
-      className="group brew-recipe-card relative cursor-pointer overflow-visible z-10"
-      style={{ '--card-srm': srmColor } as React.CSSProperties}
-    >
-      {isNavigating && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/40">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
-        </div>
-      )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]">
-        {/* SRM Color Strip */}
-        <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
-
-        {/* Header */}
-        <div className="border-b border-[rgb(var(--brew-border))] p-4">
-          <div className="flex items-center gap-2">
-            <h3
-              className="min-w-0 truncate font-extrabold tracking-tight"
-              style={{
-                fontSize: `${Math.max(1, Math.min(1.5, 2.1 - recipe.name.length * 0.035))}rem`,
-              }}
-            >
-              {recipe.name}
-            </h3>
-            {recipe.source === 'official' && (
-              <span className="shrink-0 rounded-full bg-[var(--brew-accent-200)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brew-accent-700)]">
-                Example Recipe
-              </span>
-            )}
-          </div>
-          {recipe.style && (
-            <p className="text-muted truncate text-xs italic">{recipe.style}</p>
-          )}
-          <p className="text-muted text-xs mt-1">
-            by {recipe.ownerName}
-            {recipe.forkCount > 0 && (
-              <span className="ml-2 opacity-60">
-                {recipe.forkCount} {recipe.forkCount === 1 ? 'fork' : 'forks'}
-              </span>
-            )}
-          </p>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-5 gap-0 px-4 py-3">
-          <div className="pr-2">
-            <div className="brew-gauge-label text-[10px]">ABV</div>
-            <div
-              className="font-handwritten-alt text-sm tabular-nums"
-              style={{ color: 'var(--brew-accent-700)' }}
-            >
-              {recipe.stats.abv != null ? `${recipe.stats.abv.toFixed(1)}%` : '—'}
-            </div>
-          </div>
-          <div className="border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] px-2">
-            <div className="brew-gauge-label text-[10px]">IBU</div>
-            <div className="font-handwritten-alt text-sm tabular-nums">
-              {recipe.stats.ibu != null ? recipe.stats.ibu : '—'}
-            </div>
-          </div>
-          <div className="border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] px-2">
-            <div className="brew-gauge-label text-[10px]">SRM</div>
-            <div className="flex items-center gap-1">
-              <div
-                className="h-3 w-3 rounded-full ring-1 ring-black/10"
-                style={{ backgroundColor: srmColor }}
-              />
-              <span className="font-handwritten-alt text-sm tabular-nums">
-                {recipe.stats.srm != null ? Math.round(recipe.stats.srm) : '—'}
-              </span>
-            </div>
-          </div>
-          <div className="border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] px-2">
-            <div className="brew-gauge-label text-[10px]">OG</div>
-            <div className="font-handwritten-alt text-sm tabular-nums">
-              {recipe.stats.og != null ? recipe.stats.og.toFixed(3) : '—'}
-            </div>
-          </div>
-          <div className="border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] pl-2">
-            <div className="brew-gauge-label text-[10px]">FG</div>
-            <div className="font-handwritten-alt text-sm tabular-nums">
-              {recipe.stats.fg != null ? recipe.stats.fg.toFixed(3) : '—'}
-            </div>
-          </div>
-        </div>
-
-        {/* Tags */}
-        {recipe.tags.length > 0 && (
-          <div className="px-4 pb-3">
-            <div className="flex flex-wrap gap-1">
-              {recipe.tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="brew-tag">
-                  {tag}
-                </span>
-              ))}
-              {recipe.tags.length > 3 && (
-                <span className="brew-tag">+{recipe.tags.length - 3}</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
-          <div className="text-muted text-xs">
-            {recipe.publishedAt
-              ? new Date(recipe.publishedAt).toLocaleDateString()
-              : ''}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

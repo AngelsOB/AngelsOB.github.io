@@ -30,12 +30,16 @@ import { SECTIONS, getScribbleLines } from "./sidebarData";
 import AnimatedValue from "./AnimatedValue";
 import ShareModal from "../../../sharing/ShareModal";
 import ForkButton from "../../../sharing/ForkButton";
+import RatingStars from "../../../sharing/RatingStars";
 import { useAuthStore } from "../../../auth/authStore";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
   sharedOwnerName?: string;
+  sharedOwnerId?: string;
+  sharedRatingAvg?: number;
+  sharedRatingCount?: number;
 }
 
 /**
@@ -134,6 +138,9 @@ function AccordionSection({
 export default function BetaBuilderPage({
   sharedRecipe,
   sharedOwnerName,
+  sharedOwnerId,
+  sharedRatingAvg,
+  sharedRatingCount,
 }: BetaBuilderPageProps = {}) {
   const { id, versionNumber } = useParams<{ id?: string; versionNumber?: string }>();
   const router = useRouter();
@@ -322,8 +329,24 @@ export default function BetaBuilderPage({
             </h1>
             {isShared && sharedOwnerName && (
               <p className="mt-1 text-xs text-[var(--fg-muted)]">
-                by <span className="font-medium">{sharedOwnerName}</span>
+                by{" "}
+                {sharedOwnerId ? (
+                  <Link href={`/u/${sharedOwnerId}`} className="font-medium hover:underline">
+                    {sharedOwnerName}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{sharedOwnerName}</span>
+                )}
               </p>
+            )}
+            {isShared && currentRecipe && (
+              <div className="mt-2">
+                <RatingStars
+                  recipeId={currentRecipe.id}
+                  ratingAvg={sharedRatingAvg}
+                  ratingCount={sharedRatingCount}
+                />
+              </div>
             )}
             {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
               <p className="mt-1 text-xs text-[var(--fg-muted)]">

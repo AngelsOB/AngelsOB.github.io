@@ -5,6 +5,9 @@ export type PublicRecipeResult = {
   recipe: Recipe
   calc: RecipeCalculations
   ownerName: string
+  ownerId: string
+  ratingAvg: number
+  ratingCount: number
 }
 
 export const getPublicRecipe = cache(async (slug: string): Promise<PublicRecipeResult | null> => {
@@ -30,12 +33,17 @@ export const getPublicRecipe = cache(async (slug: string): Promise<PublicRecipeR
     .collection('publicRecipeIndex')
     .doc(doc.id)
     .get()
-  const ownerName = indexSnap.data()?.ownerName || 'Anonymous Brewer'
+  const indexData = indexSnap.data()
+  const ownerName = indexData?.ownerName || 'Anonymous Brewer'
+  const ownerId = indexData?.ownerId || data.ownerId || ''
+  const ratingSum = indexData?.ratingSum || 0
+  const ratingCount = indexData?.ratingCount || 0
+  const ratingAvg = ratingCount > 0 ? ratingSum / ratingCount : 0
 
   const recipe = { id: doc.id, ...data } as Recipe
   const calc = new RecipeCalculationService().calculate(recipe)
 
-  return { recipe, calc, ownerName }
+  return { recipe, calc, ownerName, ownerId, ratingAvg, ratingCount }
 })
 
 /**
@@ -46,6 +54,8 @@ export function buildRecipeJsonLd(
   calc: RecipeCalculations,
   ownerName: string,
   slug: string,
+  ratingAvg?: number,
+  ratingCount?: number,
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
 
@@ -75,6 +85,18 @@ export function buildRecipeJsonLd(
       '@type': 'NutritionInformation',
       calories: `${Math.round(calc.calories)} cal per 355mL`,
     },
+
+    ...(ratingCount && ratingCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: ratingAvg!.toFixed(1),
+            ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
 
     keywords: [
       recipe.style,

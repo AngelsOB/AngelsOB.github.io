@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   authors: [{ name: "BeerApp" }],
   openGraph: {
     type: "website",
+    url: "./",
     title: "BeerApp - Homebrewing Recipe Builder & Calculator",
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",

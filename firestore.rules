@@ -56,6 +56,25 @@ service cloud.firestore {
                      && request.auth.uid == resource.data.ownerId;
     }
 
+    // Ratings: compound doc ID = {recipeId}__{userId}
+    // Anyone can read; signed-in users can write their own ratings
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                     && request.resource.data.userId == request.auth.uid
+                     && ratingId.matches('.*__' + request.auth.uid)
+                     && request.resource.data.value is int
+                     && request.resource.data.value >= 1
+                     && request.resource.data.value <= 5;
+      allow update: if request.auth != null
+                     && resource.data.userId == request.auth.uid
+                     && request.resource.data.value is int
+                     && request.resource.data.value >= 1
+                     && request.resource.data.value <= 5;
+      allow delete: if request.auth != null
+                     && resource.data.userId == request.auth.uid;
+    }
+
     // User preferences: owner-only
     match /userPreferences/{userId} {
       allow read, write: if request.auth != null
