@@ -63,7 +63,7 @@ export default function TargetStyleModal({
   isOpen,
   onClose,
   onSelect,
-  currentStyleName,
+  currentStyleName: _currentStyleName,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
 
