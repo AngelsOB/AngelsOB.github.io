@@ -16,6 +16,7 @@ import {
 import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 import { useAuthStore } from '../auth/authStore';
 import { toast } from '../../stores/toastStore';
+import ScalableText from '@/components/ScalableText';
 import type { Recipe } from '../beta-builder/domain/models/Recipe';
 
 const calcService = new RecipeCalculationService();
@@ -181,7 +182,7 @@ export function BrowseCard({
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]">
+      <div className="rounded-xl bg-[rgb(var(--brew-card))]" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
 
@@ -189,17 +190,12 @@ export function BrowseCard({
         <div className="border-b border-[rgb(var(--brew-border))] p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h3
-                  className="min-w-0 truncate font-extrabold tracking-tight"
-                  style={{
-                    fontSize: `${Math.max(1, Math.min(1.5, 2.1 - recipe.name.length * 0.035))}rem`,
-                  }}
-                >
+              <div className="flex items-start gap-2">
+                <ScalableText className="min-w-0 flex-1 font-extrabold tracking-tight" minScale={0.75} maxLines={2} style={{ fontSize: 'clamp(1rem, calc(8px + 3cqw), 1.5rem)' }}>
                   {recipe.name}
-                </h3>
+                </ScalableText>
                 {recipe.source === 'official' && (
-                  <span className="shrink-0 rounded-full bg-[var(--brew-accent-200)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--brew-accent-700)]">
+                  <span className="mt-1 shrink-0 rounded-full bg-[var(--brew-accent-200)] py-0.5 font-bold uppercase tracking-wider text-[var(--brew-accent-700)]" style={{ fontSize: 'clamp(6px, calc(4px + 1cqw), 10px)', padding: '2px clamp(4px, calc(2px + 0.8cqw), 8px)' }}>
                     Example Recipe
                   </span>
                 )}
@@ -232,8 +228,10 @@ export function BrowseCard({
                 )}
               </p>
             </div>
-            {/* Actions menu trigger */}
-            <div className="relative shrink-0">
+            {/* Right column: menu + rating */}
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              {/* Actions menu trigger */}
+              <div className="relative">
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -297,6 +295,62 @@ export function BrowseCard({
                   </div>
                 </div>
               )}
+              </div>
+
+              {/* Rating — in header, right-aligned */}
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const avg = recipe.ratingAvg ?? 0;
+                    const fraction = Math.min(1, Math.max(0, avg - (star - 1)));
+                    const pct = Math.round(fraction * 100);
+                    const gradientId = `star-${recipe.id}-${star}`;
+                    return (
+                      <svg
+                        key={star}
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        {pct > 0 && pct < 100 && (
+                          <defs>
+                            <linearGradient id={gradientId}>
+                              <stop offset={`${pct}%`} stopColor="var(--brew-accent-500)" />
+                              <stop offset={`${pct}%`} stopColor="transparent" />
+                            </linearGradient>
+                          </defs>
+                        )}
+                        <polygon
+                          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                          fill={
+                            pct === 100
+                              ? 'var(--brew-accent-500)'
+                              : pct > 0
+                              ? `url(#${gradientId})`
+                              : 'none'
+                          }
+                          stroke={
+                            pct > 0 ? 'var(--brew-accent-500)' : 'var(--brew-accent-300)'
+                          }
+                        />
+                      </svg>
+                    );
+                  })}
+                </div>
+                {(recipe.ratingCount ?? 0) > 0 ? (
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--brew-accent-700)' }}>
+                    {(recipe.ratingAvg ?? 0).toFixed(1)}
+                    <span className="ml-1 font-normal text-[var(--fg-muted)]">
+                      ({recipe.ratingCount})
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-[var(--fg-muted)] opacity-50">No ratings</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -341,64 +395,6 @@ export function BrowseCard({
             <div className="font-handwritten-alt text-sm tabular-nums">
               {recipe.stats.fg != null ? recipe.stats.fg.toFixed(3) : '—'}
             </div>
-          </div>
-        </div>
-
-        {/* Rating */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => {
-                const avg = recipe.ratingAvg ?? 0;
-                // fraction: 1 = full, 0 = empty, 0.0–0.99 = partial
-                const fraction = Math.min(1, Math.max(0, avg - (star - 1)));
-                const pct = Math.round(fraction * 100);
-                const gradientId = `star-${recipe.id}-${star}`;
-                return (
-                  <svg
-                    key={star}
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {pct > 0 && pct < 100 && (
-                      <defs>
-                        <linearGradient id={gradientId}>
-                          <stop offset={`${pct}%`} stopColor="var(--brew-accent-500)" />
-                          <stop offset={`${pct}%`} stopColor="transparent" />
-                        </linearGradient>
-                      </defs>
-                    )}
-                    <polygon
-                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                      fill={
-                        pct === 100
-                          ? 'var(--brew-accent-500)'
-                          : pct > 0
-                          ? `url(#${gradientId})`
-                          : 'none'
-                      }
-                      stroke={
-                        pct > 0 ? 'var(--brew-accent-500)' : 'var(--brew-accent-300)'
-                      }
-                    />
-                  </svg>
-                );
-              })}
-            </div>
-            {(recipe.ratingCount ?? 0) > 0 ? (
-              <span className="text-xs font-semibold" style={{ color: 'var(--brew-accent-700)' }}>
-                {(recipe.ratingAvg ?? 0).toFixed(1)}
-                <span className="ml-1 font-normal text-[var(--fg-muted)]">
-                  ({recipe.ratingCount})
-                </span>
-              </span>
-            ) : (
-              <span className="text-xs text-[var(--fg-muted)] opacity-60">No ratings yet</span>
-            )}
           </div>
         </div>
 

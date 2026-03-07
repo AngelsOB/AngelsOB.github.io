@@ -5,6 +5,21 @@ export const alt = 'Recipe preview'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
+/** Fetch Caveat Bold from Google Fonts (cached across invocations in the module scope). */
+async function loadCaveatFont(): Promise<ArrayBuffer | null> {
+  try {
+    const css = await fetch(
+      'https://fonts.googleapis.com/css2?family=Caveat:wght@700',
+      { headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1' } },
+    ).then((r) => r.text())
+    const url = css.match(/src: url\(([^)]+)\)/)?.[1]
+    if (!url) return null
+    return fetch(url).then((r) => r.arrayBuffer())
+  } catch {
+    return null
+  }
+}
+
 /** Inline SRM to hex — pure function, zero deps. */
 function srmToHex(srm: number): string {
   const s = Math.max(1, Math.min(40, srm))
@@ -90,6 +105,11 @@ export default async function Image({
     const { recipe, calc, ownerName } = result
     const beerColor = srmToHex(calc.srm)
     const styleName = recipe.style ? recipe.style.toUpperCase() : ''
+    const caveatFont = await loadCaveatFont()
+
+    const fonts = caveatFont
+      ? [{ name: 'Caveat', data: caveatFont, weight: 700 as const, style: 'normal' as const }]
+      : []
 
     return new ImageResponse(
       (
@@ -133,7 +153,7 @@ export default async function Image({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  marginBottom: 28,
+                  marginBottom: 20,
                 }}
               >
                 {/* Beer color circle */}
@@ -163,13 +183,14 @@ export default async function Image({
                 ) : null}
               </div>
 
-              {/* Recipe name */}
+              {/* Recipe name — Caveat handwritten font, large */}
               <div
                 style={{
-                  fontSize: recipe.name.length > 30 ? 44 : 56,
+                  fontSize: recipe.name.length > 30 ? 56 : 72,
+                  fontFamily: caveatFont ? 'Caveat' : 'sans-serif',
                   fontWeight: 700,
                   color: '#ffffff',
-                  lineHeight: 1.2,
+                  lineHeight: 1.15,
                   display: 'flex',
                 }}
               >
@@ -179,9 +200,9 @@ export default async function Image({
               {/* Brewer name */}
               <div
                 style={{
-                  fontSize: 20,
+                  fontSize: 22,
                   color: '#64748b',
-                  marginTop: 16,
+                  marginTop: 12,
                   display: 'flex',
                 }}
               >
@@ -206,7 +227,7 @@ export default async function Image({
               >
                 <div
                   style={{
-                    fontSize: 36,
+                    fontSize: 40,
                     fontWeight: 700,
                     color: '#ffffff',
                     lineHeight: 1,
@@ -244,7 +265,7 @@ export default async function Image({
               >
                 <div
                   style={{
-                    fontSize: 36,
+                    fontSize: 40,
                     fontWeight: 700,
                     color: '#ffffff',
                     lineHeight: 1,
@@ -282,7 +303,7 @@ export default async function Image({
               >
                 <div
                   style={{
-                    fontSize: 36,
+                    fontSize: 40,
                     fontWeight: 700,
                     color: '#ffffff',
                     lineHeight: 1,
@@ -320,7 +341,7 @@ export default async function Image({
               >
                 <div
                   style={{
-                    fontSize: 36,
+                    fontSize: 40,
                     fontWeight: 700,
                     color: beerColor,
                     lineHeight: 1,
@@ -373,7 +394,7 @@ export default async function Image({
           </div>
         </div>
       ),
-      { ...size },
+      { ...size, fonts },
     )
   } catch {
     return fallback()

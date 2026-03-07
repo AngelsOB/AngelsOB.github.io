@@ -30,6 +30,7 @@ import { srmToRgb } from "../../utils/srmColorUtils";
 import VersionHistoryModal from "./VersionHistoryModal";
 import RecipeSessionsBar from "./RecipeSessionsBar";
 import { toast } from "../../../../stores/toastStore";
+import ScalableText from "@/components/ScalableText";
 
 type SortOption =
   | "date-desc"
@@ -604,7 +605,7 @@ function RecipeCard({
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]">
+      <div className="rounded-xl bg-[rgb(var(--brew-card))]" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         {calculations && (
           <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmToRgb(calculations.srm) }} />
@@ -612,15 +613,10 @@ function RecipeCard({
 
         {/* Header */}
         <div className="border-b border-[rgb(var(--brew-border))] p-4">
-          <div className="flex items-center gap-3">
-            <h3
-              className="min-w-0 flex-1 truncate font-extrabold tracking-tight"
-              style={{
-                fontSize: `${Math.max(1, Math.min(1.5, 2.1 - recipe.name.length * 0.035))}rem`,
-              }}
-            >
+          <div className="flex items-start gap-3">
+            <ScalableText className="min-w-0 flex-1 font-extrabold tracking-tight" minScale={0.75} maxLines={2} style={{ fontSize: 'clamp(1rem, calc(8px + 3cqw), 1.5rem)' }}>
               {recipe.name}
-            </h3>
+            </ScalableText>
             <div
               className="relative flex shrink-0 items-center gap-2"
               onClickCapture={(e) => {
