@@ -276,6 +276,15 @@ export type Recipe = {
     sourceProfileName?: string;
     /** Target beer style name for reference (e.g., "NEIPA", "American Pale Ale") */
     targetStyleName?: string;
+    /** Custom target profile when user defines their own target (not a built-in style) */
+    customTargetProfile?: {
+      Ca: number;
+      Mg: number;
+      Na: number;
+      Cl: number;
+      SO4: number;
+      HCO3: number;
+    };
   };
 
   /** Fermentation schedule - list of fermentation steps */

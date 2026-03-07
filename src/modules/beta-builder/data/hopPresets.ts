@@ -23,7 +23,9 @@ export type HopCategory =
   | "New Zealand Hops"
   | "Australian Hops"
   | "English Hops"
-  | "German Hops";
+  | "German Hops"
+  | "Custom"
+  | (string & {});
 
 /**
  * Groups hops by category
@@ -41,7 +43,7 @@ export function groupHops(
     groups[category].push(preset);
   }
 
-  // Return groups in preferred order
+  // Return groups in preferred order, with any remaining categories appended
   const categoryOrder: string[] = [
     "US Hops",
     "Noble Hops",
@@ -51,7 +53,12 @@ export function groupHops(
     "German Hops",
   ];
 
-  return categoryOrder
+  // Append any categories not in the preferred order (e.g., "Custom")
+  const remainingCategories = Object.keys(groups).filter(
+    (cat) => !categoryOrder.includes(cat)
+  );
+
+  return [...categoryOrder, ...remainingCategories]
     .filter((label) => groups[label] && groups[label].length > 0)
     .map((label) => ({
       label: label as HopCategory,

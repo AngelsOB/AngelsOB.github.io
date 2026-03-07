@@ -4,11 +4,13 @@
  * Target Style Modal Component
  *
  * Uses PresetPickerModal (same as grains/hops/yeast) for consistent UX.
+ * Supports creating custom target profiles via CustomTargetStyleModal.
  */
 
 import { useState, useMemo } from "react";
-import { BEER_STYLE_TARGETS } from "../../domain/services/WaterChemistryService";
+import { BEER_STYLE_TARGETS, type WaterProfile } from "../../domain/services/WaterChemistryService";
 import PresetPickerModal from "./PresetPickerModal";
+import CustomTargetStyleModal from "./CustomTargetStyleModal";
 
 type StylePreset = {
   name: string;
@@ -56,6 +58,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (styleName: string) => void;
+  onSelectCustom: (profile: WaterProfile, name: string) => void;
   currentStyleName?: string;
 };
 
@@ -63,9 +66,11 @@ export default function TargetStyleModal({
   isOpen,
   onClose,
   onSelect,
+  onSelectCustom,
   currentStyleName: _currentStyleName,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
   const filteredGroups = useMemo(() => {
     if (!searchQuery.trim()) return ALL_GROUPS;
@@ -86,48 +91,59 @@ export default function TargetStyleModal({
     setSearchQuery("");
   };
 
+  const handleCustomSave = (profile: WaterProfile, name: string) => {
+    onSelectCustom(profile, name);
+    onClose();
+    setSearchQuery("");
+  };
+
   return (
-    <PresetPickerModal<StylePreset>
-      isOpen={isOpen}
-      onClose={() => {
-        onClose();
-        setSearchQuery("");
-      }}
-      title="Select Target Water Style"
-      searchPlaceholder="Search styles..."
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-      showFilters={false}
-      onToggleFilters={() => {}}
-      groups={filteredGroups}
-      isLoading={false}
-      emptyMessage="No styles found"
-      renderItem={(preset) => (
-          <button
-            key={preset.name}
-            onClick={() => handleSelect(preset)}
-            className="brew-picker-row flex flex-col gap-1"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-semibold">{preset.name}</span>
-              <span className="brew-tag text-[10px] ml-2 shrink-0">
-                {preset.clToSo4Ratio}
-              </span>
-            </div>
-            <p className="text-xs text-muted mb-2">{preset.description}</p>
-            <div className="flex gap-4 text-xs text-muted">
-              <span>Ca <strong className="text-[var(--fg-strong)]">{preset.ca}</strong></span>
-              <span>Cl <strong className="text-[var(--fg-strong)]">{preset.cl}</strong></span>
-              <span>SO₄ <strong className="text-[var(--fg-strong)]">{preset.so4}</strong></span>
-            </div>
-          </button>
-      )}
-      totalCount={ALL_PRESETS.length}
-      countLabel="styles available"
-      onCreateCustom={() => {
-        // No custom creation for target styles — just close
-        onClose();
-      }}
-    />
+    <>
+      <PresetPickerModal<StylePreset>
+        isOpen={isOpen}
+        onClose={() => {
+          onClose();
+          setSearchQuery("");
+        }}
+        title="Select Target Water Style"
+        searchPlaceholder="Search styles..."
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        showFilters={false}
+        onToggleFilters={() => {}}
+        groups={filteredGroups}
+        isLoading={false}
+        emptyMessage="No styles found"
+        renderItem={(preset) => (
+            <button
+              key={preset.name}
+              onClick={() => handleSelect(preset)}
+              className="brew-picker-row flex flex-col gap-1"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold">{preset.name}</span>
+                <span className="brew-tag text-[10px] ml-2 shrink-0">
+                  {preset.clToSo4Ratio}
+                </span>
+              </div>
+              <p className="text-xs text-muted mb-2">{preset.description}</p>
+              <div className="flex gap-4 text-xs text-muted">
+                <span>Ca <strong className="text-[var(--fg-strong)]">{preset.ca}</strong></span>
+                <span>Cl <strong className="text-[var(--fg-strong)]">{preset.cl}</strong></span>
+                <span>SO₄ <strong className="text-[var(--fg-strong)]">{preset.so4}</strong></span>
+              </div>
+            </button>
+        )}
+        totalCount={ALL_PRESETS.length}
+        countLabel="styles available"
+        onCreateCustom={() => setIsCustomModalOpen(true)}
+      />
+
+      <CustomTargetStyleModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={handleCustomSave}
+      />
+    </>
   );
 }
