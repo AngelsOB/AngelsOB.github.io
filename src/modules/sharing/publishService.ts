@@ -27,10 +27,13 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
     ? [...new Set(recipe.hops.map((h) => h.name))]
     : [];
 
-  // Preserve existing forkCount
+  // Preserve existing forkCount and rating aggregates
   const indexRef = doc(db, 'publicRecipeIndex', recipe.id);
   const indexSnap = await getDoc(indexRef);
-  const forkCount = indexSnap.exists() ? (indexSnap.data()?.forkCount ?? 0) : 0;
+  const existingData = indexSnap.exists() ? indexSnap.data() : null;
+  const forkCount = existingData?.forkCount ?? 0;
+  const ratingSum = existingData?.ratingSum ?? 0;
+  const ratingCount = existingData?.ratingCount ?? 0;
 
   // Write publicRecipeIndex entry
   await setDoc(indexRef, {
@@ -51,6 +54,8 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
     createdAt: recipe.createdAt,
     publishedAt: recipe.publishedAt || now,
     forkCount,
+    ratingSum,
+    ratingCount,
   });
 
   return slug;

@@ -34,6 +34,14 @@
       ]
     },
     {
+      "collectionGroup": "publicRecipeIndex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerId", "order": "ASCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "brewSessions",
       "queryScope": "COLLECTION",
       "fields": [

@@ -6,7 +6,10 @@ import BetaBuilderPage from '@/modules/beta-builder/presentation/components/Beta
 interface PublicRecipeClientProps {
   recipe?: Recipe
   ownerName?: string
+  ownerId?: string
   slug: string
+  ratingAvg?: number
+  ratingCount?: number
 }
 
 /**
@@ -18,7 +21,10 @@ interface PublicRecipeClientProps {
 export default function PublicRecipeClient({
   recipe,
   ownerName = 'Anonymous Brewer',
+  ownerId,
   slug: _slug,
+  ratingAvg,
+  ratingCount,
 }: PublicRecipeClientProps) {
   if (!recipe) {
     return (
@@ -33,5 +39,13 @@ export default function PublicRecipeClient({
     )
   }
 
-  return <BetaBuilderPage sharedRecipe={recipe} sharedOwnerName={ownerName} />
+  return (
+    <BetaBuilderPage
+      sharedRecipe={recipe}
+      sharedOwnerName={ownerName}
+      sharedOwnerId={ownerId}
+      sharedRatingAvg={ratingAvg}
+      sharedRatingCount={ratingCount}
+    />
+  )
 }
