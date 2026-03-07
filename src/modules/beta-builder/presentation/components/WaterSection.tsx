@@ -101,6 +101,17 @@ export default function WaterSection({ calculations, recipe }: Props) {
       waterChemistry: {
         ...waterChem,
         targetStyleName: styleName,
+        customTargetProfile: undefined,
+      },
+    });
+  };
+
+  const handleCustomTargetChange = (profile: WaterProfile, name: string) => {
+    updateRecipe({
+      waterChemistry: {
+        ...waterChem,
+        targetStyleName: name,
+        customTargetProfile: profile,
       },
     });
   };
@@ -165,8 +176,14 @@ export default function WaterSection({ calculations, recipe }: Props) {
     return null;
   }
 
-  // Get target profile for comparison
-  const targetStyle = BEER_STYLE_TARGETS[waterChem.targetStyleName || "Balanced"];
+  // Get target profile for comparison — use custom profile if set, else look up built-in style
+  const targetStyle = BEER_STYLE_TARGETS[waterChem.targetStyleName || "Balanced"]
+    || (waterChem.customTargetProfile
+      ? {
+          profile: waterChem.customTargetProfile,
+          clToSo4Ratio: `${waterChem.customTargetProfile.SO4 > 0 ? (waterChem.customTargetProfile.Cl / waterChem.customTargetProfile.SO4).toFixed(1) : "∞"}:1`,
+        }
+      : undefined);
 
   return (
     <div className="brew-section brew-animate-in brew-stagger-6" data-accent="water">
@@ -227,6 +244,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
         isOpen={isTargetModalOpen}
         onClose={() => setIsTargetModalOpen(false)}
         onSelect={handleTargetStyleChange}
+        onSelectCustom={handleCustomTargetChange}
         currentStyleName={waterChem.targetStyleName}
       />
 

@@ -23,6 +23,7 @@ import { hopFlavorCalculationService } from "../../domain/services/HopFlavorCalc
 import HopFlavorMini from "./HopFlavorMini";
 import HopFlavorRadar from "./HopFlavorRadar";
 import HopVarietyCard from "./HopVarietyCard";
+import { toast } from "../../../../stores/toastStore";
 import CustomHopModal from "./CustomHopModal";
 import PresetPickerModal from "./PresetPickerModal";
 
@@ -227,6 +228,7 @@ export default function HopSection() {
   // Handle saving a custom hop preset
   const handleSaveCustomPreset = (preset: HopPreset) => {
     saveHopPreset(preset);
+    toast.success(`"${preset.name}" saved — select it from the list to add`);
   };
 
   return (
