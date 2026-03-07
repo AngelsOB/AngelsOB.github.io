@@ -28,6 +28,9 @@ function getRecipeRepo() {
   return user ? new FirestoreRecipeRepository(user.uid) : null;
 }
 
+/** IDs of recipes deleted this session — prevents stale network responses from restoring them */
+const deletedIds = new Set<string>();
+
 type RecipeStore = {
   // State (like @Published properties)
   recipes: Recipe[];
@@ -101,7 +104,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         // Cache hit callback — show stale data immediately
         (cachedRecipes) => {
           set({
-            recipes: cachedRecipes,
+            recipes: cachedRecipes.filter((r) => !deletedIds.has(r.id)),
             isLoading: false,
             recipesLoaded: true,
           });
@@ -110,7 +113,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         // Network response — update with fresh data
         (freshRecipes) => {
           set({
-            recipes: freshRecipes,
+            recipes: freshRecipes.filter((r) => !deletedIds.has(r.id)),
             isLoading: false,
             recipesLoaded: true,
           });
@@ -347,30 +350,51 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
   // Delete a recipe
   deleteRecipe: (id: RecipeId) => {
+    // Optimistic update — remove from UI immediately
+    const previousRecipes = get().recipes;
+    const recipe = previousRecipes.find((r) => r.id === id);
+    const current = get().currentRecipe;
+    if (current?.id === id) set({ currentRecipe: null });
+    set({ recipes: previousRecipes.filter((r) => r.id !== id), error: null });
+    deletedIds.add(id);
+
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
-      const recipe = get().recipes.find((r) => r.id === id);
       firestoreRepo.deleteAsync(id).then(
         () => {
           // Also remove from publicRecipeIndex if the recipe was published
           if (recipe?.isPublic) {
             unpublishRecipe(id).catch(() => {});
           }
-          const current = get().currentRecipe;
-          if (current?.id === id) set({ currentRecipe: null });
-          set({ recipes: get().recipes.filter((r) => r.id !== id), error: null });
         },
-        () => set({ error: 'Failed to delete recipe' }),
+        (err) => {
+          console.error('[Firestore] Failed to delete recipe:', err);
+          // Rollback on failure
+          deletedIds.delete(id);
+          set({ recipes: previousRecipes, error: null });
+          toast.error('Failed to delete recipe');
+        },
       );
       return;
     }
+
+    // Guard: if user was signed in (recipe came from Firestore) but auth state
+    // is briefly null, don't silently fall through to localStorage deletion
+    if (recipe && !recipeRepository.loadById(recipe.id)) {
+      console.error('[RecipeStore] Auth state lost during delete — recipe not removed from Firestore');
+      deletedIds.delete(id);
+      set({ recipes: previousRecipes, error: null });
+      toast.error('Please try deleting again');
+      return;
+    }
+
     try {
       recipeRepository.delete(id);
-      const current = get().currentRecipe;
-      if (current?.id === id) set({ currentRecipe: null });
-      set({ recipes: get().recipes.filter((r) => r.id !== id), error: null });
     } catch {
-      set({ error: 'Failed to delete recipe' });
+      // Rollback on failure
+      deletedIds.delete(id);
+      set({ recipes: previousRecipes, error: null });
+      toast.error('Failed to delete recipe');
     }
   },
 
