@@ -111,7 +111,7 @@ export class FirestoreRecipeRepository {
 
   async saveAsync(recipe: Recipe): Promise<void> {
     const docRef = doc(this.recipesRef, recipe.id);
-    const { id, ...data } = recipe;
+    const { id: _id, ...data } = recipe;
     // JSON round-trip strips undefined values at all nesting levels
     // (Firestore rejects documents containing undefined)
     const clean = JSON.parse(JSON.stringify({

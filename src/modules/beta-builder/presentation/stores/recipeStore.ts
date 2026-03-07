@@ -359,7 +359,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     deletedIds.add(id);
 
     const firestoreRepo = getRecipeRepo();
+    const user = useAuthStore.getState().user;
     if (firestoreRepo) {
+      console.error('[DeleteDebug] recipeId:', id, 'authUid:', user?.uid, 'recipe.ownerId:', (recipe as Record<string, unknown>)?.ownerId);
       firestoreRepo.deleteAsync(id).then(
         () => {
           // Also remove from publicRecipeIndex if the recipe was published

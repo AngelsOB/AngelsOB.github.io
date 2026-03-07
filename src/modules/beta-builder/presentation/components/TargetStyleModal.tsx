@@ -1,12 +1,56 @@
+'use client';
+
 /**
  * Target Style Modal Component
  *
- * Modal for selecting beer style-based water profiles
- * Follows the same pattern as FermentableSection, HopSection, YeastSection modals
+ * Uses PresetPickerModal (same as grains/hops/yeast) for consistent UX.
  */
 
+import { useState, useMemo } from "react";
 import { BEER_STYLE_TARGETS } from "../../domain/services/WaterChemistryService";
-import ModalOverlay from "./ModalOverlay";
+import PresetPickerModal from "./PresetPickerModal";
+
+type StylePreset = {
+  name: string;
+  description: string;
+  clToSo4Ratio: string;
+  ca: number;
+  cl: number;
+  so4: number;
+};
+
+const STYLE_CATEGORIES: Record<string, string[]> = {
+  "Hoppy Ales": ["West Coast IPA", "American IPA", "American Pale Ale", "NEIPA / Hazy IPA", "English IPA"],
+  Lagers: ["Pilsner", "German Pilsner", "Munich Helles"],
+  "Dark Ales": ["Stout / Porter", "Irish Stout", "Brown Ale"],
+  "Belgian & Other": ["Belgian Ale", "Blonde / Cream Ale", "Balanced"],
+};
+
+function buildPresets(): { groups: { label: string; items: StylePreset[] }[]; all: StylePreset[] } {
+  const groups: { label: string; items: StylePreset[] }[] = [];
+  const all: StylePreset[] = [];
+  for (const [category, styles] of Object.entries(STYLE_CATEGORIES)) {
+    const items: StylePreset[] = [];
+    for (const name of styles) {
+      const t = BEER_STYLE_TARGETS[name];
+      if (!t) continue;
+      const preset: StylePreset = {
+        name,
+        description: t.description,
+        clToSo4Ratio: t.clToSo4Ratio,
+        ca: t.profile.Ca,
+        cl: t.profile.Cl,
+        so4: t.profile.SO4,
+      };
+      items.push(preset);
+      all.push(preset);
+    }
+    groups.push({ label: category, items });
+  }
+  return { groups, all };
+}
+
+const { groups: ALL_GROUPS, all: ALL_PRESETS } = buildPresets();
 
 type Props = {
   isOpen: boolean;
@@ -15,121 +59,80 @@ type Props = {
   currentStyleName?: string;
 };
 
-// Categorize styles for better organization
-const STYLE_CATEGORIES = {
-  "Hoppy Ales": [
-    "West Coast IPA",
-    "American IPA",
-    "American Pale Ale",
-    "NEIPA / Hazy IPA",
-    "English IPA",
-  ],
-  "Lagers": [
-    "Pilsner",
-    "German Pilsner",
-    "Munich Helles",
-  ],
-  "Dark Ales": [
-    "Stout / Porter",
-    "Irish Stout",
-    "Brown Ale",
-  ],
-  "Belgian & Other": [
-    "Belgian Ale",
-    "Blonde / Cream Ale",
-    "Balanced",
-  ],
-};
-
 export default function TargetStyleModal({
   isOpen,
   onClose,
   onSelect,
   currentStyleName,
 }: Props) {
-  if (!isOpen) return null;
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSelect = (styleName: string) => {
-    onSelect(styleName);
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return ALL_GROUPS;
+    const q = searchQuery.toLowerCase();
+    return ALL_GROUPS
+      .map((g) => ({
+        label: g.label,
+        items: g.items.filter(
+          (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+        ),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [searchQuery]);
+
+  const handleSelect = (preset: StylePreset) => {
+    onSelect(preset.name);
     onClose();
+    setSearchQuery("");
   };
 
   return (
-    <ModalOverlay isOpen={isOpen} onClose={onClose} size="3xl">
-        {/* Header */}
-        <div className="border-b border-[rgb(var(--brew-border-subtle))] px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Select Target Water Style</h2>
-            <button
-              onClick={onClose}
-              aria-label="Close modal"
-              className="text-[var(--fg-muted)] hover:text-[var(--fg-strong)] transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <p className="text-sm text-muted mt-2">
-            Choose a beer style to get target water profile recommendations
-          </p>
-        </div>
-
-        <div className="px-6 py-4 space-y-6 overflow-y-auto">
-          {Object.entries(STYLE_CATEGORIES).map(([category, styles]) => (
-            <div key={category}>
-              <h3 className="text-sm font-bold uppercase mb-3 text-muted" style={{ letterSpacing: 'var(--brew-tracking-wide)' }}>
-                {category}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {styles.map((styleName) => {
-                  const target = BEER_STYLE_TARGETS[styleName];
-                  if (!target) return null;
-
-                  const isSelected = currentStyleName === styleName;
-
-                  return (
-                    <button
-                      key={styleName}
-                      onClick={() => handleSelect(styleName)}
-                      className={`text-left p-4 rounded-lg transition-all duration-150 ${
-                        isSelected
-                          ? "brew-chip-active"
-                          : "brew-ingredient-row"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-semibold">
-                          {styleName}
-                        </div>
-                        <span className="brew-tag text-[10px]">
-                          {target.clToSo4Ratio}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted mb-3">
-                        {target.description}
-                      </p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="brew-gauge p-2 rounded-lg">
-                          <div className="text-muted text-[10px]">Ca</div>
-                          <div className="font-semibold">{target.profile.Ca}</div>
-                        </div>
-                        <div className="brew-gauge p-2 rounded-lg">
-                          <div className="text-muted text-[10px]">Cl</div>
-                          <div className="font-semibold">{target.profile.Cl}</div>
-                        </div>
-                        <div className="brew-gauge p-2 rounded-lg">
-                          <div className="text-muted text-[10px]">SO4</div>
-                          <div className="font-semibold">{target.profile.SO4}</div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+    <PresetPickerModal<StylePreset>
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setSearchQuery("");
+      }}
+      title="Select Target Water Style"
+      searchPlaceholder="Search styles..."
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      showFilters={false}
+      onToggleFilters={() => {}}
+      groups={filteredGroups}
+      isLoading={false}
+      emptyMessage="No styles found"
+      renderItem={(preset) => {
+        const isSelected = currentStyleName === preset.name;
+        return (
+          <button
+            key={preset.name}
+            onClick={() => handleSelect(preset)}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+              isSelected ? "brew-chip-active" : "brew-ingredient-row"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold">{preset.name}</span>
+              <span className="brew-tag text-[10px] ml-2 shrink-0">
+                {preset.clToSo4Ratio}
+              </span>
             </div>
-          ))}
-        </div>
-    </ModalOverlay>
+            <p className="text-xs text-muted mb-2">{preset.description}</p>
+            <div className="flex gap-4 text-xs text-muted">
+              <span>Ca <strong className="text-[var(--fg-strong)]">{preset.ca}</strong></span>
+              <span>Cl <strong className="text-[var(--fg-strong)]">{preset.cl}</strong></span>
+              <span>SO₄ <strong className="text-[var(--fg-strong)]">{preset.so4}</strong></span>
+            </div>
+          </button>
+        );
+      }}
+      totalCount={ALL_PRESETS.length}
+      countLabel="styles available"
+      onCreateCustom={() => {
+        // No custom creation for target styles — just close
+        onClose();
+      }}
+    />
   );
 }
