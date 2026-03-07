@@ -77,15 +77,11 @@ export default function SourceWaterModal({
         groups={filteredGroups}
         isLoading={false}
         emptyMessage="No water profiles found"
-        renderItem={(preset) => {
-          const isSelected = currentProfileName === preset.name;
-          return (
+        renderItem={(preset) => (
             <button
               key={preset.name}
               onClick={() => handleSelect(preset)}
-              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                isSelected ? "brew-chip-active" : "brew-ingredient-row"
-              }`}
+              className="brew-picker-row flex flex-col gap-1"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{preset.name}</span>
@@ -97,8 +93,7 @@ export default function SourceWaterModal({
                 Mg {preset.profile.Mg} · Na {preset.profile.Na} · HCO₃ {preset.profile.HCO3}
               </div>
             </button>
-          );
-        }}
+        )}
         totalCount={ALL_PRESETS.length}
         countLabel="profiles available"
         onCreateCustom={() => setIsCustomModalOpen(true)}
