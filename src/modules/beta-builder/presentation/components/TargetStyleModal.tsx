@@ -102,15 +102,11 @@ export default function TargetStyleModal({
       groups={filteredGroups}
       isLoading={false}
       emptyMessage="No styles found"
-      renderItem={(preset) => {
-        const isSelected = currentStyleName === preset.name;
-        return (
+      renderItem={(preset) => (
           <button
             key={preset.name}
             onClick={() => handleSelect(preset)}
-            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-              isSelected ? "brew-chip-active" : "brew-ingredient-row"
-            }`}
+            className="brew-picker-row flex flex-col gap-1"
           >
             <div className="flex items-center justify-between mb-1">
               <span className="font-semibold">{preset.name}</span>
@@ -125,8 +121,7 @@ export default function TargetStyleModal({
               <span>SO₄ <strong className="text-[var(--fg-strong)]">{preset.so4}</strong></span>
             </div>
           </button>
-        );
-      }}
+      )}
       totalCount={ALL_PRESETS.length}
       countLabel="styles available"
       onCreateCustom={() => {

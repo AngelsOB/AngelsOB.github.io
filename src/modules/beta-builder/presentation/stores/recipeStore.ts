@@ -18,10 +18,10 @@ import { beerXmlImportService } from '../../domain/services/BeerXmlImportService
 import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
 import { toast } from '../../../../stores/toastStore';
 import { useAuthStore } from '../../../auth/authStore';
+import { auth } from '@/config/firebase';
 import { generateShareSlug } from '../../../sharing/slugUtils';
-import { unpublishRecipe } from '../../../sharing/publishService';
-import { usePreferencesStore } from '../../../auth/preferencesStore';
 import { syncPublicIndex } from '../../../sharing/publishService';
+import { usePreferencesStore } from '../../../auth/preferencesStore';
 
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;
@@ -352,41 +352,29 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   deleteRecipe: (id: RecipeId) => {
     // Optimistic update — remove from UI immediately
     const previousRecipes = get().recipes;
-    const recipe = previousRecipes.find((r) => r.id === id);
     const current = get().currentRecipe;
     if (current?.id === id) set({ currentRecipe: null });
     set({ recipes: previousRecipes.filter((r) => r.id !== id), error: null });
     deletedIds.add(id);
 
-    const firestoreRepo = getRecipeRepo();
     const user = useAuthStore.getState().user;
-    if (firestoreRepo) {
-      console.error('[DeleteDebug] recipeId:', id, 'authUid:', user?.uid, 'recipe.ownerId:', (recipe as Record<string, unknown>)?.ownerId);
-      firestoreRepo.deleteAsync(id).then(
-        () => {
-          // Also remove from publicRecipeIndex if the recipe was published
-          if (recipe?.isPublic) {
-            unpublishRecipe(id).catch(() => {});
-          }
-        },
-        (err) => {
-          console.error('[Firestore] Failed to delete recipe:', err);
-          // Rollback on failure
-          deletedIds.delete(id);
-          set({ recipes: previousRecipes, error: null });
-          toast.error('Failed to delete recipe');
-        },
-      );
-      return;
-    }
-
-    // Guard: if user was signed in (recipe came from Firestore) but auth state
-    // is briefly null, don't silently fall through to localStorage deletion
-    if (recipe && !recipeRepository.loadById(recipe.id)) {
-      console.error('[RecipeStore] Auth state lost during delete — recipe not removed from Firestore');
-      deletedIds.delete(id);
-      set({ recipes: previousRecipes, error: null });
-      toast.error('Please try deleting again');
+    if (user) {
+      // Server-side delete via admin SDK (bypasses Firestore security rules)
+      auth.currentUser?.getIdToken().then((token) =>
+        fetch('/api/recipes/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ recipeId: id }),
+        }),
+      ).then((res) => {
+        if (!res?.ok) throw new Error('Server delete failed');
+      }).catch((err) => {
+        console.error('[API] Failed to delete recipe:', err);
+        // Rollback on failure
+        deletedIds.delete(id);
+        set({ recipes: previousRecipes, error: null });
+        toast.error('Failed to delete recipe');
+      });
       return;
     }
 
