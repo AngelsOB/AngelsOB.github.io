@@ -1,7 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
 import React from "react";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
+import { ionDeltaFromSalts } from "@/utils/water";
 
 /**
  * Generate handwritten "margin scribble" lines for each sidebar section.
@@ -197,11 +197,16 @@ export function getScribbleLines(
       if (recipe.waterChemistry) {
         const wc = recipe.waterChemistry;
         if (wc.sourceProfileName) left.push(<span key="profile">{wc.sourceProfileName}</span>);
-        const { SO4, Cl } = wc.sourceProfile;
-        if (Cl > 0)
+        const totalWaterL = calculations?.totalWaterL ?? 0;
+        const saltDelta = totalWaterL > 0
+          ? ionDeltaFromSalts(wc.saltAdditions, totalWaterL)
+          : { Ca: 0, Mg: 0, Na: 0, Cl: 0, SO4: 0, HCO3: 0 };
+        const finalSO4 = wc.sourceProfile.SO4 + saltDelta.SO4;
+        const finalCl = wc.sourceProfile.Cl + saltDelta.Cl;
+        if (finalCl > 0)
           left.push(
             <span key="ratio">
-              SO₄:Cl <strong>{(SO4 / Cl).toFixed(1)}</strong>
+              SO₄:Cl <strong>{(finalSO4 / finalCl).toFixed(1)}</strong>
             </span>
           );
         const sa = wc.saltAdditions;

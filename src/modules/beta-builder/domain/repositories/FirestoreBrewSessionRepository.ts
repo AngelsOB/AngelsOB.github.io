@@ -69,7 +69,7 @@ export class FirestoreBrewSessionRepository {
 
   async saveAsync(session: BrewSession): Promise<void> {
     const docRef = doc(this.sessionsRef, session.id);
-    const { id, ...data } = session;
+    const { id: _id, ...data } = session;
     // JSON round-trip strips undefined values (Firestore rejects them)
     const clean = JSON.parse(JSON.stringify({
       ...data,
