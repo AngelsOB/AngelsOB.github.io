@@ -344,6 +344,64 @@ export function BrowseCard({
           </div>
         </div>
 
+        {/* Rating */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => {
+                const avg = recipe.ratingAvg ?? 0;
+                // fraction: 1 = full, 0 = empty, 0.0–0.99 = partial
+                const fraction = Math.min(1, Math.max(0, avg - (star - 1)));
+                const pct = Math.round(fraction * 100);
+                const gradientId = `star-${recipe.id}-${star}`;
+                return (
+                  <svg
+                    key={star}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {pct > 0 && pct < 100 && (
+                      <defs>
+                        <linearGradient id={gradientId}>
+                          <stop offset={`${pct}%`} stopColor="var(--brew-accent-500)" />
+                          <stop offset={`${pct}%`} stopColor="transparent" />
+                        </linearGradient>
+                      </defs>
+                    )}
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                      fill={
+                        pct === 100
+                          ? 'var(--brew-accent-500)'
+                          : pct > 0
+                          ? `url(#${gradientId})`
+                          : 'none'
+                      }
+                      stroke={
+                        pct > 0 ? 'var(--brew-accent-500)' : 'var(--brew-accent-300)'
+                      }
+                    />
+                  </svg>
+                );
+              })}
+            </div>
+            {(recipe.ratingCount ?? 0) > 0 ? (
+              <span className="text-xs font-semibold" style={{ color: 'var(--brew-accent-700)' }}>
+                {(recipe.ratingAvg ?? 0).toFixed(1)}
+                <span className="ml-1 font-normal text-[var(--fg-muted)]">
+                  ({recipe.ratingCount})
+                </span>
+              </span>
+            ) : (
+              <span className="text-xs text-[var(--fg-muted)] opacity-60">No ratings yet</span>
+            )}
+          </div>
+        </div>
+
         {/* Tags */}
         {recipe.tags.length > 0 && (
           <div className="px-4 pb-3">
@@ -368,21 +426,16 @@ export function BrowseCard({
                 ? new Date(recipe.publishedAt).toLocaleDateString()
                 : ''}
             </span>
-            {(recipe.ratingCount ?? 0) > 0 && (
-              <span className="flex items-center gap-1">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="var(--brew-accent-500)"
-                  stroke="none"
-                >
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            {(recipe.forkCount ?? 0) > 0 && (
+              <span className="flex items-center gap-1 opacity-60">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="18" r="3" />
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="18" cy="6" r="3" />
+                  <path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" />
+                  <path d="M12 12v3" />
                 </svg>
-                <span className="font-medium" style={{ color: 'var(--brew-accent-700)' }}>
-                  {(recipe.ratingAvg ?? 0).toFixed(1)}
-                </span>
-                <span className="opacity-60">({recipe.ratingCount})</span>
+                {recipe.forkCount} {recipe.forkCount === 1 ? 'fork' : 'forks'}
               </span>
             )}
           </div>
