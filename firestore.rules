@@ -54,6 +54,10 @@ service cloud.firestore {
                               && request.auth.uid == request.resource.data.ownerId;
       allow delete: if request.auth != null
                      && request.auth.uid == resource.data.ownerId;
+      // Allow any signed-in user to increment rating/fork counters only
+      allow update: if request.auth != null
+                     && request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['ratingSum', 'ratingCount', 'forkCount']);
     }
 
     // Ratings: compound doc ID = {recipeId}__{userId}
@@ -63,12 +67,12 @@ service cloud.firestore {
       allow create: if request.auth != null
                      && request.resource.data.userId == request.auth.uid
                      && ratingId.matches('.*__' + request.auth.uid)
-                     && request.resource.data.value is int
+                     && request.resource.data.value is number
                      && request.resource.data.value >= 1
                      && request.resource.data.value <= 5;
       allow update: if request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && request.resource.data.value is int
+                     && request.resource.data.value is number
                      && request.resource.data.value >= 1
                      && request.resource.data.value <= 5;
       allow delete: if request.auth != null
