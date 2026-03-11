@@ -129,7 +129,7 @@ export default function VersionHistoryModal({ recipe, isOpen, onClose }: Version
               <div
                 role="button"
                 tabIndex={0}
-                className="mb-4 p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:shadow-md hover:border-[var(--brew-accent-400)] transition-all bg-[rgb(var(--brew-card)/0.6)] cursor-pointer"
+                className="mb-4 p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:shadow-md hover:border-[var(--brew-accent-400)] transition-all bg-[color-mix(in oklch, var(--brew-card) 60%, transparent)] cursor-pointer"
                 onClick={() => {
                   router.push(`/recipes/${recipe.id}/versions/${version!.versionNumber}`);
                 }}

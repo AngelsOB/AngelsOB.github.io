@@ -80,7 +80,7 @@ export default function RecipeSessionsBar({
 
   return (
     <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation" className="group">
-      <div className="mt-[3px] mx-auto w-[96%] rounded-b-lg bg-[rgb(var(--card))] border border-[rgb(var(--border))] border-t-0 shadow-sm relative z-0 transition-all duration-200 ease-out group-hover:bg-gray-100 dark:group-hover:bg-gray-800/60 group-hover:scale-[0.99]">
+      <div className="mt-[3px] mx-auto w-[96%] rounded-b-lg bg-[var(--card)] border border-[rgb(var(--border))] border-t-0 shadow-sm relative z-0 transition-all duration-200 ease-out group-hover:bg-gray-100 dark:group-hover:bg-gray-800/60 group-hover:scale-[0.99]">
         {/* Expanded Session List */}
         <div
           className={`overflow-hidden transition-all duration-400 ease-out origin-bottom ${
@@ -100,7 +100,7 @@ export default function RecipeSessionsBar({
                   router.push(`/recipes/sessions/${session.id}`);
                 }}
                 onKeyDown={(e) => handleSessionKeyDown(e, session.id)}
-                className="px-4 py-3 hover:bg-[rgb(var(--bg))] cursor-pointer transition-colors focus:outline-none focus:bg-[rgb(var(--bg))]"
+                className="px-4 py-3 hover:bg-[var(--bg)] cursor-pointer transition-colors focus:outline-none focus:bg-[var(--bg)]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

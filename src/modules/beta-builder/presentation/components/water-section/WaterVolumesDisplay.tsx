@@ -29,9 +29,13 @@ export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
     (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
   const postBoilHotL = Math.max(0, calculations.preBoilVolumeL - boilOffL);
 
+  const borderBase = "1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))";
   const cardStyle: React.CSSProperties = {
-    background: "color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))",
-    border: "1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))",
+    background: "color-mix(in oklch, var(--brew-accent-900) 15%, color-mix(in oklch, var(--brew-card-inset) 35%, transparent))",
+    borderTop: borderBase,
+    borderRight: borderBase,
+    borderBottom: borderBase,
+    borderLeft: borderBase,
     boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.04)",
   };
 
@@ -127,7 +131,7 @@ export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
           className="mt-3 rounded-lg px-4 py-2.5 flex items-center gap-3 flex-wrap"
           style={{
             ...cardStyle,
-            background: "color-mix(in oklch, var(--brew-accent-900) 10%, rgb(var(--brew-card-inset) / 0.2))",
+            background: "color-mix(in oklch, var(--brew-accent-900) 10%, color-mix(in oklch, var(--brew-card-inset) 20%, transparent))",
           }}
         >
           {/* Pre-Boil SG */}

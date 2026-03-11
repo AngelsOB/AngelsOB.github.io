@@ -4,12 +4,15 @@ import NavBar from "../src/components/NavBar";
 import Footer from "../src/components/Footer";
 import Toaster from "../src/components/Toaster";
 import AuthProvider from "../src/modules/auth/components/AuthProvider";
+import { useSrmTheme } from "../src/hooks/useSrmTheme";
 
 export default function ClientShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useSrmTheme();
+
   return (
     <AuthProvider>
       <div className="min-h-dvh text-[rgb(var(--text))] transition-colors">

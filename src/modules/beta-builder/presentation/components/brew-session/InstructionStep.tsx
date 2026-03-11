@@ -12,7 +12,7 @@ export function InstructionStep({
   children,
 }: InstructionStepProps) {
   return (
-    <div className="rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--card))] p-4">
+    <div className="rounded-lg border border-[rgb(var(--border))] bg-[var(--card)] p-4">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center">
           {number}

@@ -3,9 +3,9 @@ import Typewriter from "@/components/Typewriter";
 
 export default function Home() {
   return (
-    <div className="-mx-4 -mt-6 sm:-mx-6 lg:-mx-8">
+    <div className="-mt-6">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden px-4 pt-12 pb-14 sm:px-6 sm:pt-24 sm:pb-28 lg:px-8">
+      <section className="full-bleed relative overflow-hidden pt-12 pb-14 sm:pt-24 sm:pb-28">
         {/* Warm ambient glow */}
         <div
           className="pointer-events-none absolute inset-0"
@@ -19,7 +19,7 @@ export default function Home() {
 
         {/* Decorative hop cone — layered petal watermark */}
         <div
-          className="pointer-events-none absolute top-1/2 -right-12 w-[280px] -translate-y-[45%] opacity-[0.06] sm:right-0 sm:w-[360px] lg:right-[4%] lg:w-[420px] dark:opacity-[0.035]"
+          className="pointer-events-none absolute top-1/2 right-[max(0px,calc(50%-38rem))] w-[280px] -translate-y-[45%] opacity-[0.06] sm:w-[360px] lg:w-[420px] dark:opacity-[0.035]"
           aria-hidden="true"
         >
           <svg viewBox="0 0 240 320" className="h-auto w-full">
@@ -52,7 +52,7 @@ export default function Home() {
           </svg>
         </div>
 
-        <div className="brew-animate-in relative mx-auto max-w-3xl">
+        <div className="brew-animate-in relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="brew-animate-in brew-stagger-1">
             <span
               className="mb-6 inline-block text-xs font-bold tracking-[0.2em] uppercase"

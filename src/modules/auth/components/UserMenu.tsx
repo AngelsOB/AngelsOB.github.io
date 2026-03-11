@@ -10,6 +10,8 @@ export default function UserMenu() {
   const signOut = useAuthStore((s) => s.signOut);
   const defaultRecipePublic = usePreferencesStore((s) => s.defaultRecipePublic);
   const setDefaultRecipePublic = usePreferencesStore((s) => s.setDefaultRecipePublic);
+  const attenuationModel = usePreferencesStore((s) => s.attenuationModel);
+  const setAttenuationModel = usePreferencesStore((s) => s.setAttenuationModel);
   const loadPreferences = usePreferencesStore((s) => s.loadPreferences);
   const isLoaded = usePreferencesStore((s) => s.isLoaded);
   const [open, setOpen] = useState(false);
@@ -69,7 +71,7 @@ export default function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-56 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--surface))] shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-56 rounded-lg border border-[rgb(var(--border))] bg-[var(--surface)] shadow-lg z-50">
           <div className="px-4 py-3 border-b border-[rgb(var(--border))]">
             <p className="text-sm font-medium text-[var(--fg-strong)] truncate">
               {user.displayName}
@@ -80,7 +82,7 @@ export default function UserMenu() {
           </div>
 
           {/* Preferences */}
-          <div className="px-4 py-2.5 border-b border-[rgb(var(--border))]">
+          <div className="px-4 py-2.5 border-b border-[rgb(var(--border))] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--fg-muted)]">New recipes</span>
               <button
@@ -98,6 +100,23 @@ export default function UserMenu() {
                 style={{ color: 'var(--brew-accent-600)' }}
               >
                 {defaultRecipePublic ? 'Public' : 'Private'}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[var(--fg-muted)]">FG model</span>
+              <button
+                onClick={() => {
+                  const cycle = { linear: 'enzyme_kinetics', enzyme_kinetics: 'brandam_ode', brandam_ode: 'linear' } as const;
+                  const newValue = cycle[attenuationModel] ?? 'linear';
+                  setAttenuationModel(newValue, user.uid);
+                  const labels = { linear: 'Using linear FG model', enzyme_kinetics: 'Using enzyme kinetics FG model', brandam_ode: 'Using ODE kinetics FG model' } as const;
+                  toast.success(labels[newValue]);
+                }}
+                className="text-xs font-medium px-2 py-0.5 rounded-md transition-colors cursor-pointer
+                  hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]"
+                style={{ color: 'var(--brew-accent-600)' }}
+              >
+                {attenuationModel === 'enzyme_kinetics' ? 'Enzyme' : attenuationModel === 'brandam_ode' ? 'ODE' : 'Linear'}
               </button>
             </div>
           </div>

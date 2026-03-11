@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { HopFlavorProfile } from "../../domain/models/Presets";
 import { HOP_FLAVOR_KEYS } from "../../domain/models/Presets";
 
-type Series = { name: string; flavor: HopFlavorProfile };
+type Series = { name: string; flavor: HopFlavorProfile; isTarget?: boolean };
 
 type Props = {
   series: Series[]; // any length
@@ -275,8 +275,9 @@ export default function HopFlavorRadar({
       {/* Series Polygons — with glow and draw-in animation */}
       {list.map((s, si) => {
         const pts = HOP_FLAVOR_KEYS.map((k, i) => pointFor(i, s.flavor[k] || 0)).join(" ");
-        const color =
-          colorStrategy === "dominant"
+        const color = s.isTarget
+          ? "var(--fg-muted)"
+          : colorStrategy === "dominant"
             ? colorForAxis(dominantAxisKey(s.flavor))
             : colorForIndex(si, list.length);
         const dimmed = highlightIdx !== null && highlightIdx !== si;
@@ -292,12 +293,13 @@ export default function HopFlavorRadar({
           >
             <polygon
               points={pts}
-              fill={color + (dimmed ? "18" : "25")}
+              fill={s.isTarget ? "none" : color + (dimmed ? "18" : "25")}
               stroke={color}
-              strokeWidth={dimmed ? 0.35 : 2}
-              strokeOpacity={dimmed ? 0.5 : 1}
+              strokeWidth={s.isTarget ? 1.5 : dimmed ? 0.35 : 2}
+              strokeOpacity={s.isTarget ? 0.6 : dimmed ? 0.5 : 1}
               strokeLinejoin="round"
-              filter={dimmed ? undefined : `url(#hop-glow-${si})`}
+              strokeDasharray={s.isTarget ? "6,3" : undefined}
+              filter={dimmed || s.isTarget ? undefined : `url(#hop-glow-${si})`}
               className="hop-radar-polygon"
             />
           </g>
@@ -337,7 +339,14 @@ export default function HopFlavorRadar({
             >
               <span
                 className="hop-radar-legend-swatch"
-                style={{ backgroundColor: colorForIndex(i, list.length) }}
+                style={
+                  s.isTarget
+                    ? {
+                        backgroundColor: "transparent",
+                        border: "1.5px dashed var(--fg-muted)",
+                      }
+                    : { backgroundColor: colorForIndex(i, list.length) }
+                }
               />
               <span className="truncate">{s.name}</span>
             </div>

@@ -94,7 +94,7 @@ export default function StyleSelectorModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto pb-4">
           {currentStyle && (
-            <div className="mb-4 mx-6 mt-4 flex items-center justify-between p-3 rounded-lg backdrop-blur-sm" style={{ background: 'color-mix(in oklch, var(--brew-info) 8%, rgb(var(--brew-card) / 0.5))', border: '1px solid color-mix(in oklch, var(--brew-info) 20%, transparent)' }}>
+            <div className="mb-4 mx-6 mt-4 flex items-center justify-between p-3 rounded-lg backdrop-blur-sm" style={{ background: 'color-mix(in oklch, var(--brew-info) 8%, color-mix(in oklch, var(--brew-card) 50%, transparent))', border: '1px solid color-mix(in oklch, var(--brew-info) 20%, transparent)' }}>
               <div>
                 <p className="text-sm font-semibold" style={{ color: 'var(--brew-info)' }}>Current Style:</p>
                 <p>{currentStyle}</p>
@@ -121,8 +121,8 @@ export default function StyleSelectorModal({
                   <h3 
                     className="text-sm font-semibold mb-2 sticky top-0 px-6 py-2 border-b border-[rgb(var(--brew-border-subtle))] z-10 shadow-sm" 
                     style={{ 
-                      backgroundColor: 'rgb(var(--brew-card))', 
-                      background: 'color-mix(in oklch, var(--brew-accent-500) 15%, rgb(var(--brew-card)))' 
+                      backgroundColor: 'var(--brew-card)', 
+                      background: 'color-mix(in oklch, var(--brew-accent-500) 15%, var(--brew-card))' 
                     }}
                   >
                     {category.code}. {category.name}

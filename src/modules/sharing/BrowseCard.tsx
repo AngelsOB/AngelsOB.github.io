@@ -178,11 +178,11 @@ export function BrowseCard({
       style={{ '--card-srm': srmColor } as React.CSSProperties}
     >
       {(isNavigating || isBusy) && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/40">
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]" style={{ containerType: 'inline-size' }}>
+      <div className="rounded-xl bg-[var(--brew-card)]" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
 
@@ -254,7 +254,7 @@ export function BrowseCard({
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onMouseLeave={() => setIsMenuOpen(false)}
                 >
-                  <div className="w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">
+                  <div className="w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
                     <button
                       onClick={handleFork}
                       className="brew-menu-item w-full text-left"
@@ -415,7 +415,7 @@ export function BrowseCard({
         )}
 
         {/* Footer */}
-        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
+        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[var(--brew-card-inset)] p-3">
           <div className="flex items-center justify-between text-muted text-xs">
             <span>
               {recipe.publishedAt

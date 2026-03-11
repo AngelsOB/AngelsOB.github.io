@@ -139,7 +139,7 @@ const ProfileCard = ({ profile, onSelect }: ProfileCardProps) => {
   return (
     <button
       onClick={onSelect}
-      className="w-full text-left p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:border-[var(--brew-accent-400)] hover:bg-[rgb(var(--brew-card-inset)/0.4)] transition-colors"
+      className="w-full text-left p-4 border border-[rgb(var(--brew-border-subtle))] rounded-lg hover:border-[var(--brew-accent-400)] hover:bg-[color-mix(in oklch, var(--brew-card-inset) 40%, transparent)] transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">

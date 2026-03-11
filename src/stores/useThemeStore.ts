@@ -11,9 +11,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 type Theme = 'light' | 'dark' | 'system';
-export type Palette = 'default' | 'vintage' | 'midnight' | 'forest' | 'copper' | 'ink' | 'sahara';
+export type Palette = 'default' | 'vintage' | 'midnight' | 'forest' | 'copper' | 'ink' | 'sahara' | 'reactive';
 
-const PALETTE_CLASSES = ['palette-vintage', 'palette-midnight', 'palette-forest', 'palette-copper', 'palette-ink', 'palette-sahara'] as const;
+const PALETTE_CLASSES = ['palette-vintage', 'palette-midnight', 'palette-forest', 'palette-copper', 'palette-ink', 'palette-sahara', 'palette-reactive'] as const;
 
 interface ThemeState {
   theme: Theme;

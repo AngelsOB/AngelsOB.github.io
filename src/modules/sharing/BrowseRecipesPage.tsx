@@ -208,7 +208,7 @@ export default function BrowseRecipesPage() {
       {isLoading && !error && recipes.length === 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-[rgb(var(--brew-card))] animate-pulse">
+            <div key={i} className="rounded-xl bg-[var(--brew-card)] animate-pulse">
               <div className="h-2 w-full rounded-t-xl bg-[var(--brew-accent-200)]" />
               <div className="p-4 space-y-3">
                 <div className="h-5 bg-[var(--brew-accent-100)] rounded w-3/4" />

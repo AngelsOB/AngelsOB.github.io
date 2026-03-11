@@ -2,11 +2,12 @@
  * Salt Additions Panel Component
  *
  * Input controls for adjusting total salt additions.
- * Shows the auto-calculated mash/sparge split for each salt.
+ * Uses machined datum readouts (same as Equipment section)
+ * with stepper buttons and mash/sparge split display.
  */
 
 import type { SaltAdditions } from "../../../domain/services/WaterChemistryService";
-import { SALT_LABELS } from "./constants";
+import { SALT_SHORT_LABELS } from "./constants";
 
 type Props = {
   /** Current total salt additions */
@@ -25,39 +26,65 @@ export default function SaltAdditionsPanel({
   spargeSalts,
   onSaltChange,
 }: Props) {
+  const nudge = (saltKey: keyof SaltAdditions, dir: 1 | -1) => {
+    const current = saltAdditions[saltKey] || 0;
+    const next = parseFloat((current + dir * 0.1).toFixed(1));
+    onSaltChange(saltKey, Math.max(0, next));
+  };
+
   return (
     <div>
-      <h4 className="text-sm font-semibold mb-2">Salt Additions (grams total)</h4>
-      <p className="text-xs text-muted mb-3">
-        Enter total amounts - they'll be automatically split between mash and sparge
-        water
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {(Object.keys(SALT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
+      <h4 className="text-sm font-semibold mb-3">Salt Additions</h4>
+      <div className="salt-additions-grid">
+        {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
           const totalAmount = saltAdditions[saltKey] || 0;
           const mashAmount = mashSalts[saltKey] || 0;
           const spargeAmount = spargeSalts[saltKey] || 0;
 
           return (
-            <div key={saltKey}>
-              <label className="block text-xs mb-1 text-muted">
-                {SALT_LABELS[saltKey]}
+            <div key={saltKey} className="equip-datum">
+              <label htmlFor={`salt-${saltKey}`} className="equip-datum-label">
+                {SALT_SHORT_LABELS[saltKey]}
               </label>
-              <input
-                type="number"
-                value={totalAmount || ""}
-                onChange={(e) =>
-                  onSaltChange(saltKey, parseFloat(e.target.value) || 0)
-                }
-                placeholder="0"
-                step="0.1"
-                min="0"
-                className="brew-input w-full"
-              />
-              {totalAmount > 0 && (
-                <div className="text-xs text-muted mt-1">
-                  Mash: {mashAmount.toFixed(1)}g / Sparge: {spargeAmount.toFixed(1)}g
+              <div className="equip-datum-value">
+                <div className="starter-stepper">
+                  <button
+                    type="button"
+                    className="starter-stepper-btn"
+                    onClick={() => nudge(saltKey, -1)}
+                    aria-label={`Decrease ${SALT_SHORT_LABELS[saltKey]}`}
+                  >
+                    −
+                  </button>
+                  <div className="starter-stepper-center">
+                    <input
+                      id={`salt-${saltKey}`}
+                      type="number"
+                      value={totalAmount || ""}
+                      onChange={(e) =>
+                        onSaltChange(saltKey, parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="0"
+                      step="0.1"
+                      min="0"
+                      className="equip-datum-input starter-stepper-input"
+                    />
+                    <span className="equip-datum-unit starter-stepper-unit">g</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="starter-stepper-btn"
+                    onClick={() => nudge(saltKey, 1)}
+                    aria-label={`Increase ${SALT_SHORT_LABELS[saltKey]}`}
+                  >
+                    +
+                  </button>
                 </div>
+              </div>
+              {totalAmount > 0 && (
+                <p className="text-[10px] text-muted mt-1 text-center">
+                  {mashAmount.toFixed(1)}g mash · {spargeAmount.toFixed(1)}g sparge
+                </p>
               )}
             </div>
           );

@@ -159,7 +159,7 @@ export default function RecipeListPage() {
         {/* Card grid skeleton */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-[rgb(var(--brew-card))] animate-pulse">
+            <div key={i} className="rounded-xl bg-[var(--brew-card)] animate-pulse">
               <div className="h-2 w-full rounded-t-xl bg-[var(--brew-accent-200)]" />
               <div className="border-b border-[rgb(var(--brew-border))] p-4 space-y-2">
                 <div className="h-6 bg-[var(--brew-accent-100)] rounded w-3/4" />
@@ -173,7 +173,7 @@ export default function RecipeListPage() {
                   </div>
                 ))}
               </div>
-              <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
+              <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[var(--brew-card-inset)] p-3">
                 <div className="h-3 bg-[var(--brew-accent-100)] rounded w-24" />
               </div>
             </div>
@@ -186,9 +186,9 @@ export default function RecipeListPage() {
   return (
     <div className="brew-theme mx-auto max-w-6xl px-2 py-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 flex items-baseline gap-3">
         <h1 className="brew-section-title text-3xl">My Recipes</h1>
-        <span className="brew-tag mt-2 inline-block">
+        <span className="brew-tag">
           {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
         </span>
       </div>
@@ -287,7 +287,7 @@ export default function RecipeListPage() {
             </button>
 
             {showImportMenu && (
-              <div className="absolute right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">
+              <div className="absolute right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
                 <button
                   onClick={() => {
                     fileInputRef.current?.click();
@@ -601,11 +601,11 @@ function RecipeCard({
       }
     >
       {isNavigating && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/40">
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]" style={{ containerType: 'inline-size' }}>
+      <div className="rounded-xl bg-[var(--brew-card)]" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         {calculations && (
           <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmToRgb(calculations.srm) }} />
@@ -671,7 +671,7 @@ function RecipeCard({
                   }}
                   onMouseLeave={() => setIsVersionMenuOpen(false)}
                 >
-                  <div className="w-40 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">
+                  <div className="w-40 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
                     <button
                       onClick={(e) => {
                         handleNewVersion(e);
@@ -826,7 +826,7 @@ function RecipeCard({
         )}
 
         {/* Footer */}
-        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
+        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[var(--brew-card-inset)] p-3">
           <div className="text-muted text-xs">
             {new Date(recipe.updatedAt).toLocaleDateString()}
           </div>

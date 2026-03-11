@@ -14,6 +14,7 @@ import { useEffect, useState, useMemo } from "react";
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
+import { toast } from "../../../../stores/toastStore";
 import EmptyState from "../../../../components/EmptyState";
 import { fermentableCalculationService } from "../../domain/services/FermentableCalculationService";
 import type { Fermentable } from "../../domain/models/Recipe";
@@ -96,6 +97,7 @@ export default function FermentableSection() {
   // Handle saving a custom fermentable preset
   const handleSaveCustomPreset = (preset: FermentablePreset) => {
     saveFermentablePreset(preset);
+    toast.success(`"${preset.name}" saved — select it from the list to add`);
   };
 
   // Filter presets by search query

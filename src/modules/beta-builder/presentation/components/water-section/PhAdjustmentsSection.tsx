@@ -1,97 +1,92 @@
 /**
- * pH Adjustments Section Component
+ * Mash pH Card
  *
- * Displays the estimated mash pH with status indicators and
- * action buttons to add pH adjustment ingredients (lactic acid or baking soda).
+ * Compact right-aligned card showing estimated mash pH.
+ * The whole card is a button when adjustment is needed — clicking
+ * adds lactic acid or baking soda to other ingredients.
+ * A handwritten "Adjust pH!" scribble sits diagonally across the top-left.
  */
 
 import type { RecipeCalculations } from "../../../domain/models/Recipe";
 
 type Props = {
-  /** Recipe calculations containing mash pH data */
   calculations: RecipeCalculations;
-  /** Whether water chemistry has been configured */
-  hasWaterChemistry: boolean;
-  /** Callback when user adds a pH adjustment ingredient */
   onAddPhAdjustment: (name: string, amount: number, unit: string) => void;
 };
 
 export default function PhAdjustmentsSection({
   calculations,
-  hasWaterChemistry,
   onAddPhAdjustment,
 }: Props) {
   const ph = calculations.estimatedMashPh;
   if (ph == null) return null;
 
   const adj = calculations.mashPhAdjustment;
-  const inRange = ph >= 5.2 && ph <= 5.6;
-  const inIdeal = ph >= 5.2 && ph <= 5.4;
+  // Use the displayed (rounded) value for color so 5.41 → "5.41" shows green
+  const displayed = Math.round(ph * 100) / 100;
+  const inIdeal = displayed >= 5.2 && displayed <= 5.4;
+  const inRange = displayed >= 5.2 && displayed <= 5.6;
 
-  // Semantic colors for pH status (data-driven, not theme colors)
   const statusColor = inIdeal
     ? 'var(--brew-success)'
     : inRange
       ? 'var(--brew-warning)'
       : 'var(--brew-danger)';
 
+  const needsLactic = adj && adj.lacticAcid88Ml > 0;
+  const needsBakingSoda = adj && adj.bakingSodaG > 0;
+  const needsAdjustment = needsLactic || needsBakingSoda;
+
+  const handleClick = () => {
+    if (needsLactic) {
+      onAddPhAdjustment("Lactic acid (88%)", adj!.lacticAcid88Ml, "ml");
+    } else if (needsBakingSoda) {
+      onAddPhAdjustment("Baking soda", adj!.bakingSodaG, "g");
+    }
+  };
+
+  const ctaText = needsLactic
+    ? `Click to add ~${adj!.lacticAcid88Ml} mL lactic acid`
+    : needsBakingSoda
+      ? `Click to add ~${adj!.bakingSodaG} g baking soda`
+      : null;
+
+  const Tag = needsAdjustment ? 'button' : 'div';
+
   return (
-    <div className="mb-6">
-      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--fg-strong)' }}>
-        Estimated Mash pH
-      </h3>
-      <div
-        className="rounded-lg p-4"
-        style={{
-          background: `color-mix(in oklch, ${statusColor} 10%, rgb(var(--brew-card-inset) / 0.4))`,
-          border: `1px solid color-mix(in oklch, ${statusColor} 25%, rgb(var(--brew-border-subtle)))`,
-          borderLeft: `3px solid ${statusColor}`,
-          boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)',
-        }}
+    <div className="relative overflow-visible shrink-0 self-stretch">
+      {/* Handwritten scribble — diagonal across top-left */}
+      {needsAdjustment && (
+        <span className="ph-adjust-flag">Adjust pH!</span>
+      )}
+
+      <Tag
+        type={needsAdjustment ? "button" : undefined}
+        onClick={needsAdjustment ? handleClick : undefined}
+        className={`equip-datum flex flex-col items-center justify-center h-full ${needsAdjustment ? 'ph-card-actionable cursor-pointer active:scale-[0.98] transition-all' : ''}`}
+        style={{ minWidth: '140px', padding: '14px 16px 12px' }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div
-              className="text-3xl font-bold"
-              style={{ color: statusColor }}
-            >
-              {ph.toFixed(2)}
-            </div>
-            <div className="text-xs text-muted mt-1">
-              {hasWaterChemistry ? "With water profile" : "DI water estimate"} &middot;
-              Target: 5.2–5.6
-            </div>
-          </div>
-          {adj && adj.lacticAcid88Ml > 0 && (
-            <button
-              onClick={() =>
-                onAddPhAdjustment("Lactic acid (88%)", adj.lacticAcid88Ml, "ml")
-              }
-              className="brew-chip-active text-xs px-3 py-1.5 rounded-md text-right transition-colors cursor-pointer"
-            >
-              <div className="font-semibold">
-                + Add ~{adj.lacticAcid88Ml} mL lactic acid (88%)
-              </div>
-              <div className="text-muted">
-                to reach pH {adj.targetPh.toFixed(1)}
-              </div>
-            </button>
-          )}
-          {adj && adj.bakingSodaG > 0 && (
-            <button
-              onClick={() => onAddPhAdjustment("Baking soda", adj.bakingSodaG, "g")}
-              className="brew-chip-active text-xs px-3 py-1.5 rounded-md text-right transition-colors cursor-pointer"
-            >
-              <div className="font-semibold">
-                + Add ~{adj.bakingSodaG} g baking soda
-              </div>
-              <div className="text-muted">
-                to reach pH {adj.targetPh.toFixed(1)}
-              </div>
-            </button>
-          )}
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1">
+          Mash pH
         </div>
-      </div>
+        <div
+          className="text-3xl font-bold tabular-nums"
+          style={{ color: statusColor }}
+        >
+          {ph.toFixed(2)}
+        </div>
+        <div className="text-[10px] text-muted mt-1">
+          Target: 5.2–5.4
+        </div>
+        {ctaText && (
+          <div
+            className="text-[10px] font-semibold mt-1.5"
+            style={{ color: 'var(--brew-danger)' }}
+          >
+            {ctaText}
+          </div>
+        )}
+      </Tag>
     </div>
   );
 }
