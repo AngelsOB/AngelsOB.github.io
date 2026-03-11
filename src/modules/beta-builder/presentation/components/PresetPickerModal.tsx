@@ -149,7 +149,7 @@ export default function PresetPickerModal<T>({
             <div className="space-y-6">
               {groups.map((group) => (
                 <div key={group.label}>
-                  <h4 className="text-sm font-bold uppercase sticky top-0 z-10 backdrop-blur-md px-6 py-2 border-b border-[rgb(var(--brew-border-subtle))]" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-600) 15%, rgb(var(--brew-card) / 0.9))' }}>
+                  <h4 className="text-sm font-bold uppercase sticky top-0 z-10 backdrop-blur-md px-6 py-2 border-b border-[rgb(var(--brew-border-subtle))]" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-600) 15%, color-mix(in oklch, var(--brew-card) 90%, transparent))' }}>
                     {group.label}
                   </h4>
                   <div className="grid gap-1.5 px-6 pt-2 pb-1">

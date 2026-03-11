@@ -35,7 +35,7 @@ export default function StickyStatsBar({ calculations, position, isVisible }: St
 
   return (
     <div
-      className={`fixed right-0 left-0 z-40 border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))]/25 shadow-lg backdrop-blur-md transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
+      className={`fixed right-0 left-0 z-40 border-[rgb(var(--brew-border))] bg-[var(--brew-card)]/25 shadow-lg backdrop-blur-md transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
     >
       {/* Scrollable stats strip — snaps on mobile, centered on desktop */}
       <div className="scrollbar-hide mx-auto max-w-4xl overflow-x-auto px-2 py-2 sm:px-8">

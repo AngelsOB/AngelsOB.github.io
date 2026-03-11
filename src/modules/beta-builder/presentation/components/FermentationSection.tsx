@@ -110,13 +110,13 @@ export default function FermentationSection() {
 
                   {/* Duration and Temperature */}
                   <div className="brew-ferm-step-metrics">
-                    <div className="px-3 py-1.5 rounded-md" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                    <div className="px-3 py-1.5 rounded-md" style={{ background: 'var(--brew-card-inset)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
                       <div className="text-xs text-muted">Duration</div>
                       <div className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--fg-strong)' }}>
                         {step.durationDays} <span className="text-sm font-normal">days</span>
                       </div>
                     </div>
-                    <div className="px-3 py-1.5 rounded-md" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                    <div className="px-3 py-1.5 rounded-md" style={{ background: 'var(--brew-card-inset)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
                       <div className="text-xs text-muted">Temperature</div>
                       <div className="text-base font-bold whitespace-nowrap" style={{ color: 'var(--fg-strong)' }}>
                         {step.temperatureC}<span className="text-sm font-normal">°C</span>
@@ -127,7 +127,7 @@ export default function FermentationSection() {
 
                 {/* Notes */}
                 {step.notes && (
-                  <div className="text-xs italic p-2 rounded" style={{ background: 'rgb(var(--brew-card-inset))', border: '1px solid rgb(var(--brew-border-subtle))' }}>
+                  <div className="text-xs italic p-2 rounded" style={{ background: 'var(--brew-card-inset)', border: '1px solid rgb(var(--brew-border-subtle))' }}>
                     {step.notes}
                   </div>
                 )}

@@ -269,10 +269,11 @@ export function getScribbleLines(
     case "targets": {
       if (!calculations) return [];
       const lines: React.ReactNode[] = [];
-      if (calculations.estimatedMashPh != null)
+      if (calculations.mashWaterL > 0)
         lines.push(
           <>
-            Mash pH <strong>{calculations.estimatedMashPh.toFixed(2)}</strong>
+            Mash <strong>{calculations.mashWaterL.toFixed(1)}</strong>L · Sparge{" "}
+            <strong>{calculations.spargeWaterL.toFixed(1)}</strong>L
           </>
         );
       if (calculations.preBoilVolumeL > 0)
@@ -351,8 +352,8 @@ export const SECTIONS = [
   {
     id: "water",
     accent: "water",
-    label: "Water",
-    shortLabel: "Water",
+    label: "Water Chem.",
+    shortLabel: "Chem.",
     number: "07",
     bg: "var(--sidebar-water-bg)",
     text: "var(--sidebar-water-text)",
@@ -369,8 +370,8 @@ export const SECTIONS = [
   {
     id: "targets",
     accent: "targets",
-    label: "Targets",
-    shortLabel: "Tgts",
+    label: "Brew Day",
+    shortLabel: "B.Day",
     number: "09",
     bg: "var(--sidebar-targets-bg)",
     text: "var(--sidebar-targets-text)",

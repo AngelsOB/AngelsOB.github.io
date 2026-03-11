@@ -28,7 +28,7 @@ export function BrewedVersionModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-      <div className="w-[95vw] max-w-6xl max-h-[92vh] bg-[rgb(var(--bg))] rounded-xl shadow-2xl border border-[rgb(var(--border))] overflow-hidden">
+      <div className="w-[95vw] max-w-6xl max-h-[92vh] bg-[var(--bg)] rounded-xl shadow-2xl border border-[rgb(var(--border))] overflow-hidden">
         <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-[rgb(var(--border))] bg-white/80 dark:bg-gray-900/50">
           <div className="flex-1">
             <div className="text-xs text-gray-500">Brewed version editor</div>
@@ -42,7 +42,7 @@ export function BrewedVersionModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-sm border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+              className="px-4 py-2 text-sm border border-[rgb(var(--border))] rounded-md hover:bg-[var(--bg)]"
             >
               Cancel
             </button>

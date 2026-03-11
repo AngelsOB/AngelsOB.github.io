@@ -55,7 +55,7 @@ export function EditableNumber({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         step={step}
-        className="w-24 px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-[rgb(var(--bg))] text-right"
+        className="w-24 px-2 py-1 text-sm border border-[rgb(var(--border))] rounded bg-[var(--bg)] text-right"
       />
     </div>
   );

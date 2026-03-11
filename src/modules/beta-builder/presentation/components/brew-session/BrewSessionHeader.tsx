@@ -48,7 +48,7 @@ export function BrewSessionHeader({
           <select
             value={status}
             onChange={(e) => onStatusChange(e.target.value as SessionStatus)}
-            className="px-3 py-1 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--bg))]"
+            className="px-3 py-1 border border-[rgb(var(--border))] rounded-md bg-[var(--bg)]"
           >
             <option value="planning">Planning</option>
             <option value="brewing">Brewing</option>
@@ -58,7 +58,7 @@ export function BrewSessionHeader({
           </select>
           <button
             onClick={onEditBrewedVersion}
-            className="px-3 py-1 text-sm border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))]"
+            className="px-3 py-1 text-sm border border-[rgb(var(--border))] rounded-md hover:bg-[var(--bg)]"
           >
             Edit Brewed Version
           </button>

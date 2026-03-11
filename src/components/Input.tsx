@@ -31,7 +31,7 @@ const baseClasses =
 
 const variantClasses: Record<InputVariant, string> = {
   default:
-    "border-[rgb(var(--border))] bg-[rgb(var(--surface))] focus-glow",
+    "border-[rgb(var(--border))] bg-[var(--surface)] focus-glow",
   flush:
     "border-transparent bg-transparent focus:border-[var(--coral-600)] focus:ring-0",
   filled:

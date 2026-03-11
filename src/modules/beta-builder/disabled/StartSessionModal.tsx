@@ -46,7 +46,7 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
     >
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
-        className="bg-[rgb(var(--card))] rounded-lg p-6 max-w-lg w-full mx-4"
+        className="bg-[var(--card)] rounded-lg p-6 max-w-lg w-full mx-4"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -69,7 +69,7 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
         </div>
 
         {/* Recipe Info */}
-        <div className="mb-6 p-4 bg-[rgb(var(--bg))] rounded-lg">
+        <div className="mb-6 p-4 bg-[var(--bg)] rounded-lg">
           <div className="font-semibold text-lg mb-2">{recipe.name}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
             Version {recipe.currentVersion}
@@ -86,7 +86,7 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
             type="date"
             value={brewDate}
             onChange={(e) => setBrewDate(e.target.value)}
-            className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[rgb(var(--bg))]"
+            className="w-full px-3 py-2 border border-[rgb(var(--border))] rounded-md bg-[var(--bg)]"
           />
         </label>
 
@@ -104,7 +104,7 @@ export default function StartSessionModal({ recipe, onClose }: StartSessionModal
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[rgb(var(--bg))] transition-colors"
+            className="flex-1 px-4 py-2 border border-[rgb(var(--border))] rounded-md hover:bg-[var(--bg)] transition-colors"
           >
             Cancel
           </button>

@@ -128,7 +128,7 @@ export default function WaterIngredientPickerModal({
         ) : (
           filteredPresets.map((group) => (
             <div key={group.category} className="mb-2">
-              <div className="sticky top-0 backdrop-blur-md px-2 py-1.5 text-xs font-semibold text-muted uppercase" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-200) 55%, rgb(var(--brew-card) / 0.9))' }}>
+              <div className="sticky top-0 backdrop-blur-md px-2 py-1.5 text-xs font-semibold text-muted uppercase" style={{ letterSpacing: 'var(--brew-tracking-wide)', background: 'color-mix(in oklch, var(--brew-accent-200) 55%, color-mix(in oklch, var(--brew-card) 90%, transparent))' }}>
                 {group.label}
               </div>
               <div className="grid gap-1.5 pt-1.5 pb-1">

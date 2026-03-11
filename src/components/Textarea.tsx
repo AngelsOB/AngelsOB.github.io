@@ -26,7 +26,7 @@ const baseClasses =
 
 const variantClasses: Record<TextareaVariant, string> = {
   default:
-    "border-[rgb(var(--border))] bg-[rgb(var(--surface))] focus:ring-2 focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
+    "border-[rgb(var(--border))] bg-[var(--surface)] focus:ring-2 focus:ring-[var(--coral-600)] focus:border-[var(--coral-600)]",
   flush:
     "border-transparent bg-transparent focus:border-[var(--coral-600)] focus:ring-0",
   filled:

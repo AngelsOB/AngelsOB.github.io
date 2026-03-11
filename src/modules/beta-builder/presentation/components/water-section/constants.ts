@@ -17,9 +17,9 @@ export const SALT_LABELS: Record<keyof SaltAdditions, string> = {
 };
 
 export const SALT_SHORT_LABELS: Record<keyof SaltAdditions, string> = {
-  gypsum_g: "Gypsum",
+  gypsum_g: "Gypsum (CaSO₄)",
   cacl2_g: "CaCl₂",
-  epsom_g: "Epsom",
+  epsom_g: "Epsom (MgSO₄)",
   nacl_g: "NaCl",
   nahco3_g: "Baking Soda",
 };

@@ -23,6 +23,7 @@ const PALETTES: PaletteOption[] = [
   { id: 'copper',   label: 'Copper',   swatches: ['#FAF5EE', '#BE6E28', '#372616'] },
   { id: 'ink',      label: 'Ink',      swatches: ['#F8F8FA', '#2D2D37', '#121216'] },
   { id: 'sahara',   label: 'Sahara',   swatches: ['#FCF7EE', '#C35F37', '#41301E'] },
+  { id: 'reactive', label: 'Reactive', swatches: ['#FCF7F0', '#D2A03C', '#322614'] },
 ];
 
 export default function ThemeToggle() {
@@ -80,7 +81,7 @@ export default function ThemeToggle() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 max-h-[420px] overflow-y-auto rounded-xl bg-[rgb(var(--card))] border border-[rgb(var(--border))] shadow-[var(--shadow-elevated)] p-1.5 z-50">
+        <div className="absolute right-0 top-full mt-2 w-48 max-h-[420px] overflow-y-auto rounded-xl bg-[var(--card)] border border-[rgb(var(--border))] shadow-[var(--shadow-elevated)] p-1.5 z-50">
           {/* Mode section */}
           <div className="px-2.5 pt-1 pb-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--fg-muted)]">

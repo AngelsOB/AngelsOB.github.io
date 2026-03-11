@@ -47,7 +47,7 @@ export default function SaltSummary({
               <div
                 key={saltKey}
                 className="rounded-lg p-3"
-                style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}
+                style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, color-mix(in oklch, var(--brew-card-inset) 35%, transparent))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}
               >
                 <div className="text-xs brew-link mb-1 font-medium">
                   {SALT_SHORT_LABELS[saltKey]}

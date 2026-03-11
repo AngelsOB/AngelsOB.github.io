@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attenuation Model Verification</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 0.5rem; color: #fff; }
+    h2 { font-size: 1.1rem; margin: 2.5rem 0 0.75rem; color: #ccc; font-weight: 500; }
+    .subtitle { color: #888; font-size: 0.85rem; margin-bottom: 2rem; line-height: 1.5; }
+    .chart-container {
+      background: #14141f;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-title {
+      font-size: 0.95rem;
+      color: #ccc;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .chart-note {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.5rem;
+    }
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    canvas { width: 100% !important; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+      background: #14141f;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    th { background: #1a1a2e; color: #aaa; text-align: right; padding: 0.5rem 0.75rem; font-weight: 500; }
+    td { text-align: right; padding: 0.4rem 0.75rem; border-top: 1px solid #1e1e2e; }
+    th:first-child, td:first-child { text-align: left; }
+    tr:hover td { background: #1a1a2e; }
+    .source-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; font-size: 0.8rem; }
+    .source-legend span { display: flex; align-items: center; gap: 0.4rem; color: #aaa; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  </style>
+</head>
+<body>
+  <h1>Attenuation Model Verification</h1>
+  <p class="subtitle">
+    Current models (Linear / Enzyme / ODE) vs. proposed recalibrations vs. empirical data.<br>
+    All-base-malt recipe, 60 min single infusion, baseAtt = 0.75.
+  </p>
+
+  <div class="chart-container">
+    <div class="chart-title">Chart 1: Apparent Attenuation vs Mash Temperature — Current Models + Proposed + Data</div>
+    <canvas id="chart1" height="220"></canvas>
+    <div class="chart-note">
+      Solid lines = current models. Dashed lines = proposed recalibrations (different BASE_S values).
+      Scatter points = real measured data from Brulosophy, HBT, and Braukaiser experiments.
+      Data points use various yeasts (baseAtt 0.75–0.85) so absolute values vary — compare the SLOPE.
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-container">
+      <div class="chart-title">Chart 2: Local Slope (%/°C) — How steep is each curve?</div>
+      <canvas id="chart2"></canvas>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title">Chart 3: Step Mash Comparison (baseAtt = 0.75)</div>
+      <canvas id="chart3"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-title">Chart 4: FG vs Mash Temperature (OG ~1.050) — Current + Proposed + Data</div>
+    <canvas id="chart4" height="220"></canvas>
+    <div class="chart-note">
+      This chart shows Final Gravity directly — the number brewers actually measure.
+      Lower FG = more fermentable wort. Compare model curves against the scatter points.
+    </div>
+  </div>
+
+  <h2>Empirical Data Sources</h2>
+  <div class="source-legend">
+    <span><span class="dot" style="background:#ef4444"></span> Brulosophy Helles (64°C vs 73°C)</span>
+    <span><span class="dot" style="background:#f97316"></span> Brulosophy Czech Lager (65°C vs 67°C)</span>
+    <span><span class="dot" style="background:#eab308"></span> Brulosophy Belgian (64°C vs 70°C)</span>
+    <span><span class="dot" style="background:#84cc16"></span> Brulosophy Blonde (64°C vs 72°C)</span>
+    <span><span class="dot" style="background:#10b981"></span> Brulosophy German Pils (64°C vs 71°C)</span>
+    <span><span class="dot" style="background:#f472b6"></span> Brulosophy English Porter (64°C vs 73°C)</span>
+    <span><span class="dot" style="background:#94a3b8"></span> UK Forum (63°C)</span>
+    <span><span class="dot" style="background:#06b6d4"></span> HBT APA 2025 (64, 67, 70°C)</span>
+    <span><span class="dot" style="background:#a855f7"></span> Braukaiser 66.6°C</span>
+    <span><span class="dot" style="background:#ffffff; border: 1px solid #666"></span> Woodland Brewing Regression (meta-analysis curve)</span>
+  </div>
+
+  <h2>Sweep Table — baseAtt = 0.75</h2>
+  <table id="sweepTable"></table>
+
+  <h2>Step Mash — baseAtt = 0.75</h2>
+  <table id="stepTable"></table>
+
+  <script>
+    // ── Data ──
+    const sweep = [{"temp":58,"linear":84.00000000000011,"enzyme":80.48452712914924,"ode":74.87985327935085,"linearFG":1.0087758429316784,"enzymeFG":1.0107040452907512,"odeFG":1.013778153877571},{"temp":59,"linear":82.99999999999994,"enzyme":80.24163715178105,"ode":75.76118655681253,"linearFG":1.0093243331149084,"enzymeFG":1.0108372680589426,"odeFG":1.0132947512267294},{"temp":60,"linear":82.00000000000017,"enzyme":79.94655616980162,"ode":76.39832684780093,"linearFG":1.0098728232981382,"enzymeFG":1.0109991170808161,"odeFG":1.012945286031782},{"temp":61,"linear":81,"enzyme":79.58807176836356,"ode":76.81914229038968,"linearFG":1.0104213134813682,"enzymeFG":1.011195742255846,"odeFG":1.0127144728925705},{"temp":62,"linear":79.99999999999984,"enzyme":79.15231870984749,"ode":77.04452610754781,"linearFG":1.0109698036645982,"enzymeFG":1.0114347485307544,"odeFG":1.0125908520814004},{"temp":63,"linear":79.00000000000007,"enzyme":78.62201311421441,"ode":77.08448163716014,"linearFG":1.011518293847828,"enzymeFG":1.011725615944071,"odeFG":1.0125689368656423},{"temp":64,"linear":77.9999999999999,"enzyme":77.97528155109222,"ode":76.93406940790915,"linearFG":1.012066784031058,"enzymeFG":1.0120803418576285,"odeFG":1.0126514364968242},{"temp":65,"linear":77.00000000000014,"enzyme":77.18378221155602,"ode":76.56997040503055,"linearFG":1.0126152742142878,"enzymeFG":1.012514471475397,"odeFG":1.012851141225627},{"temp":66,"linear":75.99999999999997,"enzyme":76.20959786241531,"ode":75.94781304816031,"linearFG":1.0131637643975178,"enzymeFG":1.013048802027557,"odeFG":1.0131923884282945},{"temp":67,"linear":75.0000000000002,"enzyme":75.0000000000002,"ode":75.0000000000002,"linearFG":1.0137122545807475,"enzymeFG":1.0137122545807475,"odeFG":1.0137122545807475},{"temp":68,"linear":74.00000000000003,"enzyme":73.47852320326717,"ode":73.63211822048213,"linearFG":1.0142607447639775,"enzymeFG":1.0145467696677677,"odeFG":1.0144625243086323},{"temp":69,"linear":72.99999999999986,"enzyme":71.53009776870559,"ode":71.71161747098162,"linearFG":1.0148092349472075,"enzymeFG":1.0156154618913802,"odeFG":1.015515900116619},{"temp":70,"linear":72.0000000000001,"enzyme":68.9803364650645,"ode":69.0388069380264,"linearFG":1.0153577251304373,"enzymeFG":1.0170139809360068,"odeFG":1.0169819104555784},{"temp":71,"linear":70.99999999999993,"enzyme":65.58669187646221,"ode":65.30863281068939,"linearFG":1.0159062153136673,"enzymeFG":1.0188753616782265,"odeFG":1.019027874346161},{"temp":72,"linear":70.00000000000016,"enzyme":61.10473244299482,"ode":60.14474036255643,"linearFG":1.016454705496897,"enzymeFG":1.021333672429118,"odeFG":1.021860218661217},{"temp":73,"linear":69,"enzyme":55.48495103385503,"ode":53.32737862264501,"linearFG":1.017003195680127,"enzymeFG":1.024416067363929,"odeFG":1.0255994746510855},{"temp":74,"linear":68.00000000000023,"enzyme":49.016980716203825,"ode":45.06551659179927,"linearFG":1.0175516858633569,"enzymeFG":1.0279636855885832,"odeFG":1.0301310248702042},{"temp":75,"linear":67.00000000000006,"enzyme":42.16193171095384,"ode":35.94933043393777,"linearFG":1.0181001760465869,"enzymeFG":1.0317236126735227,"odeFG":1.0351311634862876},{"temp":76,"linear":65.99999999999989,"enzyme":35.328691026678264,"ode":26.74402703468527,"linearFG":1.0186486662298169,"enzymeFG":1.035471578108495,"odeFG":1.0401801820344305},{"temp":77,"linear":65.00000000000013,"enzyme":28.825472501512728,"ode":18.26311333539314,"linearFG":1.0191971564130466,"enzymeFG":1.0390385296289473,"odeFG":1.0448318799433123},{"temp":78,"linear":63.99999999999996,"enzyme":22.866709064785656,"ode":11.217305047191035,"linearFG":1.0197456465962766,"enzymeFG":1.0423068528781814,"odeFG":1.048696436622311},{"temp":79,"linear":63.00000000000019,"enzyme":17.590437799527557,"ode":6.039104705741102,"linearFG":1.0202941367795064,"enzymeFG":1.0452008358712335,"odeFG":1.051536628676394},{"temp":80,"linear":62.000000000000014,"enzyme":13.07747093962667,"ode":2.7606668132522993,"linearFG":1.0208426269627364,"enzymeFG":1.047676153891131,"odeFG":1.0533348196767531},{"temp":81,"linear":61.000000000000256,"enzyme":9.360842354805438,"ode":1.0312783482826557,"linearFG":1.0213911171459662,"enzymeFG":1.049714688184617,"odeFG":1.05428337227278},{"temp":82,"linear":60.00000000000008,"enzyme":6.427351811606193,"ode":0.30087161003843577,"linearFG":1.0219396073291962,"enzymeFG":1.0513236789501597,"odeFG":1.054683993198472}];
+    const slopes = [{"temp":59,"linear":0.9999999999999716,"enzyme":0.2689854796738089,"ode":-0.7592367842250383},{"temp":60,"linear":0.9999999999999716,"enzyme":0.3267826917087433,"ode":-0.5289778667885727},{"temp":61,"linear":1.0000000000001634,"enzyme":0.3971187299770662,"ode":-0.32309962987343965},{"temp":62,"linear":0.9999999999999645,"enzyme":0.4830293270745756,"ode":-0.13266967338523017},{"temp":63,"linear":0.9999999999999716,"enzyme":0.5885185793776344,"ode":0.05522834981933045},{"temp":64,"linear":0.9999999999999645,"enzyme":0.7191154513291949,"ode":0.2572556160647963},{"temp":65,"linear":0.9999999999999645,"enzyme":0.8828418443384578,"ode":0.49312817987441804},{"temp":66,"linear":0.9999999999999716,"enzyme":1.0918911057779113,"ode":0.7849852025151733},{"temp":67,"linear":0.9999999999999716,"enzyme":1.3655373295740674,"ode":1.157847413839093},{"temp":68,"linear":1.0000000000001705,"enzyme":1.7349511156473056,"ode":1.6441912645092884},{"temp":69,"linear":0.9999999999999645,"enzyme":2.249093369101338,"ode":2.296655641227865},{"temp":70,"linear":0.9999999999999645,"enzyme":2.971702946121688,"ode":3.2014923301461167},{"temp":71,"linear":0.9999999999999716,"enzyme":3.9378020110348366,"ode":4.447033287734982},{"temp":72,"linear":0.9999999999999645,"enzyme":5.050870421303589,"ode":5.990627094022191},{"temp":73,"linear":0.9999999999999645,"enzyme":6.043875863395499,"ode":7.53961188537858},{"temp":74,"linear":0.9999999999999716,"enzyme":6.661509661450598,"ode":8.68902409435362},{"temp":75,"linear":1.0000000000001705,"enzyme":6.844144844762781,"ode":9.160744778557001},{"temp":76,"linear":0.9999999999999645,"enzyme":6.668229604720555,"ode":8.843108549272314},{"temp":77,"linear":0.9999999999999645,"enzyme":6.230990980946304,"ode":7.763360993747118},{"temp":78,"linear":0.999999999999968,"enzyme":5.6175173509925855,"ode":6.112004314826018},{"temp":79,"linear":0.9999999999999716,"enzyme":4.894619062579493,"ode":4.2283191169693675},{"temp":80,"linear":0.999999999999968,"enzyme":4.114797722361059,"ode":2.5039131787292233},{"temp":81,"linear":0.999999999999968,"enzyme":3.3250595640102385,"ode":1.2298976016069318}];
+    const proposed = [{"label":"Proposed BASE_S=0.16 (~2%/°C)","baseS":0.16,"accel":0.008,"data":[83.83898437123518,83.4491256693016,82.97491901806683,82.39803760851791,81.69579676646833,80.83996283976184,79.7950358913854,78.51571593723253,76.9431972057998,75,72.58346219353434,69.55939417897031,65.76218285272131,61.02251992578546,55.2661067511661,48.675378280445344,41.7055913066946,34.83397861987871,28.385275015963625,22.553114944078462,17.440288255398222,13.087833287388879,9.49645926922648,6.636202753411305,4.449062873719316]},{"label":"Proposed BASE_S=0.24 (~3%/°C)","baseS":0.24,"accel":0.008,"data":[88.53007341740637,87.92609870759655,87.19192636367174,86.29958680464004,85.21469110955564,83.89486235708739,82.28760801732564,80.32744993576226,77.9323262335561,75,71.40698468913487,67.01598736765621,61.703637885934256,55.427167696492596,48.33973195497776,40.87786197785378,33.624661290091225,27.00514549983829,21.20218010345082,16.25973005954173,12.153097498871265,8.82380486713696,6.198391044036638,4.194941734277132,2.7242722354803823]},{"label":"Proposed BASE_S=0.32 (~4%/°C)","baseS":0.32,"accel":0.008,"data":[93.48364556262925,92.64325745694434,91.62325330323749,90.38587445536083,88.88515527493391,87.06520491437888,84.85804107450817,82.18098932372578,78.93417082641857,75,70.24957625744878,64.56557904035989,57.895567987536026,50.344871411266425,42.28142387521794,34.32946304501069,27.109502861595253,20.935819345403708,15.83681824066713,11.722496970582785,8.46876936058409,5.9490009250296225,4.0457238266997875,2.651747815410567,1.6681398810633]}];
+    const proposedSlopes = [{"label":"Proposed BASE_S=0.16 (~2%/°C)","slopes":[{"temp":59,"slope":0.43203267658417843},{"temp":60,"slope":0.5255440303918419},{"temp":61,"slope":0.6395611257992471},{"temp":62,"slope":0.7790373843780358},{"temp":63,"slope":0.9503804375414688},{"temp":64,"slope":1.1621234512646552},{"temp":65,"slope":1.4259193427927954},{"temp":66,"slope":1.757857968616264},{"temp":67,"slope":2.17986750613273},{"temp":68,"slope":2.720302910514846},{"temp":69,"slope":3.4106396704065176},{"temp":70,"slope":4.268437126592424},{"temp":71,"slope":5.248038050777605},{"temp":72,"slope":6.173570822670058},{"temp":73,"slope":6.780257722235749},{"temp":74,"slope":6.9206998302833185},{"temp":75,"slope":6.660158145365488},{"temp":76,"slope":6.140431837900122},{"temp":77,"slope":5.472493380282701},{"temp":78,"slope":4.732640828344792},{"temp":79,"slope":3.9719144930858707},{"temp":80,"slope":3.225815266988787},{"temp":81,"slope":2.5236981977535824}]},{"label":"Proposed BASE_S=0.24 (~3%/°C)","slopes":[{"temp":59,"slope":0.6690735268673151},{"temp":60,"slope":0.8132559514782542},{"temp":61,"slope":0.9886176270580478},{"temp":62,"slope":1.2023622237763263},{"temp":63,"slope":1.4635415461150032},{"temp":64,"slope":1.7837062106625652},{"temp":65,"slope":2.1776408918847707},{"temp":66,"slope":2.66372496788113},{"temp":67,"slope":3.262670772210612},{"temp":68,"slope":3.9920063161718957},{"temp":69,"slope":4.8516734016003085},{"temp":70,"slope":5.794409835581806},{"temp":71,"slope":6.681952965478249},{"temp":72,"slope":7.274652859319406},{"temp":73,"slope":7.357535332443266},{"temp":74,"slope":6.936358239007747},{"temp":75,"slope":6.211240593320202},{"temp":76,"slope":5.372707720148279},{"temp":77,"slope":4.524541302289778},{"temp":78,"slope":3.7179625962023852},{"temp":79,"slope":2.9773532274173133},{"temp":80,"slope":2.3144315664299144},{"temp":81,"slope":1.737059404278128}]},{"label":"Proposed BASE_S=0.32 (~4%/°C)","slopes":[{"temp":59,"slope":0.9301961296958794},{"temp":60,"slope":1.1286915007917528},{"temp":61,"slope":1.3690490141517913},{"temp":62,"slope":1.6603347704909766},{"temp":63,"slope":2.0135571002128714},{"temp":64,"slope":2.4421077953265495},{"temp":65,"slope":2.9619351240447997},{"temp":66,"slope":3.5904946618628912},{"temp":67,"slope":4.342297284484893},{"temp":68,"slope":5.217210479820054},{"temp":69,"slope":6.177004134956377},{"temp":70,"slope":7.110353814546734},{"temp":71,"slope":7.807072056159043},{"temp":72,"slope":8.007704183127867},{"temp":73,"slope":7.585960506811343},{"temp":74,"slope":6.6968218498034915},{"temp":75,"slope":5.6363423104640615},{"temp":76,"slope":4.606661187410461},{"temp":77,"slope":3.6840244400415196},{"temp":78,"slope":2.8867480227765814},{"temp":79,"slope":2.2115227669421516},{"temp":80,"slope":1.6486265548095278},{"temp":81,"slope":1.188791972818244}]}];
+    const stepMash = [{"name":"Single 67°C/60min (reference)","linear":75.0000000000002,"enzyme":75.0000000000002,"ode":75.0000000000002,"linearFG":1.0137122545807475,"enzymeFG":1.0137122545807475,"odeFG":1.0137122545807475},{"name":"Protein + Sacch (52°C/15 → 67°C/45)","linear":78.74999999999993,"enzyme":75.33737355386786,"ode":73.9343713951902,"linearFG":1.0116554163936355,"enzymeFG":1.0135272084983697,"odeFG":1.0142967414094548},{"name":"Low→High (63°C/20 → 72°C/40)","linear":72.99999999999986,"enzyme":73.38770581025088,"ode":72.55825844658898,"linearFG":1.0148092349472075,"enzymeFG":1.0145965821163037,"odeFG":1.0150515258527781},{"name":"High→Low (72°C/20 → 63°C/40)","linear":75.99999999999997,"enzyme":73.469081749333,"ode":71.43853585453722,"linearFG":1.0131637643975178,"enzymeFG":1.014551948212566,"odeFG":1.0156656827024593},{"name":"Extended Low (63°C/45 → 72°C/15)","linear":76.75,"enzyme":77.2671848613679,"ode":76.05756922533196,"linearFG":1.0127523967600953,"enzymeFG":1.01246872594072,"odeFG":1.013132188242567},{"name":"Hochkurz (63°C/30 → 72°C/30)","linear":74.49999999999991,"enzyme":75.32795879626636,"ode":74.37730047878331,"linearFG":1.0139864996723627,"enzymeFG":1.0135323724004917,"odeFG":1.014053799155237},{"name":"Single Hot (72°C/60)","linear":70.00000000000016,"enzyme":61.10473244299482,"ode":60.14474036255643,"linearFG":1.016454705496897,"enzymeFG":1.021333672429118,"odeFG":1.021860218661217},{"name":"Single Cool (63°C/60)","linear":79.00000000000007,"enzyme":78.62201311421441,"ode":77.08448163716014,"linearFG":1.011518293847828,"enzymeFG":1.011725615944071,"odeFG":1.0125689368656423}];
+    const empirical = [{"temp":64,"appAtt":82.6,"source":"Brulosophy Helles"},{"temp":73,"appAtt":52.1,"source":"Brulosophy Helles"},{"temp":65,"appAtt":84,"source":"Brulosophy Czech"},{"temp":67,"appAtt":82,"source":"Brulosophy Czech"},{"temp":64,"appAtt":81,"source":"Brulosophy Belgian"},{"temp":70,"appAtt":74,"source":"Brulosophy Belgian"},{"temp":64,"appAtt":89.6,"source":"Brulosophy Blonde"},{"temp":72,"appAtt":70.8,"source":"Brulosophy Blonde"},{"temp":64.4,"appAtt":84.6,"source":"HBT APA 2025"},{"temp":66.7,"appAtt":76.9,"source":"HBT APA 2025"},{"temp":70,"appAtt":69.2,"source":"HBT APA 2025"},{"temp":64,"appAtt":85.7,"source":"Brulosophy Pils"},{"temp":71,"appAtt":60.4,"source":"Brulosophy Pils"},{"temp":64,"appAtt":77.4,"source":"Brulosophy Porter"},{"temp":73,"appAtt":54.5,"source":"Brulosophy Porter"},{"temp":63,"appAtt":80.4,"source":"UK Forum 63°C"},{"temp":66.6,"appAtt":79,"source":"Braukaiser 66.6°C","baseAtt":0.81}];
+    const temps = sweep.map(r => r.temp);
+
+    // ── Colors ──
+    const C = {
+      linear:  '#6b7280',
+      enzyme:  '#3b82f6',
+      ode:     '#8b5cf6',
+      prop1:   '#22d3ee', // BASE_S=0.16
+      prop2:   '#f59e0b', // BASE_S=0.24
+      prop3:   '#ef4444', // BASE_S=0.32
+    };
+    const SOURCE_COLORS = {
+      'Brulosophy Helles':  '#ef4444',
+      'Brulosophy Czech':   '#f97316',
+      'Brulosophy Belgian': '#eab308',
+      'Brulosophy Blonde':  '#84cc16',
+      'Brulosophy Pils':    '#10b981',
+      'Brulosophy Porter':  '#f472b6',
+      'UK Forum 63°C':      '#94a3b8',
+      'HBT APA 2025':       '#06b6d4',
+      'Braukaiser 66.6°C':  '#a855f7',
+    };
+
+    // ── Woodland Brewing regression curve (meta-analysis of Braukaiser + Wyeast + own data) ──
+    // Equation: Att = -0.000663 * T_F^2 + 0.1964 * T_F - 13.692  (T_F in °F)
+    // Shows peak around 148°F (64.4°C), slight decline below due to incomplete gelatinization
+    const woodlandCurve = temps.map(tC => {
+      const tF = tC * 9/5 + 32;
+      return { x: tC, y: -0.000663 * tF * tF + 0.1964 * tF - 13.692 };
+    });
+
+    const chartOpts = (yLabel, yMin, yMax) => ({
+      responsive: true,
+      interaction: { mode: 'nearest', intersect: false },
+      plugins: { legend: { labels: { color: '#aaa', font: { size: 11 }, usePointStyle: true } } },
+      scales: {
+        x: { ticks: { color: '#666' }, grid: { color: '#1e1e2e' }, title: { display: true, text: 'Mash Temperature (°C)', color: '#888' } },
+        y: { ticks: { color: '#666' }, grid: { color: '#1e1e2e' }, title: { display: true, text: yLabel, color: '#888' }, min: yMin, max: yMax },
+      }
+    });
+
+    // Helper: make a scatter dataset from empirical data
+    function scatterDataset(source, color) {
+      const pts = empirical.filter(d => d.source === source);
+      return {
+        label: source,
+        data: pts.map(p => ({ x: p.temp, y: p.appAtt })),
+        backgroundColor: color,
+        borderColor: color,
+        pointRadius: 7,
+        pointStyle: 'circle',
+        showLine: false,
+        type: 'scatter',
+      };
+    }
+    function scatterFGDataset(source, color, og) {
+      const pts = empirical.filter(d => d.source === source);
+      return {
+        label: source,
+        data: pts.map(p => ({ x: p.temp, y: 1 + (og - 1) * (1 - p.appAtt / 100) })),
+        backgroundColor: color,
+        borderColor: color,
+        pointRadius: 7,
+        pointStyle: 'circle',
+        showLine: false,
+        type: 'scatter',
+      };
+    }
+
+    // ── Helper: convert array data to {x, y} points for linear x-axis ──
+    function toXY(data, tempsArr) {
+      return data.map((val, i) => ({ x: tempsArr[i], y: val }));
+    }
+
+    // ── Chart 1: Attenuation vs Temp ──
+    new Chart(document.getElementById('chart1'), {
+      type: 'scatter',
+      data: {
+        datasets: [
+          // Current models (as lines via showLine)
+          { label: 'Current Linear', data: toXY(sweep.map(r => r.linear), temps), showLine: true, borderColor: C.linear, borderDash: [4, 2], borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'Current Enzyme (BASE_S=0.10)', data: toXY(sweep.map(r => r.enzyme), temps), showLine: true, borderColor: C.enzyme, borderWidth: 2.5, pointRadius: 0, fill: false },
+          { label: 'Current ODE (BASE_S=0.10)', data: toXY(sweep.map(r => r.ode), temps), showLine: true, borderColor: C.ode, borderWidth: 2.5, pointRadius: 0, fill: false },
+          // Proposed recalibrations
+          { label: proposed[0].label, data: toXY(proposed[0].data, temps), showLine: true, borderColor: C.prop1, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, fill: false },
+          { label: proposed[1].label, data: toXY(proposed[1].data, temps), showLine: true, borderColor: C.prop2, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, fill: false },
+          { label: proposed[2].label, data: toXY(proposed[2].data, temps), showLine: true, borderColor: C.prop3, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, fill: false },
+          // Woodland Brewing regression (meta-analysis reference curve)
+          { label: 'Woodland Brewing Regression', data: woodlandCurve, showLine: true, borderColor: '#ffffff', borderDash: [2, 4], borderWidth: 1.5, pointRadius: 0, fill: false },
+          // Empirical data (scatter points)
+          ...Object.entries(SOURCE_COLORS).map(([src, col]) => scatterDataset(src, col)),
+        ]
+      },
+      options: chartOpts('Apparent Attenuation (%)', 30, 100),
+    });
+
+    // ── Chart 2: Slope ──
+    const slopeTemps = slopes.map(r => r.temp);
+    new Chart(document.getElementById('chart2'), {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Current Enzyme', data: toXY(slopes.map(r => r.enzyme), slopeTemps), showLine: true, borderColor: C.enzyme, borderWidth: 2.5, pointRadius: 0, fill: false },
+          { label: 'Current ODE', data: toXY(slopes.map(r => r.ode), slopeTemps), showLine: true, borderColor: C.ode, borderWidth: 2.5, pointRadius: 0, fill: false },
+          ...proposedSlopes.map((ps, i) => ({
+            label: ps.label.replace('Proposed ', ''),
+            data: toXY(ps.slopes.map(s => s.slope), ps.slopes.map(s => s.temp)),
+            showLine: true,
+            borderColor: [C.prop1, C.prop2, C.prop3][i],
+            borderDash: [6, 3],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+          })),
+        ]
+      },
+      options: chartOpts('Slope (%/°C)', 0, 15),
+    });
+
+    // ── Chart 3: Step Mash ──
+    new Chart(document.getElementById('chart3'), {
+      type: 'bar',
+      data: {
+        labels: stepMash.map(r => r.name),
+        datasets: [
+          { label: 'Linear', data: stepMash.map(r => r.linear), backgroundColor: C.linear },
+          { label: 'Enzyme', data: stepMash.map(r => r.enzyme), backgroundColor: C.enzyme },
+          { label: 'ODE', data: stepMash.map(r => r.ode), backgroundColor: C.ode },
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { labels: { color: '#aaa', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#666' }, grid: { color: '#1e1e2e' }, title: { display: true, text: 'Apparent Attenuation (%)', color: '#888' }, min: 40, max: 95 },
+          y: { ticks: { color: '#ccc', font: { size: 9 } }, grid: { color: '#1e1e2e' } },
+        }
+      }
+    });
+
+    // ── Chart 4: FG vs Temp ──
+    const nominalOG = sweep[0] ? (1 + (sweep[0].linearFG - 1) / (1 - sweep.find(r=>r.temp===67).linear/100)) : 1.055;
+    // Use actual OG from the recipe
+    const ogVal = 1.0548490183229906;
+    new Chart(document.getElementById('chart4'), {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Current Linear', data: toXY(sweep.map(r => r.linearFG), temps), showLine: true, borderColor: C.linear, borderDash: [4, 2], borderWidth: 2, pointRadius: 0, fill: false },
+          { label: 'Current Enzyme', data: toXY(sweep.map(r => r.enzymeFG), temps), showLine: true, borderColor: C.enzyme, borderWidth: 2.5, pointRadius: 0, fill: false },
+          { label: 'Current ODE', data: toXY(sweep.map(r => r.odeFG), temps), showLine: true, borderColor: C.ode, borderWidth: 2.5, pointRadius: 0, fill: false },
+          // Proposed FG curves
+          ...proposed.map((p, i) => ({
+            label: p.label,
+            data: toXY(p.data.map(att => ogVal - (ogVal - 1) * att / 100), temps),
+            showLine: true,
+            borderColor: [C.prop1, C.prop2, C.prop3][i],
+            borderDash: [6, 3],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+          })),
+          // Empirical FG data
+          ...Object.entries(SOURCE_COLORS).map(([src, col]) => scatterFGDataset(src, col, ogVal)),
+        ]
+      },
+      options: chartOpts('Final Gravity', 0.990, 1.060),
+    });
+
+    // ── Tables ──
+    function buildSweepTable() {
+      const slopeMap = new Map(slopes.map(s => [s.temp, s]));
+      let html = '<tr><th>Temp</th><th>Lin AA%</th><th>Enz AA%</th><th>ODE AA%</th><th>Enz FG</th><th>Enz Δ/°C</th>';
+      proposed.forEach(p => { html += '<th>' + p.label.split(' ')[1] + '</th>'; });
+      html += '</tr>';
+      for (const row of sweep) {
+        const s = slopeMap.get(row.temp);
+        html += '<tr><td>' + row.temp + '°C</td>'
+          + '<td>' + row.linear.toFixed(1) + '</td>'
+          + '<td>' + row.enzyme.toFixed(1) + '</td>'
+          + '<td>' + row.ode.toFixed(1) + '</td>'
+          + '<td>' + row.enzymeFG.toFixed(3) + '</td>'
+          + '<td>' + (s ? s.enzyme.toFixed(1) : '—') + '</td>';
+        const idx = row.temp - 58;
+        proposed.forEach(p => { html += '<td>' + p.data[idx].toFixed(1) + '</td>'; });
+        html += '</tr>';
+      }
+      document.getElementById('sweepTable').innerHTML = html;
+    }
+
+    function buildStepTable() {
+      let html = '<tr><th>Scenario</th><th>Linear</th><th>Enzyme</th><th>ODE</th><th>Enz FG</th><th>ODE FG</th></tr>';
+      for (const r of stepMash) {
+        html += '<tr><td>' + r.name + '</td>'
+          + '<td>' + r.linear.toFixed(1) + '%</td>'
+          + '<td>' + r.enzyme.toFixed(1) + '%</td>'
+          + '<td>' + r.ode.toFixed(1) + '%</td>'
+          + '<td>' + r.enzymeFG.toFixed(3) + '</td>'
+          + '<td>' + r.odeFG.toFixed(3) + '</td></tr>';
+      }
+      document.getElementById('stepTable').innerHTML = html;
+    }
+
+    buildSweepTable();
+    buildStepTable();
+  </script>
+</body>
+</html>

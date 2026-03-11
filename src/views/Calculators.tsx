@@ -1,12 +1,13 @@
 import AbvCalculator from "../components/AbvCalculator";
 import BoilOffCalculator from "../components/BoilOffCalculator";
+import CarbonationCalculator from "../components/CarbonationCalculator";
 import DilutionCalculator from "../components/DilutionCalculator";
 
 export default function Calculators() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* ── Hero header ── */}
-      <div className="relative overflow-hidden -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 pb-10 mb-2">
+      <div className="full-bleed relative overflow-hidden -mt-6 pt-8 pb-10 mb-2">
         {/* Ambient glow — mash-orange warmth */}
         <div
           className="pointer-events-none absolute inset-0"
@@ -18,7 +19,7 @@ export default function Calculators() {
           }}
         />
 
-        <div className="relative">
+        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
           <div className="brew-animate-in brew-stagger-1">
             <span
               className="inline-block text-[10px] font-bold uppercase mb-4"
@@ -56,6 +57,9 @@ export default function Calculators() {
         </div>
         <div className="brew-animate-in brew-stagger-8">
           <BoilOffCalculator />
+        </div>
+        <div className="brew-animate-in brew-stagger-10">
+          <CarbonationCalculator />
         </div>
       </div>
     </div>

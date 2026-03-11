@@ -277,7 +277,7 @@ export default function BetaBuilderPage({
             <p className="mb-4">Version not found.</p>
             <button
               onClick={() => router.push("/recipes")}
-              className="rounded-md border border-[rgb(var(--border))] px-4 py-2 hover:bg-[rgb(var(--bg))]"
+              className="rounded-md border border-[rgb(var(--border))] px-4 py-2 hover:bg-[var(--bg)]"
             >
               Back to Recipes
             </button>
@@ -310,7 +310,7 @@ export default function BetaBuilderPage({
       )}
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
+        <div className="flex items-center justify-between">
           <div>
             <button
               onClick={() => router.push(isShared ? "/browse" : "/recipes")}
@@ -666,7 +666,7 @@ export default function BetaBuilderPage({
           </AccordionSection>
         </div>
 
-        {/* Brew Day Targets */}
+        {/* Brew Day Numbers */}
         <div>
           <AccordionSection
             sectionKey="targets"

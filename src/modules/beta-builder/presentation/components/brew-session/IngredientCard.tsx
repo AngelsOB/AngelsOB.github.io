@@ -22,7 +22,7 @@ export function IngredientCard({
 }: IngredientCardProps) {
   return (
     <div
-      className={`rounded-lg border border-[rgb(var(--border))] border-t-4 bg-[rgb(var(--card))] p-4 shadow-sm ${TONE_BORDERS[tone]} ${className}`}
+      className={`rounded-lg border border-[rgb(var(--border))] border-t-4 bg-[var(--card)] p-4 shadow-sm ${TONE_BORDERS[tone]} ${className}`}
     >
       {children}
     </div>
