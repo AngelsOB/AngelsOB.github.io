@@ -25,6 +25,7 @@ import PresetPickerModal from "./PresetPickerModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 import { srmToRgb } from "../../utils/srmColorUtils";
 import ScalableText from "../../../../components/ScalableText";
+import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
 export default function FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
@@ -228,8 +229,7 @@ export default function FermentableSection() {
       <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
         <div className="flex items-center gap-4">
           <h2 className="brew-section-title">Fermentables</h2>
-          {/* Mode Toggle — machined segmented control (matches hop flavor toggle) */}
-          <div className="hop-flavor-toggle">
+          <div className="brew-segmented-toggle">
             <button
               type="button"
               className={mode === "amount" ? "is-active" : ""}
@@ -343,9 +343,8 @@ export default function FermentableSection() {
                     {mode === "amount" ? "Weight" : "%"}
                   </span>
                   <div className="fermentable-datum-value">
-                    <input
+                    <AnimatedNumberInput
                       id={`fermentable-value-${fermentable.id}`}
-                      type="number"
                       value={editableValue}
                       onChange={(e) => {
                         const v = parseFloat(e.target.value) || 0;

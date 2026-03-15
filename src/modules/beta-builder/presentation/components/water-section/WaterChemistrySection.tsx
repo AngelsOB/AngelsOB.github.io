@@ -25,6 +25,8 @@ type Props = {
   targetStyleName?: string;
   /** Whether the target is a user-defined custom profile (vs BJCP auto-detected) */
   isCustomTarget?: boolean;
+  /** BJCP auto-detected target profile (for per-ion custom detection) */
+  bjcpTargetProfile?: WaterProfile;
   /** Calculated final water profile */
   finalProfile: WaterProfile;
   /** Current salt additions */
@@ -51,6 +53,7 @@ export default function WaterChemistrySection({
   targetStyle,
   targetStyleName,
   isCustomTarget,
+  bjcpTargetProfile,
   finalProfile,
   saltAdditions,
   mashSalts,
@@ -130,6 +133,7 @@ export default function WaterChemistrySection({
       <WaterProfileComparison
         sourceProfile={sourceProfile}
         targetProfile={targetProfile}
+        bjcpTargetProfile={bjcpTargetProfile}
         finalProfile={finalProfile}
         isCustomTarget={isCustomTarget}
         onTargetDrag={onTargetDrag}

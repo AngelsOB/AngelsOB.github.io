@@ -160,6 +160,7 @@ export default function BetaBuilderPage({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
+  const [titleUnderline, setTitleUnderline] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<Set<string>>(() => new Set(["recipe"]));
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
   const isShared = Boolean(sharedRecipe);
@@ -175,6 +176,12 @@ export default function BetaBuilderPage({
       }
       return next;
     });
+  }, []);
+
+  // Delayed underline animation for recipe name
+  useEffect(() => {
+    const timer = setTimeout(() => setTitleUnderline(true), 750);
+    return () => clearTimeout(timer);
   }, []);
 
   // Load recipe based on URL param, shared prop, or create new.
@@ -296,108 +303,165 @@ export default function BetaBuilderPage({
 
   return (
     <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-1 sm:px-4 py-6">
-      <SectionSidebar recipe={currentRecipe} calculations={calculations} />
+      <SectionSidebar
+        recipe={currentRecipe}
+        calculations={calculations}
+        hideSidebarNav={showStickyTop || showStickyBottom}
+        navButton={{
+          backPath: isShared ? "/browse" : "/recipes",
+          backLabel: isShared ? "Back to Browse" : "Back to Recipes",
+          showShareControl: !isReadOnly && !isShared && !!user && !!id,
+          isPublic: currentRecipe?.isPublic ?? false,
+          shareSlug: currentRecipe?.shareSlug,
+          recipeName: currentRecipe?.name,
+          recipeId: currentRecipe?.id,
+          onPublished: (slug) => {
+            updateRecipe({
+              isPublic: true,
+              shareSlug: slug,
+              publishedAt: new Date().toISOString(),
+            });
+            saveCurrentRecipe();
+          },
+          onUnpublished: () => {
+            updateRecipe({ isPublic: false, shareSlug: undefined, publishedAt: undefined });
+            saveCurrentRecipe();
+          },
+        }}
+      />
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
-          <StickyStatsBar calculations={calculations} position="top" isVisible={showStickyTop} />
+          <StickyStatsBar
+            calculations={calculations}
+            position="top"
+            isVisible={showStickyTop}
+            leftAction={
+              <button
+                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                className="sticky-bar-btn"
+              >
+                <span className="sticky-bar-btn-arrow">&#8592;</span>
+                {isShared ? "Back to Browse" : "Back to Recipes"}
+              </button>
+            }
+            rightAction={
+              <>
+                {isShared && currentRecipe && (
+                  <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+                )}
+                {!isShared && isReadOnly && id && (
+                  <button onClick={() => router.push(`/recipes/${id}`)} className="sticky-bar-btn">
+                    Current
+                  </button>
+                )}
+                {!isReadOnly && user && id && currentRecipe && (
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="sticky-bar-btn"
+                  >
+                    {currentRecipe.isPublic && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    )}
+                    {currentRecipe.isPublic ? "Shared" : "Share"}
+                  </button>
+                )}
+              </>
+            }
+          />
           <StickyStatsBar
             calculations={calculations}
             position="bottom"
             isVisible={showStickyBottom}
+            leftAction={
+              <button
+                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                className="sticky-bar-btn"
+              >
+                <span className="sticky-bar-btn-arrow">&#8592;</span>
+                {isShared ? "Back to Browse" : "Back to Recipes"}
+              </button>
+            }
+            rightAction={
+              <>
+                {isShared && currentRecipe && (
+                  <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+                )}
+                {!isShared && isReadOnly && id && (
+                  <button onClick={() => router.push(`/recipes/${id}`)} className="sticky-bar-btn">
+                    Current
+                  </button>
+                )}
+                {!isReadOnly && user && id && currentRecipe && (
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="sticky-bar-btn"
+                  >
+                    {currentRecipe.isPublic && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    )}
+                    {currentRecipe.isPublic ? "Shared" : "Share"}
+                  </button>
+                )}
+              </>
+            }
           />
         </>
       )}
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <button
-              onClick={() => router.push(isShared ? "/browse" : "/recipes")}
-              className="mb-3 flex items-center gap-1.5 text-sm font-medium transition-colors"
-              style={{ color: "var(--brew-accent-600)" }}
-            >
-              <span className="text-xs">&#8592;</span>{" "}
-              {isShared ? "Back to Browse" : "Back to Recipes"}
-            </button>
-            <h1 className="brew-section-title text-3xl">
+      {/* Shared/read-only info banner */}
+      {(isShared || isReadOnly || (currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName)) && (
+        <div className="mb-4 text-center">
+          {(isShared || isReadOnly) && (
+            <h1 className="brew-section-title text-xl">
               {isShared
                 ? "Shared Recipe (Read-only)"
-                : isReadOnly
-                  ? `Version ${versionNumber} (Read-only)`
-                  : "Recipe Builder"}
+                : `Version ${versionNumber} (Read-only)`}
             </h1>
-            {isShared && sharedOwnerName && (
-              <p className="mt-1 text-xs text-[var(--fg-muted)]">
-                by{" "}
-                {sharedOwnerId ? (
-                  <Link href={`/u/${sharedOwnerId}`} className="font-medium hover:underline">
-                    {sharedOwnerName}
-                  </Link>
-                ) : (
-                  <span className="font-medium">{sharedOwnerName}</span>
-                )}
-              </p>
-            )}
-            {isShared && currentRecipe && (
-              <div className="mt-2">
-                <RatingStars
-                  recipeId={currentRecipe.id}
-                  ratingAvg={sharedRatingAvg}
-                  ratingCount={sharedRatingCount}
-                />
-              </div>
-            )}
-            {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
-              <p className="mt-1 text-xs text-[var(--fg-muted)]">
-                Forked from{" "}
-                {currentRecipe.parentRecipeShareSlug ? (
-                  <Link
-                    href={`/r/${currentRecipe.parentRecipeShareSlug}`}
-                    className="font-medium underline transition-colors hover:text-[var(--brew-accent-600)]"
-                    style={{ pointerEvents: "auto" }}
-                  >
-                    {currentRecipe.parentRecipeName}
-                  </Link>
-                ) : (
-                  <span className="font-medium">{currentRecipe.parentRecipeName}</span>
-                )}
-                {currentRecipe.parentRecipeOwnerName && (
-                  <> by {currentRecipe.parentRecipeOwnerName}</>
-                )}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isShared && currentRecipe && (
-              <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
-            )}
-            {!isShared && isReadOnly && id && (
-              <button onClick={() => router.push(`/recipes/${id}`)} className="brew-btn-ghost">
-                Open Current Recipe
-              </button>
-            )}
-            {!isReadOnly && user && id && currentRecipe && (
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="brew-btn-ghost flex items-center gap-1.5"
-              >
-                {currentRecipe.isPublic && (
-                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                )}
-                {currentRecipe.isPublic ? "Shared" : "Share"}
-              </button>
-            )}
-          </div>
+          )}
+          {isShared && sharedOwnerName && (
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              by{" "}
+              {sharedOwnerId ? (
+                <Link href={`/u/${sharedOwnerId}`} className="font-medium hover:underline">
+                  {sharedOwnerName}
+                </Link>
+              ) : (
+                <span className="font-medium">{sharedOwnerName}</span>
+              )}
+            </p>
+          )}
+          {isShared && currentRecipe && (
+            <div className="mt-2">
+              <RatingStars
+                recipeId={currentRecipe.id}
+                ratingAvg={sharedRatingAvg}
+                ratingCount={sharedRatingCount}
+              />
+            </div>
+          )}
+          {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              Forked from{" "}
+              {currentRecipe.parentRecipeShareSlug ? (
+                <Link
+                  href={`/r/${currentRecipe.parentRecipeShareSlug}`}
+                  className="font-medium underline transition-colors hover:text-[var(--brew-accent-600)]"
+                  style={{ pointerEvents: "auto" }}
+                >
+                  {currentRecipe.parentRecipeName}
+                </Link>
+              ) : (
+                <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+              )}
+              {currentRecipe.parentRecipeOwnerName && (
+                <> by {currentRecipe.parentRecipeOwnerName}</>
+              )}
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       <div className={`brew-main-fade-in ${isReadOnly ? "brew-read-only" : ""}`}>
-        {currentRecipe?.name && (
-          <div className="mobile-sidebar-title">
-            <span>{currentRecipe.name}</span>
-          </div>
-        )}
         {/* Recipe Name & Metadata */}
         <div>
           <AccordionSection
@@ -408,16 +472,37 @@ export default function BetaBuilderPage({
             onToggle={toggleMobileSection}
           >
             <div className="brew-section space-y-5">
-              <div>
+              {/* Handwritten recipe name — desktop only */}
+              <div className="hidden md:block text-center">
+                {!currentRecipe.name && (
+                  <span className="recipe-name-label">Title:</span>
+                )}
+                <div className={"recipe-name-wrapper" + (titleUnderline && currentRecipe.name ? " is-drawn" : "")}>
+                  <input
+                    id="recipe-name"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Untitled Recipe"
+                    value={currentRecipe.name}
+                    onChange={(e) => updateRecipe({ name: e.target.value })}
+                    size={currentRecipe.name.length || 16}
+                    className="recipe-name-input text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Mobile recipe name — plain input */}
+              <div className="md:hidden">
                 <label
-                  htmlFor="recipe-name"
+                  htmlFor="recipe-name-mobile"
                   className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
                 >
                   Recipe Name
                 </label>
                 <input
-                  id="recipe-name"
+                  id="recipe-name-mobile"
                   type="text"
+                  autoComplete="off"
                   value={currentRecipe.name}
                   onChange={(e) => updateRecipe({ name: e.target.value })}
                   className="brew-input w-full text-lg font-semibold"

@@ -2,6 +2,7 @@ import AbvCalculator from "../components/AbvCalculator";
 import BoilOffCalculator from "../components/BoilOffCalculator";
 import CarbonationCalculator from "../components/CarbonationCalculator";
 import DilutionCalculator from "../components/DilutionCalculator";
+import HydrometerCorrectionCalculator from "../components/HydrometerCorrectionCalculator";
 
 export default function Calculators() {
   return (
@@ -60,6 +61,9 @@ export default function Calculators() {
         </div>
         <div className="brew-animate-in brew-stagger-10">
           <CarbonationCalculator />
+        </div>
+        <div className="brew-animate-in brew-stagger-12">
+          <HydrometerCorrectionCalculator />
         </div>
       </div>
     </div>

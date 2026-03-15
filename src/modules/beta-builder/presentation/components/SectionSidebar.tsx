@@ -1,33 +1,39 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import { getScribbleLines, SECTIONS } from "./sidebarData";
+import SidebarNavButton from "./SidebarNavButton";
+
+export interface SidebarNavConfig {
+  backPath: string;
+  backLabel: string;
+  showShareControl?: boolean;
+  isPublic?: boolean;
+  shareSlug?: string;
+  recipeName?: string;
+  recipeId?: string;
+  onPublished?: (slug: string) => void;
+  onUnpublished?: () => void;
+}
 
 interface SectionSidebarProps {
   recipe: Parameters<typeof getScribbleLines>[1];
   calculations: RecipeCalculations | null;
+  navButton?: SidebarNavConfig;
+  hideSidebarNav?: boolean;
 }
 
 /** Padding inside each item where the dot can travel */
 const DOT_PAD_TOP = 11;
 const DOT_PAD_BOTTOM = 32; // leave room for the label
 
-export default function SectionSidebar({ recipe, calculations }: SectionSidebarProps) {
+export default function SectionSidebar({ recipe, calculations, navButton, hideSidebarNav }: SectionSidebarProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dotProgress, setDotProgress] = useState(0); // 0..1 scroll progress within active section
-  const [titleUnderline, setTitleUnderline] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const activeHeightRef = useRef(320);
-
-  // Draw underline after recipe name is stable for 2s
-  useEffect(() => {
-    setTitleUnderline(false);
-    if (!recipe?.name) return;
-    const timer = setTimeout(() => setTitleUnderline(true), 750);
-    return () => clearTimeout(timer);
-  }, [recipe?.name]);
 
   /**
    * Find all brew-section elements on the page by data-accent.
@@ -191,14 +197,12 @@ export default function SectionSidebar({ recipe, calculations }: SectionSidebarP
 
   return (
     <nav ref={sidebarRef} className="section-sidebar" aria-label="Recipe sections">
+      {navButton && (
+        <div className={`sidebar-nav-slot sidebar-animate-in-left sidebar-stagger-1${hideSidebarNav ? " sidebar-nav-hidden" : ""}`}>
+          <SidebarNavButton {...navButton} />
+        </div>
+      )}
       <div className="section-sidebar-track">
-        {recipe?.name && (
-          <div className="sidebar-animate-in-left sidebar-stagger-1">
-            <div className={"section-sidebar-title" + (titleUnderline ? " is-drawn" : "")}>
-              <span>{recipe.name}</span>
-            </div>
-          </div>
-        )}
         {SECTIONS.map((section, i) => {
           const isActive = i === activeIndex;
           const scribbleLines = getScribbleLines(section.accent, recipe, calculations);

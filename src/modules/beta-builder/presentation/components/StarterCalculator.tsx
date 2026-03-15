@@ -17,6 +17,8 @@ import { useMemo, useEffect, useState, useRef, useCallback } from "react";
 import { uid } from "@/utils/uid";
 import type { YeastType, StarterStep, StarterInfo } from "../../domain/models/Recipe";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
+import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
+import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
 interface StarterCalculatorProps {
   starterInfo?: StarterInfo;
@@ -61,6 +63,9 @@ function StarterDatum({
     if (rounded >= minNum) onChange(rounded);
   };
 
+  const holdDown = useHoldToRepeat(() => nudge(-1));
+  const holdUp = useHoldToRepeat(() => nudge(1));
+
   return (
     <div className="equip-datum is-small">
       <span className="equip-datum-label">{label}</span>
@@ -79,10 +84,9 @@ function StarterDatum({
           </select>
         ) : stepper ? (
           <div className="starter-stepper">
-            <button type="button" className="starter-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`}>−</button>
+            <button type="button" className="starter-stepper-btn" {...holdDown} aria-label={`Decrease ${label}`}>−</button>
             <div className="starter-stepper-center">
-              <input
-                type="number"
+              <AnimatedNumberInput
                 className="equip-datum-input starter-stepper-input"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
@@ -91,7 +95,7 @@ function StarterDatum({
               />
               {unit && <span className="equip-datum-unit starter-stepper-unit">{unit}</span>}
             </div>
-            <button type="button" className="starter-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`}>+</button>
+            <button type="button" className="starter-stepper-btn" {...holdUp} aria-label={`Increase ${label}`}>+</button>
           </div>
         ) : (
           <input

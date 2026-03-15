@@ -48,26 +48,22 @@ export function getScribbleLines(
     case "equipment": {
       const eq = recipe.equipment;
       const batchVol = recipe.batchVolumeL;
-      return [
+      const lines: React.ReactNode[] = [];
+      if (recipe.equipmentProfileName)
+        lines.push(<span className="sidebar-equip-profile">{recipe.equipmentProfileName}</span>);
+      lines.push(
         <span className="sidebar-scribble-equipment">
           <span className="sidebar-equip-batch">
             <strong>{batchVol}</strong>L batch
           </span>
-          {calculations && (
-            <span className="sidebar-equip-volumes">
-              <span>
-                mash <strong>{calculations.mashWaterL.toFixed(1)}</strong>L
-              </span>
-              <span>
-                sparge <strong>{calculations.spargeWaterL.toFixed(1)}</strong>L
-              </span>
-            </span>
-          )}
         </span>,
+      );
+      lines.push(
         <>
           <strong>{eq.boilTimeMin}</strong> min boil · <strong>{eq.mashEfficiencyPercent}</strong>% eff
         </>,
-      ];
+      );
+      return lines;
     }
     case "grain": {
       if (recipe.fermentables.length === 0) return [];
@@ -271,10 +267,17 @@ export function getScribbleLines(
       const lines: React.ReactNode[] = [];
       if (calculations.mashWaterL > 0)
         lines.push(
-          <>
-            Mash <strong>{calculations.mashWaterL.toFixed(1)}</strong>L · Sparge{" "}
-            <strong>{calculations.spargeWaterL.toFixed(1)}</strong>L
-          </>
+          <span className="sidebar-scribble-targets-volumes">
+            <span>
+              Mash <strong>{calculations.mashWaterL.toFixed(1)}</strong>L · Sparge{" "}
+              <strong>{calculations.spargeWaterL.toFixed(1)}</strong>L
+            </span>
+            {calculations.strikeTempC != null && (
+              <span>
+                Strike <strong>{calculations.strikeTempC.toFixed(1)}</strong>°C
+              </span>
+            )}
+          </span>
         );
       if (calculations.preBoilVolumeL > 0)
         lines.push(
