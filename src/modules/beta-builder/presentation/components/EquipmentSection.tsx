@@ -11,6 +11,8 @@ import { useEquipmentStore } from '../stores/equipmentStore';
 import type { EquipmentProfile } from '../../domain/models/Equipment';
 import { EquipmentProfileModal } from './EquipmentProfileModal';
 import { CustomEquipmentModal } from './CustomEquipmentModal';
+import { useHoldToRepeat } from '../../../../hooks/useHoldToRepeat';
+import AnimatedNumberInput from '../../../../components/AnimatedNumberInput';
 
 function EquipDatum({
   id,
@@ -40,17 +42,19 @@ function EquipDatum({
     if (rounded >= 0) onChange(rounded);
   };
 
+  const holdDown = useHoldToRepeat(() => nudge(-1));
+  const holdUp = useHoldToRepeat(() => nudge(1));
+
   return (
     <div className={"equip-datum" + (small ? " is-small" : "")}>
       <label htmlFor={id} className="equip-datum-label">{label}</label>
       <div className="equip-datum-value">
         {stepper ? (
           <div className="starter-stepper">
-            <button type="button" className="starter-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`}>−</button>
+            <button type="button" className="starter-stepper-btn" {...holdDown} aria-label={`Decrease ${label}`}>−</button>
             <div className="starter-stepper-center">
-              <input
+              <AnimatedNumberInput
                 id={id}
-                type="number"
                 value={value}
                 onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
                 className="equip-datum-input starter-stepper-input"
@@ -59,7 +63,7 @@ function EquipDatum({
               />
               <span className="equip-datum-unit starter-stepper-unit">{unit}</span>
             </div>
-            <button type="button" className="starter-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`}>+</button>
+            <button type="button" className="starter-stepper-btn" {...holdUp} aria-label={`Increase ${label}`}>+</button>
           </div>
         ) : (
           <>

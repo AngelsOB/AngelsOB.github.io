@@ -5,6 +5,7 @@
  * past the main calculated values section. Supports both top and bottom positioning.
  */
 
+import React from "react";
 import AnimatedValue from "./AnimatedValue";
 import BeerGlass from "./BeerGlass";
 
@@ -22,9 +23,11 @@ interface StickyStatsBarProps {
   calculations: RecipeCalculations;
   position: "top" | "bottom";
   isVisible: boolean;
+  leftAction?: React.ReactNode;
+  rightAction?: React.ReactNode;
 }
 
-export default function StickyStatsBar({ calculations, position, isVisible }: StickyStatsBarProps) {
+export default function StickyStatsBar({ calculations, position, isVisible, leftAction, rightAction }: StickyStatsBarProps) {
   const positionClasses = position === "top" ? "top-0 border-b" : "bottom-0 border-t";
 
   const translateClasses = isVisible
@@ -37,9 +40,13 @@ export default function StickyStatsBar({ calculations, position, isVisible }: St
     <div
       className={`fixed right-0 left-0 z-40 border-[rgb(var(--brew-border))] bg-[var(--brew-card)]/25 shadow-lg backdrop-blur-md transition-all duration-300 ease-in-out ${positionClasses} ${translateClasses}`}
     >
-      {/* Scrollable stats strip — snaps on mobile, centered on desktop */}
-      <div className="scrollbar-hide mx-auto max-w-4xl overflow-x-auto px-2 py-2 sm:px-8">
-        <div className="flex min-w-max gap-3 sm:min-w-0 sm:justify-between sm:gap-4">
+      <div className="flex items-center px-6 py-2 sm:px-12">
+        {/* Left action — pinned to left edge */}
+        {leftAction && <div className="shrink-0">{leftAction}</div>}
+
+        {/* Scrollable stats strip — centered in remaining space */}
+        <div className="scrollbar-hide mx-auto min-w-0 overflow-x-auto px-2 sm:px-8">
+          <div className="flex min-w-max gap-8 sm:min-w-0 sm:justify-between sm:gap-10">
           {/* ABV */}
           <div className="min-w-[3.5rem] shrink-0 text-center">
             <div className="brew-gauge-label">ABV</div>
@@ -102,7 +109,11 @@ export default function StickyStatsBar({ calculations, position, isVisible }: St
               <AnimatedValue value={calculations.carbsG} decimals={1} suffix="g" />
             </div>
           </div>
+          </div>
         </div>
+
+        {/* Right action — pinned to right edge */}
+        {rightAction && <div className="shrink-0">{rightAction}</div>}
       </div>
     </div>
   );

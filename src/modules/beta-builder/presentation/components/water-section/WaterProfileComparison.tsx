@@ -23,6 +23,8 @@ type Props = {
   sourceProfile: WaterProfile;
   /** The target style profile */
   targetProfile: WaterProfile;
+  /** BJCP auto-detected target profile (for per-ion custom detection) */
+  bjcpTargetProfile?: WaterProfile;
   /** The calculated final profile after salt additions */
   finalProfile: WaterProfile;
   /** Whether the target is a user-defined custom profile (vs BJCP preset) */
@@ -34,6 +36,7 @@ type Props = {
 export default function WaterProfileComparison({
   sourceProfile,
   targetProfile,
+  bjcpTargetProfile,
   finalProfile,
   isCustomTarget,
   onTargetDrag,
@@ -50,7 +53,7 @@ export default function WaterProfileComparison({
             source={sourceProfile[ion]}
             target={targetProfile[ion]}
             final={finalProfile[ion]}
-            isCustomTarget={isCustomTarget}
+            isCustomTarget={isCustomTarget && bjcpTargetProfile !== undefined && targetProfile[ion] !== bjcpTargetProfile[ion]}
             onTargetDrag={onTargetDrag}
           />
         ))}

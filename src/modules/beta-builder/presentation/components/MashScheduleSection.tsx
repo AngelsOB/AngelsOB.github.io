@@ -17,6 +17,8 @@ import EmptyState from "../../../../components/EmptyState";
 import ScalableText from "../../../../components/ScalableText";
 import MashStepModal from "./MashStepModal";
 import type { MashStep } from "../../domain/models/Recipe";
+import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
+import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
 /* ── Inline stepper helper ─────────────────────────────── */
 const chevronUp = <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5 5 1 9 5"/></svg>;
@@ -37,12 +39,14 @@ function MashDatum({
     onChange(next);
   };
 
+  const holdUp = useHoldToRepeat(() => nudge(1));
+  const holdDown = useHoldToRepeat(() => nudge(-1));
+
   return (
     <div className="mash-step-datum">
       <span className="mash-step-datum-label">{label}</span>
       <div className="mash-step-datum-value">
-        <input
-          type="number"
+        <AnimatedNumberInput
           value={value}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           className="mash-step-datum-input"
@@ -53,8 +57,8 @@ function MashDatum({
         />
         <span className="mash-step-datum-unit">{unit}</span>
         <div className="mash-stepper">
-          <button type="button" className="mash-stepper-btn" onClick={() => nudge(1)} aria-label={`Increase ${label}`} tabIndex={-1}>{chevronUp}</button>
-          <button type="button" className="mash-stepper-btn" onClick={() => nudge(-1)} aria-label={`Decrease ${label}`} tabIndex={-1}>{chevronDown}</button>
+          <button type="button" className="mash-stepper-btn" {...holdUp} aria-label={`Increase ${label}`} tabIndex={-1}>{chevronUp}</button>
+          <button type="button" className="mash-stepper-btn" {...holdDown} aria-label={`Decrease ${label}`} tabIndex={-1}>{chevronDown}</button>
         </div>
       </div>
     </div>

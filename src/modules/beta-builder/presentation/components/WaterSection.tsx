@@ -233,6 +233,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
         targetStyle={targetStyle}
         targetStyleName={effectiveTargetName}
         isCustomTarget={isCustomTarget}
+        bjcpTargetProfile={(BEER_STYLE_TARGETS[bjcpWaterTarget] || BEER_STYLE_TARGETS["Balanced"]).profile}
         finalProfile={finalProfile}
         saltAdditions={waterChem.saltAdditions}
         mashSalts={mashSalts}

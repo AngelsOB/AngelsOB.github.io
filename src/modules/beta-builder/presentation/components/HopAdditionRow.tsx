@@ -1,4 +1,6 @@
 import type { Hop } from "../../domain/models/Recipe";
+import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
+import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
 type HopAdditionRowProps = {
   hop: Hop;
@@ -42,12 +44,14 @@ function HopDatum({
     if (rounded >= minNum && rounded <= maxNum) onChange(rounded);
   };
 
+  const holdUp = useHoldToRepeat(() => nudge(1));
+  const holdDown = useHoldToRepeat(() => nudge(-1));
+
   return (
     <div className="hop-addition-datum">
       <span className="hop-addition-datum-label">{label}</span>
       <div className="hop-addition-datum-value">
-        <input
-          type="number"
+        <AnimatedNumberInput
           value={value}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           className={"hop-addition-datum-input" + (narrow ? " is-narrow" : "")}
@@ -61,7 +65,7 @@ function HopDatum({
           <button
             type="button"
             className="hop-stepper-btn"
-            onClick={() => nudge(1)}
+            {...holdUp}
             aria-label={`Increase ${label}`}
             tabIndex={-1}
           >
@@ -70,7 +74,7 @@ function HopDatum({
           <button
             type="button"
             className="hop-stepper-btn"
-            onClick={() => nudge(-1)}
+            {...holdDown}
             aria-label={`Decrease ${label}`}
             tabIndex={-1}
           >
