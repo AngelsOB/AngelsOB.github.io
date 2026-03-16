@@ -4,7 +4,6 @@ import {
   canCreateRecipe,
   RECIPE_LIMIT,
   type Feature,
-  type UserState,
 } from './tierAccess';
 
 describe('tierAccess', () => {
