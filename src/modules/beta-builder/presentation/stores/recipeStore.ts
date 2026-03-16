@@ -17,7 +17,8 @@ import { recipeVersionRepository } from '../../domain/repositories/RecipeVersion
 import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
 import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
 import { toast } from '../../../../stores/toastStore';
-import { useAuthStore } from '../../../auth/authStore';
+import { useAuthStore, deriveUserState } from '../../../auth/authStore';
+import { canCreateRecipe, RECIPE_LIMIT } from '../../../auth/tierAccess';
 import { auth } from '@/config/firebase';
 import { generateShareSlug } from '../../../sharing/slugUtils';
 import { syncPublicIndex } from '../../../sharing/publishService';
@@ -26,6 +27,21 @@ import { usePreferencesStore } from '../../../auth/preferencesStore';
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;
   return user ? new FirestoreRecipeRepository(user.uid) : null;
+}
+
+/**
+ * Check if the current user can create a new recipe.
+ * Returns true if allowed, false if at limit (and shows a toast).
+ */
+function checkRecipeLimit(): boolean {
+  const { user, recipeCount, subscriptionStatus, subscriptionCurrentPeriodEnd } = useAuthStore.getState();
+  const userState = deriveUserState(user, subscriptionStatus, subscriptionCurrentPeriodEnd);
+  if (canCreateRecipe(userState, recipeCount)) return true;
+  toast.error(
+    `You've reached the ${RECIPE_LIMIT}-recipe limit. Upgrade to Premium for unlimited recipes.`,
+    { duration: 6000 },
+  );
+  return false;
 }
 
 /** IDs of recipes deleted this session — prevents stale network responses from restoring them */
@@ -251,7 +267,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        await firestoreRepo.saveAsync(duplicate);
+        if (!checkRecipeLimit()) { set({ isLoading: false }); return; }
+        await firestoreRepo.saveNewAsync(duplicate);
+        useAuthStore.getState().adjustRecipeCount(1);
         set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, isLoading: false });
       }).catch(() => set({ error: 'Failed to duplicate recipe', isLoading: false }));
       return;
@@ -315,7 +333,17 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         set({ currentRecipe: recipeToSave });
       }
 
-      firestoreRepo.saveAsync(recipeToSave).then(
+      // Detect new vs update — new recipes use saveNewAsync (transactional, increments recipeCount)
+      const isNew = !get().recipes.some((r) => r.id === recipeToSave.id);
+
+      // Belt-and-suspenders: UI disables save button, but guard here too
+      if (isNew && !checkRecipeLimit()) return;
+
+      const savePromise = isNew
+        ? firestoreRepo.saveNewAsync(recipeToSave)
+        : firestoreRepo.saveAsync(recipeToSave);
+
+      savePromise.then(
         () => {
           // Update local array instead of re-fetching from Firestore
           const recipes = get().recipes;
@@ -324,6 +352,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
             ? recipes.map((r) => r.id === recipeToSave.id ? recipeToSave : r)
             : [...recipes, recipeToSave];
           set({ recipes: updated, error: null });
+
+          // Optimistically update recipeCount for new recipes
+          if (isNew) {
+            useAuthStore.getState().adjustRecipeCount(1);
+          }
 
           // Sync publicRecipeIndex in the background for public recipes
           if (recipeToSave.isPublic) {
@@ -368,9 +401,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         }),
       ).then((res) => {
         if (!res?.ok) throw new Error('Server delete failed');
-        // Clear local Firestore cache (best-effort, may fail with permission denied)
-        const firestoreRepo = getRecipeRepo();
-        firestoreRepo?.deleteAsync(id).catch(() => {});
+        // Optimistically update recipeCount (admin route already decremented in Firestore)
+        useAuthStore.getState().adjustRecipeCount(-1);
       }).catch((err) => {
         console.error('[API] Failed to delete recipe:', err);
         // Rollback on failure
@@ -406,7 +438,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
       const firestoreRepo = getRecipeRepo();
       if (firestoreRepo) {
-        firestoreRepo.saveAsync(recipe).then(() => set({ recipes: [...get().recipes, recipe] }));
+        if (!checkRecipeLimit()) return null;
+        firestoreRepo.saveNewAsync(recipe).then(() => {
+          useAuthStore.getState().adjustRecipeCount(1);
+          set({ recipes: [...get().recipes, recipe] });
+        });
       } else {
         recipeRepository.save(recipe);
         set({ recipes: [...get().recipes, recipe] });
@@ -444,7 +480,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       };
       const firestoreRepo = getRecipeRepo();
       if (firestoreRepo) {
-        firestoreRepo.saveAsync(recipe).then(() => set({ recipes: [...get().recipes, recipe] }));
+        if (!checkRecipeLimit()) return null;
+        firestoreRepo.saveNewAsync(recipe).then(() => {
+          useAuthStore.getState().adjustRecipeCount(1);
+          set({ recipes: [...get().recipes, recipe] });
+        });
       } else {
         recipeRepository.save(recipe);
         set({ recipes: [...get().recipes, recipe] });
@@ -748,7 +788,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        await firestoreRepo.saveAsync(variation);
+        if (!checkRecipeLimit()) { set({ isLoading: false }); return; }
+        await firestoreRepo.saveNewAsync(variation);
+        useAuthStore.getState().adjustRecipeCount(1);
         set({ recipes: [...get().recipes, variation], currentRecipe: variation, isLoading: false });
       }).catch(() => set({ error: 'Failed to create variation', isLoading: false }));
       return;
