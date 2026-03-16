@@ -19,7 +19,6 @@ import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
 import { useAuthStore } from "../../../auth/authStore";
 import { useUserTier } from "../../../auth/useUserTier";
-import { RECIPE_LIMIT } from "../../../auth/tierAccess";
 import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import {
