@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { uid } from "@/utils/uid";
 import { useRouter } from 'next/navigation';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, runTransaction } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
 import Button from '../../components/Button';
-import { useAuthStore } from '../auth/authStore';
+import { useAuthStore, deriveUserState } from '../auth/authStore';
+import { canCreateRecipe, RECIPE_LIMIT } from '../auth/tierAccess';
 import { toast } from '../../stores/toastStore';
 import type { Recipe } from '../beta-builder/domain/models/Recipe';
 
@@ -24,6 +25,14 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
   async function handleFork() {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
+
+    // Check recipe limit before forking
+    const { recipeCount, subscriptionStatus, subscriptionCurrentPeriodEnd } = useAuthStore.getState();
+    const userState = deriveUserState(currentUser, subscriptionStatus, subscriptionCurrentPeriodEnd);
+    if (!canCreateRecipe(userState, recipeCount)) {
+      toast.error(`You've reached the ${RECIPE_LIMIT}-recipe limit. Upgrade to Premium for unlimited recipes.`, { duration: 6000 });
+      return;
+    }
 
     setIsForking(true);
     try {
@@ -76,8 +85,14 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
         updatedAt: now,
       }));
 
-      // Save the fork
-      await setDoc(doc(db, 'recipes', newId), forkedData);
+      // Save the fork + increment recipeCount atomically
+      await runTransaction(db, async (transaction) => {
+        const recipeRef = doc(db, 'recipes', newId);
+        const userRef = doc(db, 'users', currentUser.uid);
+        transaction.set(recipeRef, forkedData);
+        transaction.update(userRef, { recipeCount: increment(1) });
+      });
+      useAuthStore.getState().adjustRecipeCount(1);
 
       // Best-effort: increment fork count on public index
       try {

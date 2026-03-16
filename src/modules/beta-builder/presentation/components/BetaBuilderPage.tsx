@@ -32,6 +32,8 @@ import ShareModal from "../../../sharing/ShareModal";
 import ForkButton from "../../../sharing/ForkButton";
 import RatingStars from "../../../sharing/RatingStars";
 import { useAuthStore } from "../../../auth/authStore";
+import { useUserTier } from "../../../auth/useUserTier";
+import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 
 interface BetaBuilderPageProps {
@@ -156,15 +158,22 @@ export default function BetaBuilderPage({
   const calculations = useRecipeCalculations(currentRecipe);
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const { canCreate: canCreateMore } = useUserTier();
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
   const [titleUnderline, setTitleUnderline] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<Set<string>>(() => new Set(["recipe"]));
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
+  const recipes = useRecipeStore((s) => s.recipes);
   const isShared = Boolean(sharedRecipe);
   const isReadOnly = Boolean(versionNumber) || isShared;
+  // A recipe is "new" if it hasn't been saved yet (not in the recipes list)
+  const isNewRecipe = currentRecipe ? !recipes.some((r) => r.id === currentRecipe.id) : false;
+  // Disable save for new recipes when at the free tier limit
+  const saveDisabled = isNewRecipe && !canCreateMore;
 
   const toggleMobileSection = useCallback((key: string) => {
     setMobileOpenSection((prev) => {
@@ -297,6 +306,10 @@ export default function BetaBuilderPage({
   }
 
   const handleSave = () => {
+    if (saveDisabled) {
+      setIsLimitModalOpen(true);
+      return;
+    }
     saveCurrentRecipe();
     router.push("/recipes");
   };
@@ -776,8 +789,11 @@ export default function BetaBuilderPage({
               >
                 Cancel
               </button>
-              <button onClick={handleSave} className="brew-btn-primary flex-1 py-3 text-base">
-                Save & Close
+              <button
+                onClick={handleSave}
+                className={`brew-btn-primary flex-1 py-3 text-base${saveDisabled ? ' opacity-50' : ''}`}
+              >
+                Save &amp; Close
               </button>
             </div>
           </div>
@@ -815,6 +831,12 @@ export default function BetaBuilderPage({
           }}
         />
       )}
+
+      {/* Recipe Limit Modal */}
+      <RecipeLimitModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+      />
     </div>
   );
 }
