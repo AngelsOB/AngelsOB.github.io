@@ -26,23 +26,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Get or create Stripe customer
+    // Get or create Stripe customer (transaction prevents duplicate customers on double-click)
     const userRef = adminDb.collection('users').doc(decoded.uid);
-    const userSnap = await userRef.get();
-    const userData = userSnap.data();
+    const stripeCustomerId = await adminDb.runTransaction(async (tx) => {
+      const userSnap = await tx.get(userRef);
+      const existing = userSnap.data()?.stripeCustomerId as string | null;
+      if (existing) return existing;
 
-    let stripeCustomerId = userData?.stripeCustomerId as string | null;
-
-    if (!stripeCustomerId) {
       const customer = await getStripe().customers.create({
         email: decoded.email ?? undefined,
         metadata: { firebaseUserId: decoded.uid },
       });
-      stripeCustomerId = customer.id;
-      await userRef.update(
-        JSON.parse(JSON.stringify({ stripeCustomerId })),
-      );
-    }
+      tx.update(userRef, JSON.parse(JSON.stringify({ stripeCustomerId: customer.id })));
+      return customer.id;
+    });
 
     // Create checkout session
     const baseUrl = req.headers.get('origin') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';

@@ -14,7 +14,7 @@ function AccountContent() {
   const { userState, recipeCount } = useUserTier();
   const searchParams = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<'monthly' | 'annual' | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
 
   // Show success banner when returning from Stripe Checkout
@@ -42,9 +42,9 @@ function AccountContent() {
     : null;
 
   async function handleUpgrade(plan: 'monthly' | 'annual') {
-    setCheckoutLoading(true);
+    setLoadingPlan(plan);
     await startCheckout(plan);
-    setCheckoutLoading(false);
+    setLoadingPlan(null);
   }
 
   async function handleManage() {
@@ -114,14 +114,16 @@ function AccountContent() {
               <Button
                 variant="neon"
                 onClick={() => handleUpgrade('monthly')}
-                loading={checkoutLoading}
+                loading={loadingPlan === 'monthly'}
+                disabled={loadingPlan !== null}
               >
                 Upgrade — $1.99/mo
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleUpgrade('annual')}
-                loading={checkoutLoading}
+                loading={loadingPlan === 'annual'}
+                disabled={loadingPlan !== null}
               >
                 $19.99/yr (save ~$4)
               </Button>
@@ -158,7 +160,7 @@ function AccountContent() {
             <Button
               variant="neon"
               onClick={() => handleUpgrade('monthly')}
-              loading={checkoutLoading}
+              loading={loadingPlan === 'monthly'}
             >
               Resubscribe
             </Button>
