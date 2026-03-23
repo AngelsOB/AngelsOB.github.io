@@ -3,6 +3,7 @@
 @theme {
   --font-handwritten: "Shadows Into Light", cursive;
   --font-handwritten-alt: "Rock Salt", cursive;
+  --font-display: "Bitter", serif;
 }
 
 /* Tabular nums globally — fixed-width digits for all numeric displays */
@@ -7179,4 +7180,86 @@ input[type="number"],
 .sticky-bar-btn-arrow {
   font-size: 16px;
   line-height: 1;
+}
+
+/* ========================================
+   LEARN / DOCS PROSE STYLING
+   Long-form reading typography for /learn pages
+   ======================================== */
+
+.learn-prose h2 {
+  scroll-margin-top: 5rem;
+}
+
+.learn-prose p {
+  line-height: 1.75;
+}
+
+.learn-prose strong {
+  font-weight: 700;
+  color: var(--fg-strong);
+}
+
+.learn-prose em {
+  font-style: italic;
+}
+
+.learn-prose a {
+  color: var(--coral-500);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.learn-prose a:hover {
+  text-decoration: underline;
+  color: var(--coral-600);
+}
+
+.learn-prose ul,
+.learn-prose ol {
+  padding-left: 1.25rem;
+}
+
+.learn-prose li {
+  line-height: 1.75;
+}
+
+.learn-prose li + li {
+  margin-top: 0.25rem;
+}
+
+.learn-prose code {
+  font-size: 0.875em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: color-mix(in oklch, var(--fg-strong) 6%, transparent);
+  color: var(--fg-strong);
+}
+
+.learn-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 1.5rem 0;
+}
+
+.learn-prose th {
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid color-mix(in oklch, var(--fg-strong) 12%, transparent);
+}
+
+.learn-prose td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--fg-strong) 6%, transparent);
+  color: var(--fg-strong);
+}
+
+.learn-prose tr:hover td {
+  background: color-mix(in oklch, var(--fg-strong) 3%, transparent);
 }

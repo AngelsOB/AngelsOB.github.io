@@ -173,6 +173,7 @@ export default function BetaBuilderPage({
   const [showStickyBottom, setShowStickyBottom] = useState(false);
   const [titleUnderline, setTitleUnderline] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<Set<string>>(() => new Set(["recipe"]));
+  const [canCount, setCanCount] = useState(0);
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
   const recipes = useRecipeStore((s) => s.recipes);
   const isShared = Boolean(sharedRecipe);
@@ -193,6 +194,11 @@ export default function BetaBuilderPage({
       return next;
     });
   }, []);
+
+  // Reset spawned cans when label changes or is removed
+  useEffect(() => {
+    setCanCount(0);
+  }, [currentRecipe?.labelUrl]);
 
   // Delayed underline animation for recipe name
   useEffect(() => {
@@ -620,6 +626,7 @@ export default function BetaBuilderPage({
               <LabelUploader
                 labelUrl={currentRecipe.labelUrl}
                 isReadOnly={!!sharedRecipe}
+                onSpawnCan={currentRecipe.labelUrl ? () => setCanCount((c) => c + 1) : undefined}
               />
               {/* PhysicsCan is rendered at page level as a fixed overlay */}
 
@@ -873,11 +880,12 @@ export default function BetaBuilderPage({
         )}
       </div>
 
-      {/* Physics Beer Can — floating overlay */}
-      {currentRecipe.labelUrl && (
+      {/* Physics Beer Can — floating overlay, spawned on demand */}
+      {currentRecipe.labelUrl && canCount > 0 && (
         <PhysicsCan
           labelUrl={currentRecipe.labelUrl}
           srmColor={calculations ? srmToRgb(calculations.srm) : undefined}
+          canCount={canCount}
         />
       )}
 

@@ -6,9 +6,10 @@ import { useRecipeStore } from '../beta-builder/presentation/stores/recipeStore'
 interface LabelUploaderProps {
   labelUrl?: string;
   isReadOnly?: boolean;
+  onSpawnCan?: () => void;
 }
 
-export default function LabelUploader({ labelUrl, isReadOnly }: LabelUploaderProps) {
+export default function LabelUploader({ labelUrl, isReadOnly, onSpawnCan }: LabelUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -111,6 +112,14 @@ export default function LabelUploader({ labelUrl, isReadOnly }: LabelUploaderPro
             >
               Remove
             </button>
+            {onSpawnCan && (
+              <button
+                className="brew-tag bg-[rgb(var(--brew-accent-400))]/80 text-xs font-medium text-white backdrop-blur-sm pointer-events-auto"
+                onClick={(e) => { e.stopPropagation(); onSpawnCan(); }}
+              >
+                Spawn Can
+              </button>
+            )}
           </div>
         </div>
       ) : (

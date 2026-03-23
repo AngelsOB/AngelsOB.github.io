@@ -113,7 +113,7 @@ function CanMesh({ labelUrl, config }: { labelUrl: string; config: CanPhysicsCon
 
 /* ── Beer Can Rigid Body ────────────────────────────────────── */
 
-function BeerCanBody({ labelUrl, config }: { labelUrl: string; config: CanPhysicsConfig }) {
+function BeerCanBody({ labelUrl, config, startX = 0 }: { labelUrl: string; config: CanPhysicsConfig; startX?: number }) {
   const bodyRef = useRef<RapierRigidBody>(null);
   const { viewport, camera, gl } = useThree();
   const dragging = useRef(false);
@@ -155,12 +155,10 @@ function BeerCanBody({ labelUrl, config }: { labelUrl: string; config: CanPhysic
     };
   }, [camera, gl]);
 
-  // Initial position — 85% from left, above viewport
+  // Initial position — above viewport, offset by startX
   const startPos = useMemo((): [number, number, number] => {
-    const rect = gl.domElement.getBoundingClientRect();
-    const px = rect.left + rect.width * 0.90;
-    const worldStart = pixelToWorld(px, -100);
-    return [worldStart.x, worldStart.y, 0];
+    const worldStart = pixelToWorld(gl.domElement.getBoundingClientRect().left + gl.domElement.getBoundingClientRect().width * 0.5, -100);
+    return [worldStart.x + startX, worldStart.y, 0];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -460,10 +458,26 @@ export interface PhysicsCanProps {
   labelUrl: string;
   srmColor?: string;
   config?: CanPhysicsConfig;
+  canCount?: number;
 }
 
-function PhysicsCanInner({ labelUrl, srmColor, config = DEFAULT_CAN_CONFIG }: PhysicsCanProps) {
+/** Generate a random X offset in world units so stacked spawns don't overlap */
+function randomStartX() {
+  return (Math.random() - 0.5) * 4; // ±2 world units from center
+}
+
+function PhysicsCanInner({ labelUrl, srmColor, config = DEFAULT_CAN_CONFIG, canCount = 1 }: PhysicsCanProps) {
   const [isDesktop, setIsDesktop] = useState(false);
+  // Stable list of keys — grows as canCount increases, never shrinks (physics bodies stay)
+  const canKeys = useRef<number[]>([]);
+  const nextId = useRef(0);
+  const startXs = useRef<number[]>([]);
+
+  // Grow the key list when canCount increases
+  while (canKeys.current.length < canCount) {
+    canKeys.current.push(nextId.current++);
+    startXs.current.push(randomStartX());
+  }
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 768);
@@ -472,7 +486,7 @@ function PhysicsCanInner({ labelUrl, srmColor, config = DEFAULT_CAN_CONFIG }: Ph
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  if (!isDesktop) return null;
+  if (!isDesktop || canCount === 0) return null;
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 41, pointerEvents: 'none' }}>
@@ -490,7 +504,9 @@ function PhysicsCanInner({ labelUrl, srmColor, config = DEFAULT_CAN_CONFIG }: Ph
           <directionalLight position={[-3, 2, 4]} intensity={0.8} color="#f0f4ff" />
           <directionalLight position={[0, 3, -5]} intensity={2.5} color="#ffffff" />
           {srmColor && <pointLight position={[1, -1, 3]} intensity={2.0} color={srmColor} distance={15} decay={2} />}
-          <BeerCanBody labelUrl={labelUrl} config={config} />
+          {canKeys.current.slice(0, canCount).map((key, i) => (
+            <BeerCanBody key={key} labelUrl={labelUrl} config={config} startX={startXs.current[i]} />
+          ))}
           <Boundaries config={config} />
         </Physics>
       </Canvas>
