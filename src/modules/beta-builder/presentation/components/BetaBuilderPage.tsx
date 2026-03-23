@@ -7,7 +7,7 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
@@ -18,6 +18,7 @@ import HopSection from "./HopSection";
 import YeastSection from "./YeastSection";
 import WaterSection from "./WaterSection";
 import FermentationSection from "./FermentationSection";
+import PackagingSection from "./PackagingSection";
 import { EquipmentSection } from "./EquipmentSection";
 import StyleSelectorModal from "./StyleSelectorModal";
 import StyleRangeComparison from "./StyleRangeComparison";
@@ -34,7 +35,10 @@ import RatingStars from "../../../sharing/RatingStars";
 import { useAuthStore } from "../../../auth/authStore";
 import { useUserTier } from "../../../auth/useUserTier";
 import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
+import SignInPrompt from "../../../auth/components/SignInPrompt";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
+import LabelUploader from "../../../labels/LabelUploader";
+import PhysicsCan from "../../../labels/PhysicsCan";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
@@ -162,6 +166,9 @@ export default function BetaBuilderPage({
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const wasAnonymousRef = useRef(!user && !isAuthLoading);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
   const [titleUnderline, setTitleUnderline] = useState(false);
@@ -230,6 +237,24 @@ export default function BetaBuilderPage({
     createNewRecipe,
     setCurrentRecipe,
   ]);
+
+  // Auto-save after sign-in: if user was anonymous and just signed in via popup,
+  // save the in-progress recipe automatically.
+  useEffect(() => {
+    if (wasAnonymousRef.current && user && currentRecipe && !isReadOnly) {
+      wasAnonymousRef.current = false;
+      // Small delay to let AuthProvider sync user doc + reload recipes
+      const timer = setTimeout(() => {
+        saveCurrentRecipe();
+        router.push("/recipes");
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // Track anonymous state for next transition
+    if (!user && !isAuthLoading) {
+      wasAnonymousRef.current = true;
+    }
+  }, [user, isAuthLoading, currentRecipe, isReadOnly, saveCurrentRecipe, router]);
 
   // Update document title with recipe name
   useEffect(() => {
@@ -306,6 +331,10 @@ export default function BetaBuilderPage({
   }
 
   const handleSave = () => {
+    if (!user) {
+      setIsSignInModalOpen(true);
+      return;
+    }
     if (saveDisabled) {
       setIsLimitModalOpen(true);
       return;
@@ -474,6 +503,30 @@ export default function BetaBuilderPage({
         </div>
       )}
 
+      {/* Anonymous sign-in banner */}
+      {!user && !isAuthLoading && !isReadOnly && !bannerDismissed && (
+        <div className="brew-section mb-4 flex items-center justify-between gap-3 py-3 px-4 rounded-lg border border-[var(--brew-accent-400)]/30 bg-[var(--brew-accent-400)]/5">
+          <p className="text-sm text-[var(--brew-text-secondary)]">
+            <button
+              onClick={() => setIsSignInModalOpen(true)}
+              className="font-medium text-[var(--brew-accent-500)] hover:underline cursor-pointer"
+            >
+              Sign in with Google
+            </button>{" "}
+            to save your recipe — it&apos;s free and takes one click.
+          </p>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="shrink-0 text-[var(--brew-text-tertiary)] hover:text-[var(--brew-text-secondary)] transition-colors cursor-pointer"
+            aria-label="Dismiss"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       <div className={`brew-main-fade-in ${isReadOnly ? "brew-read-only" : ""}`}>
         {/* Recipe Name & Metadata */}
         <div>
@@ -562,6 +615,13 @@ export default function BetaBuilderPage({
                   />
                 </div>
               </div>
+
+              {/* Beer Label */}
+              <LabelUploader
+                labelUrl={currentRecipe.labelUrl}
+                isReadOnly={!!sharedRecipe}
+              />
+              {/* PhysicsCan is rendered at page level as a fixed overlay */}
 
               {/* Calculated Values - Gauge Style */}
               {calculations && (
@@ -764,6 +824,19 @@ export default function BetaBuilderPage({
           </AccordionSection>
         </div>
 
+        {/* Packaging */}
+        <div>
+          <AccordionSection
+            sectionKey="packaging"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
+            <PackagingSection />
+          </AccordionSection>
+        </div>
+
         {/* Brew Day Numbers */}
         <div>
           <AccordionSection
@@ -793,12 +866,20 @@ export default function BetaBuilderPage({
                 onClick={handleSave}
                 className={`brew-btn-primary flex-1 py-3 text-base${saveDisabled ? ' opacity-50' : ''}`}
               >
-                Save &amp; Close
+                {user ? 'Save & Close' : 'Sign In to Save'}
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Physics Beer Can — floating overlay */}
+      {currentRecipe.labelUrl && (
+        <PhysicsCan
+          labelUrl={currentRecipe.labelUrl}
+          srmColor={calculations ? srmToRgb(calculations.srm) : undefined}
+        />
+      )}
 
       {/* Style Selector Modal */}
       <StyleSelectorModal
@@ -836,6 +917,12 @@ export default function BetaBuilderPage({
       <RecipeLimitModal
         isOpen={isLimitModalOpen}
         onClose={() => setIsLimitModalOpen(false)}
+      />
+
+      {/* Sign In Prompt Modal */}
+      <SignInPrompt
+        isOpen={isSignInModalOpen}
+        onClose={() => setIsSignInModalOpen(false)}
       />
     </div>
   );

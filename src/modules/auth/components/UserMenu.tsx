@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "../authStore";
 import { usePreferencesStore } from "../preferencesStore";
+import { useUserTier } from "../useUserTier";
 import { toast } from "../../../stores/toastStore";
+import TierBadge from "./TierBadge";
 
 export default function UserMenu() {
   const user = useAuthStore((s) => s.user);
@@ -14,6 +17,8 @@ export default function UserMenu() {
   const setAttenuationModel = usePreferencesStore((s) => s.setAttenuationModel);
   const loadPreferences = usePreferencesStore((s) => s.loadPreferences);
   const isLoaded = usePreferencesStore((s) => s.isLoaded);
+  const { userState } = useUserTier();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +84,7 @@ export default function UserMenu() {
             <p className="text-xs text-[var(--fg-muted)] truncate">
               {user.email}
             </p>
+            <TierBadge />
           </div>
 
           {/* Preferences */}
@@ -122,6 +128,18 @@ export default function UserMenu() {
           </div>
 
           <div className="py-1">
+            <button
+              onClick={() => {
+                setOpen(false);
+                router.push('/account');
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-[var(--fg-muted)]
+                hover:text-[var(--fg-strong)]
+                hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]
+                transition-colors cursor-pointer"
+            >
+              {userState === 'premium' ? 'Manage Subscription' : 'Upgrade to Premium'}
+            </button>
             <button
               onClick={() => {
                 setOpen(false);

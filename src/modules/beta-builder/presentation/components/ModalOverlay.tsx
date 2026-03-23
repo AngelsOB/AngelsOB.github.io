@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Modal Overlay Component
@@ -11,9 +11,11 @@
  * - Prevents body scroll when open
  * - Focus trapping for keyboard accessibility
  * - ARIA attributes for screen readers
+ * - Animated entrance: backdrop fades, content scales down, modal grows from click point
  */
 
-import { useEffect, useRef, useCallback, useId } from "react";
+import { useEffect, useRef, useCallback, useId, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalOverlayProps {
   isOpen: boolean;
@@ -27,16 +29,30 @@ interface ModalOverlayProps {
   describedById?: string;
 }
 
+/** Track last pointer position for transform-origin */
+let lastPointerX = 0;
+let lastPointerY = 0;
+if (typeof window !== "undefined") {
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+    },
+    true
+  );
+}
+
 /** Get all focusable elements within a container */
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
   const selector = [
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    'a[href]',
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "a[href]",
     '[tabindex]:not([tabindex="-1"])',
-  ].join(', ');
+  ].join(", ");
 
   return Array.from(container.querySelectorAll<HTMLElement>(selector));
 }
@@ -54,37 +70,79 @@ export default function ModalOverlay({
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const generatedId = useId();
   const dialogLabelId = labelledById ?? `modal-label-${generatedId}`;
+  const [originStyle, setOriginStyle] = useState<React.CSSProperties>({});
 
-  // Handle ESC key and focus trapping
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose();
-      return;
-    }
+  // Capture click origin when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Compute offset from viewport center to click point
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = lastPointerX - cx;
+      const dy = lastPointerY - cy;
+      setOriginStyle({
+        "--modal-dx": `${dx}px`,
+        "--modal-dy": `${dy}px`,
+      } as React.CSSProperties);
 
-    // Focus trap: Tab and Shift+Tab
-    if (e.key === "Tab" && modalRef.current) {
-      const focusable = getFocusableElements(modalRef.current);
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey) {
-        // Shift+Tab: if on first element, go to last
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        // Tab: if on last element, go to first
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      // Scale down page content
+      const appRoot = document.getElementById("app-shell");
+      if (appRoot) {
+        appRoot.style.transition =
+          "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), filter 0.4s ease";
+        appRoot.style.transform = "scale(0.95)";
+        appRoot.style.filter = "brightness(0.95)";
+      }
+    } else {
+      const appRoot = document.getElementById("app-shell");
+      if (appRoot) {
+        appRoot.style.transform = "";
+        appRoot.style.filter = "";
       }
     }
-  }, [onClose]);
+
+    return () => {
+      const appRoot = document.getElementById("app-shell");
+      if (appRoot) {
+        appRoot.style.transform = "";
+        appRoot.style.filter = "";
+      }
+    };
+  }, [isOpen]);
+
+  // Handle ESC key and focus trapping
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      // Focus trap: Tab and Shift+Tab
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = getFocusableElements(modalRef.current);
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          // Shift+Tab: if on first element, go to last
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          // Tab: if on last element, go to first
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    },
+    [onClose]
+  );
 
   // Set up keyboard listeners when modal opens
   useEffect(() => {
@@ -103,7 +161,7 @@ export default function ModalOverlay({
       // Focus [autofocus] element if present, otherwise first focusable element
       requestAnimationFrame(() => {
         if (modalRef.current) {
-          const autoFocusEl = modalRef.current.querySelector<HTMLElement>('[data-autofocus]');
+          const autoFocusEl = modalRef.current.querySelector<HTMLElement>("[data-autofocus]");
           if (autoFocusEl) {
             autoFocusEl.focus();
           } else {
@@ -154,15 +212,16 @@ export default function ModalOverlay({
     }
   };
 
-  return (
-    // Backdrop: keyboard handling (ESC) is managed via useEffect keydown listener
+  return createPortal(
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
-      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{
+        backgroundColor: "rgba(0, 0, 0, 0.3)",
+        animation: "modal-backdrop-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) both",
+      }}
       onClick={handleBackdropClick}
     >
-      {/* stopPropagation prevents backdrop click from closing when clicking inside dialog */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
       <div
         ref={modalRef}
@@ -171,12 +230,19 @@ export default function ModalOverlay({
         aria-labelledby={dialogLabelId}
         aria-describedby={describedById}
         tabIndex={-1}
-        className={`brew-modal ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col`}
+        className={`brew-modal ${sizeClasses[size]} flex max-h-[90vh] w-full flex-col`}
+        style={
+          {
+            animation: "modal-scale-in 0.35s cubic-bezier(0.32, 0.72, 0, 1) both",
+            ...originStyle,
+          } as React.CSSProperties
+        }
         onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

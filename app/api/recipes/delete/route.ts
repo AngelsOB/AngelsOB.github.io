@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/config/firebase-admin';
+import { adminDb, adminAuth, adminStorage } from '@/config/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(req: NextRequest) {
@@ -39,6 +39,11 @@ export async function POST(req: NextRequest) {
       }
 
       await batch.commit();
+
+      // Clean up label image from Storage (best-effort)
+      try {
+        await adminStorage.bucket().file(`labels/${decoded.uid}/${recipeId}`).delete();
+      } catch { /* file may not exist */ }
     } else {
       // Recipe already gone — still clean up index if present
       const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);

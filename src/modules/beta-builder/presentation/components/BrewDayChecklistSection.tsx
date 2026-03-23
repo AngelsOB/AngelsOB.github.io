@@ -37,7 +37,7 @@ export default function BrewDayNumbersSection({ recipe, calculations }: Props) {
     : 0;
 
   return (
-    <div className="brew-section brew-animate-in brew-stagger-8" data-accent="targets">
+    <div className="brew-section brew-animate-in brew-stagger-9" data-accent="targets">
       <h2 className="brew-section-title">Brew Day Numbers</h2>
       <p className="text-sm text-muted mt-1 mb-4">
         Key volumes and targets for brew day.

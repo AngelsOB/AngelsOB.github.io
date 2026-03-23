@@ -20,7 +20,7 @@ const footerSections = [
 
 export default function Footer() {
   return (
-    <footer className="relative mt-12">
+    <footer data-physics="footer" className="relative mt-12">
       {/* Decorative divider — accent-tinted gradient line */}
       <div
         className="mx-auto h-px max-w-5xl"

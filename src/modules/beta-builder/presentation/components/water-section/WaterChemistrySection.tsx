@@ -45,6 +45,14 @@ type Props = {
   onSaltChange: (saltKey: keyof SaltAdditions, value: number) => void;
   /** Callback when user drags a target needle */
   onTargetDrag?: (ion: keyof WaterProfile, value: number) => void;
+  /** Callback to auto-calculate salt additions (premium feature) */
+  onAutoCalculate?: () => void;
+  /** Whether the user has access to auto-calculate */
+  canAutoCalc?: boolean;
+  /** Whether baking soda is included in auto-calculate */
+  includeBakingSoda?: boolean;
+  /** Callback when baking soda toggle changes */
+  onToggleBakingSoda?: (include: boolean) => void;
 };
 
 export default function WaterChemistrySection({
@@ -63,6 +71,10 @@ export default function WaterChemistrySection({
   onOpenCustomTarget,
   onSaltChange,
   onTargetDrag,
+  onAutoCalculate,
+  canAutoCalc,
+  includeBakingSoda,
+  onToggleBakingSoda,
 }: Props) {
   const targetProfile = targetStyle?.profile || { Ca: 75, Mg: 10, Na: 10, Cl: 75, SO4: 75, HCO3: 75 };
 
@@ -127,6 +139,10 @@ export default function WaterChemistrySection({
         mashSalts={mashSalts}
         spargeSalts={spargeSalts}
         onSaltChange={onSaltChange}
+        onAutoCalculate={onAutoCalculate}
+        canAutoCalc={canAutoCalc}
+        includeBakingSoda={includeBakingSoda}
+        onToggleBakingSoda={onToggleBakingSoda}
       />
 
       {/* Water Profile Comparison */}

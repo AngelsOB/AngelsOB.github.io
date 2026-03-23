@@ -23,6 +23,8 @@ import { auth } from '@/config/firebase';
 import { generateShareSlug } from '../../../sharing/slugUtils';
 import { syncPublicIndex } from '../../../sharing/publishService';
 import { usePreferencesStore } from '../../../auth/preferencesStore';
+import { processLabelImage } from '../../../labels/imageProcessor';
+import { uploadLabel as uploadLabelToStorage, deleteLabel as deleteLabelFromStorage } from '../../../labels/labelService';
 
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;
@@ -95,6 +97,10 @@ type RecipeStore = {
   createVariation: (recipeId: RecipeId, newName: string) => void;
   loadVersionHistory: (recipeId: RecipeId) => RecipeVersion[];
   restoreVersion: (recipeId: RecipeId, versionNumber: number) => void;
+
+  // Label actions
+  uploadLabel: (file: File) => Promise<void>;
+  removeLabel: () => Promise<void>;
 };
 
 export const useRecipeStore = create<RecipeStore>((set, get) => ({
@@ -894,6 +900,42 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       set({ recipes: get().recipes.map((r) => r.id === recipeId ? restoredRecipe : r), currentRecipe: restoredRecipe, error: null });
     } catch {
       set({ error: 'Failed to restore version' });
+    }
+  },
+
+  // Upload a label image for the current recipe
+  uploadLabel: async (file: File) => {
+    const current = get().currentRecipe;
+    const user = useAuthStore.getState().user;
+    if (!current || !user) {
+      toast.error('Sign in and open a recipe to upload a label.');
+      return;
+    }
+
+    try {
+      const { blob, wasCompressed } = await processLabelImage(file);
+      const downloadUrl = await uploadLabelToStorage(user.uid, current.id, blob);
+      get().updateRecipe({ labelUrl: downloadUrl });
+      get().saveCurrentRecipe();
+      toast.success(wasCompressed ? 'Label uploaded (image was compressed to fit)' : 'Label uploaded');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload label');
+    }
+  },
+
+  // Remove the label from the current recipe
+  removeLabel: async () => {
+    const current = get().currentRecipe;
+    const user = useAuthStore.getState().user;
+    if (!current || !user) return;
+
+    try {
+      await deleteLabelFromStorage(user.uid, current.id);
+      get().updateRecipe({ labelUrl: undefined });
+      get().saveCurrentRecipe();
+      toast.success('Label removed');
+    } catch {
+      toast.error('Failed to remove label');
     }
   },
 }));

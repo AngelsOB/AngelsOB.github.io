@@ -158,6 +158,8 @@ input[type="number"],
   --sidebar-water-text: oklch(93% 0.02 250);
   --sidebar-fermentation-bg: oklch(calc(52% * var(--srm-l-scale)) 0.17 15);
   --sidebar-fermentation-text: oklch(95% 0.01 15);
+  --sidebar-packaging-bg: oklch(calc(55% * var(--srm-l-scale)) 0.15 50);
+  --sidebar-packaging-text: oklch(95% 0.01 50);
   --sidebar-targets-bg: oklch(calc(58% * var(--srm-l-scale)) 0.14 25);
   --sidebar-targets-text: oklch(96% 0.01 25);
 
@@ -375,6 +377,8 @@ input[type="number"],
   --sidebar-water-text: oklch(92% 0.015 250);
   --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.13 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.11 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
   --sidebar-targets-bg: oklch(calc(55% * var(--srm-l-scale)) 0.1 25);
   --sidebar-targets-text: oklch(95% 0.008 25);
 
@@ -615,6 +619,8 @@ input[type="number"],
   --sidebar-water-text: oklch(93% 0.015 250);
   --sidebar-fermentation-bg: oklch(calc(48% * var(--srm-l-scale)) 0.14 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
+  --sidebar-packaging-bg: oklch(calc(49% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(94% 0.008 50);
   --sidebar-targets-bg: oklch(calc(50% * var(--srm-l-scale)) 0.12 250);
   --sidebar-targets-text: oklch(94% 0.008 250);
 }
@@ -828,6 +834,8 @@ input[type="number"],
   --sidebar-water-text: oklch(92% 0.012 200);
   --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.14 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-packaging-bg: oklch(calc(51% * var(--srm-l-scale)) 0.12 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
   --sidebar-targets-bg: oklch(calc(52% * var(--srm-l-scale)) 0.1 148);
   --sidebar-targets-text: oklch(95% 0.008 148);
 }
@@ -1041,6 +1049,8 @@ input[type="number"],
   --sidebar-water-text: oklch(92% 0.012 230);
   --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.15 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
   --sidebar-targets-bg: oklch(calc(54% * var(--srm-l-scale)) 0.12 35);
   --sidebar-targets-text: oklch(95% 0.008 35);
 }
@@ -1250,6 +1260,8 @@ input[type="number"],
   --sidebar-water-text: oklch(93% 0.004 250);
   --sidebar-fermentation-bg: oklch(calc(38% * var(--srm-l-scale)) 0.012 15);
   --sidebar-fermentation-text: oklch(94% 0.004 15);
+  --sidebar-packaging-bg: oklch(calc(34% * var(--srm-l-scale)) 0.01 50);
+  --sidebar-packaging-text: oklch(94% 0.004 50);
   --sidebar-targets-bg: oklch(calc(30% * var(--srm-l-scale)) 0.008 260);
   --sidebar-targets-text: oklch(94% 0.004 260);
 }
@@ -1460,6 +1472,8 @@ input[type="number"],
   --sidebar-water-text: oklch(92% 0.012 240);
   --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.15 18);
   --sidebar-fermentation-text: oklch(94% 0.008 18);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
   --sidebar-targets-bg: oklch(calc(54% * var(--srm-l-scale)) 0.12 30);
   --sidebar-targets-text: oklch(95% 0.008 30);
 }
@@ -1718,6 +1732,10 @@ input[type="number"],
     calc(50% * var(--srm-l-scale)) calc(0.15 * var(--srm-chroma-scale)) 20
   );
   --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-packaging-bg: oklch(
+    calc(52% * var(--srm-l-scale)) calc(0.13 * var(--srm-chroma-scale)) 50
+  );
+  --sidebar-packaging-text: oklch(95% 0.008 50);
   --sidebar-targets-bg: oklch(
     calc(54% * var(--srm-l-scale)) calc(0.12 * var(--srm-chroma-scale)) 35
   );
@@ -3786,12 +3804,17 @@ input[type="number"],
       0 16px 32px rgba(0, 0, 0, 0.1),
       0 32px 64px rgba(0, 0, 0, 0.06);
   }
-  .brew-recipe-card:active {
+  .brew-recipe-card:active:not(:has(button:active)) {
     transform: translateY(5px);
     box-shadow:
       inset 0 2px 6px rgba(0, 0, 0, 0.12),
       0 0px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
       0 1px 2px rgba(0, 0, 0, 0.06);
+    transition-duration: 80ms;
+  }
+  .brew-recipe-card button:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     transition-duration: 80ms;
   }
 
@@ -3830,7 +3853,7 @@ input[type="number"],
       0 16px 32px rgba(0, 0, 0, 0.25),
       0 32px 64px rgba(0, 0, 0, 0.15);
   }
-  .dark .brew-recipe-card:active {
+  .dark .brew-recipe-card:active:not(:has(button:active)) {
     box-shadow:
       inset 0 2px 6px rgba(0, 0, 0, 0.4),
       0 0px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
@@ -5568,6 +5591,32 @@ input[type="number"],
   }
 }
 
+/* Modal entrance animations */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes modal-scale-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--modal-dx, 0px), var(--modal-dy, 0px)) scale(0.6);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
 /* Brew theme animations — initial load stagger */
 @keyframes brew-fade-in-up {
   from {
@@ -5845,7 +5894,7 @@ input[type="number"],
   .brew-btn-ghost:hover {
     transform: none !important;
   }
-  .brew-recipe-card:active,
+  .brew-recipe-card:active:not(:has(button:active)),
   .btn-neon:active,
   .btn-outline:active,
   .btn-tonal:active,

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
 import {
   collection,
   query,
@@ -66,6 +65,7 @@ export default function BrowseRecipesPage() {
           ratingSum: data.ratingSum || 0,
           ratingCount: data.ratingCount || 0,
           ratingAvg: data.ratingCount > 0 ? (data.ratingSum || 0) / data.ratingCount : 0,
+          labelUrl: data.labelUrl || undefined,
         } as BrowseRecipe;
       });
 
@@ -268,18 +268,12 @@ export default function BrowseRecipesPage() {
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
-              <Link
+              <BrowseCard
                 key={recipe.id}
-                href={
-                  recipe.source === 'official'
-                    ? `/r/seed/${recipe.id}`
-                    : `/r/${recipe.shareSlug}`
-                }
-                onClick={() => setNavigatingId(recipe.id)}
-                className="contents"
-              >
-                <BrowseCard recipe={recipe} isNavigating={navigatingId === recipe.id} />
-              </Link>
+                recipe={recipe}
+                isNavigating={navigatingId === recipe.id}
+                onNavigate={() => setNavigatingId(recipe.id)}
+              />
             ))}
           </div>
 

@@ -15,6 +15,9 @@ import {
 } from '../beta-builder/presentation/utils/recipeExport';
 import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 import { useAuthStore } from '../auth/authStore';
+import { useUserTier } from '../auth/useUserTier';
+import { canAccess } from '../auth/tierAccess';
+import UpgradeModal from '../auth/components/UpgradeModal';
 import { toast } from '../../stores/toastStore';
 import ScalableText from '@/components/ScalableText';
 import type { Recipe } from '../beta-builder/domain/models/Recipe';
@@ -36,14 +39,17 @@ export type BrowseRecipe = {
   ratingAvg?: number;
   ratingCount?: number;
   source?: 'official' | 'community';
+  labelUrl?: string;
 };
 
 export function BrowseCard({
   recipe,
   isNavigating,
+  onNavigate,
 }: {
   recipe: BrowseRecipe;
   isNavigating?: boolean;
+  onNavigate?: () => void;
 }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -51,6 +57,9 @@ export function BrowseCard({
   const srmColor = recipe.stats.srm != null ? srmToRgb(recipe.stats.srm) : 'rgb(220, 190, 140)';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const { userState } = useUserTier();
+  const exportAllowed = canAccess('export', userState);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   /** Fetch the full Recipe object (seed or Firestore). */
   async function getFullRecipe(): Promise<Recipe | null> {
@@ -141,6 +150,7 @@ export function BrowseCard({
     e.preventDefault();
     e.stopPropagation();
     setIsMenuOpen(false);
+    if (!exportAllowed) { setIsUpgradeModalOpen(true); return; }
     setIsBusy(true);
 
     try {
@@ -176,6 +186,24 @@ export function BrowseCard({
     <div
       className={`group brew-recipe-card relative cursor-pointer overflow-visible ${isMenuOpen ? 'z-30' : 'z-10'}`}
       style={{ '--card-srm': srmColor } as React.CSSProperties}
+      role="link"
+      tabIndex={0}
+      onClick={() => {
+        onNavigate?.();
+        const path = recipe.source === 'official'
+          ? `/r/seed/${recipe.id}`
+          : `/r/${recipe.shareSlug}`;
+        router.push(path);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          onNavigate?.();
+          const path = recipe.source === 'official'
+            ? `/r/seed/${recipe.id}`
+            : `/r/${recipe.shareSlug}`;
+          router.push(path);
+        }
+      }}
     >
       {(isNavigating || isBusy) && (
         <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
@@ -191,6 +219,14 @@ export function BrowseCard({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2">
+                {recipe.labelUrl && (
+                  <img
+                    src={recipe.labelUrl}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
+                    loading="lazy"
+                  />
+                )}
                 <ScalableText className="min-w-0 flex-1 font-extrabold tracking-tight" minScale={0.75} maxLines={2} style={{ fontSize: 'clamp(1rem, calc(8px + 3cqw), 1.5rem)' }}>
                   {recipe.name}
                 </ScalableText>
@@ -229,7 +265,7 @@ export function BrowseCard({
               </p>
             </div>
             {/* Right column: menu + rating */}
-            <div className="flex shrink-0 flex-col items-end gap-2">
+            <div className="flex shrink-0 flex-col items-end gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               {/* Actions menu trigger */}
               <div className="relative">
               <button
@@ -270,25 +306,25 @@ export function BrowseCard({
                     <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
                     <button
                       onClick={(e) => handleExport('markdown', e)}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
                     >
                       Export Markdown
                     </button>
                     <button
                       onClick={(e) => handleExport('copy-md', e)}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
                     >
                       Copy Markdown
                     </button>
                     <button
                       onClick={(e) => handleExport('json', e)}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
                     >
                       Export JSON
                     </button>
                     <button
                       onClick={(e) => handleExport('beerxml', e)}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
                     >
                       Export BeerXML
                     </button>
@@ -419,7 +455,7 @@ export function BrowseCard({
           <div className="flex items-center justify-between text-muted text-xs">
             <span>
               {recipe.publishedAt
-                ? new Date(recipe.publishedAt).toLocaleDateString()
+                ? new Date(recipe.publishedAt).toISOString().slice(0, 10)
                 : ''}
             </span>
             {(recipe.forkCount ?? 0) > 0 && (
@@ -437,6 +473,12 @@ export function BrowseCard({
           </div>
         </div>
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        reason="Export is a Premium feature."
+      />
     </div>
   );
 }

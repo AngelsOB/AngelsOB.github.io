@@ -1,11 +1,17 @@
 'use client';
 
 import type { Recipe, RecipeCalculations, Hop } from '../beta-builder/domain/models/Recipe';
+import { packagingCalculationService as pkgCalc } from '../beta-builder/domain/services/PackagingCalculationService';
 import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
 import HopFlavorRadar from '../beta-builder/presentation/components/HopFlavorRadar';
 import ForkButton from './ForkButton';
+import { useState } from 'react';
 import { downloadTextFile, generateBeerXml, sanitizeFileName } from '../beta-builder/presentation/utils/recipeExport';
 import Button from '../../components/Button';
+import PhysicsCan from '../labels/PhysicsCan';
+import UpgradeModal from '../auth/components/UpgradeModal';
+import { useUserTier } from '../auth/useUserTier';
+import { canAccess } from '../auth/tierAccess';
 
 interface PublicRecipeViewProps {
   recipe: Recipe;
@@ -67,7 +73,12 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
     .filter((h) => h.flavor)
     .map((h) => ({ name: h.name, flavor: h.flavor! }));
 
+  const { userState } = useUserTier();
+  const exportAllowed = canAccess('export', userState);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+
   function handleExportBeerXml() {
+    if (!exportAllowed) { setIsUpgradeModalOpen(true); return; }
     const xml = generateBeerXml(recipe);
     const filename = `${sanitizeFileName(recipe.name)}.xml`;
     downloadTextFile(filename, xml, 'application/xml;charset=utf-8');
@@ -82,6 +93,12 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
           className="h-2 rounded-full mb-4"
           style={{ backgroundColor: srmColor }}
         />
+        {recipe.labelUrl && (
+          <PhysicsCan
+            labelUrl={recipe.labelUrl}
+            srmColor={srmColor}
+          />
+        )}
         <h1 className="text-3xl font-bold text-[var(--fg-strong)]">{recipe.name}</h1>
         {recipe.style && (
           <p className="text-lg italic text-[var(--fg-muted)] mt-1">{recipe.style}</p>
@@ -362,13 +379,66 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
         </div>
       )}
 
+      {/* Packaging */}
+      {recipe.packaging && (
+        <div className="brew-section">
+          <h2 className="brew-section-title mb-4">Packaging</h2>
+          {(() => {
+            const pkg = recipe.packaging!;
+            const highTemp = pkgCalc.highestFermTemp(recipe.fermentationSteps);
+            const residual = pkgCalc.residualCo2(highTemp);
+            const hasBottle = pkg.methods.includes('bottle');
+            const hasKeg = pkg.methods.includes('keg');
+            const methodLabel = pkg.methods.length === 2 ? 'Bottle + Keg' : hasBottle ? 'Bottling' : 'Kegging';
+            return (
+              <div className="space-y-3 text-sm">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-[var(--fg-muted)]">
+                  <span>Method: <strong className="text-[var(--fg-strong)]">{methodLabel}</strong></span>
+                  <span>Target CO₂: <strong className="text-[var(--fg-strong)]">{fmt(pkg.targetCo2Volumes, 1)}</strong> vol</span>
+                  <span>Residual CO₂: <strong className="text-[var(--fg-strong)]">{fmt(residual, 2)}</strong> vol</span>
+                </div>
+                {hasBottle && pkg.primingSugarType && (
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-[var(--fg-muted)]">
+                    <span>Priming sugar: <strong className="text-[var(--fg-strong)]">{Math.round(pkgCalc.primingSugarGrams(pkg.targetCo2Volumes, residual, recipe.batchVolumeL, pkg.primingSugarType))} g</strong> {pkgCalc.sugarLabel(pkg.primingSugarType)}</span>
+                    {(pkg.bottles?.length ?? 0) > 0
+                      ? pkg.bottles!.map((b, i) => (
+                          <span key={i}>
+                            <strong className="text-[var(--fg-strong)]">{b.count}</strong> x {pkgCalc.bottleSizeML(b.size)} ml
+                          </span>
+                        ))
+                      : pkg.bottleSize && (
+                          <span>Bottles: <strong className="text-[var(--fg-strong)]">{pkgCalc.numberOfBottles(recipe.batchVolumeL, pkg.bottleSize)}</strong> x {pkgCalc.bottleSizeML(pkg.bottleSize)} ml</span>
+                        )
+                    }
+                  </div>
+                )}
+                {hasKeg && pkg.servingTempC != null && (
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-[var(--fg-muted)]">
+                    <span>Serving pressure: <strong className="text-[var(--fg-strong)]">{fmt(pkgCalc.forcedCarbonationPsi(pkg.servingTempC, pkg.targetCo2Volumes), 1)} PSI</strong> at {fmt(pkg.servingTempC, 0)}°C</span>
+                  </div>
+                )}
+                {pkg.notes && (
+                  <p className="text-[var(--fg-muted)] italic">{pkg.notes}</p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex flex-wrap gap-3 items-center justify-between">
         <ForkButton recipeId={recipe.id} recipeName={recipe.name} />
-        <Button variant="ghost" size="sm" onClick={handleExportBeerXml}>
+        <Button variant="ghost" size="sm" onClick={handleExportBeerXml} className={!exportAllowed ? "opacity-50" : ""}>
           Export BeerXML
         </Button>
       </div>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        reason="Export is a Premium feature."
+      />
     </div>
   );
 }

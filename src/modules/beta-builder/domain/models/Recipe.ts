@@ -193,6 +193,46 @@ export type BrewDayChecklistItem = {
   enabled: boolean;
 };
 
+/**
+ * Packaging method types
+ */
+export type PackagingMethod = 'bottle' | 'keg';
+export type PrimingSugarType = 'corn-sugar' | 'table-sugar' | 'dme' | 'honey';
+export type BottleSize = '330ml' | '500ml' | '650ml' | '750ml';
+
+/**
+ * A bottle entry — size + count for that size
+ */
+export type BottleEntry = {
+  size: BottleSize;
+  count: number;
+};
+
+/**
+ * Packaging configuration — bottling, kegging, or both
+ */
+export type Packaging = {
+  methods: PackagingMethod[];
+  /** Target CO2 volumes (e.g., 2.4) */
+  targetCo2Volumes: number;
+  /** Priming sugar type (bottling) */
+  primingSugarType?: PrimingSugarType;
+  /** Bottle conditioning temperature in Celsius */
+  conditioningTempC?: number;
+  /** Bottle conditioning duration in days */
+  conditioningDays?: number;
+  /** Bottle entries — multiple sizes with counts */
+  bottles?: BottleEntry[];
+  /** @deprecated Use bottles[] instead */
+  bottleSize?: BottleSize;
+  /** Serving/carbonation temperature in Celsius (kegging) */
+  servingTempC?: number;
+  /** Forced carbonation method (kegging) */
+  carbonationMethod?: 'set-and-forget' | 'burst';
+  /** Optional notes */
+  notes?: string;
+};
+
 export type Recipe = {
   id: RecipeId;
   name: string;
@@ -290,6 +330,9 @@ export type Recipe = {
   /** Fermentation schedule - list of fermentation steps */
   fermentationSteps: FermentationStep[];
 
+  /** Packaging configuration (bottling/kegging) */
+  packaging?: Packaging;
+
   /** Brew day checklist — per-recipe overrides (optional, defaults generated at export time) */
   brewDayChecklist?: BrewDayChecklistItem[];
 
@@ -300,6 +343,9 @@ export type Recipe = {
   isPublic?: boolean;
   shareSlug?: string;
   publishedAt?: string;
+
+  /** Beer label image URL (Firebase Storage) */
+  labelUrl?: string;
 
   /** Timestamps */
   createdAt: string;

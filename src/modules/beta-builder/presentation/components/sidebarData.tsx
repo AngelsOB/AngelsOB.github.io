@@ -1,6 +1,7 @@
 import React from "react";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 import { starterCalculationService } from "../../domain/services/StarterCalculationService";
+import { packagingCalculationService } from "../../domain/services/PackagingCalculationService";
 import { ionDeltaFromSalts } from "@/utils/water";
 
 /**
@@ -262,6 +263,49 @@ export function getScribbleLines(
         </>
       ));
     }
+    case "packaging": {
+      const pkg = recipe.packaging;
+      if (!pkg) return [];
+      const lines: React.ReactNode[] = [];
+      const methodLabel =
+        pkg.methods.length === 2
+          ? "Bottle + Keg"
+          : pkg.methods[0] === "bottle"
+            ? "Bottling"
+            : "Kegging";
+      lines.push(
+        <>
+          {methodLabel} · <strong>{pkg.targetCo2Volumes.toFixed(1)}</strong> vol CO₂
+        </>
+      );
+      const highTemp = packagingCalculationService.highestFermTemp(recipe.fermentationSteps);
+      const residual = packagingCalculationService.residualCo2(highTemp);
+      if (pkg.methods.includes("bottle") && pkg.primingSugarType) {
+        const grams = packagingCalculationService.primingSugarGrams(
+          pkg.targetCo2Volumes,
+          residual,
+          recipe.batchVolumeL,
+          pkg.primingSugarType
+        );
+        lines.push(
+          <>
+            <strong>{Math.round(grams)}</strong>g priming sugar
+          </>
+        );
+      }
+      if (pkg.methods.includes("keg") && pkg.servingTempC != null) {
+        const psi = packagingCalculationService.forcedCarbonationPsi(
+          pkg.servingTempC,
+          pkg.targetCo2Volumes
+        );
+        lines.push(
+          <>
+            <strong>{psi.toFixed(1)}</strong> PSI
+          </>
+        );
+      }
+      return lines;
+    }
     case "targets": {
       if (!calculations) return [];
       const lines: React.ReactNode[] = [];
@@ -371,11 +415,20 @@ export const SECTIONS = [
     text: "var(--sidebar-fermentation-text)",
   },
   {
+    id: "packaging",
+    accent: "packaging",
+    label: "Packaging",
+    shortLabel: "Pkg.",
+    number: "09",
+    bg: "var(--sidebar-packaging-bg)",
+    text: "var(--sidebar-packaging-text)",
+  },
+  {
     id: "targets",
     accent: "targets",
     label: "Brew Day",
     shortLabel: "B.Day",
-    number: "09",
+    number: "10",
     bg: "var(--sidebar-targets-bg)",
     text: "var(--sidebar-targets-text)",
   },

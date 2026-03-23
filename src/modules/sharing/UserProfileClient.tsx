@@ -43,6 +43,7 @@ export default function UserProfileClient({ userId }: { userId: string }) {
             ratingSum: data.ratingSum || 0,
             ratingCount: data.ratingCount || 0,
             ratingAvg: data.ratingCount > 0 ? (data.ratingSum || 0) / data.ratingCount : 0,
+            labelUrl: data.labelUrl || undefined,
           } as BrowseRecipe;
         });
 
@@ -161,14 +162,12 @@ export default function UserProfileClient({ userId }: { userId: string }) {
       {recipes.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {recipes.map((recipe) => (
-            <Link
+            <BrowseCard
               key={recipe.id}
-              href={`/r/${recipe.shareSlug}`}
-              onClick={() => setNavigatingId(recipe.id)}
-              className="contents"
-            >
-              <BrowseCard recipe={recipe} isNavigating={navigatingId === recipe.id} />
-            </Link>
+              recipe={recipe}
+              isNavigating={navigatingId === recipe.id}
+              onNavigate={() => setNavigatingId(recipe.id)}
+            />
           ))}
         </div>
       )}
