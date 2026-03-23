@@ -12,6 +12,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE_URL, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
     { url: `${BASE_URL}/browse`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE_URL}/calculators`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/learn`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+  ]
+
+  // Learn / docs pages
+  const learnArticles = ['ibu', 'gravity', 'mash-ph', 'mash-temperature', 'yeast-starters', 'hop-flavor']
+  const learnCalculators = ['abv-calculator', 'dilution-calculator', 'boil-off-calculator', 'carbonation-calculator', 'hydrometer-calculator']
+  const learnRoutes: MetadataRoute.Sitemap = [
+    ...learnArticles.map((slug) => ({
+      url: `${BASE_URL}/learn/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.85,
+    })),
+    ...learnCalculators.map((slug) => ({
+      url: `${BASE_URL}/learn/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
   ]
 
   // Seed recipes (static, known IDs)
@@ -40,5 +59,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // If admin SDK is unavailable (e.g. during build), skip dynamic recipes
   }
 
-  return [...staticRoutes, ...seedRoutes, ...recipeRoutes]
+  return [...staticRoutes, ...learnRoutes, ...seedRoutes, ...recipeRoutes]
 }

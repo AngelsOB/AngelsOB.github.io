@@ -11,6 +11,15 @@ const footerSections = [
     ],
   },
   {
+    title: "Learn",
+    links: [
+      { href: "/learn/ibu", label: "IBU & Bitterness" },
+      { href: "/learn/gravity", label: "Gravity & ABV" },
+      { href: "/learn/mash-ph", label: "Mash pH" },
+      { href: "/learn", label: "All Topics" },
+    ],
+  },
+  {
     title: "Account",
     links: [
       { href: "/recipes", label: "My Recipes" },
