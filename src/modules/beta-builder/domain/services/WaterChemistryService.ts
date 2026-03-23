@@ -7,6 +7,8 @@
  * - Chloride:Sulfate ratio
  */
 
+import { optimizeSaltAdditions } from './WaterSaltOptimizer';
+
 export type WaterProfile = {
   Ca: number; // ppm
   Mg: number; // ppm
@@ -26,7 +28,7 @@ export type SaltAdditions = {
 
 // Ion contributions per 1 g of salt added to 1 L of water (mg/L aka ppm)
 // Mass fractions computed from molar masses.
-const ION_PPM_PER_G_PER_L = {
+export const ION_PPM_PER_G_PER_L = {
   gypsum: {
     Ca: 0.2328 * 1000, // 40.078 / 172.169
     SO4: 0.5583 * 1000, // 96.061 / 172.169
@@ -200,45 +202,24 @@ export class WaterChemistryService {
   }
 
   /**
-   * Calculate total salts needed to hit a target profile
-   * Returns salt additions split between mash and sparge water
+   * Calculate optimal salts to hit a target profile using bounded least squares.
+   * Returns total salt additions and the split between mash and sparge water.
    */
   calculateSaltsForTarget(
     sourceProfile: WaterProfile,
     targetProfile: WaterProfile,
     mashWaterL: number,
     spargeWaterL: number
-  ): { mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
-    // For now, distribute salts proportionally to water volumes
-    // This is a simplified approach - a more sophisticated algorithm would
-    // optimize for specific ions, but that requires solving a system of equations
+  ): { totalSalts: SaltAdditions; mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
     const totalWaterL = mashWaterL + spargeWaterL;
     if (totalWaterL <= 0) {
-      return { mashSalts: {}, spargeSalts: {} };
+      return { totalSalts: {}, mashSalts: {}, spargeSalts: {} };
     }
 
-    const mashRatio = mashWaterL / totalWaterL;
-    const spargeRatio = spargeWaterL / totalWaterL;
+    const { salts: totalSalts } = optimizeSaltAdditions(sourceProfile, targetProfile, totalWaterL);
+    const { mashSalts, spargeSalts } = this.splitSaltsProportionally(totalSalts, mashWaterL, spargeWaterL);
 
-    // Calculate deltas needed
-    const clDelta = Math.max(0, targetProfile.Cl - sourceProfile.Cl);
-    const so4Delta = Math.max(0, targetProfile.SO4 - sourceProfile.SO4);
-
-    // Use gypsum for sulfate and calcium chloride for chloride
-    // This is a simplified approach that covers the most common adjustments
-    const gypsumTotal = so4Delta > 0 ? (so4Delta * totalWaterL) / ION_PPM_PER_G_PER_L.gypsum.SO4 : 0;
-    const cacl2Total = clDelta > 0 ? (clDelta * totalWaterL) / ION_PPM_PER_G_PER_L.cacl2.Cl : 0;
-
-    return {
-      mashSalts: {
-        gypsum_g: gypsumTotal > 0 ? gypsumTotal * mashRatio : undefined,
-        cacl2_g: cacl2Total > 0 ? cacl2Total * mashRatio : undefined,
-      },
-      spargeSalts: {
-        gypsum_g: gypsumTotal > 0 ? gypsumTotal * spargeRatio : undefined,
-        cacl2_g: cacl2Total > 0 ? cacl2Total * spargeRatio : undefined,
-      },
-    };
+    return { totalSalts, mashSalts, spargeSalts };
   }
 }
 
@@ -310,9 +291,9 @@ export const BEER_STYLE_TARGETS: Record<string, BeerStyleTarget> = {
     clToSo4Ratio: "1:1 (Balanced)",
   },
   "Irish Stout": {
-    profile: { Ca: 120, Mg: 4, Na: 12, Cl: 19, SO4: 53, HCO3: 319 },
-    description: "Dublin water profile. Very high bicarbonate for roast character.",
-    clToSo4Ratio: "0.4:1 (Balanced)",
+    profile: { Ca: 42, Mg: 7, Na: 45, Cl: 48, SO4: 62, HCO3: 117 },
+    description: "Dublin-inspired water profile. Higher bicarbonate for roast character.",
+    clToSo4Ratio: "0.8:1 (Balanced)",
   },
   "Belgian Ale": {
     profile: { Ca: 75, Mg: 15, Na: 20, Cl: 100, SO4: 75, HCO3: 120 },

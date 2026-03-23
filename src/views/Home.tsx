@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Typewriter from "@/components/Typewriter";
+// import HomePhysicsCansLoader from "@/modules/labels/HomePhysicsCansLoader";
 
 export default function Home() {
   return (
@@ -103,6 +104,7 @@ export default function Home() {
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="grain"
+              /* data-physics="card-0" */
             >
               <div className="brew-animate-in brew-stagger-5 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                 {/* Left — copy */}
@@ -180,6 +182,7 @@ export default function Home() {
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="mash"
+              /* data-physics="card-1" */
             >
               <div className="brew-animate-in brew-stagger-7 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                 {/* Left — copy */}
@@ -235,6 +238,7 @@ export default function Home() {
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="equipment"
+              /* data-physics="card-2" */
             >
               <div className="brew-animate-in brew-stagger-9 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                 {/* Left — copy */}
@@ -371,6 +375,8 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* <HomePhysicsCansLoader /> */}
     </div>
   );
 }

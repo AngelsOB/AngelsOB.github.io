@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { RecipeCalculations } from "../../domain/models/Recipe";
 import { getScribbleLines, SECTIONS } from "./sidebarData";
 import SidebarNavButton from "./SidebarNavButton";
@@ -195,7 +196,7 @@ export default function SectionSidebar({ recipe, calculations, navButton, hideSi
     return DOT_PAD_TOP + travelRange * dotProgress;
   };
 
-  return (
+  const sidebar = (
     <nav ref={sidebarRef} className="section-sidebar" aria-label="Recipe sections">
       {navButton && (
         <div className={`sidebar-nav-slot sidebar-animate-in-left sidebar-stagger-1${hideSidebarNav ? " sidebar-nav-hidden" : ""}`}>
@@ -268,4 +269,7 @@ export default function SectionSidebar({ recipe, calculations, navButton, hideSi
       </div>
     </nav>
   );
+
+  // Portal to body so the sidebar isn't affected by transform on #app-shell (modal scale-down)
+  return createPortal(sidebar, document.body);
 }

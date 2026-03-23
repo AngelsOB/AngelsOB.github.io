@@ -13,13 +13,14 @@
 
 import type React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
 import { useAuthStore } from "../../../auth/authStore";
 import { useUserTier } from "../../../auth/useUserTier";
 import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
+import UpgradeModal from "../../../auth/components/UpgradeModal";
+import { canAccess } from "../../../auth/tierAccess";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import {
   downloadTextFile,
@@ -70,6 +71,7 @@ export default function RecipeListPage() {
   const { canCreate, userState } = useUserTier();
   const atLimit = userState === "free" && !canCreate;
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Close import menu on outside click
   useEffect(() => {
@@ -218,7 +220,7 @@ export default function RecipeListPage() {
         </span>
       </div>
 
-      {/* Local-only banner for unauthenticated users */}
+      {/* Sign-in prompt for anonymous users */}
       {!isAuthLoading && !user && (
         <div className="brew-alert-warning mb-6 flex items-center gap-4 px-4 py-3">
           <svg
@@ -238,8 +240,8 @@ export default function RecipeListPage() {
             <path d="M12 16h.01" />
           </svg>
           <p className="flex-1 text-sm">
-            Your recipes are saved locally on this device. Sign in to sync across devices and share
-            with others.
+            Sign in with Google to save recipes to the cloud, share with others, and access them
+            from any device.
           </p>
           <button
             onClick={signInWithGoogle}
@@ -507,11 +509,20 @@ export default function RecipeListPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredAndSortedRecipes.map((recipe) => (
             <div key={recipe.id} className="flex flex-col overflow-visible">
-              <Link
-                href={`/recipes/${recipe.id}`}
+              <div
+                role="link"
+                tabIndex={0}
                 onClick={() => {
                   handlePreloadRecipe(recipe);
                   setNavigatingId(recipe.id);
+                  router.push(`/recipes/${recipe.id}`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handlePreloadRecipe(recipe);
+                    setNavigatingId(recipe.id);
+                    router.push(`/recipes/${recipe.id}`);
+                  }
                 }}
                 className="contents"
               >
@@ -519,8 +530,9 @@ export default function RecipeListPage() {
                   recipe={recipe}
                   onDelete={(e) => handleDeleteClick(recipe.id, e)}
                   isNavigating={navigatingId === recipe.id}
+                  onUpgrade={() => setIsUpgradeModalOpen(true)}
                 />
-              </Link>
+              </div>
               <RecipeSessionsBar recipeId={recipe.id} />
             </div>
           ))}
@@ -553,6 +565,13 @@ export default function RecipeListPage() {
 
       {/* Recipe Limit Modal */}
       <RecipeLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)} />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        reason="Export is a Premium feature."
+      />
     </div>
   );
 }
@@ -562,10 +581,12 @@ function RecipeCard({
   recipe,
   onDelete,
   isNavigating,
+  onUpgrade,
 }: {
   recipe: Recipe;
   onDelete: (e: React.MouseEvent) => void;
   isNavigating?: boolean;
+  onUpgrade: () => void;
 }) {
   const router = useRouter();
   // Calculate stats for the recipe
@@ -577,6 +598,8 @@ function RecipeCard({
   const variationNameRef = useRef<HTMLInputElement>(null);
   const { createNewVersion, createVariation } = useRecipeStore();
   const { createSession, saveCurrentSession } = useBrewSessionStore();
+  const { userState } = useUserTier();
+  const canExport = canAccess('export', userState);
 
   const handleExportMarkdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -660,6 +683,14 @@ function RecipeCard({
         {/* Header */}
         <div className="border-b border-[rgb(var(--brew-border))] p-4">
           <div className="flex items-start gap-3">
+            {recipe.labelUrl && (
+              <img
+                src={recipe.labelUrl}
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
+                loading="lazy"
+              />
+            )}
             <ScalableText
               className="min-w-0 flex-1 font-extrabold tracking-tight"
               minScale={0.75}
@@ -670,12 +701,16 @@ function RecipeCard({
             </ScalableText>
             <div
               className="relative flex shrink-0 items-center gap-2"
-              onClickCapture={(e) => {
-                e.preventDefault();
+              onClick={(e) => {
+                e.stopPropagation();
               }}
             >
               <button
-                onClick={handleStartSession}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleStartSession(e);
+                }}
                 className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
                 style={{
                   background: "color-mix(in oklch, var(--brew-accent-200) 40%, transparent)",
@@ -753,37 +788,45 @@ function RecipeCard({
                     <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportMarkdown(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export Markdown
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleCopyMarkdown(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Copy Markdown
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportJson(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export JSON
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportBeerXml(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export BeerXML
                     </button>

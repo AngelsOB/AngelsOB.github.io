@@ -20,6 +20,14 @@ type Props = {
   spargeSalts: Partial<SaltAdditions>;
   /** Callback when a salt amount changes */
   onSaltChange: (saltKey: keyof SaltAdditions, value: number) => void;
+  /** Callback to auto-calculate salt additions (premium feature) */
+  onAutoCalculate?: () => void;
+  /** Whether the user has access to auto-calculate */
+  canAutoCalc?: boolean;
+  /** Whether baking soda is included in auto-calculate */
+  includeBakingSoda?: boolean;
+  /** Callback when baking soda toggle changes */
+  onToggleBakingSoda?: (include: boolean) => void;
 };
 
 function SaltRow({
@@ -93,6 +101,10 @@ export default function SaltAdditionsPanel({
   mashSalts,
   spargeSalts,
   onSaltChange,
+  onAutoCalculate,
+  canAutoCalc,
+  includeBakingSoda,
+  onToggleBakingSoda,
 }: Props) {
   const nudge = (saltKey: keyof SaltAdditions, dir: 1 | -1) => {
     const current = saltAdditions[saltKey] || 0;
@@ -102,7 +114,36 @@ export default function SaltAdditionsPanel({
 
   return (
     <div>
-      <h4 className="text-sm font-semibold mb-3">Salt Additions</h4>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-sm font-semibold">Salt Additions</h4>
+        {onAutoCalculate && (
+          <div className="flex items-center gap-3">
+            {onToggleBakingSoda && (
+              <label className="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={!!includeBakingSoda}
+                  onChange={(e) => onToggleBakingSoda(e.target.checked)}
+                  className="brew-checkbox"
+                />
+                NaHCO₃
+              </label>
+            )}
+            <button
+              type="button"
+              onClick={onAutoCalculate}
+              className={`brew-btn-ghost text-xs ${!canAutoCalc ? 'opacity-50' : ''}`}
+            >
+              {!canAutoCalc && (
+                <svg className="inline-block w-3 h-3 mr-1 -mt-0.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 1a4 4 0 0 0-4 4v3H3a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-1V5a4 4 0 0 0-4-4zm2 7H6V5a2 2 0 1 1 4 0v3z"/>
+                </svg>
+              )}
+              Auto-Calculate
+            </button>
+          </div>
+        )}
+      </div>
       <div className="salt-additions-grid">
         {(Object.keys(SALT_SHORT_LABELS) as Array<keyof SaltAdditions>).map((saltKey) => {
           const totalAmount = saltAdditions[saltKey] || 0;

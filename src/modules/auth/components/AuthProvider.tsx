@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 import { useAuthStore } from "../authStore";
 import { useRecipeStore } from "../../beta-builder/presentation/stores/recipeStore";
@@ -10,23 +10,14 @@ import { useEquipmentStore } from "../../beta-builder/presentation/stores/equipm
 import { useBrewSessionStore } from "../../beta-builder/presentation/stores/brewSessionStore";
 
 /**
- * Read (or create on first sign-in) the users/{userId} document
- * and push tier/subscription state into authStore.
+ * Ensure the users/{userId} document exists (create on first sign-in).
+ * Returns the doc ref for the snapshot listener to subscribe to.
  */
-async function syncUserDoc(userId: string, displayName: string | null, email: string | null, photoURL: string | null) {
+async function ensureUserDoc(userId: string, displayName: string | null, email: string | null, photoURL: string | null) {
   const userRef = doc(db, "users", userId);
   const snap = await getDoc(userRef);
 
-  if (snap.exists()) {
-    const data = snap.data();
-    useAuthStore.getState().setUserDoc({
-      tier: data.tier ?? 'free',
-      recipeCount: data.recipeCount ?? 0,
-      subscriptionStatus: data.subscriptionStatus ?? 'none',
-      subscriptionCurrentPeriodEnd: data.subscriptionCurrentPeriodEnd ?? null,
-      stripeCustomerId: data.stripeCustomerId ?? null,
-    });
-  } else {
+  if (!snap.exists()) {
     // First sign-in — create user doc with defaults
     const newDoc = {
       displayName: displayName ?? '',
@@ -40,14 +31,9 @@ async function syncUserDoc(userId: string, displayName: string | null, email: st
       subscriptionCurrentPeriodEnd: null,
     };
     await setDoc(userRef, JSON.parse(JSON.stringify(newDoc)));
-    useAuthStore.getState().setUserDoc({
-      tier: 'free',
-      recipeCount: 0,
-      subscriptionStatus: 'none',
-      subscriptionCurrentPeriodEnd: null,
-      stripeCustomerId: null,
-    });
   }
+
+  return userRef;
 }
 
 export default function AuthProvider({
@@ -57,17 +43,35 @@ export default function AuthProvider({
 }) {
   const setUser = useAuthStore((s) => s.setUser);
   const setLoading = useAuthStore((s) => s.setLoading);
+  const unsubSnapshotRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
 
+      // Clean up previous snapshot listener
+      unsubSnapshotRef.current?.();
+      unsubSnapshotRef.current = null;
+
       if (user) {
-        // Read/create user doc (tier, recipeCount, subscription)
-        syncUserDoc(user.uid, user.displayName, user.email, user.photoURL).catch(
-          (err) => console.error('[Auth] Failed to sync user doc:', err),
-        );
+        // Ensure user doc exists, then subscribe to real-time updates
+        ensureUserDoc(user.uid, user.displayName, user.email, user.photoURL)
+          .then((userRef) => {
+            unsubSnapshotRef.current = onSnapshot(userRef, (snap) => {
+              if (snap.exists()) {
+                const data = snap.data();
+                useAuthStore.getState().setUserDoc({
+                  tier: data.tier ?? 'free',
+                  recipeCount: data.recipeCount ?? 0,
+                  subscriptionStatus: data.subscriptionStatus ?? 'none',
+                  subscriptionCurrentPeriodEnd: data.subscriptionCurrentPeriodEnd ?? null,
+                  stripeCustomerId: data.stripeCustomerId ?? null,
+                });
+              }
+            });
+          })
+          .catch((err) => console.error('[Auth] Failed to sync user doc:', err));
       } else {
         useAuthStore.getState().clearUserDoc();
       }
@@ -78,7 +82,10 @@ export default function AuthProvider({
       useBrewSessionStore.getState().loadSessions();
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubSnapshotRef.current?.();
+    };
   }, [setUser, setLoading]);
 
   return <>{children}</>;
