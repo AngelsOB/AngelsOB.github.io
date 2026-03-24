@@ -60,10 +60,10 @@ export default function BrewSessionPage() {
   // Update document title with session recipe name
   useEffect(() => {
     if (currentSession?.recipeName) {
-      document.title = `Brew: ${currentSession.recipeName} | BeerApp`;
+      document.title = `Brew: ${currentSession.recipeName} | Brewing.It`;
     }
     return () => {
-      document.title = 'BeerApp - Homebrewing Recipe Builder & Calculator';
+      document.title = 'Brewing.It - Homebrewing Recipe Builder & Calculator';
     };
   }, [currentSession?.recipeName]);
 
