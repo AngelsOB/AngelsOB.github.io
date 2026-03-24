@@ -4,7 +4,7 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "ABV Calculator — Alcohol by Volume",
+  title: "ABV Calculator: Alcohol by Volume",
   description:
     "Calculate alcohol by volume from original and final gravity readings. Learn how the formula works and when to use it on brew day.",
   keywords: [
@@ -45,7 +45,7 @@ export default function AbvCalcPage() {
       >
         {/* What it is */}
         <p className="text-base leading-relaxed">
-          ABV — alcohol by volume — tells you how strong your beer is. A
+          ABV (alcohol by volume) tells you how strong your beer is. A
           session pale ale might be 4.5%. A barleywine pushes 10%+. It comes
           down to one thing: how much sugar your yeast ate.
         </p>
@@ -54,7 +54,7 @@ export default function AbvCalcPage() {
           You measure gravity before fermentation (OG) and after (FG). The
           bigger the drop, the more sugar your yeast converted to alcohol. In
           the recipe builder, ABV updates automatically as you adjust your grain
-          bill and yeast selection — but this standalone version is handy on
+          bill and yeast selection, but this standalone version is handy on
           brew day.
         </p>
 
@@ -86,7 +86,7 @@ export default function AbvCalcPage() {
         <FormulaCallout
           title="ABV Formula"
           expression={"ABV = (OG - FG) \\times 131.25"}
-          description="This is the industry standard formula — accurate to within 0.1% ABV for beers under 1.080 OG."
+          description="The industry standard formula. Accurate to within 0.1% ABV for beers under 1.080 OG."
         />
 
         <p className="text-sm leading-relaxed mb-4">
@@ -143,7 +143,7 @@ export default function AbvCalcPage() {
             the Cutaia formula), but for the vast majority of beers the simple
             formula is within a tenth of a percent. We use the standard approach
             because the difference only shows up in imperial stouts and
-            barleywines — and even then it&apos;s small.
+            barleywines, and even then it&apos;s small.
           </p>
         </div>
 
@@ -159,7 +159,7 @@ export default function AbvCalcPage() {
           The 131.25 constant traces back to Balling&apos;s 1865 work on
           fermentation chemistry, later refined by Michael Hall in{" "}
           <em>Zymurgy</em> (1995). It simplifies a more complex relationship
-          between gravity drop and ethanol production — one that holds
+          between gravity drop and ethanol production, one that holds
           remarkably well for the beers most of us are brewing.
         </p>
 

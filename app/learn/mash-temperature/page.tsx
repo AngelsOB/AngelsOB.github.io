@@ -4,7 +4,7 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 export const metadata: Metadata = {
   title: "Mash Temperature & Enzyme Kinetics",
   description:
-    "How mash temperature controls fermentability through enzyme kinetics. BeerApp offers three models — linear, enzyme kinetics, and ODE — for predicting final gravity.",
+    "How mash temperature controls fermentability through enzyme kinetics. Brewing.It offers three models (linear, enzyme kinetics, and ODE) for predicting final gravity.",
   keywords: [
     "mash temperature",
     "enzyme kinetics brewing",
@@ -20,9 +20,9 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: "Mash Temperature & Enzyme Kinetics",
-  description: "How mash temperature controls fermentability and why BeerApp offers three models for predicting the effect.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+  description: "How mash temperature controls fermentability and why Brewing.It offers three models for predicting the effect.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -109,14 +109,14 @@ export default function MashTemperaturePage() {
         <p className="text-base leading-relaxed">
           Mash temperature is how you control whether your beer finishes dry or
           full-bodied. Lower temps (around 63–65°C) produce more fermentable
-          sugars — lighter body, lower FG, drier finish. Higher temps (68–72°C)
-          produce more unfermentable dextrins — fuller body, higher FG, sweeter
+          sugars: lighter body, lower FG, drier finish. Higher temps (68–72°C)
+          produce more unfermentable dextrins: fuller body, higher FG, sweeter
           finish.
         </p>
         <p className="text-sm leading-relaxed">
           In the recipe builder, changing the mash temperature updates your
-          predicted FG and ABV in real time. We offer three models for this —
-          you can pick the one that matches how much precision you want.
+          predicted FG and ABV in real time. We offer three models for this, and you can pick
+          the one that matches how much precision you want.
         </p>
 
         <ModelComparisonPreview />
@@ -150,7 +150,7 @@ export default function MashTemperaturePage() {
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               The simplest model. About 1% attenuation change per °C from a 67°C
               reference. Works well in the normal brewing range (64–70°C) and
-              matches what most calculators do. Falls apart at extremes — it
+              matches what most calculators do. Falls apart at extremes. It
               still predicts 62% attenuation at 80°C, which isn&apos;t physically
               realistic since both enzymes are dead by then.
             </p>
@@ -171,13 +171,13 @@ export default function MashTemperaturePage() {
                 className="text-xs font-medium px-1.5 py-0.5 rounded"
                 style={{ background: "color-mix(in oklch, var(--coral-500) 12%, transparent)", color: "var(--coral-600)" }}
               >
-                unique to BeerApp
+                unique to Brewing.It
               </span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               Models both enzymes with temperature-dependent activity (Gaussian
               curves) and thermal denaturation (Arrhenius kinetics). Beta-amylase
-              has a half-life of ~14 minutes at 72°C — it dies fast. Alpha-amylase
+              has a half-life of ~14 minutes at 72°C and dies fast. Alpha-amylase
               is essentially immortal at mash temps (half-life measured in days at 67°C).
               13% of beta-amylase is a thermostable isoform that never denatures.
               This model naturally drops to near-zero fermentability at 80°C+.
@@ -199,7 +199,7 @@ export default function MashTemperaturePage() {
                 className="text-xs font-medium px-1.5 py-0.5 rounded"
                 style={{ background: "color-mix(in oklch, var(--coral-500) 12%, transparent)", color: "var(--coral-600)" }}
               >
-                unique to BeerApp
+                unique to Brewing.It
               </span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -208,7 +208,7 @@ export default function MashTemperaturePage() {
               substrate depletion, the alpha-to-beta conversion pipeline, and
               accumulated denaturation across step mash schedules. If beta
               loses 50% activity during a 67°C rest, the 72°C mashout starts
-              with only 50%. No other homebrew calculator does this.
+              with only 50%.
             </p>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function MashTemperaturePage() {
           <li>Brandam, C. et al. &ldquo;A kinetic model for the mashing process.&rdquo; <em>EBC Congress</em>, 2003.</li>
           <li>De Schepper, C.F. et al. &ldquo;Inactivation kinetics of enzymes in barley malt.&rdquo; <em>JASBC</em>, 2022.</li>
           <li>Evans, D.E. et al. &ldquo;Impact of Thermostability of Amylases on Wort Fermentability.&rdquo; <em>JASBC</em> 61(4), 2003.</li>
-          <li>Braukaiser mash temperature studies — braukaiser.com.</li>
+          <li>Braukaiser mash temperature studies. braukaiser.com.</li>
         </ul>
       </LearnArticle>
     </>

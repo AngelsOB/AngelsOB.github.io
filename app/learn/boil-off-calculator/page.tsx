@@ -4,7 +4,7 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "Boil-Off Calculator — Pre-Boil to Post-Boil Volume",
+  title: "Boil-Off Calculator: Pre-Boil to Post-Boil Volume",
   description: "Calculate your post-boil volume and how long to boil to hit your target OG. Same conservation principle as dilution, in reverse.",
   keywords: ["boil off calculator", "pre boil gravity", "post boil volume", "boil time calculator"],
   alternates: { canonical: "/learn/boil-off-calculator" },
@@ -25,13 +25,13 @@ export default function BoilOffCalcPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <LearnArticle
         title="Boil-Off Calculator"
-        subtitle="How much volume you'll lose — and when to stop boiling"
+        subtitle="How much volume you'll lose, and when to stop boiling"
         relatedLearn={["/learn/dilution-calculator", "/learn/gravity"]}
         ctaText="Build a full recipe"
       >
         <p className="text-base leading-relaxed">
           During the boil, water evaporates but sugar stays. That concentrates
-          your wort — gravity goes up as volume goes down. This calculator
+          your wort. Gravity goes up as volume goes down. This calculator
           tells you how much volume you&apos;ll end up with, or how long to
           boil to hit your target gravity.
         </p>
@@ -44,7 +44,7 @@ export default function BoilOffCalcPage() {
         <FormulaCallout
           title="Post-Boil Volume"
           expression={"V_{post} = \\frac{V_{pre} \\times G_{pre}}{G_{target}}"}
-          description="Same conservation principle as dilution, in reverse — water leaves, sugar stays, gravity concentrates."
+          description="Same conservation principle as dilution, in reverse. Water leaves, sugar stays, gravity concentrates."
         />
         <p className="text-sm leading-relaxed">
           If you know your boil-off rate (liters per hour), you can also

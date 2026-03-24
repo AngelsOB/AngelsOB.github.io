@@ -31,7 +31,7 @@ export default function HydrometerCalcPage() {
         <p className="text-base leading-relaxed">
           Hydrometers are calibrated at a specific temperature (usually 15°C or
           20°C). If your wort sample is warmer or cooler than that, the reading
-          will be off. This calculator corrects for the difference — enter your
+          will be off. This calculator corrects for the difference. Enter your
           reading, sample temp, and calibration temp, and it gives you the true
           gravity.
         </p>
@@ -42,7 +42,7 @@ export default function HydrometerCalcPage() {
           How We Calculate It
         </h2>
         <p className="text-sm leading-relaxed mb-4">
-          We use the <strong>Kell (1975) water density equation</strong> — a
+          We use the <strong>Kell (1975) water density equation</strong>, a
           polynomial that models how water density changes with temperature.
           The correction compares the density of water at your sample
           temperature to the density at calibration temperature, then adjusts

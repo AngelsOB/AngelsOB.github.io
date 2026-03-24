@@ -5,7 +5,7 @@ import { learnNav } from "@/modules/learn/docsConfig";
 export const metadata: Metadata = {
   title: "Learn Brewing Science",
   description:
-    "Explore the science behind every calculation in BeerApp — IBU, gravity, mash pH, enzyme kinetics, hop flavor, and more. Formulas explained with real sources.",
+    "Explore the science behind every calculation in Brewing.It: IBU, gravity, mash pH, enzyme kinetics, hop flavor, and more. Formulas explained with real sources.",
   alternates: { canonical: "/learn" },
 };
 

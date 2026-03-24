@@ -4,9 +4,9 @@ import FormulaCallout from "@/modules/learn/FormulaCallout";
 import HopRadarDemo from "@/modules/learn/HopRadarDemo";
 
 export const metadata: Metadata = {
-  title: "The Hop Flavor Radar — Mapping Hop Character Beyond IBU",
+  title: "The Hop Flavor Radar: Mapping Hop Character Beyond IBU",
   description:
-    "How BeerApp maps hop flavor across 9 axes — citrus, tropical, resin, floral, and more. Understand the aroma model that shows what your hops actually taste like.",
+    "How Brewing.It maps hop flavor across 9 axes: citrus, tropical, resin, floral, and more. Understand the aroma model that shows what your hops actually taste like.",
   keywords: [
     "hop flavor profile",
     "hop aroma calculator",
@@ -21,11 +21,11 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "The Hop Flavor Radar — Mapping Hop Character Beyond IBU",
+  headline: "The Hop Flavor Radar: Mapping Hop Character Beyond IBU",
   description:
-    "How BeerApp maps hop flavor across 9 axes using dose, timing, and aroma retention factors.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+    "How Brewing.It maps hop flavor across 9 axes using dose, timing, and aroma retention factors.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -43,12 +43,12 @@ export default function HopFlavorPage() {
       />
       <LearnArticle
         title="Hop Flavor Radar"
-        subtitle="What your hops actually taste like — beyond the IBU number"
+        subtitle="What your hops actually taste like, beyond the IBU number"
         relatedLearn={["/learn/ibu", "/learn/gravity"]}
       >
         <p className="text-base leading-relaxed">
           IBU tells you how bitter your beer is. But 40 IBU of Cascade and 40
-          IBU of Hallertau taste completely different — one is grapefruity and
+          IBU of Hallertau taste completely different. One is grapefruity and
           piney, the other is floral and spicy. The hop flavor radar shows the{" "}
           <em>shape</em> of your hop character, not just the intensity.
         </p>
@@ -84,7 +84,7 @@ export default function HopFlavorPage() {
                 color: "var(--coral-600)",
               }}
             >
-              unique to BeerApp
+              unique to Brewing.It
             </span>
           </div>
           <div style={{ background: "var(--card)" }}>
@@ -100,7 +100,7 @@ export default function HopFlavorPage() {
               borderTop: "1px solid color-mix(in oklch, var(--fg-strong) 5%, transparent)",
             }}
           >
-            A West Coast IPA — heavy on citrus and pine, light on everything else.
+            A West Coast IPA: heavy on citrus and pine, light on everything else.
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export default function HopFlavorPage() {
           Each hop variety has a flavor profile across all 9 axes (sourced from
           published hop descriptors). Each addition is then weighted by two
           things: <strong>dose</strong> (grams per liter) and{" "}
-          <strong>aroma retention</strong> — how much flavor survives the
+          <strong>aroma retention</strong>, how much flavor survives the
           brewing process.
         </p>
 
@@ -138,9 +138,9 @@ export default function HopFlavorPage() {
               Aroma Retention by Addition Type
             </h3>
             <div className="text-sm space-y-1.5" style={{ color: "var(--fg-muted)" }}>
-              <p><strong>Dry hops</strong> retain ~80% of volatile aroma compounds — no heat to drive them off.</p>
+              <p><strong>Dry hops</strong> retain ~80% of volatile aroma compounds because there&apos;s no heat to drive them off.</p>
               <p><strong>Whirlpool hops</strong> retain 50–100% depending on temperature and time. Cooler, shorter stands preserve more.</p>
-              <p><strong>Boil additions</strong> lose aroma exponentially — a 60-minute boil retains only about 5%. Bitterness goes up, flavor fades.</p>
+              <p><strong>Boil additions</strong> lose aroma exponentially. A 60-minute boil retains only about 5%. Bitterness goes up, flavor fades.</p>
               <p><strong>First wort &amp; mash hops</strong> retain almost nothing (5–8%). They&apos;re for bitterness, not flavor.</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function HopFlavorPage() {
               The Perceptual Ceiling
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
-              The model uses a sigmoidal intensity curve — doubling your dry hops
+              The model uses a sigmoidal intensity curve. Doubling your dry hops
               doesn&apos;t double the displayed flavor. There&apos;s a practical
               limit to perceivable aroma intensity. This prevents the radar from
               blowing out to unrealistic values on heavily hopped recipes.
@@ -173,7 +173,7 @@ export default function HopFlavorPage() {
         <FormulaCallout
           title="Intensity Curve"
           expression={"\\text{magnitude} = 5 \\times \\left(1 - e^{-0.7 \\times w_{total}}\\right)"}
-          description="The overall intensity approaches a ceiling of 5 as total hop weight increases. Diminishing returns — just like in real life."
+          description="The overall intensity approaches a ceiling of 5 as total hop weight increases. Diminishing returns, just like in real life."
         />
 
         <h2
@@ -206,12 +206,12 @@ export default function HopFlavorPage() {
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">
-          This is an original model — there&apos;s no published standard for
+          This is an original model. There&apos;s no published standard for
           predicting hop flavor profiles. The aroma retention factors are
           informed by general hop oil volatility research and brewing science
           principles. It&apos;s not a lab measurement, and it can&apos;t predict
           exactly what a beer will taste like. But it gives a useful comparative
-          signal where other tools show nothing at all.
+          signal for comparing hop bills and understanding how additions affect flavor.
         </p>
 
       </LearnArticle>

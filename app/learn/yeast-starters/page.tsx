@@ -3,9 +3,9 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "Yeast Starters — Cell Counts & Growth Models",
+  title: "Yeast Starters: Cell Counts & Growth Models",
   description:
-    "How BeerApp calculates yeast pitching rates, viability decay, and starter sizes using the White and Braukaiser growth models.",
+    "How Brewing.It calculates yeast pitching rates, viability decay, and starter sizes using the White and Braukaiser growth models.",
   keywords: [
     "yeast starter calculator",
     "yeast pitching rate",
@@ -20,10 +20,10 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Yeast Starters — Cell Counts & Growth Models",
-  description: "How BeerApp calculates yeast pitching rates, viability, and multi-step starter plans.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+  headline: "Yeast Starters: Cell Counts & Growth Models",
+  description: "How Brewing.It calculates yeast pitching rates, viability, and multi-step starter plans.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -37,11 +37,11 @@ export default function YeastStartersPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <LearnArticle
         title="Yeast Starters"
-        subtitle="Hitting the right pitch rate — and the science of growing yeast"
+        subtitle="Hitting the right pitch rate, and the science of growing yeast"
         relatedLearn={["/learn/gravity", "/learn/mash-temperature"]}
       >
         <p className="text-base leading-relaxed">
-          Pitching rate — how many yeast cells you add to your wort — affects
+          Pitching rate (how many yeast cells you add to your wort) affects
           flavor, fermentation speed, and attenuation. Underpitch and you get
           more esters and fusel alcohols (sometimes that&apos;s what you want
           in a Belgian, usually not in a lager). Overpitch and you lose yeast
@@ -50,7 +50,7 @@ export default function YeastStartersPage() {
         <p className="text-sm leading-relaxed">
           In the recipe builder, the yeast section shows whether you need a
           starter based on your OG, batch size, and yeast package date. If you
-          do, it calculates the starter volume and DME needed — with support
+          do, it calculates the starter volume and DME needed, with support
           for multi-step starters when a single step isn&apos;t enough.
         </p>
 
@@ -69,7 +69,7 @@ export default function YeastStartersPage() {
         </h2>
         <p className="text-sm leading-relaxed mb-4">
           Yeast cells die during storage at about 0.7% per day. A 3-month-old
-          liquid pack might be at ~40% viability — that&apos;s why starters
+          liquid pack might be at ~40% viability. That&apos;s why starters
           exist. We calculate available cells from your package type, count, and
           manufacture date.
         </p>
@@ -91,7 +91,7 @@ export default function YeastStartersPage() {
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               Based on White Labs yeast growth data. Growth depends on
-              inoculation rate — at lower cell densities, each cell has more
+              inoculation rate. At lower cell densities, each cell has more
               nutrients and reproduces more. Aeration adds +0.5 to the growth
               factor. This is the more sophisticated model and what most starter
               calculators use.
@@ -109,7 +109,7 @@ export default function YeastStartersPage() {
               Braukaiser Model <span className="text-xs font-normal ml-1" style={{ color: "var(--fg-muted)" }}>linear growth</span>
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
-              Simpler — each gram of DME produces about 1.4 billion new cells,
+              Simpler: each gram of DME produces about 1.4 billion new cells,
               regardless of starting density. Based on Kai Troester&apos;s
               cell-counting experiments. Works well for typical 1–2L starters
               and is easier to reason about.
@@ -133,7 +133,7 @@ export default function YeastStartersPage() {
         </h2>
         <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>
           <li>White, C. &amp; Zainasheff, J. <em>Yeast</em>. Brewers Publications, 2010.</li>
-          <li>Troester, K. &ldquo;Yeast Starter&rdquo; — braukaiser.com.</li>
+          <li>Troester, K. &ldquo;Yeast Starter.&rdquo; braukaiser.com.</li>
         </ul>
       </LearnArticle>
     </>

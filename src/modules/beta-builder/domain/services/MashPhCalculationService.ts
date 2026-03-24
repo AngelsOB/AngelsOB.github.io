@@ -33,7 +33,7 @@ export type GrainPhCategory =
 
 /**
  * Distilled-water mash pH ranges per grain category.
- * Sources: AJ deLange (MBAA TQ), Bru'n Water grain data, Kai Troester.
+ * Sources: AJ deLange (MBAA TQ), Kai Troester (braukaiser.com).
  */
 const GRAIN_DI_PH: Record<GrainPhCategory, { min: number; max: number }> = {
   base:       { min: 5.65, max: 5.72 },

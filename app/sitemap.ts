@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // Learn / docs pages
-  const learnArticles = ['ibu', 'gravity', 'mash-ph', 'mash-temperature', 'yeast-starters', 'hop-flavor']
+  const learnArticles = ['getting-started', 'ibu', 'gravity', 'water-chemistry', 'mash-ph', 'mash-temperature', 'yeast-starters', 'hop-flavor']
   const learnCalculators = ['abv-calculator', 'dilution-calculator', 'boil-off-calculator', 'carbonation-calculator', 'hydrometer-calculator']
   const learnRoutes: MetadataRoute.Sitemap = [
     ...learnArticles.map((slug) => ({
