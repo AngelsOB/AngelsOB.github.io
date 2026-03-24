@@ -3,9 +3,9 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "Mash pH — The Proton Deficit Model",
+  title: "Mash pH: The Proton Deficit Model",
   description:
-    "How BeerApp predicts mash pH from your grain bill and water chemistry using the proton deficit model. Understand the science behind pH adjustment.",
+    "How Brewing.It predicts mash pH from your grain bill and water chemistry using the proton deficit model. Understand the science behind pH adjustment.",
   keywords: [
     "mash pH calculator",
     "proton deficit model",
@@ -20,10 +20,10 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Mash pH — The Proton Deficit Model",
-  description: "How BeerApp predicts and adjusts mash pH using the proton deficit equilibrium model.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+  headline: "Mash pH: The Proton Deficit Model",
+  description: "How Brewing.It predicts and adjusts mash pH using the proton deficit equilibrium model.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -132,7 +132,7 @@ export default function MashPhPage() {
           How We Calculate It
         </h2>
         <p className="text-sm leading-relaxed mb-4">
-          We use the <strong>proton deficit model</strong> — the current gold
+          We use the <strong>proton deficit model</strong>, the current gold
           standard for mash pH prediction. The idea is simple: every grain adds
           acid to the mash, and every water ion adds alkalinity. At the correct
           pH, all these contributions balance out to zero. We solve for that
@@ -159,7 +159,7 @@ export default function MashPhPage() {
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               Base malt has a distilled-water pH of ~5.7. Roasted barley drops to
               ~4.5. Acidulated malt is ~3.4 (it contains lactic acid). Each grain
-              also has a buffering capacity of ~40 mEq/kg/pH — how much it resists
+              also has a buffering capacity of ~40 mEq/kg/pH, which measures how much it resists
               pH change. We use grain data from published sources and interpolate
               by color for specialty malts.
             </p>
@@ -190,7 +190,7 @@ export default function MashPhPage() {
         </h2>
         <p className="text-sm leading-relaxed">
           Typically within ±0.1 pH for standard grain bills. Good enough to
-          calculate water adjustments before brew day — but still worth
+          calculate water adjustments before brew day, but still worth
           measuring with a pH meter to calibrate for your specific system. The
           model works best when your water report is accurate and your grain
           is fresh.
@@ -213,7 +213,7 @@ export default function MashPhPage() {
         </h2>
         <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>
           <li>deLange, A.J. &ldquo;Understanding and Adjusting Mash pH.&rdquo; <em>MBAA TQ</em>, 2013 &amp; 2015.</li>
-          <li>Troester, K. &ldquo;Mash pH and Alkalinity&rdquo; — braukaiser.com.</li>
+          <li>Troester, K. &ldquo;Mash pH and Alkalinity.&rdquo; braukaiser.com.</li>
         </ul>
       </LearnArticle>
     </>

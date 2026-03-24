@@ -4,8 +4,8 @@ import LearnNav from "@/modules/learn/LearnNav";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | BeerApp Learn",
-    default: "Learn Brewing Science | BeerApp",
+    template: "%s | Brewing.It Learn",
+    default: "Learn Brewing Science | Brewing.It",
   },
 };
 

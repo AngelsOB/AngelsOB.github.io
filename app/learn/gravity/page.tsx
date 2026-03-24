@@ -3,9 +3,9 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "Gravity & ABV — How Your Beer's Strength Is Built",
+  title: "Gravity & ABV: How Your Beer's Strength Is Built",
   description:
-    "How BeerApp calculates original gravity, final gravity, and ABV from your grain bill, mash efficiency, and yeast attenuation.",
+    "How Brewing.It calculates original gravity, final gravity, and ABV from your grain bill, mash efficiency, and yeast attenuation.",
   keywords: [
     "original gravity calculator",
     "final gravity",
@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
-  headline: "Gravity & ABV — How Your Beer's Strength Is Built",
+  headline: "Gravity & ABV: How Your Beer's Strength Is Built",
   description:
-    "How BeerApp builds OG from your grain bill, predicts FG from yeast attenuation, and calculates ABV.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+    "How Brewing.It builds OG from your grain bill, predicts FG from yeast attenuation, and calculates ABV.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -113,7 +113,7 @@ export default function GravityPage() {
         relatedLearn={["/learn/mash-temperature", "/learn/abv-calculator"]}
       >
         <p className="text-base leading-relaxed">
-          Gravity is the density of your wort — it tells you how much sugar is
+          Gravity is the density of your wort. It tells you how much sugar is
           dissolved in it. Original gravity (OG) is measured before
           fermentation. Final gravity (FG) is what&apos;s left after yeast has
           eaten the fermentable sugars. The difference between them determines
@@ -123,7 +123,7 @@ export default function GravityPage() {
         <p className="text-sm leading-relaxed">
           In the recipe builder, OG, FG, and ABV all update automatically as
           you adjust your grain bill, batch size, efficiency, or yeast
-          selection. The whole pipeline is connected — change one thing and
+          selection. The whole pipeline is connected. Change one thing and
           everything recalculates.
         </p>
 
@@ -133,8 +133,7 @@ export default function GravityPage() {
           Original Gravity
         </h2>
         <p className="text-sm leading-relaxed mb-4">
-          Every fermentable in your recipe has a <strong>PPG</strong> value —
-          points per pound per gallon. It&apos;s a measure of how much sugar
+          Every fermentable in your recipe has a <strong>PPG</strong> value: points per pound per gallon. It&apos;s a measure of how much sugar
           that ingredient contributes. 2-Row malt has a PPG of ~37, meaning 1
           pound in 1 gallon gives a gravity of 1.037.
         </p>
@@ -147,7 +146,7 @@ export default function GravityPage() {
 
         <p className="text-sm leading-relaxed">
           Sugars (corn sugar, honey, candi sugar) and extracts (DME, LME) use
-          100% efficiency — they dissolve completely and bypass the mash. Only
+          100% efficiency. They dissolve completely and bypass the mash. Only
           grains that go through the mash get your mash efficiency applied. This
           is the industry standard approach.
         </p>
@@ -158,7 +157,7 @@ export default function GravityPage() {
         <p className="text-sm leading-relaxed mb-4">
           FG depends on two things: which sugars are fermentable, and how
           thoroughly your yeast ferments them. Not all grain extract is
-          fermentable — crystal malts produce less fermentable sugar than base
+          fermentable. Crystal malts produce less fermentable sugar than base
           malt, and lactose isn&apos;t fermentable at all.
         </p>
 
@@ -179,7 +178,7 @@ export default function GravityPage() {
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               Each ingredient has a fermentability value from 0 to 1. Base malt
               is 1.0 (fully fermentable by the yeast&apos;s stated attenuation).
-              Crystal malts range from 0.90 (light) down to 0.75 (dark) — based
+              Crystal malts range from 0.90 (light) down to 0.75 (dark), based
               on Briess maltster data. Lactose is 0. The gravity from each
               ingredient is split into fermentable and non-fermentable fractions.
             </p>
@@ -202,7 +201,7 @@ export default function GravityPage() {
               Mash temperature is the biggest lever on final gravity. Lower
               temps favor beta-amylase (more fermentable sugars, lower FG).
               Higher temps favor alpha-amylase (more dextrins, higher FG,
-              fuller body). We offer three models for this — see the{" "}
+              fuller body). We offer three models for this. See the{" "}
               <a href="/learn/mash-temperature" className="text-[var(--coral-500)] hover:underline font-medium">
                 mash temperature
               </a>{" "}
@@ -218,7 +217,7 @@ export default function GravityPage() {
         <FormulaCallout
           title="ABV Formula"
           expression={"ABV = (OG - FG) \\times 131.25"}
-          description="The industry standard approximation — accurate to within 0.1% for beers under 1.080 OG."
+          description="The industry standard approximation. Accurate to within 0.1% for beers under 1.080 OG."
         />
 
         <p className="text-sm leading-relaxed">

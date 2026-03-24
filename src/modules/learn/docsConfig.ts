@@ -11,6 +11,17 @@ export interface LearnSection {
 
 export const learnNav: LearnSection[] = [
   {
+    title: "Getting Started",
+    links: [
+      {
+        href: "/learn/getting-started",
+        label: "How To Use Brewing.It",
+        description:
+          "A quick start guide — what the builder calculates, what to set up first, and how to use the numbers on brew day.",
+      },
+    ],
+  },
+  {
     title: "Brewing Science",
     links: [
       {
@@ -24,6 +35,12 @@ export const learnNav: LearnSection[] = [
         label: "Gravity & ABV",
         description:
           "How original gravity is built from your grain bill, and the path from OG to FG to alcohol.",
+      },
+      {
+        href: "/learn/water-chemistry",
+        label: "Water Chemistry",
+        description:
+          "Source profiles, style targets, the auto-calculator, and what ions do to your beer.",
       },
       {
         href: "/learn/mash-ph",

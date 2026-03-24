@@ -4,8 +4,8 @@ import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
 export const metadata: Metadata = {
-  title: "Dilution Calculator — Hit Your Target Gravity",
-  description: "Calculate how much water to add to hit your target gravity. Conservation of gravity points — simple and exact.",
+  title: "Dilution Calculator: Hit Your Target Gravity",
+  description: "Calculate how much water to add to hit your target gravity. Conservation of gravity points. Simple and exact.",
   keywords: ["dilution calculator", "gravity dilution", "water addition brewing", "sparge calculator"],
   alternates: { canonical: "/learn/dilution-calculator" },
 };
@@ -44,10 +44,10 @@ export default function DilutionCalcPage() {
         <FormulaCallout
           title="Gravity Points Conservation"
           expression={"V_{total} = \\frac{V_{current} \\times G_{current}}{G_{target}}"}
-          description="Sugar doesn't disappear when you add water — the total gravity points stay constant. Water to add = total volume − current volume."
+          description="Sugar doesn&apos;t disappear when you add water. The total gravity points stay constant. Water to add = total volume − current volume."
         />
         <p className="text-sm leading-relaxed">
-          This is basic conservation of mass — the gravity points (sugar content)
+          This is basic conservation of mass. The gravity points (sugar content)
           in your wort don&apos;t change when you add water. You&apos;re just
           spreading them across a larger volume. It&apos;s exact, not an
           approximation.

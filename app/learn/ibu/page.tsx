@@ -5,7 +5,7 @@ import FormulaCallout from "@/modules/learn/FormulaCallout";
 export const metadata: Metadata = {
   title: "Understanding IBU: How Bitterness Is Calculated",
   description:
-    "Learn how BeerApp calculates IBU for every type of hop addition — boil, whirlpool, dry hop, and first wort. The formulas, the reasoning, and what makes our approach different.",
+    "Learn how Brewing.It calculates IBU for every type of hop addition: boil, whirlpool, dry hop, and first wort. The formulas, the reasoning, and what makes our approach different.",
   keywords: [
     "IBU calculator",
     "tinseth formula",
@@ -24,9 +24,9 @@ const jsonLd = {
   "@type": "Article",
   headline: "Understanding IBU: How Bitterness Is Calculated",
   description:
-    "How BeerApp calculates IBU across boil, whirlpool, dry hop, and first wort additions — the formulas, the reasoning, and the research behind it.",
-  author: { "@type": "Organization", name: "BeerApp" },
-  publisher: { "@type": "Organization", name: "BeerApp" },
+    "How Brewing.It calculates IBU across boil, whirlpool, dry hop, and first wort additions. The formulas, the reasoning, and the research behind it.",
+  author: { "@type": "Organization", name: "Brewing.It" },
+  publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -139,7 +139,7 @@ function HopAdditionPreview() {
             "1px solid color-mix(in oklch, var(--fg-strong) 5%, transparent)",
         }}
       >
-        Every addition type — boil, whirlpool, dry hop — gets its own IBU
+        Every addition type (boil, whirlpool, dry hop) gets its own IBU
         contribution.
       </div>
     </div>
@@ -160,16 +160,16 @@ export default function IbuPage() {
       >
         {/* ── What IBU Is ── */}
         <p className="text-base leading-relaxed">
-          IBU stands for International Bitterness Units — it&apos;s how brewers
+          IBU stands for International Bitterness Units. It&apos;s how brewers
           measure hop bitterness. A light lager might sit around 10 IBU. A West
           Coast IPA pushes 60+. The number tells you how bitter the beer will
-          taste (roughly — malt sweetness and other flavors can balance it out).
+          taste, though malt sweetness and other flavors can balance it out.
         </p>
 
         <p className="text-sm leading-relaxed">
           In the recipe builder, IBU updates automatically every time you add,
           change, or remove a hop addition. Boil hops, whirlpool hops, first
-          wort hops, dry hops — they all contribute, and the builder tracks
+          wort hops, dry hops. They all contribute, and the builder tracks
           every one of them.
         </p>
 
@@ -185,7 +185,7 @@ export default function IbuPage() {
         </h2>
 
         <p className="text-sm leading-relaxed">
-          We use the <strong>Tinseth model</strong> — the industry standard
+          We use the <strong>Tinseth model</strong>, the industry standard
           formula that virtually every brewing calculator is built on. It
           accounts for two things: how your wort&apos;s gravity affects
           extraction, and how long the hops are in contact with hot wort.
@@ -199,7 +199,7 @@ export default function IbuPage() {
 
         <p className="text-sm leading-relaxed">
           The utilization factor is where the real physics lives. Heavier wort
-          suppresses bitterness extraction, and longer boils increase it — but
+          suppresses bitterness extraction, and longer boils increase it, but
           with diminishing returns past about 60 minutes.
         </p>
 
@@ -219,7 +219,7 @@ export default function IbuPage() {
 
         <p className="text-sm leading-relaxed mb-6">
           The Tinseth formula covers boil additions. But modern recipes use hops
-          in a lot more places — and each one adds bitterness differently.
+          in a lot more places, and each one adds bitterness differently.
         </p>
 
         {/* Addition type cards */}
@@ -248,7 +248,7 @@ export default function IbuPage() {
               </span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
-              Isomerization doesn&apos;t stop when the flame goes off — it just
+              Isomerization doesn&apos;t stop when the flame goes off. It just
               slows down. At 80°C, you get about 29% of the extraction rate of a
               full boil. We scale the Tinseth utilization by a temperature factor
               that drops to zero below 60°C, where extraction becomes negligible.
@@ -282,18 +282,17 @@ export default function IbuPage() {
                   color: "var(--coral-600)",
                 }}
               >
-                unique to BeerApp
+                unique to Brewing.It
               </span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
               Most calculators show 0 IBU for dry hops. But during hop pellet
               processing, some alpha acids oxidize into compounds called{" "}
-              <strong>humulinones</strong> — and these dissolve into beer at
+              <strong>humulinones</strong>. These dissolve into beer at
               room temperature. We model both the humulinone contribution and a
               small amount of non-isomerized alpha acid dissolution, with an
               extraction efficiency that decreases at very high dry-hop rates.
-              A heavy dry hop (8 g/L, 12% AA) adds about 12 measurable IBU —
-              enough to shift the balance in hop-forward styles.
+              A heavy dry hop (8 g/L, 12% AA) adds about 12 measurable IBU, enough to shift the balance in hop-forward styles.
             </p>
           </div>
 
@@ -322,7 +321,7 @@ export default function IbuPage() {
               boil. They get the full boil time plus extra contact, producing
               more IBU with a smoother, rounder perceived bitterness. We model
               this by adding 20 minutes to the boil time for utilization
-              calculations — so a 60-minute boil treats FWH as 80 minutes of
+              calculations, so a 60-minute boil treats FWH as 80 minutes of
               contact time.
             </p>
           </div>
@@ -348,8 +347,7 @@ export default function IbuPage() {
               </h3>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
-              Hops added during the mash contribute very little bitterness —
-              most alpha acids wash out with the grain. We apply{" "}
+              Hops added during the mash contribute very little bitterness. Most alpha acids wash out with the grain. We apply{" "}
               <strong>20% utilization</strong>, which is the standard approach.
               Community experiments suggest the real number may be closer to
               10–15%, so our figure is slightly generous.
@@ -366,7 +364,7 @@ export default function IbuPage() {
           Worked Example
         </h2>
         <p className="text-sm leading-relaxed mb-4">
-          Here&apos;s the math for a single hop addition — 1 oz of Cascade
+          Here&apos;s the math for a single hop addition: 1 oz of Cascade
           (7% alpha acid) boiled for 60 minutes in 5 gallons of 1.050 wort:
         </p>
 
@@ -419,8 +417,7 @@ export default function IbuPage() {
         <p className="text-sm leading-relaxed mb-3">
           The Tinseth model has been the industry standard since 1995. Our dry
           hop model is based on Maye et al. (2016), who showed that humulinones
-          formed during pellet processing dissolve into beer without heat —
-          contributing measurable bitterness that most tools don&apos;t account
+          formed during pellet processing dissolve into beer without heat, contributing measurable bitterness that most tools don&apos;t account
           for.
         </p>
       </LearnArticle>
