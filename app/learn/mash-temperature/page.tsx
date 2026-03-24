@@ -216,23 +216,12 @@ export default function MashTemperaturePage() {
         <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           Where This Comes From
         </h2>
-        <p className="text-sm leading-relaxed mb-3">
-          The enzyme kinetics parameters come from Brandam et al. (2003) for
-          Arrhenius denaturation rates, De Schepper et al. (2022) for the 13%
-          thermostable beta-amylase fraction, and Evans et al. (2003) for
-          alpha-amylase stability data. The models were calibrated against 7
-          controlled split-batch experiments from the homebrewing community.
+        <p className="text-sm leading-relaxed">
+          The enzyme kinetics parameters are based on published brewing science
+          research into amylase activity, thermal denaturation rates, and
+          thermostable enzyme fractions. The Braukaiser mash temperature studies
+          at braukaiser.com were also a key reference.
         </p>
-
-        <h2 id="sources" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
-          Sources
-        </h2>
-        <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>
-          <li>Brandam, C. et al. &ldquo;A kinetic model for the mashing process.&rdquo; <em>EBC Congress</em>, 2003.</li>
-          <li>De Schepper, C.F. et al. &ldquo;Inactivation kinetics of enzymes in barley malt.&rdquo; <em>JASBC</em>, 2022.</li>
-          <li>Evans, D.E. et al. &ldquo;Impact of Thermostability of Amylases on Wort Fermentability.&rdquo; <em>JASBC</em> 61(4), 2003.</li>
-          <li>Braukaiser mash temperature studies. braukaiser.com.</li>
-        </ul>
       </LearnArticle>
     </>
   );

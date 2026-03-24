@@ -156,11 +156,11 @@ export default function AbvCalcPage() {
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">
-          The 131.25 constant traces back to Balling&apos;s 1865 work on
-          fermentation chemistry, later refined by Michael Hall in{" "}
-          <em>Zymurgy</em> (1995). It simplifies a more complex relationship
-          between gravity drop and ethanol production, one that holds
-          remarkably well for the beers most of us are brewing.
+          The 131.25 constant comes from the well-established relationship
+          between gravity drop and ethanol production in fermentation
+          chemistry. It simplifies a more complex calculation into something
+          practical, and it holds remarkably well for the beers most of us
+          are brewing.
         </p>
 
       </LearnArticle>

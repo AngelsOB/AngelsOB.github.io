@@ -416,8 +416,9 @@ export default function IbuPage() {
         </h2>
         <p className="text-sm leading-relaxed mb-3">
           The Tinseth model has been the industry standard since 1995. Our dry
-          hop model is based on Maye et al. (2016), who showed that humulinones
-          formed during pellet processing dissolve into beer without heat, contributing measurable bitterness.
+          hop model is based on research showing that humulinones formed during
+          pellet processing dissolve into beer without heat, contributing
+          measurable bitterness.
         </p>
       </LearnArticle>
     </>
