@@ -208,7 +208,7 @@ export default function MashTemperaturePage() {
               substrate depletion, the alpha-to-beta conversion pipeline, and
               accumulated denaturation across step mash schedules. If beta
               loses 50% activity during a 67°C rest, the 72°C mashout starts
-              with only 50%. No other homebrew calculator does this.
+              with only 50%.
             </p>
           </div>
         </div>

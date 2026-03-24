@@ -286,7 +286,7 @@ export default function IbuPage() {
               </span>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
-              Most calculators show 0 IBU for dry hops. But during hop pellet
+              Dry hops do contribute measurable bitterness. During hop pellet
               processing, some alpha acids oxidize into compounds called{" "}
               <strong>humulinones</strong>. These dissolve into beer at
               room temperature. We model both the humulinone contribution and a
@@ -417,8 +417,7 @@ export default function IbuPage() {
         <p className="text-sm leading-relaxed mb-3">
           The Tinseth model has been the industry standard since 1995. Our dry
           hop model is based on Maye et al. (2016), who showed that humulinones
-          formed during pellet processing dissolve into beer without heat, contributing measurable bitterness that most tools don&apos;t account
-          for.
+          formed during pellet processing dissolve into beer without heat, contributing measurable bitterness.
         </p>
       </LearnArticle>
     </>

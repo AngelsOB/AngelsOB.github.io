@@ -211,7 +211,7 @@ export default function HopFlavorPage() {
           informed by general hop oil volatility research and brewing science
           principles. It&apos;s not a lab measurement, and it can&apos;t predict
           exactly what a beer will taste like. But it gives a useful comparative
-          signal where other tools show nothing at all.
+          signal for comparing hop bills and understanding how additions affect flavor.
         </p>
 
       </LearnArticle>

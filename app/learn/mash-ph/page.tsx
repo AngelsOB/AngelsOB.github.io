@@ -201,11 +201,10 @@ export default function MashPhPage() {
         </h2>
         <p className="text-sm leading-relaxed">
           The proton deficit model was published by AJ deLange in the MBAA
-          Technical Quarterly (2013, 2015). The grain pH data comes from
-          Bru&apos;n Water and Braukaiser. Kolbach&apos;s calcium and magnesium
-          factors date to mid-20th century German brewing research. This is the
-          same framework used by the most respected water chemistry tools in
-          homebrewing.
+          Technical Quarterly (2013, 2015). Grain pH and buffering values are
+          based on published malt analyses and brewing literature. Kolbach&apos;s
+          calcium and magnesium factors date to mid-20th century German brewing
+          research.
         </p>
 
         <h2 id="sources" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
