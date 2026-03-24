@@ -200,20 +200,12 @@ export default function MashPhPage() {
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">
-          The proton deficit model was published by AJ deLange in the MBAA
-          Technical Quarterly (2013, 2015). Grain pH and buffering values are
-          based on published malt analyses and brewing literature. Kolbach&apos;s
-          calcium and magnesium factors date to mid-20th century German brewing
-          research.
+          The proton deficit model was developed by AJ deLange and published
+          in the MBAA Technical Quarterly. Grain pH and buffering values are
+          based on published malt analyses and brewing literature, including
+          Kai Troester&apos;s work at braukaiser.com. Kolbach&apos;s calcium and
+          magnesium factors come from mid-20th century German brewing research.
         </p>
-
-        <h2 id="sources" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
-          Sources
-        </h2>
-        <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>
-          <li>deLange, A.J. &ldquo;Understanding and Adjusting Mash pH.&rdquo; <em>MBAA TQ</em>, 2013 &amp; 2015.</li>
-          <li>Troester, K. &ldquo;Mash pH and Alkalinity.&rdquo; braukaiser.com.</li>
-        </ul>
       </LearnArticle>
     </>
   );

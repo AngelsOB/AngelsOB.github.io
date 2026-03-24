@@ -221,8 +221,9 @@ export default function GravityPage() {
         />
 
         <p className="text-sm leading-relaxed">
-          The 131.25 constant traces back to Balling&apos;s 1865 fermentation
-          chemistry. For the full breakdown, see the{" "}
+          The 131.25 constant comes from the well-established relationship
+          between gravity drop and ethanol production. For the full breakdown,
+          see the{" "}
           <a href="/learn/abv-calculator" className="text-[var(--coral-500)] hover:underline font-medium">
             ABV calculator
           </a>{" "}
