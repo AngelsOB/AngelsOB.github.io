@@ -30,15 +30,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       alternates: { canonical: `/r/${slug}` },
       openGraph: {
-        title: `${recipe.name} — BeerApp`,
+        title: `${recipe.name} | Brewing.It`,
         description,
         url: `/r/${slug}`,
         type: 'article',
-        siteName: 'BeerApp',
+        siteName: 'Brewing.It',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${recipe.name} — BeerApp`,
+        title: `${recipe.name} | Brewing.It`,
         description,
       },
     }

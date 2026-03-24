@@ -1,6 +1,6 @@
 {
-  "name": "BeerApp - Homebrewing Calculator",
-  "short_name": "BeerApp",
+  "name": "Brewing.It - Homebrewing Calculator",
+  "short_name": "Brewing.It",
   "description": "Homebrewing recipe builder and brewing calculator. Design recipes, calculate ABV, IBU, SRM, water chemistry, and more.",
   "start_url": "/",
   "display": "standalone",

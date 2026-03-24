@@ -28,10 +28,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: { canonical: `/r/seed/${id}` },
     openGraph: {
-      title: `${recipe.name} — BeerApp`,
+      title: `${recipe.name} | Brewing.It`,
       description,
       type: 'article',
-      siteName: 'BeerApp',
+      siteName: 'Brewing.It',
     },
   }
 }

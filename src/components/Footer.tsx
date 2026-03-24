@@ -25,6 +25,13 @@ const footerSections = [
       { href: "/recipes", label: "My Recipes" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+    ],
+  },
 ] as const;
 
 export default function Footer() {
