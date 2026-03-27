@@ -37,7 +37,8 @@ class BeerXmlExportService {
     lines.push(tag('NAME', recipe.name));
     lines.push(tag('VERSION', 1));
     lines.push(tag('TYPE', 'All Grain'));
-    lines.push(tag('BATCH_SIZE', recipe.batchVolumeL));
+    // BeerXML BATCH_SIZE = into-fermenter volume; add fermenter loss back
+    lines.push(tag('BATCH_SIZE', recipe.batchVolumeL + recipe.equipment.fermenterLossLiters));
     lines.push(tag('BOIL_TIME', recipe.equipment.boilTimeMin));
     lines.push(tag('EFFICIENCY', recipe.equipment.mashEfficiencyPercent));
     if (recipe.notes) lines.push(tag('NOTES', recipe.notes));

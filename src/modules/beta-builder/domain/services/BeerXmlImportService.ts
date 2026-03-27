@@ -42,6 +42,9 @@ class BeerXmlImportService {
     const name = text(recipeEl, 'NAME') || 'Imported BeerXML';
     const styleName = text(recipeEl, 'STYLE') ? text(recipeEl.getElementsByTagName('STYLE')[0], 'NAME') : undefined;
 
+    // BeerXML BATCH_SIZE = into-fermenter volume; our batchVolumeL = final packaged volume.
+    // We can't derive fermenter loss from BeerXML (no packaged-volume field), so we pass
+    // the value through as-is. This overestimates by ~fermenterLossLiters (default 0.5L).
     const batchVolumeL = toNumber(text(recipeEl, 'BATCH_SIZE')) ?? 20;
     const boilTimeMin = toNumber(text(recipeEl, 'BOIL_TIME')) ?? 60;
     const efficiency = toNumber(text(recipeEl, 'EFFICIENCY')) ?? 75;
