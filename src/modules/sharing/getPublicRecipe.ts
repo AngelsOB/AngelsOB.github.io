@@ -49,6 +49,20 @@ export const getPublicRecipe = cache(async (slug: string): Promise<PublicRecipeR
 /**
  * Build schema.org/Recipe JSON-LD structured data for a public recipe.
  */
+/**
+ * Convert minutes to ISO 8601 duration (e.g. 90 → "PT1H30M").
+ */
+function toIsoDuration(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  if (h > 0 && m > 0) return `PT${h}H${m}M`
+  if (h > 0) return `PT${h}H`
+  return `PT${m}M`
+}
+
+/**
+ * Build schema.org/Recipe JSON-LD structured data for a public recipe.
+ */
 export function buildRecipeJsonLd(
   recipe: Recipe,
   calc: RecipeCalculations,
@@ -59,11 +73,68 @@ export function buildRecipeJsonLd(
 ) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
 
+  // Build recipeInstructions from mash + fermentation steps
+  const instructions: { '@type': string; name: string; text: string }[] = []
+  let stepIndex = 1
+
+  if (recipe.mashSteps?.length) {
+    for (const step of recipe.mashSteps) {
+      instructions.push({
+        '@type': 'HowToStep',
+        name: `Mash: ${step.name}`,
+        text: `${step.name} at ${step.temperatureC}°C for ${step.durationMinutes} minutes.`,
+      })
+      stepIndex++
+    }
+  }
+
+  const boilTime = recipe.equipment?.boilTimeMin ?? 60
+  const boilHops = (recipe.hops || []).filter((h) => h.type === 'boil')
+  if (boilHops.length > 0) {
+    const hopList = boilHops.map((h) => `${h.grams}g ${h.name} at ${h.timeMinutes} min`).join(', ')
+    instructions.push({
+      '@type': 'HowToStep',
+      name: 'Boil',
+      text: `Boil for ${boilTime} minutes. Hop additions: ${hopList}.`,
+    })
+    stepIndex++
+  } else {
+    instructions.push({
+      '@type': 'HowToStep',
+      name: 'Boil',
+      text: `Boil for ${boilTime} minutes.`,
+    })
+    stepIndex++
+  }
+
+  if (recipe.fermentationSteps?.length) {
+    for (const step of recipe.fermentationSteps) {
+      const parts = [step.name || step.type]
+      if (step.temperatureC) parts.push(`at ${step.temperatureC}°C`)
+      if (step.durationDays) parts.push(`for ${step.durationDays} days`)
+      instructions.push({
+        '@type': 'HowToStep',
+        name: `Fermentation: ${step.name || step.type}`,
+        text: `${parts.join(' ')}.`,
+      })
+      stepIndex++
+    }
+  }
+
+  // Calculate total times
+  const mashMinutes = (recipe.mashSteps || []).reduce((sum, s) => sum + (s.durationMinutes || 0), 0)
+  const fermentDays = (recipe.fermentationSteps || []).reduce((sum, s) => sum + (s.durationDays || 0), 0)
+  const prepMinutes = mashMinutes // mash = prep
+  const cookMinutes = boilTime // boil = cook
+  const totalMinutes = prepMinutes + cookMinutes + fermentDays * 24 * 60
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Recipe',
     name: recipe.name,
-    description: recipe.notes || `${recipe.style || 'Homebrew'} recipe`,
+    description:
+      recipe.notes ||
+      `${recipe.style || 'Homebrew'} beer recipe — ${calc.abv.toFixed(1)}% ABV, ${Math.round(calc.ibu)} IBU. Batch size: ${recipe.batchVolumeL}L.`,
     author: { '@type': 'Person', name: ownerName },
     datePublished: recipe.publishedAt,
     recipeCategory: 'Beverage',
@@ -71,15 +142,24 @@ export function buildRecipeJsonLd(
     recipeYield: `${recipe.batchVolumeL} liters`,
     url: `${baseUrl}/r/${slug}`,
 
+    ...(prepMinutes > 0 ? { prepTime: toIsoDuration(prepMinutes) } : {}),
+    ...(cookMinutes > 0 ? { cookTime: toIsoDuration(cookMinutes) } : {}),
+    ...(totalMinutes > 0 ? { totalTime: toIsoDuration(totalMinutes) } : {}),
+
+    ...(recipe.labelUrl ? { image: recipe.labelUrl } : {}),
+
     recipeIngredient: [
-      ...(recipe.fermentables || []).map(
-        (f) => `${f.weightKg} kg ${f.name}`,
-      ),
+      ...(recipe.fermentables || []).map((f) => `${f.weightKg} kg ${f.name}`),
       ...(recipe.hops || []).map(
         (h) => `${h.grams} g ${h.name} (${h.type}, ${h.timeMinutes ?? 0} min)`,
       ),
       ...(recipe.yeasts || []).map((y) => `${y.name} yeast`),
+      ...(recipe.otherIngredients || []).map(
+        (o) => `${o.amount} ${o.unit} ${o.name}`,
+      ),
     ],
+
+    ...(instructions.length > 0 ? { recipeInstructions: instructions } : {}),
 
     nutrition: {
       '@type': 'NutritionInformation',
@@ -98,12 +178,7 @@ export function buildRecipeJsonLd(
         }
       : {}),
 
-    keywords: [
-      recipe.style,
-      'homebrew',
-      'beer recipe',
-      ...(recipe.tags || []),
-    ]
+    keywords: [recipe.style, 'homebrew', 'beer recipe', 'homebrewing', ...(recipe.tags || [])]
       .filter(Boolean)
       .join(', '),
   }
