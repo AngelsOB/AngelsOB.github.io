@@ -227,7 +227,7 @@ export function BrowseCard({
                 {recipe.labelUrl && (
                   <img
                     src={recipe.labelUrl}
-                    alt=""
+                    alt={`${recipe.name} beer label`}
                     className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
                     loading="lazy"
                   />

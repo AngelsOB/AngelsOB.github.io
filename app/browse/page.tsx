@@ -40,10 +40,10 @@ export default async function BrowsePage() {
   return (
     <>
       <BrowseRecipesPage />
-      {/* Server-rendered recipe links for search engine crawlability */}
-      <nav aria-label="All community recipes" className="mx-auto max-w-6xl px-2 pb-8">
-        <h2 className="brew-section-title mb-4 text-lg">All Recipes</h2>
-        <ul className="columns-2 gap-x-6 sm:columns-3 text-sm">
+      {/* Server-rendered recipe links — visually hidden, crawlable by search engines */}
+      <nav aria-label="All community recipes" className="sr-only">
+        <h2>All Recipes</h2>
+        <ul>
           {SEED_RECIPES.map((r) => (
             <li key={r.id} className="mb-1">
               <Link href={`/r/seed/${r.id}`} className="text-[var(--brew-accent-700)] hover:underline" prefetch={false}>
