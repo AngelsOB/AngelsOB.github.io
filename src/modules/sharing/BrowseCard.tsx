@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
@@ -182,29 +183,33 @@ export function BrowseCard({
     }
   }
 
+  const cardPath = recipe.source === 'official'
+    ? `/r/seed/${recipe.id}`
+    : `/r/${recipe.shareSlug}`;
+
   return (
     <div
       className={`group brew-recipe-card relative cursor-pointer overflow-visible ${isMenuOpen ? 'z-30' : 'z-10'}`}
       style={{ '--card-srm': srmColor } as React.CSSProperties}
-      role="link"
-      tabIndex={0}
-      onClick={() => {
-        onNavigate?.();
-        const path = recipe.source === 'official'
-          ? `/r/seed/${recipe.id}`
-          : `/r/${recipe.shareSlug}`;
-        router.push(path);
+      onClick={(e) => {
+        // Only navigate if the click wasn't on an interactive child
+        if ((e.target as HTMLElement).closest('button, a, [role="menu"]')) return
+        onNavigate?.()
+        router.push(cardPath)
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          onNavigate?.();
-          const path = recipe.source === 'official'
-            ? `/r/seed/${recipe.id}`
-            : `/r/${recipe.shareSlug}`;
-          router.push(path);
+        if (e.key === 'Enter' && !(e.target as HTMLElement).closest('button, a, [role="menu"]')) {
+          onNavigate?.()
+          router.push(cardPath)
         }
       }}
+      role="article"
+      tabIndex={0}
     >
+      {/* Hidden crawlable link for search engines */}
+      <Link href={cardPath} tabIndex={-1} aria-hidden className="absolute inset-0 z-0" prefetch={false}>
+        <span className="sr-only">{recipe.name}</span>
+      </Link>
       {(isNavigating || isBusy) && (
         <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
@@ -222,7 +227,7 @@ export function BrowseCard({
                 {recipe.labelUrl && (
                   <img
                     src={recipe.labelUrl}
-                    alt=""
+                    alt={`${recipe.name} beer label`}
                     className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
                     loading="lazy"
                   />
@@ -242,18 +247,14 @@ export function BrowseCard({
               <p className="text-muted text-xs mt-1">
                 by{' '}
                 {recipe.ownerId ? (
-                  <span
-                    role="link"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      router.push(`/u/${recipe.ownerId}`);
-                    }}
-                    className="hover:underline cursor-pointer"
+                  <Link
+                    href={`/u/${recipe.ownerId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:underline"
+                    prefetch={false}
                   >
                     {recipe.ownerName}
-                  </span>
+                  </Link>
                 ) : (
                   recipe.ownerName
                 )}

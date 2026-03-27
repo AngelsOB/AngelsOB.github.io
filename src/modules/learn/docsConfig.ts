@@ -72,6 +72,12 @@ export const learnNav: LearnSection[] = [
     title: "Calculators",
     links: [
       {
+        href: "/learn/strike-temp-calculator",
+        label: "Strike Water Temp",
+        description:
+          "Calculate the strike water temperature for your mash from target temp, grain temp, and mash thickness.",
+      },
+      {
         href: "/learn/abv-calculator",
         label: "ABV Calculator",
         description:
