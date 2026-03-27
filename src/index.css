@@ -5640,15 +5640,33 @@ input[type="number"],
 }
 
 @keyframes wiggle {
-  0% { transform: rotate(0deg) scale(1); }
-  5% { transform: rotate(-12deg) scale(1.25); }
-  10% { transform: rotate(10deg) scale(1.25); }
-  15% { transform: rotate(-6deg) scale(1.15); }
-  20% { transform: rotate(4deg) scale(1.05); }
-  25% { transform: rotate(0deg) scale(1); }
-  50% { transform: scale(1.15); }
-  75% { transform: scale(1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  5% {
+    transform: rotate(-12deg) scale(1.25);
+  }
+  10% {
+    transform: rotate(10deg) scale(1.25);
+  }
+  15% {
+    transform: rotate(-6deg) scale(1.15);
+  }
+  20% {
+    transform: rotate(4deg) scale(1.05);
+  }
+  25% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  75% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes blink {
@@ -6792,6 +6810,16 @@ input[type="number"],
     left 392ms cubic-bezier(0.22, 1.7, 0.36, 1),
     right 342ms 37ms cubic-bezier(0.16, 2.2, 0.36, 1);
 }
+/* Hover hint — pill's front edge nudges toward the hovered inactive side */
+.brew-segmented-toggle:has(button:first-child.is-active):has(button:last-child:hover)::before {
+  left: calc(var(--_pad) + 1.5px);
+  right: calc(50% + var(--_gap) / 2 - 3px);
+}
+.brew-segmented-toggle:has(button:last-child.is-active):has(button:first-child:hover)::before {
+  left: calc(50% + var(--_gap) / 2 - 3px);
+  right: calc(var(--_pad) + 1.5px);
+}
+
 /* Moving right: left (trailing) lags 37ms, faster + bouncier to compress on arrival */
 .brew-segmented-toggle:has(button:last-child.is-active)::before {
   left: calc(50% + var(--_gap) / 2);
