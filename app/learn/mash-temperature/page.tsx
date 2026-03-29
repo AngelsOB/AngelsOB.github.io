@@ -50,7 +50,7 @@ function ModelComparisonPreview() {
       }}
     >
       <div
-        className="px-5 py-3"
+        className="px-5 py-3 grain"
         style={{ background: "linear-gradient(135deg, oklch(82% 0.1 30), oklch(78% 0.08 35))" }}
       >
         <span className="text-sm font-black tracking-tight" style={{ color: "oklch(25% 0.05 30)" }}>
@@ -138,9 +138,9 @@ export default function MashTemperaturePage() {
 
         <div className="space-y-4">
           <div
-            className="rounded-xl p-5"
+            className="grain rounded-xl p-5"
             style={{
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 80)), var(--card))`,
+              background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 80)), var(--card))`,
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
@@ -157,9 +157,9 @@ export default function MashTemperaturePage() {
           </div>
 
           <div
-            className="rounded-xl p-5"
+            className="grain rounded-xl p-5"
             style={{
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))`,
+              background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))`,
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
@@ -185,9 +185,9 @@ export default function MashTemperaturePage() {
           </div>
 
           <div
-            className="rounded-xl p-5"
+            className="grain rounded-xl p-5"
             style={{
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.1 10)), var(--card))`,
+              background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.1 10)), var(--card))`,
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >

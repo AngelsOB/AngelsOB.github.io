@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { learnNav } from "./docsConfig";
+import GrainGradient from "@/components/GrainGradient";
 
 interface LearnArticleProps {
   /** Article title — rendered in display serif */
@@ -84,22 +85,25 @@ export default function LearnArticle({
       {/* CTA */}
       <div className="mt-12 pt-8 border-t border-[color-mix(in_oklch,var(--fg-strong)_10%,transparent)]">
         <div
-          className="rounded-2xl p-6 text-center"
+          className="rounded-2xl p-6 text-center relative overflow-hidden"
           style={{
-            background: `
-              linear-gradient(
-                135deg,
-                color-mix(in oklch, var(--coral-100) 30%, var(--surface)),
-                var(--surface)
-              )
-            `,
             boxShadow: "var(--shadow-card)",
             border:
               "1px solid color-mix(in oklch, var(--coral-300) 30%, transparent)",
           }}
         >
+          <GrainGradient
+            stops={[
+              { pos: 0, color: "var(--coral-100)" },
+              { pos: 1, color: "var(--surface)" },
+            ]}
+            direction={135}
+            displacement={0.5}
+            grainOpacity={0.6}
+            radius={10}
+          />
           <p
-            className="text-sm mb-4"
+            className="relative z-10 text-sm mb-4"
             style={{
               fontFamily: "'Shadows Into Light', cursive",
               color: "var(--fg-muted)",
@@ -108,7 +112,7 @@ export default function LearnArticle({
           >
             See all the numbers come together in real time.
           </p>
-          <Link href={ctaHref} className="btn-neon inline-block px-6 py-2.5">
+          <Link href={ctaHref} className="btn-neon relative z-10 inline-block px-6 py-2.5">
             {ctaText}
           </Link>
         </div>

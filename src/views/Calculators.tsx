@@ -1,3 +1,4 @@
+import GrainGradient from "@/components/GrainGradient";
 import AbvCalculator from "../components/AbvCalculator";
 import BoilOffCalculator from "../components/BoilOffCalculator";
 import CarbonationCalculator from "../components/CarbonationCalculator";
@@ -9,18 +10,20 @@ export default function Calculators() {
     <div className="max-w-2xl mx-auto">
       {/* ── Hero header ── */}
       <div className="full-bleed relative overflow-hidden -mt-6 pt-8 pb-10 mb-2">
-        {/* Ambient glow — mash-orange warmth */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 70% 55% at 15% -5%, color-mix(in oklch, var(--brew-accent-300) 14%, transparent), transparent 65%),
-              radial-gradient(ellipse 50% 50% at 85% 10%, color-mix(in oklch, var(--brew-accent-400) 10%, transparent), transparent 55%)
-            `,
-          }}
+        {/* Grainy ambient glow — displacement shader */}
+        <GrainGradient
+          stops={[
+            { pos: 0,    color: "color-mix(in oklch, var(--brew-accent-300) 18%, transparent)" },
+            { pos: 0.55, color: "color-mix(in oklch, var(--brew-accent-200) 8%, transparent)" },
+            { pos: 1,    color: "transparent" },
+          ]}
+          direction={150}
+          displacement={0.6}
+          grainOpacity={0.7}
+          radius={12}
         />
 
-        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6">
           <div className="brew-animate-in brew-stagger-1">
             <span
               className="inline-block text-[10px] font-bold uppercase mb-4"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   collection,
   query,
@@ -14,6 +15,7 @@ import { db } from '@/config/firebase';
 import { SEED_RECIPES } from '@/data/seed-recipes';
 import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 import { BrowseCard, type BrowseRecipe } from './BrowseCard';
+import Button from '@/components/Button';
 
 const calc = new RecipeCalculationService();
 const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
@@ -35,7 +37,10 @@ const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
 
 type SortOption = 'newest' | 'popular' | 'top-rated';
 
+const MAX_COMPARE = 8;
+
 export default function BrowseRecipesPage() {
+  const router = useRouter();
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sort, setSort] = useState<SortOption>('newest');
@@ -43,6 +48,25 @@ export default function BrowseRecipesPage() {
   const [styleFilter, setStyleFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < MAX_COMPARE) {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCompare = useCallback(() => {
+    if (selectedIds.size < 2) return;
+    router.push(`/browse/compare?ids=${Array.from(selectedIds).join(',')}`);
+  }, [selectedIds, router]);
 
   const fetchRecipes = useCallback(async () => {
     setError(null);
@@ -188,6 +212,24 @@ export default function BrowseRecipesPage() {
               <option value="popular">Most Forked</option>
             </select>
           </div>
+          <Button
+            variant={compareMode ? 'neon' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setCompareMode((prev) => !prev);
+              if (compareMode) setSelectedIds(new Set());
+            }}
+            leftIcon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            }
+          >
+            Compare
+          </Button>
         </div>
       </div>
 
@@ -273,11 +315,45 @@ export default function BrowseRecipesPage() {
                 recipe={recipe}
                 isNavigating={navigatingId === recipe.id}
                 onNavigate={() => setNavigatingId(recipe.id)}
+                compareMode={compareMode}
+                isSelected={selectedIds.has(recipe.id)}
+                onToggleSelect={toggleSelect}
               />
             ))}
           </div>
 
         </>
+      )}
+
+      {/* Floating compare action bar */}
+      {compareMode && selectedIds.size >= 1 && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+          <div className="card-glass flex items-center gap-4 rounded-2xl px-6 py-3 shadow-lg backdrop-blur-md">
+            <span className="text-sm font-semibold whitespace-nowrap" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {selectedIds.size} recipe{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+            <Button
+              variant="neon"
+              size="sm"
+              onClick={handleCompare}
+              loading={false}
+              leftIcon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
+                </svg>
+              }
+            >
+              Compare{selectedIds.size < 2 ? ` (${2 - selectedIds.size} more)` : ''}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

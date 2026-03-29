@@ -1,4 +1,5 @@
 import MathBlock from "./MathBlock";
+import GrainGradient from "@/components/GrainGradient";
 
 interface FormulaCalloutProps {
   /** Label shown above the formula (e.g., "Tinseth Utilization") */
@@ -22,22 +23,24 @@ export default function FormulaCallout({
     <figure
       className="my-8 rounded-2xl p-6 relative overflow-hidden"
       style={{
-        background: `
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E") repeat,
-          linear-gradient(
-            145deg,
-            color-mix(in oklch, var(--surface) 92%, var(--coral-100)),
-            var(--surface)
-          )
-        `,
         boxShadow: `
           var(--shadow-inset),
           inset 0 0 0 1px color-mix(in oklch, var(--fg-strong) 8%, transparent)
         `,
       }}
     >
+      <GrainGradient
+        stops={[
+          { pos: 0, color: "color-mix(in oklch, var(--surface) 92%, var(--coral-100))" },
+          { pos: 1, color: "var(--surface)" },
+        ]}
+        direction={145}
+        displacement={0.4}
+        grainOpacity={0.5}
+        radius={8}
+      />
       <figcaption
-        className="text-xs font-semibold uppercase tracking-wider mb-3"
+        className="relative z-10 text-xs font-semibold uppercase tracking-wider mb-3"
         style={{
           color: "var(--fg-muted)",
           fontFamily: "'Bitter', serif",
@@ -47,11 +50,13 @@ export default function FormulaCallout({
         {title}
       </figcaption>
 
-      <MathBlock expression={expression} />
+      <div className="relative z-10">
+        <MathBlock expression={expression} />
+      </div>
 
       {description && (
         <p
-          className="mt-3 text-sm leading-relaxed"
+          className="relative z-10 mt-3 text-sm leading-relaxed"
           style={{ color: "var(--fg-muted)" }}
         >
           {description}

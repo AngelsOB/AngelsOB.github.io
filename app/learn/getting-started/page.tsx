@@ -137,9 +137,9 @@ export default function GettingStartedPage() {
         <EquipmentMockup />
 
         <div
-          className="relative rounded-xl p-5 my-4"
+          className="grain relative rounded-xl p-5 my-4"
           style={{
-            background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))`,
+            background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))`,
             border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
           }}
         >
@@ -207,9 +207,9 @@ export default function GettingStartedPage() {
         </p>
 
         <div
-          className="rounded-xl p-5 mb-6"
+          className="grain rounded-xl p-5 mb-6"
           style={{
-            background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 55)), var(--card))`,
+            background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 55)), var(--card))`,
             border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
           }}
         >
@@ -295,12 +295,9 @@ export default function GettingStartedPage() {
         <BrewDayMockup />
 
         <div
-          className="rounded-xl p-5 my-6"
+          className="grain rounded-xl p-5 my-6"
           style={{
-            background: `
-              url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat,
-              linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))
-            `,
+            background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.08 30)), var(--card))`,
             border:
               "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
           }}

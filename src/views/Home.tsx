@@ -1,23 +1,38 @@
 import Link from "next/link";
 import Typewriter from "@/components/Typewriter";
+import GrainGradient from "@/components/GrainGradient";
 // import HomePhysicsCansLoader from "@/modules/labels/HomePhysicsCansLoader";
 
 export default function Home() {
   return (
-    <div className="-mt-6">
-      {/* ── Hero ── */}
-      <section className="full-bleed relative overflow-hidden pt-12 pb-14 sm:pt-24 sm:pb-28">
-        {/* Warm ambient glow */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 50% at 20% 0%, color-mix(in oklch, var(--coral-300) 12%, transparent), transparent 70%),
-              radial-gradient(ellipse 60% 60% at 80% 20%, color-mix(in oklch, var(--coral-400) 8%, transparent), transparent 60%)
-            `,
-          }}
+    <div className="relative -mt-6">
+      {/* Grainy ambient glow — behind all content, fades out over the feature cards */}
+      <div
+        className="pointer-events-none absolute top-0 h-[130vh]"
+        style={{
+          left: 'calc(50% - 50vw)',
+          width: '100vw',
+          zIndex: -1,
+          maskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+        }}
+        aria-hidden
+      >
+        <GrainGradient
+          stops={[
+            { pos: 0,    color: "color-mix(in oklch, var(--coral-300) 18%, transparent)" },
+            { pos: 0.55, color: "color-mix(in oklch, var(--coral-200) 8%, transparent)" },
+            { pos: 1,    color: "transparent" },
+          ]}
+          direction={145}
+          displacement={0.6}
+          grainOpacity={0.7}
+          radius={12}
         />
+      </div>
 
+      {/* ── Hero ── */}
+      <section className="full-bleed relative pt-12 pb-14 sm:pt-24 sm:pb-28">
         {/* Decorative hop cone — layered petal watermark */}
         <div
           className="pointer-events-none absolute top-1/2 right-[max(0px,calc(50%-38rem))] w-[280px] -translate-y-[45%] opacity-[0.06] sm:w-[360px] lg:w-[420px] dark:opacity-[0.035]"
@@ -53,7 +68,7 @@ export default function Home() {
           </svg>
         </div>
 
-        <div className="brew-animate-in relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div className="brew-animate-in relative z-10 mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="brew-animate-in brew-stagger-1">
             <span
               className="mb-6 inline-block text-xs font-bold tracking-[0.2em] uppercase"

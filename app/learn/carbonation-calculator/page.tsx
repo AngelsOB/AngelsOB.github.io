@@ -48,9 +48,9 @@ export default function CarbonationCalcPage() {
         </p>
 
         <div
-          className="rounded-xl p-5 my-6"
+          className="grain rounded-xl p-5 my-6"
           style={{
-            background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 220)), var(--card))`,
+            background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 220)), var(--card))`,
             border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
           }}
         >

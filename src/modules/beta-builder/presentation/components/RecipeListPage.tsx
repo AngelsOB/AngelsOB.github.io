@@ -671,7 +671,7 @@ function RecipeCard({
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[var(--brew-card)]" style={{ containerType: "inline-size" }}>
+      <div className="rounded-xl overflow-hidden" style={{ containerType: "inline-size" }}>
         {/* SRM Color Strip */}
         {calculations && (
           <div
