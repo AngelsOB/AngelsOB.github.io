@@ -4,32 +4,23 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 export interface GrainParams {
-  /** Grain size: 1 = fine film grain, 4 = coarse/chunky. Default: 2 */
+  /** Grain size: 1 = fine film grain, 4 = coarse/chunky. Default: 1 */
   blockSize: number;
-  /** Noise layers 1–6. More octaves = more complex texture. Default: 4 */
+  /** Noise layers 1–6. More octaves = more complex texture. Default: 5 */
   octaves: number;
-  /** Contrast of the noise 1–6. Higher = more distinct grain vs smooth tonal shift. Default: 2 */
+  /** Contrast of the noise 1–6. Default: 3.3 */
   contrast: number;
-  /** Overall opacity of the overlay 0–1. Default: 0.4 */
+  /** Overall opacity of the overlay 0–1. Default: 0.06 */
   opacity: number;
-  /**
-   * Blend mode split:
-   *   0 = all normal (always visible, ignores surface color)
-   *   0.5 = half soft-light, half normal
-   *   1 = all soft-light (integrates with surface, invisible on mid-gray)
-   * Default: 0.5
-   */
-  softLight: number;
   /** Seed for different grain patterns. Default: 42 */
   seed: number;
 }
 
 export const GRAIN_DEFAULTS: GrainParams = {
-  blockSize: 1,
-  octaves: 5,
-  contrast: 3.3,
-  opacity: 0.4,
-  softLight: 0.8,
+  blockSize: 1.25,
+  octaves: 6,
+  contrast: 4.0,
+  opacity: 0.1,
   seed: 42,
 };
 
@@ -40,26 +31,25 @@ function buildNoiseUrl(blockSize: number, octaves: number, contrast: number, see
   return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
 }
 
-function GrainLayers({ blockSize, octaves, contrast, opacity, softLight, seed }: GrainParams) {
+function GrainLayers({ blockSize, octaves, contrast, opacity, seed }: GrainParams) {
   const noiseUrl = buildNoiseUrl(blockSize, octaves, contrast, seed);
 
-  const base: React.CSSProperties = {
-    position: "fixed",
-    inset: 0,
-    pointerEvents: "none",
-    backgroundImage: noiseUrl,
-    backgroundRepeat: "repeat",
-    backgroundSize: "256px 256px",
-    zIndex: 9998,
-  };
-
   return (
-    <>
-      {/* soft-light: blends beautifully on light surfaces */}
-      <div aria-hidden style={{ ...base, opacity: opacity * softLight, mixBlendMode: "soft-light" }} />
-      {/* normal: always visible — ensures grain shows on dark/composited surfaces */}
-      <div aria-hidden style={{ ...base, opacity: opacity * (1 - softLight) * 0.5, mixBlendMode: "normal" }} />
-    </>
+    <div
+      aria-hidden
+      style={{
+        position: "fixed",
+        inset: 0,
+        pointerEvents: "none",
+        backgroundImage: noiseUrl,
+        backgroundRepeat: "repeat",
+        backgroundSize: "256px 256px",
+        zIndex: 9998,
+        opacity,
+        // No blend mode — mix-blend-mode on a fixed viewport-sized element
+        // forces full-viewport compositing on every scroll frame.
+      }}
+    />
   );
 }
 
@@ -71,7 +61,9 @@ export default function GrainOverlay(params: GrainParams) {
     el.setAttribute("aria-hidden", "true");
     document.body.appendChild(el);
     setMount(el);
-    return () => { document.body.removeChild(el); };
+    return () => {
+      document.body.removeChild(el);
+    };
   }, []);
 
   if (!mount) return null;

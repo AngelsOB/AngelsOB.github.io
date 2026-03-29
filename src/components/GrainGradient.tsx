@@ -37,6 +37,11 @@ interface GrainGradientProps {
   grainSize?: number;
   /** Max displacement radius px. Default: 12 */
   radius?: number;
+  /**
+   * Render resolution multiplier 0–1. Canvas is drawn at this fraction of parent size
+   * then CSS-scaled up. For background glows 0.15–0.25 is indistinguishable. Default: 1
+   */
+  resolution?: number;
   /** Extra className on the canvas element */
   className?: string;
 }
@@ -166,6 +171,7 @@ export default function GrainGradient({
   grainOpacity = 0.7,
   grainSize = 1,
   radius = 12,
+  resolution = 1,
   className = "",
 }: GrainGradientProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -183,9 +189,10 @@ export default function GrainGradient({
       if (!parent) return;
 
       const rect = parent.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.round(rect.width * dpr);
-      const h = Math.round(rect.height * dpr);
+      // Cap DPR at 1 then apply resolution multiplier — background glows don't need retina detail
+      const scale = Math.min(window.devicePixelRatio || 1, 1) * Math.min(resolution, 1);
+      const w = Math.max(1, Math.round(rect.width * scale));
+      const h = Math.max(1, Math.round(rect.height * scale));
       if (w === 0 || h === 0) return;
 
       // Resolve CSS colors to RGBA

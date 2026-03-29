@@ -28,6 +28,7 @@ export default function Home() {
           displacement={0.6}
           grainOpacity={0.7}
           radius={12}
+          resolution={0.2}
         />
       </div>
 

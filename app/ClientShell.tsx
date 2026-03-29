@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import NavBar from "../src/components/NavBar";
 import Footer from "../src/components/Footer";
 import Toaster from "../src/components/Toaster";
 import AuthProvider from "../src/modules/auth/components/AuthProvider";
 import { useSrmTheme } from "../src/hooks/useSrmTheme";
-import GrainOverlay, { GRAIN_DEFAULTS } from "../src/components/GrainOverlay";
+import GrainOverlay, { GRAIN_DEFAULTS, type GrainParams } from "../src/components/GrainOverlay";
+import GrainTweaker from "../src/components/GrainTweaker";
 
 export default function ClientShell({
   children,
@@ -13,6 +15,7 @@ export default function ClientShell({
   children: React.ReactNode;
 }) {
   useSrmTheme();
+  const [grainParams, setGrainParams] = useState<GrainParams>(GRAIN_DEFAULTS);
 
   return (
     <AuthProvider>
@@ -32,7 +35,10 @@ export default function ClientShell({
         </main>
         <Footer />
         <Toaster />
-        <GrainOverlay {...GRAIN_DEFAULTS} />
+        <GrainOverlay {...grainParams} />
+        {process.env.NODE_ENV === 'development' && (
+          <GrainTweaker params={grainParams} onChange={setGrainParams} />
+        )}
       </div>
     </AuthProvider>
   );
