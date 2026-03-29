@@ -671,83 +671,51 @@ function RecipeCard({
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl overflow-hidden" style={{ containerType: "inline-size" }}>
-        {/* SRM Color Strip */}
-        {calculations && (
-          <div
-            className="h-2 w-full rounded-t-xl"
-            style={{ backgroundColor: srmToRgb(calculations.srm) }}
-          />
-        )}
-
-        {/* Header */}
-        <div className="border-b border-[rgb(var(--brew-border))] p-4">
-          <div className="flex items-start gap-3">
-            {recipe.labelUrl && (
-              <img
-                src={recipe.labelUrl}
-                alt=""
-                className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
-                loading="lazy"
-              />
-            )}
-            <ScalableText
-              className="min-w-0 flex-1 font-extrabold tracking-tight"
-              minScale={0.75}
-              maxLines={2}
-              style={{ fontSize: "clamp(1rem, calc(8px + 3cqw), 1.5rem)" }}
-            >
-              {recipe.name}
-            </ScalableText>
-            <div
-              className="relative flex shrink-0 items-center gap-2"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleStartSession(e);
-                }}
-                className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
-                style={{
-                  background: "color-mix(in oklch, var(--brew-accent-200) 40%, transparent)",
-                  color: "var(--brew-accent-700)",
-                  border: "1px solid var(--brew-accent-300)",
-                }}
-                title="Brew this beer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 8h10v9a3 3 0 01-3 3H7a3 3 0 01-3-3V8z"
-                  />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 9h2a3 3 0 010 6h-2" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h7" />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsVersionMenuOpen((prev) => !prev);
-                }}
-                className="brew-tag shadow-sm"
-                title="Version actions"
-              >
-                v{recipe.currentVersion}
-              </button>
-              {isVersionMenuOpen && (
+      {/* Action buttons — outside overflow-hidden so the dropdown isn't clipped */}
+      <div
+        className="absolute top-6 right-4 z-30 flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStartSession(e);
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
+          style={{
+            background: "color-mix(in oklch, var(--brew-accent-200) 40%, transparent)",
+            color: "var(--brew-accent-700)",
+            border: "1px solid var(--brew-accent-300)",
+          }}
+          title="Brew this beer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h10v9a3 3 0 01-3 3H7a3 3 0 01-3-3V8z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14 9h2a3 3 0 010 6h-2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h7" />
+          </svg>
+        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsVersionMenuOpen((prev) => !prev);
+            }}
+            className="brew-tag shadow-sm"
+            title="Version actions"
+          >
+            v{recipe.currentVersion}
+          </button>
+          {isVersionMenuOpen && (
                 // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                 <div
                   className="absolute top-full right-0 z-20 -m-4 mt-2 p-4"
@@ -853,7 +821,39 @@ function RecipeCard({
                   </div>
                 </div>
               )}
-            </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl overflow-hidden" style={{ containerType: "inline-size" }}>
+        {/* SRM Color Strip */}
+        {calculations && (
+          <div
+            className="h-2 w-full rounded-t-xl"
+            style={{ backgroundColor: srmToRgb(calculations.srm) }}
+          />
+        )}
+
+        {/* Header */}
+        <div className="border-b border-[rgb(var(--brew-border))] p-4">
+          <div className="flex items-start gap-3">
+            {recipe.labelUrl && (
+              <img
+                src={recipe.labelUrl}
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
+                loading="lazy"
+              />
+            )}
+            <ScalableText
+              className="min-w-0 flex-1 font-extrabold tracking-tight"
+              minScale={0.75}
+              maxLines={2}
+              style={{ fontSize: "clamp(1rem, calc(8px + 3cqw), 1.5rem)" }}
+            >
+              {recipe.name}
+            </ScalableText>
+            {/* Spacer so title doesn't overlap the absolutely-positioned buttons */}
+            <div className="w-20 shrink-0" />
           </div>
           {recipe.style && <p className="text-muted truncate text-xs italic">{recipe.style}</p>}
         </div>
