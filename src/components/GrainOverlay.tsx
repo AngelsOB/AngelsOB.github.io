@@ -14,25 +14,75 @@ export interface GrainParams {
   opacity: number;
   /** Seed for different grain patterns. Default: 42 */
   seed: number;
+  /**
+   * Blue noise mode: applies a high-pass SVG filter (noise minus blurred copy)
+   * to suppress low-frequency clumping, producing a more even, fine-grained distribution.
+   * Default: false (fractal/Perlin noise)
+   */
+  blueNoise: boolean;
 }
 
 export const GRAIN_DEFAULTS: GrainParams = {
   blockSize: 1.25,
   octaves: 6,
-  contrast: 4.0,
-  opacity: 0.1,
+  contrast: 4.5,
+  opacity: 0.085,
   seed: 42,
+  blueNoise: true,
 };
 
-function buildNoiseUrl(blockSize: number, octaves: number, contrast: number, seed: number): string {
+function buildNoiseUrl(
+  blockSize: number,
+  octaves: number,
+  contrast: number,
+  seed: number,
+  blueNoise: boolean,
+): string {
   const freq = (0.85 / blockSize).toFixed(3);
   const intercept = (-(contrast - 1) / 2).toFixed(3);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="${octaves}" seed="${seed}" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="${contrast}" intercept="${intercept}"/><feFuncG type="linear" slope="${contrast}" intercept="${intercept}"/><feFuncB type="linear" slope="${contrast}" intercept="${intercept}"/></feComponentTransfer></filter><rect width="256" height="256" filter="url(#g)"/></svg>`;
+
+  let filter: string;
+  if (blueNoise) {
+    // True high-pass via Laplacian feConvolveMatrix kernel:
+    //   -1 -1 -1
+    //   -1  8 -1
+    //   -1 -1 -1
+    // Sum = 0 → pure edge/high-frequency signal. bias=0.5 re-centers to [0,1].
+    // A 3×3 kernel only touches 1px at the tile edge, so seam artifacts are invisible.
+    // feTurbulence with 1 octave avoids Perlin's built-in low-freq octaves — the
+    // Laplacian then strips any remaining smooth structure, leaving an even fine speckle.
+    filter = [
+      `<filter id="g">`,
+      `<feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="1" seed="${seed}" stitchTiles="stitch" result="n"/>`,
+      `<feConvolveMatrix in="n" order="3" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" divisor="1" bias="0.5" preserveAlpha="true" result="hp"/>`,
+      `<feColorMatrix in="hp" type="saturate" values="0"/>`,
+      `<feComponentTransfer>`,
+      `<feFuncR type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `<feFuncG type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `<feFuncB type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `</feComponentTransfer>`,
+      `</filter>`,
+    ].join("");
+  } else {
+    filter = [
+      `<filter id="g">`,
+      `<feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="${octaves}" seed="${seed}" stitchTiles="stitch"/>`,
+      `<feColorMatrix type="saturate" values="0"/>`,
+      `<feComponentTransfer>`,
+      `<feFuncR type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `<feFuncG type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `<feFuncB type="linear" slope="${contrast}" intercept="${intercept}"/>`,
+      `</feComponentTransfer>`,
+      `</filter>`,
+    ].join("");
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">${filter}<rect width="256" height="256" filter="url(#g)"/></svg>`;
   return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
 }
 
-function GrainLayers({ blockSize, octaves, contrast, opacity, seed }: GrainParams) {
-  const noiseUrl = buildNoiseUrl(blockSize, octaves, contrast, seed);
+function GrainLayers({ blockSize, octaves, contrast, opacity, seed, blueNoise }: GrainParams) {
+  const noiseUrl = buildNoiseUrl(blockSize, octaves, contrast, seed, blueNoise);
 
   return (
     <div
