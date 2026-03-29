@@ -27,6 +27,7 @@ input[type="number"],
   margin-left: -50vw;
 }
 
+
 /* Force dark mode to work with .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -121,11 +122,9 @@ input[type="number"],
   --shadow-inset:
     inset 0 1px 2px rgba(140, 120, 90, 0.09), inset 0 2px 4px rgba(140, 120, 90, 0.06);
 
-  /* Noise texture — warm-tinted, tactile paper grain */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
-
-  /* Paper fiber texture — coarser grain for tactile paper feel */
-  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05 0 0.85 0 0 0.03 0 0 0.75 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.14'/%3E%3C/svg%3E");
+  /* Dither-grain texture — injected at runtime by useGrainTexture (canvas-generated, no feTurbulence) */
+  --noise-texture: none;
+  --paper-texture: none; /* kept for fallback; always overridden to none at runtime */
 
   /* Typography */
   --brew-tracking-tight: -0.025em;
@@ -220,11 +219,9 @@ input[type="number"],
     0 24px 24px -12px rgba(0, 0, 0, 0.15), 0 48px 48px -24px rgba(0, 0, 0, 0.12);
   --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.14);
 
-  /* Noise texture (more visible in dark — matte brushed feel) */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-
-  /* Paper fiber texture — subtler in dark mode */
-  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E");
+  /* Dark mode — also injected at runtime, no feTurbulence */
+  --noise-texture: none;
+  --paper-texture: none;
 
   /* Brew theme surfaces — warm charcoal */
   --brew-bg: var(--bg);
@@ -262,14 +259,12 @@ input[type="number"],
           color-mix(in oklch, var(--brew-accent-200) 20%, transparent),
           transparent 55%
         ),
-      /* Noise grain — warm paper-like texture */ var(--noise-texture);
+      transparent;
     background-size:
       100% 100%,
       auto,
-      auto,
-      200px 200px;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-    background-attachment: fixed;
+      auto;
+    background-repeat: no-repeat, no-repeat, no-repeat;
     transition: background-color 0.3s ease;
   }
 
@@ -287,14 +282,12 @@ input[type="number"],
         900px 300px at 85% -10%,
         color-mix(in oklch, var(--brew-accent-600) 8%, transparent),
         transparent 50%
-      ),
-      /* Noise grain — matte brushed surface */ var(--noise-texture);
+      );
     background-size:
       100% 100%,
       auto,
-      auto,
-      200px 200px;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+      auto;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
 }
 
@@ -2209,7 +2202,6 @@ input[type="number"],
   pointer-events: none;
   z-index: 0;
   background:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E"),
     linear-gradient(
       to bottom,
       oklch(100% 0 0 / 0.2) 0%,
@@ -2218,6 +2210,8 @@ input[type="number"],
       oklch(0% 0 0 / 0.08) 80%,
       oklch(0% 0 0 / 0.18) 100%
     );
+  background-size: auto;
+  background-repeat: no-repeat;
 }
 
 .section-sidebar-item:not(.is-active) {
@@ -3380,8 +3374,6 @@ input[type="number"],
      */
     border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
-        padding-box,
       radial-gradient(
           ellipse 140% 100% at 5% -10%,
           color-mix(in oklch, var(--brew-accent-200) 65%, transparent),
@@ -3409,7 +3401,6 @@ input[type="number"],
         )
         border-box;
     background-size:
-      180px 180px,
       auto,
       auto,
       auto,
@@ -3446,8 +3437,6 @@ input[type="number"],
 
     border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")
-        padding-box,
       linear-gradient(var(--section-grad-angle), var(--section-grad-from), var(--section-grad-to))
         padding-box,
       linear-gradient(
@@ -3456,10 +3445,6 @@ input[type="number"],
           color-mix(in oklch, var(--brew-accent-800) 20%, transparent)
         )
         border-box;
-    background-size:
-      180px 180px,
-      auto,
-      auto;
     box-shadow:
       0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
       0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-900) 12%, transparent),
@@ -3562,10 +3547,9 @@ input[type="number"],
   .dark .brew-gauge {
     background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
     border: 1px solid transparent;
-    background-clip: padding-box, padding-box, border-box;
-    background-origin: padding-box, padding-box, border-box;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
     background-image:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
       linear-gradient(
         to bottom,
         color-mix(in oklch, var(--brew-accent-800) 20%, transparent),
@@ -3769,8 +3753,6 @@ input[type="number"],
     position: relative;
     border: 1.5px solid transparent;
     background:
-      var(--noise-texture) padding-box,
-      var(--paper-texture) padding-box,
       linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent 50%, rgba(0, 0, 0, 0.02))
         padding-box,
       linear-gradient(var(--brew-card), var(--brew-card)) padding-box,
@@ -3780,12 +3762,6 @@ input[type="number"],
           color-mix(in oklch, var(--_srm) 20%, transparent)
         )
         border-box;
-    background-size:
-      200px 200px,
-      300px 300px,
-      auto,
-      auto,
-      auto;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.4),
       0 5px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
@@ -3822,8 +3798,6 @@ input[type="number"],
   /* Dark mode depth adjustments for recipe card */
   .dark .brew-recipe-card {
     background:
-      var(--noise-texture) padding-box,
-      var(--paper-texture) padding-box,
       linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent 50%, rgba(0, 0, 0, 0.06))
         padding-box,
       linear-gradient(var(--brew-card), var(--brew-card)) padding-box,
@@ -3833,12 +3807,6 @@ input[type="number"],
           color-mix(in oklch, var(--_srm) 12%, transparent)
         )
         border-box;
-    background-size:
-      200px 200px,
-      300px 300px,
-      auto,
-      auto,
-      auto;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
       0 5px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
@@ -3906,7 +3874,6 @@ input[type="number"],
   .brew-modal {
     @apply overflow-hidden rounded-2xl backdrop-blur-xl;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E"),
       radial-gradient(
         ellipse 140% 100% at 5% -10%,
         color-mix(in oklch, var(--brew-accent-100) 50%, transparent),
@@ -3924,12 +3891,6 @@ input[type="number"],
         transparent 100%
       ),
       color-mix(in oklch, var(--brew-card) 88%, transparent);
-    background-size:
-      180px 180px,
-      auto,
-      auto,
-      auto,
-      auto;
     border: 1px solid color-mix(in oklch, var(--brew-accent-200) 30%, rgb(var(--brew-border) / 0.6));
     border-top: 3px solid var(--brew-accent-500);
     box-shadow:
@@ -3938,7 +3899,6 @@ input[type="number"],
   }
   .dark .brew-modal {
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
       radial-gradient(
         ellipse 140% 100% at 5% -10%,
         color-mix(in oklch, var(--brew-accent-900) 50%, transparent),
@@ -3956,12 +3916,6 @@ input[type="number"],
         transparent 100%
       ),
       color-mix(in oklch, var(--brew-card) 75%, transparent);
-    background-size:
-      180px 180px,
-      auto,
-      auto,
-      auto,
-      auto;
     border-color: color-mix(in oklch, var(--brew-accent-800) 20%, rgb(255 255 255 / 0.08));
     box-shadow:
       var(--shadow-elevated),
@@ -7290,4 +7244,28 @@ input[type="number"],
 
 .learn-prose tr:hover td {
   background: color-mix(in oklch, var(--fg-strong) 3%, transparent);
+}
+
+/* =========================================
+   GRAIN OVERLAY UTILITY
+   Canvas-generated noise applied as a pseudo-element.
+   --grain-overlay is injected at runtime by useGrainTexture.
+   --grain-opacity controls per-element intensity (default: 1).
+   Usage: add class="grain" to any element with a gradient bg.
+   ========================================= */
+.grain {
+  position: relative;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain-overlay);
+  background-size: 256px 256px;
+  background-repeat: repeat;
+  opacity: var(--grain-opacity, 1);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
 }

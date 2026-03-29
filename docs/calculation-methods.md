@@ -38,72 +38,158 @@ Each section includes a **Validation** verdict:
 **Formula:**
 
 ```
-OG = 1 + Σ(PPG × weight_lbs × efficiency) / (batch_volume_gal × 1000)
+OG = 1 + Σ(PPG × weight_lbs × efficiency_i) / (batch_volume_gal × 1000)
 ```
 
 Each fermentable has a PPG value — the number of gravity points one pound of that ingredient contributes to one gallon of water. For example, 2-Row malt has a PPG of ~37, meaning 1 lb in 1 gallon yields a gravity of 1.037.
 
-Mash efficiency is applied uniformly to all fermentables, accounting for how effectively sugars are extracted during the mash and transferred to the kettle.
+**Efficiency is per-ingredient type:** mash efficiency is applied to grains and mashable adjuncts. Sugars (corn sugar, honey, candi sugar, etc.) and extracts (DME, LME) dissolve completely and use 100% efficiency since they bypass the mash. This matches BeerSmith, Brewfather, and Brewer's Friend, all of which only apply mash efficiency to mashed ingredients.
 
-**Comparison:** This is the universal approach. BeerSmith, Brewfather, and Brewer's Friend all use this identical formula. No calculator uses a different gravity model.
+**Comparison:** This is the universal approach. BeerSmith, Brewfather, and Brewer's Friend all use this identical formula with per-type efficiency.
 
 ---
 
 ## 2. Final Gravity (FG) & Attenuation
 
-**Method:** Two-layer attenuation model (custom)
-**Source:** Layer 1 (per-ingredient fermentability) is standard practice in all major calculators. Layer 2 (effective attenuation adjustments) is a custom model with factors drawn from multiple sources of varying rigor.
-**Validation: Needs Review** — several adjustment factors are scientifically questionable
+**Method:** Two-layer attenuation model
+**Source:** Layer 1 (per-ingredient fermentability) is standard practice in all major calculators. Layer 2 (effective attenuation adjustments) uses mash temperature and duration factors based on Braukaiser research.
+**Validation: Correct**
 
 ### Layer 1 — Per-Ingredient Fermentability
 
-**Validation: Correct**
-
 Each fermentable has a fermentability value (0–1) representing how much of its sugar is fermentable by yeast:
 
-- Standard base malt: ~0.95 (95% fermentable)
+- Standard base malt: 1.00 (all extract goes to the "fermentable" bucket; the yeast's stated attenuation handles the actual split)
+- Crystal/Caramel malt: 0.90 (C10) → 0.75 (C120), color-based linear scale
+- Roasted malt: 0.60
 - Lactose: 0 (completely unfermentable)
-- Honey: ~1.0 (fully fermentable)
+- Honey: 1.0 (fully fermentable)
 
 The gravity contribution from each ingredient is split into fermentable and non-fermentable portions. Only the fermentable portion is reduced by yeast attenuation.
+
+**Crystal malt fermentability** uses a color-based scale derived from Briess maltster data: crystal malt extract is 10% (lighter) to 25% (darker) less fermentable than base malt. The linear formula is `f = 0.90 − (colorL − 10) × 0.15 / 110`, clamped to [0.50, 0.95]. This was validated against the Beertech attenuation experiment (2011) which measured apparent attenuation reductions of −1% (C10), −3% (C40), and −4% (C120) at 15% usage.
 
 This approach matches BeerSmith and Brewfather, which both track per-ingredient fermentability.
 
 ### Layer 2 — Effective Attenuation
 
-Starting from the yeast's stated base attenuation (typically 0.75 for a standard ale yeast), adjustments are applied for process conditions:
+Starting from the yeast's stated base attenuation (typically 0.75 for a standard ale yeast), the user can select one of three models for computing mash-temperature effects:
+
+#### Model A: Linear (default)
+
+The simplest model. Adjustments are applied linearly for mash conditions:
 
 | Factor | Adjustment | Source | Validation |
 |--------|-----------|--------|------------|
-| **Mash temperature** | ~1% attenuation per °C from 66°C reference | Braukaiser mash temp studies | **Acceptable** — Braukaiser measured ~1.1%/°C; BeerSmith uses a similar model |
-| **Decoction mash** | +0.5% per minute of decoction step | No published source | **Needs Review** — see issues below |
+| **Mash temperature** | ~1% attenuation per °C from 67°C reference | Braukaiser mash temp studies | **Acceptable** — Braukaiser data is commonly interpreted as ~1%/°C; empirical experiments show 1–3.6%/°C depending on temperature range (see Empirical Validation) |
 | **Mash duration** | ±0.5% per 15 min from 60 min reference (capped ±3%) | General brewing science | **Acceptable** — direction is correct, enzyme activity is time-dependent |
-| **Fermentation temperature** | +0.4% per °C above 20°C | No published source | **Needs Review** — see issues below |
-| **Fermentation duration** | +0.2% per day above 10-day reference | No published source | **Incorrect** — see issues below |
 
-**Final formula:**
+Effective attenuation is clamped to [60%, 95%]. The 60% floor means the model **plateaus** at extreme temperatures — mashing at 80°C still predicts ~50% apparent attenuation, which is unrealistically high. This is the main limitation of the linear model.
+
+#### Model B: Enzyme Kinetics
+
+Models α- and β-amylase as competing enzymes with temperature-dependent catalytic activity (Gaussian curves), Arrhenius thermal inactivation, and a 13% thermostable β-amylase residual fraction.
+
+**Enzyme activity** peaks at 63°C for β-amylase and 70°C for α-amylase (Gaussian). **Denaturation** follows Arrhenius kinetics calibrated from mashing experiments: β-amylase half-life ranges from ~38 hours at 60°C to ~14 minutes at 72°C; α-amylase is essentially immortal at mashing temperatures (~82 hour half-life at 67°C).
+
+The ratio of β-amylase "work" (integral of activity × survival over time) to total enzyme work determines the wort's fermentable fraction. This raw ratio changes ~7–10%/°C — far steeper than empirical data shows. To bridge this gap, the ratio is mapped to effective attenuation through **log-space damping** — a variable-sensitivity compression with a calibrated gain parameter (`BASE_S = 0.10`) that produces ~1.3%/°C at the 67°C reference while allowing natural acceleration at extreme temperatures. The gain represents all the buffering factors the enzyme model doesn't capture explicitly (yeast behavior, starch structure, dextrin partial fermentability). See *Empirical Validation* below for calibration details.
+
+**Key advantage over Linear:** no 60% floor — the model naturally produces near-zero fermentability at 80°C+ where β-amylase is completely denatured. Also handles step mash schedules with accumulated denaturation across steps.
+
+#### Model C: ODE Kinetics (Brandam)
+
+The most physically detailed model. Instead of computing an enzyme *ratio*, it directly simulates the mash by tracking three sugar species through coupled differential equations:
+
+```
+Starch →(α-amylase)→ Dextrins (non-fermentable)
+Starch →(β-amylase)→ Fermentable sugars (maltose)
+Dextrins →(β-amylase)→ Fermentable sugars
+```
+
+Uses the same Arrhenius denaturation and 13% residual β-amylase as Model B, plus Brandam's catalytic rate constants (ka=0.07 min⁻¹ for α, kb=0.02 min⁻¹ for β at optimal temperatures). Solved via semi-analytical Euler integration with 0.5-minute time steps.
+
+**Key advantages over Enzyme Kinetics:** tracks substrate depletion (enzymes compete for finite starch), models the α→β pipeline (α produces dextrins that β subsequently converts), and captures incomplete conversion at very low mash temperatures.
+
+Both enzyme models (B and C) use the same log-space damping transfer function (`BASE_S = 0.10`, `ACCEL = 0.008`) and output similar results in the 64–72°C brewing range (~1.3%/°C) but diverge at extremes: the ODE model drops to zero faster at high temps and predicts lower fermentability at sub-60°C mashes (incomplete starch conversion).
+
+#### Comparison (baseAtt = 0.75, 60 min single infusion)
+
+| Temp | Linear | Enzyme | ODE |
+|------|--------|--------|-----|
+| 60°C | 82.0% | 79.9% | 76.4% |
+| 65°C | 77.0% | 77.2% | 76.6% |
+| 67°C | 75.0% | 75.0% | 75.0% |
+| 70°C | 72.0% | 69.0% | 69.0% |
+| 72°C | 70.0% | 61.1% | 60.1% |
+| 75°C | 67.0% | 42.2% | 35.9% |
+| 80°C | 62.0% | 13.1% | 2.8% |
+
+**Final formula (all models):**
 
 ```
 FG = 1 + (nonFermentablePts + fermentablePts × (1 − effectiveAttenuation)) / 1000
 ```
 
-Effective attenuation is clamped to [60%, 95%].
+### Empirical Validation of Mash Temperature Sensitivity
 
-### Issues Identified
+The enzyme and ODE models use a **log-space damping** transfer function to map the scientifically-computed β/α enzyme work ratio to actual attenuation. The raw enzyme signal changes ~7–10%/°C, but real-world attenuation only changes ~1–3%/°C. The `BASE_S` parameter controls this compression (higher = steeper curve).
 
-**Fermentation duration (+0.2%/day):** This is physically wrong. Fermentation has a terminal gravity — the point at which all fermentable sugars have been consumed. Once the yeast has eaten everything it can, no amount of additional time will lower the gravity further. A 30-day fermentation does not produce a lower FG than a 14-day fermentation if the yeast reached terminal gravity on day 7. The linear, unbounded adjustment implies that fermenting for 60 days would add +10% attenuation over 10 days, which is not how fermentation works. This factor should either be removed entirely or replaced with a diminishing-returns curve that asymptotically approaches zero additional attenuation (e.g., logarithmic). Neither BeerSmith nor Brewfather apply a fermentation duration adjustment — they use the yeast's stated attenuation directly.
+**Calibration analysis** compared model slopes against 7 controlled split-batch experiments:
 
-**Decoction bonus (+0.5%/min):** This is far too large. A 15-minute decoction step would add +7.5% attenuation, which is enormous. Brulosophy exBEERiments have found no statistically significant difference in attenuation between decoction and infusion mashes. The traditional claim is that decoction produces more fermentable wort by gelatinizing starches and denaturing proteins, but modern fully-modified malts don't benefit from this. If kept at all, the bonus should be much smaller (perhaps +1-2% total, not per minute) or applied only when using undermodified malts. Neither BeerSmith nor Brewfather model a decoction attenuation bonus.
+| Experiment | Temp Range | Measured Slope |
+|-----------|-----------|----------------|
+| Brulosophy Czech Lager | 65→67°C | 1.0%/°C |
+| Brulosophy Belgian GSA | 64→70°C | 1.2%/°C |
+| Brulosophy Blonde Ale | 64→72°C | 2.3%/°C |
+| Brulosophy English Porter | 64→73°C | 2.5%/°C |
+| HBT APA 2025 | 64.4→70°C | 2.8%/°C |
+| Brulosophy Munich Helles | 64→73°C | 3.4%/°C |
+| Brulosophy German Pils | 64→71°C | 3.6%/°C |
 
-**Fermentation temperature (+0.4%/°C):** The direction is correct — higher fermentation temperatures do increase yeast metabolism and can produce slightly lower terminal gravities. However, +0.4% per degree is uncapped beyond the [60%, 95%] clamp. At 30°C (an aggressive Belgian ale temp), this adds +4% attenuation over the 20°C baseline, which is plausible. But at very high temps the yeast would produce excessive off-flavors and potentially die, not attenuate further. The effect should probably cap around 25°C for most strains. Neither BeerSmith nor Brewfather model fermentation temperature effects on attenuation.
+**Median empirical slope: ~2.5%/°C.** The wide range (1.0–3.6%/°C) reflects differences in yeast strains, grain bills, and temperature ranges tested.
 
-**Mash temperature (1%/°C):** The direction and magnitude are reasonable. Braukaiser's research shows that mashing at 64°C vs 70°C can produce a ~6% difference in apparent attenuation, which aligns with ~1%/°C. The reference point of 66°C is good (standard saccharification rest). This is the strongest factor in the model. BeerSmith applies a similar mash-temperature adjustment using a slightly different curve.
+`BASE_S = 0.10` produces ~1.3%/°C at 67°C — conservative relative to the empirical median but within the range of the lower-slope experiments. Higher values were tested (0.16 → 2.2%/°C, 0.24 → 3.3%/°C) but overshoot the Czech and Belgian experiments. The initial "4%/°C" figure commonly attributed to Braukaiser was a misinterpretation; Braukaiser's data actually shows ~1%/°C (4% over a 4°C range).
+
+The verification script (`scripts/verify-attenuation-models.ts`) generates interactive charts comparing all models against the empirical data. Static snapshots are included below; run the script for interactive versions.
+
+#### Attenuation vs Mash Temperature
+
+Model curves (solid = current BASE_S=0.10, dashed = proposed alternatives) plotted against empirical data points from 7 split-batch experiments. Each colored dot is a measured attenuation at a specific mash temperature.
+
+![Attenuation vs Mash Temperature](images/attenuation-vs-mash-temp.png)
+
+#### Slope Comparison (%/°C)
+
+The local slope of each model curve — how many percentage points of attenuation change per °C. The empirical median is ~2.5%/°C in the 64–72°C range. Current calibration (BASE_S=0.10) produces ~1.3%/°C at 67°C.
+
+![Slope Comparison](images/attenuation-slope-comparison.png)
+
+#### Final Gravity vs Mash Temperature
+
+Same data as Chart 1 but expressed as Final Gravity (OG ~1.050). This view makes it easier to see how the models track real-world FG measurements.
+
+![FG vs Mash Temperature](images/enzyme-work-ratio.png)
+
+#### Step Mash Scenarios
+
+How the three models differ for various step mash profiles (all at baseAtt = 0.75). The enzyme and ODE models capture time-at-temperature effects that the linear model cannot.
+
+![Step Mash Scenarios](images/step-mash-scenarios.png)
+
+### Previously Removed Factors
+
+The following attenuation adjustments were removed after audit because they lacked scientific rigor:
+
+- **Fermentation duration** — removed because fermentation has a terminal gravity. Once fermentable sugars are consumed, additional time does not lower gravity further. Neither BeerSmith nor Brewfather model this.
+- **Fermentation temperature** — removed because the effect is small, poorly quantified, and not modeled by other calculators.
+- **Decoction bonus** — removed because Brulosophy exBEERiments found no measurable attenuation difference between decoction and infusion mashes with modern fully-modified malts. Neither BeerSmith nor Brewfather model this.
 
 **Sources:**
 - Kai Troester, "The Effect of Mash Parameters on Fermentability" — braukaiser.com
-- White & Zainasheff, *Yeast* (Brewers Publications, 2010) — fermentation kinetics
 - Brulosophy, "Decoction vs. Infusion exBEERiment" — brulosophy.com
-- BeerSmith, "Understanding Attenuation" — beersmith.com/blog
+- Brandam et al., "A kinetic model for the mashing process" (2003) — Arrhenius denaturation parameters (α: A=6.9e30, Ea=224.2 kJ/mol; β: A=7.6e60, Ea=410.7 kJ/mol) and catalytic rate constants
+- De Schepper et al., J. Am. Soc. Brew. Chem. (2022) — β-amylase fractional conversion inactivation model (13% thermostable residual)
+- Evans et al., "Impact of Thermostability of α-Amylase, β-Amylase, and Limit Dextrinase on Potential Wort Fermentability" (2003) — validates α-amylase retains ~100% activity after 1 hr at 65°C
 
 ---
 
@@ -134,7 +220,7 @@ Most homebrew calculators use the simple 131.25 formula. BeerSmith offers both t
 
 **Method:** Tinseth isomerization model with extensions for whirlpool, dry hop, mash, and first wort additions
 **Source:** Glenn Tinseth, hop utilization research (1995–1999), originally published at realbeer.com/hops/research.html
-**Validation: Correct** (core formula) / **Needs Review** (some extensions)
+**Validation: Correct** (core formula) / **Acceptable** (FWH extension, see Known Issues)
 
 ### Core Tinseth Formula (Boil Additions)
 
@@ -158,23 +244,17 @@ Our code uses 75 instead of the precise 74.89 — this is a common rounding. The
 
 ### First Wort Hops (FWH)
 
-**Validation: Needs Review** — inconsistent between our two implementations
+**Validation: Acceptable** — see Known Issues for potential improvement
 
-The main recipe service (`RecipeCalculationService.ts`) uses:
 ```
 utilization = tinseth(boilTime + 20 minutes)
-```
-
-The standalone calculator (`ibu.ts`) uses:
-```
-utilization = tinseth(boilTime) × 1.10
 ```
 
 The foundational study is Preis, Mitter & Steiner, "The Re-Discovery of First Wort Hopping" (*Brauwelt International*, 1995). They found FWH beers had ~10% more IBUs than conventionally hopped beers, with a smoother perceived bitterness.
 
 **BeerSmith** uses a flat ×1.10 multiplier. **Brewfather** treats FWH as equal to the full boil time with no additional boost.
 
-The `+20 minutes` approach produces inconsistent results: for a 60-minute boil it adds ~10-12% IBU, but for a 90-minute boil only ~5%, and for a 30-minute boil ~18%. The ×1.10 multiplier is more faithful to the empirical research.
+The `+20 minutes` approach produces inconsistent results across boil lengths (see Known Issues section 15). A ×1.10 multiplier would be more faithful to the empirical research.
 
 **Source:** Preis, Mitter & Steiner, *Brauwelt International* (1995); BeerSmith documentation
 
@@ -218,8 +298,6 @@ utilization = tinseth(boilTime) × 0.20
 
 At typical mash temperatures (65-70°C), the Arrhenius isomerization rate is ~8-10% of the boiling rate. Additionally, most alpha acids are removed with the grain during lautering. The 20% figure matches **BeerSmith's** default (applies an 80% penalty). **Brewfather** does not have a specific mash hop model. Brew Your Own magazine and the homebrew community consensus suggest ~10% is more accurate.
 
-Our standalone calculator (`ibu.ts`) uses 15%, which differs from the main service's 20%.
-
 **Source:** BeerSmith documentation; Alchemy Overlord Arrhenius model; BYO "Mash Hopping" article
 
 ### Dry Hops — Humulinone Dissolution Model
@@ -253,8 +331,6 @@ Validation against published research:
 Note: The 0.54 and 0.62 are **spectrophotometric** IBU response factors (how much these compounds register on the standard IBU assay), not sensory bitterness factors. Sensory bitterness of humulinones is ~66% of iso-alpha-acids (Algazzali & Shellhammer 2016), but the IBU assay reads them at ~54%.
 
 **Neither BeerSmith nor Brewfather model dry hop IBU contribution** — both show 0 IBU for dry hop additions. Our humulinone model is more scientifically current.
-
-The standalone calculator (`ibu.ts`) uses a simpler heuristic: 5% of Tinseth(60min) utilization. This has no direct scientific basis and should be replaced with the humulinone model for consistency.
 
 **Sources:**
 - Maye, Smith & Leker, "Humulinone Formation in Hops and Hop Pellets and Its Implications for Dry Hopped Beers" — MBAA Technical Quarterly 53(1), 2016
@@ -551,16 +627,13 @@ Deadspace (water below the false bottom) is recovered during draining, so it aff
 ### Strike Temperature
 
 ```
-strikeTemp = targetTemp + (grainMass × 0.38 × (targetTemp − grainTemp)) / (waterMass × 1.0)
+strikeTemp = targetTemp + (grainMass × 0.41 × (targetTemp − grainTemp)) / waterMass
 ```
 
-- Grain specific heat capacity: **0.38 cal/g/°C** (dimensionless ratio to water)
-- Water specific heat capacity: **1.0 cal/g/°C** (reference)
+- Grain-to-water heat capacity ratio: **0.41** (c_grain / c_water ≈ 1.71 / 4.18)
 - Default grain temperature: 20°C
 
-This is a straightforward heat balance equation. The grain heat capacity of 0.38 is a well-established value from brewing science literature.
-
-**Note:** The `MashScheduleService` uses 0.41 for grain heat capacity in step-mash infusion calculations (see section 11). See Known Issues for discussion.
+This is a straightforward heat balance equation. The 0.41 ratio comes from Palmer's *How to Brew* and is used consistently across both `VolumeCalculationService` and `MashScheduleService`. Brewfather and Brewer's Friend also use 0.41. BeerSmith uses 0.38.
 
 **Sources:**
 - Palmer, *How to Brew*, 4th ed. (Brewers Publications, 2017), Chapter 17
@@ -573,11 +646,11 @@ This is a straightforward heat balance equation. The grain heat capacity of 0.38
 
 **Method:** Heat balance / conservation of energy
 **Source:** Standard thermodynamics applied to brewing. Palmer's *How to Brew*; Narziss's *Abriss der Bierbrauerei*.
-**Validation: Acceptable** — minor inconsistency in grain heat capacity
+**Validation: Correct**
 
 ### Strike Temperature
 
-Same as section 10, using grain heat capacity of 0.38 (or 0.41, see note below).
+Same as section 10, using grain-to-water heat capacity ratio of 0.41.
 
 ### Infusion Temperature (Step Mash)
 
@@ -591,13 +664,9 @@ Where:
 - `mashHeatCapacity = grain_kg × 0.41 + currentMashVolume_L`
 - `tempRise = targetTemp − currentTemp`
 
-### Grain Heat Capacity Note
+### Grain Heat Capacity
 
-The code uses **0.38** for strike temperature calculation and **0.41** for step-mash infusion calculations. Both values appear in brewing literature:
-- 0.38 cal/g/°C — dry grain (Palmer, *How to Brew*)
-- 0.41 cal/g/°C — hydrated grain during mashing (accounts for absorbed water increasing effective heat capacity)
-
-The distinction is physically meaningful: dry grain absorbs heat differently than grain that has been soaking in hot water. BeerSmith uses 0.41 for all mash calculations. Using 0.38 for strike water and 0.41 for subsequent infusions is arguably more correct, but the difference is small (~3°C variation in extreme cases).
+All mash calculations use a grain-to-water heat capacity ratio of **0.41**, derived from Palmer's *How to Brew*: c_grain ≈ 1.71 J/g/°C, c_water ≈ 4.18 J/g/°C, ratio ≈ 0.41. This is consistent with Brewfather and Brewer's Friend. BeerSmith uses 0.38.
 
 **Sources:**
 - Palmer, *How to Brew*, 4th ed. (2017), Chapter 17
@@ -696,38 +765,17 @@ waterToAdd = totalVolume − currentVolume
 postBoilVolume = (preBoilVolume × preBoilPoints) / targetPoints
 ```
 
-### Standalone IBU Calculator
-**Validation: Needs Review** — see discrepancies noted in section 15
-
-Uses Tinseth with different FWH, dry hop, and mash hop factors than the main recipe service.
-
 ---
 
-## 15. Known Issues & Discrepancies
+## 15. Known Issues & Potential Improvements
 
-### Issue 1: Duplicate IBU Implementations That Disagree
+### First Wort Hop IBU Calculation
 
-There are two IBU implementations with different constants:
+The main recipe service uses `tinseth(boilTime + 20 minutes)` for FWH, which produces inconsistent scaling: +10-12% for a 60-min boil, +5% for a 90-min boil, +18% for a 30-min boil. The empirical research (Preis, Mitter & Steiner, 1995) found a flat ~10% increase. A `× 1.10` multiplier would be more faithful to the literature and is what BeerSmith uses.
 
-| Hop Type | Main Service (`RecipeCalculationService.ts`) | Standalone (`ibu.ts`) |
-|----------|----------------------------------------------|----------------------|
-| First Wort | `tinseth(time + 20min)` | `tinseth(time) × 1.10` |
-| Dry Hop | Humulinone dissolution model | `tinseth(60min) × 0.05` |
-| Mash | `tinseth(time) × 0.20` | `tinseth(60min) × 0.15` |
+### Mash Hop Utilization
 
-These should be unified. The main service's humulinone model for dry hops is more scientifically grounded. The standalone's ×1.10 for FWH is more consistent with published research than the main service's +20min approach.
-
-### Issue 2: Fermentation Duration Adjustment Is Physically Wrong
-
-The `+0.2% attenuation per day above 10 days` factor has no terminal point. Fermentation has a terminal gravity determined by the wort's sugar composition and yeast capabilities. Once fermentable sugars are consumed, additional time does not lower the gravity. This factor should be removed or replaced with a diminishing-returns model.
-
-### Issue 3: Decoction Attenuation Bonus Is Too Large
-
-The `+0.5% per minute` bonus means a 15-minute decoction adds +7.5% attenuation. Controlled experiments (Brulosophy) have found no significant attenuation difference between decoction and infusion mashes with modern fully-modified malts.
-
-### Issue 4: Grain Heat Capacity Inconsistency
-
-`VolumeCalculationService` uses 0.38 for strike temperature. `MashScheduleService` uses 0.41 for infusion calculations. Both values appear in literature, but the inconsistency could produce confusing results if a user cross-checks the numbers.
+The current 20% utilization factor for mash hops matches BeerSmith's default, but community consensus and the Arrhenius isomerization model suggest ~10-15% is more accurate. Worth monitoring but not critical.
 
 ---
 
@@ -735,11 +783,13 @@ The `+0.5% per minute` bonus means a 15-minute decoction adds +7.5% attenuation.
 
 | Calculation | Named Method | Primary Source | Validation |
 |-------------|-------------|----------------|------------|
-| Gravity (OG) | **PPG model** | Standard (Palmer, BeerSmith) | Correct |
-| Final Gravity | **Two-layer attenuation** | Custom (Braukaiser + empirical) | Needs Review |
+| Gravity (OG) | **PPG model** (per-type efficiency) | Standard (Palmer, BeerSmith) | Correct |
+| Final Gravity (linear) | **Two-layer attenuation** (color-based crystal ferm.) | Braukaiser + Briess maltster data | Correct |
+| Final Gravity (enzyme) | **Arrhenius enzyme kinetics + log-space damping** | Brandam (2003), De Schepper (2022), Evans (2003) | Correct |
+| Final Gravity (ODE) | **Brandam ODE sugar species tracking** | Brandam (2003), De Schepper (2022) | Correct |
 | ABV | **Standard approximation** | Hall, *Zymurgy* (1995) | Correct |
 | IBU (boil) | **Tinseth** | Glenn Tinseth (1995) | Correct |
-| IBU (FWH) | **Modified Tinseth** | Preis, Mitter & Steiner (1995) | Needs Review |
+| IBU (FWH) | **Modified Tinseth** | Preis, Mitter & Steiner (1995) | Acceptable |
 | IBU (whirlpool) | **Tinseth + temp scaling** | Approximation of Arrhenius/mIBU model | Acceptable |
 | IBU (dry hop) | **Humulinone dissolution** | Maye et al. (2016), Algazzali & Shellhammer (2016) | Correct |
 | IBU (mash) | **Tinseth × 0.20** | BeerSmith default | Acceptable |
@@ -765,6 +815,11 @@ The `+0.5% per minute` bonus means a 15-minute decoction adds +7.5% attenuation.
 - Algazzali, V. & Shellhammer, T. "Bitterness Intensity of Oxidized Hop Acids: Humulinones and Hulupones." *Journal of the American Society of Brewing Chemists* 74(1), 2016.
 - ASBC. *Methods of Analysis*, 14th ed. American Society of Brewing Chemists.
 - Balling, C.J.N. *Die Bierbrauerei*, 1865.
+- Beertech, "Crystal Malt Experiment — Attenuation Test." beertech.blogspot.com, 2011.
+- Brandam, C. et al. "A kinetic model for the mashing process." In *European Brewing Convention Congress*, 2003.
+- Briess Malt & Ingredients, "Caramel Malt User's Manual." brewingwithbriess.com.
+- De Schepper, C.F. et al. "Inactivation kinetics of enzymes in barley malt." *J. Am. Soc. Brew. Chem.*, 2021/2022.
+- Evans, D.E., Li, C. & Eglinton, J.K. "The Impact of the Thermostability of α-Amylase, β-Amylase, and Limit Dextrinase on Potential Wort Fermentability." *JASBC* 61(4), 2003.
 - deLange, A.J. "Understanding and Adjusting Mash pH." *MBAA Technical Quarterly*, 2013 and 2015.
 - Fermentis. SafAle US-05 Product Data Sheet.
 - Fix, G. *Principles of Brewing Science*, 2nd ed. Brewers Publications, 1999.
@@ -778,6 +833,113 @@ The `+0.5% per minute` bonus means a 15-minute decoction adds +7.5% attenuation.
 - Tinseth, G. "Glenn's Hop Utilization Numbers." realbeer.com/hops/research.html, 1995.
 - Troester, K. Various articles on mash chemistry, yeast starters, and fermentability. braukaiser.com.
 - White, C. & Zainasheff, J. *Yeast: The Practical Guide to Beer Fermentation*. Brewers Publications, 2010.
+
+---
+
+## Blog Post Roadmap
+
+Educational posts that explain the brewing science behind each section of the recipe builder. The goal is twofold: build trust by showing the research behind the numbers, and capture SEO traffic from brewers searching for "how does X work" — then funnel them to the recipe builder where all of this comes together in one place.
+
+**Key principle:** These are *not* standalone calculator pages. The product's differentiator is that everything lives in one unified recipe builder — no jumping between a dozen single-purpose tools. Each post explains the science, cites the research, and points the reader to the recipe builder as the place where it all works together.
+
+### 1. "Understanding IBU: How Bitterness Is Calculated Across Every Hop Addition"
+
+**SEO targets:** "how IBU is calculated", "tinseth formula explained", "whirlpool hop IBU", "do dry hops add bitterness"
+
+**What it covers:**
+- The Tinseth utilization formula — what it models (isomerization rate vs. wort gravity) and why it's been the standard since 1995
+- Whirlpool additions: isomerization doesn't stop when the flame goes off. Temperature determines extraction — at 80°C you still get ~25% of boiling utilization. The temperature scaling model and why it matters for hop-forward styles
+- First wort hops: the Preis, Mitter & Steiner (1995) study — ~10% more IBU but with smoother perceived bitterness. Why this is a case where "more IBU" doesn't mean "more harsh"
+- Dry hop bitterness: humulinones (oxidized alpha acids formed during pellet processing) dissolve into beer during dry hopping. Maye et al. (MBAA TQ, 2016) measured 0.54 IBU per mg/L. A heavy dry hop (8 g/L) adds 5-10 measurable IBU. Most calculators still show 0 because the research is from 2016-2018
+- Mash hops: why most alpha acids wash out with the grain, and the research behind the ~10-20% utilization estimate
+
+**Key sources:** Tinseth (1995), Maye et al. (2016), Algazzali & Shellhammer (2016), Preis/Mitter/Steiner (1995)
+
+### 2. "Gravity, Attenuation, and ABV: What Actually Determines Your Beer's Strength"
+
+**SEO targets:** "how OG is calculated", "what determines final gravity", "mash temperature fermentability", "how ABV is calculated homebrew"
+
+**What it covers:**
+- How OG is built from the grain bill: each ingredient contributes gravity points based on its extract potential (PPG) and the system's mash efficiency
+- What determines final gravity: every ingredient has a fermentability — lactose is 0%, base malt ~95%, honey ~100%. The wort's sugar composition is set during the mash. Yeast attenuation acts on the fermentable fraction
+- Why mash temperature is the biggest lever: lower temps → more beta-amylase activity → more fermentable sugars → lower FG. Braukaiser measured ~1% attenuation change per °C. This is how you control body and dryness
+- The ABV formula: the standard approximation (ABV ≈ (OG - FG) × 131.25) works to within 0.1% ABV for beers under 8%. Where it comes from (Balling's work from 1865, refined by Hall in 1995)
+- Why fermentation time/temperature don't appear: fermentation has a terminal point determined by wort composition + yeast capability. Once fermentable sugars are consumed, gravity doesn't drop further. The science doesn't support modeling duration
+
+**Key sources:** Palmer *How to Brew* (2017), Braukaiser mash temp studies, Hall *Zymurgy* (1995), Balling (1865)
+
+### 3. "Mash pH: The Proton Deficit Model and Why It Works"
+
+**SEO targets:** "mash pH prediction", "how to calculate mash pH", "water chemistry brewing", "residual alkalinity vs proton deficit"
+
+**What it covers:**
+- Why pH matters for brewers: enzyme activity windows (beta-amylase peaks at pH 5.2-5.4), tannin extraction above pH 5.8, and the flavor impact of a well-adjusted mash
+- Why simple residual alkalinity calculators fall short: RA tells you which direction to adjust but can't predict a starting pH from a grain bill
+- The proton deficit model: every grain contributes acid to the mash. Every water ion contributes alkalinity. At the correct pH, all proton contributions sum to zero. The model solves for that equilibrium point
+- Where the model comes from: AJ deLange published it in MBAA Technical Quarterly (2013, 2015). It's the same approach used by Bru'n Water
+- The grain data: each grain has a "distilled-water pH" (base malt ~5.7, roasted barley ~4.5, acidulated malt ~3.4) and a buffering capacity of ~40 mEq/kg/pH
+- Kolbach's factors: calcium and magnesium react with malt phosphates, consuming alkalinity. Ca/3.5 and Mg/7 — from Kolbach's mid-20th century research, confirmed by deLange
+- Practical accuracy: ±0.1 pH for typical grain bills. Good enough to calculate water adjustments before brew day; still worth measuring to calibrate your system
+
+**Key sources:** deLange (MBAA TQ 2013, 2015), Bru'n Water documentation, Kolbach, Braukaiser mash pH articles
+
+### 4. "Mash Temperature & Final Gravity: Enzyme Kinetics, Not Guesswork"
+
+**SEO targets:** "mash temperature final gravity", "enzyme kinetics brewing", "alpha beta amylase mash temperature", "how mash temp affects fermentability", "step mash enzyme activity"
+
+**What it covers:**
+- The two enzymes that control fermentability: β-amylase (peaks ~63°C, produces maltose — fermentable) vs α-amylase (peaks ~70°C, produces dextrins — non-fermentable). Every homebrew book mentions this, but nobody shows the actual math
+- Why most calculators get this wrong: the simple "1% per °C" linear model plateaus at extreme temperatures — mashing at 80°C still predicts 50% attenuation, which is physically impossible (both enzymes are dead). No homebrew calculator handles this correctly
+- The three models in BeerApp and why each exists:
+  - **Linear:** simple, matches Braukaiser data in the 64-70°C range, but fails at extremes
+  - **Enzyme Kinetics:** models enzyme activity (Gaussian) and thermal denaturation (Arrhenius, from Brandam et al. 2003). β-amylase half-life at 72°C is ~14 minutes — it dies fast. α-amylase is essentially immortal at mashing temps (82-hour half-life at 67°C, validated by Evans et al. 2003). 13% of β-amylase is a thermostable isoform that never denatures (De Schepper et al. 2022)
+  - **ODE Kinetics:** the full model — simulates sugar species (starch → dextrins → maltose) through coupled differential equations. Tracks substrate depletion and the α→β pipeline. No other homebrew calculator does this
+- Step mash implications: accumulated denaturation — if β-amylase loses 50% of activity during a 67°C rest, the 72°C mashout starts with only 50%. The ODE model also captures that a low-temp rest "banks" fermentable sugars before β is killed by a high-temp step
+- The log-space damping technique: raw enzyme ratios change ~10%/°C (way too steep). Log-space compression with variable sensitivity maps this to the empirical ~1%/°C in the brewing range while allowing natural acceleration at extreme temperatures
+- Comparison table showing all three models from 60-90°C — the divergence above 72°C is dramatic and physically meaningful
+
+**Key sources:** Brandam et al. (2003), De Schepper et al. (2021, 2022), Evans et al. (2003), Braukaiser mash temp studies, Brulosophy mash temp exBEERiments
+
+### 5. "Yeast Starters: Cell Counts, Growth Models, and Pitching Rate Science"
+
+**SEO targets:** "yeast starter calculator explained", "yeast pitching rate", "yeast cell count calculator", "white vs braukaiser yeast model"
+
+**What it covers:**
+- Why pitching rate matters: underpitching produces more esters and fusel alcohols (sometimes desirable in Belgian styles, usually not in lagers). Overpitching reduces yeast character. The target: ~0.75M cells/mL/°P for ales, ~1.5M for lagers
+- Viability: yeast cells die during storage. White Labs measured ~0.7%/day linear decay for liquid packs. A 3-month-old pack might be at ~40% viability — that's why starters exist
+- The White model: a polynomial growth curve fitted to White Labs data. Growth rate depends on inoculation rate (cells/L) — lower density = more nutrients per cell = more reproduction. Aeration adds +0.5 growth factor. This is what Brewer's Friend uses
+- The Braukaiser model: simpler — each gram of DME produces ~1.4 billion new cells, regardless of starting density. Based on Kai Troester's cell-counting experiments. Works well for typical 1-2L starters
+- Multi-step starters: when a single step can't reach the target, the calculator chains steps — the output of step N becomes the input of step N+1
+- Package cell counts: dry yeast (11g sachet = ~66B cells), liquid packs (100-200B depending on format)
+
+**Key sources:** White & Zainasheff *Yeast* (2010), Troester braukaiser.com, Fermentis spec sheets, White Labs documentation
+
+### 5. "The Hop Flavor Radar: Mapping Hop Character Beyond IBU"
+
+**SEO targets:** "hop flavor profile chart", "hop aroma calculator", "compare hop flavors brewing", "citrus vs tropical hops"
+
+**What it covers:**
+- The problem: IBU measures bitterness intensity but says nothing about hop *character*. 40 IBU of Cascade and 40 IBU of Hallertau taste completely different. Brewers need to understand the *shape* of their hop flavor, not just the magnitude
+- How it works: each hop variety has a 9-axis flavor profile (citrus, tropical fruit, stone fruit, berry, floral, grassy, herbal, spice, resin/pine). Each addition is weighted by dose (g/L) and an aroma retention factor
+- Why addition method matters: dry hops retain ~80% of volatile aroma compounds (no heat). A 60-minute boil retains ~5% (exponential decay as oils boil off). Whirlpool depends on temperature. This is why a bittering charge barely registers on the radar even at high doses
+- The perceptual ceiling: the model uses a sigmoidal intensity curve — doubling your dry hops doesn't double the displayed flavor. There's a practical limit to perceivable aroma intensity
+- What it's good for: comparing hop bills, understanding the impact of substitutions (swapping Simcoe for Galaxy shifts the profile from resin/citrus toward tropical), and checking whether your hop character matches the style you're brewing
+- What it isn't: a lab measurement. No tool can predict exactly what a beer will taste like. But this gives a useful comparative signal where other calculators show nothing
+
+**Key sources:** Hop oil volatility research (Peacock), Lafontaine & Shellhammer (Oregon State) on hop aroma extraction
+
+### Writing Priority
+
+| Priority | Post | SEO Value | Trust Value |
+|----------|------|-----------|-------------|
+| 1 | IBU pipeline | High — many searches, unique dry hop angle | High — explains why numbers differ |
+| 2 | Hop flavor radar | High — no competitor has this | High — explains unique feature |
+| 3 | Water & mash pH | High — popular search topic | High — advanced brewers care deeply |
+| 4 | Mash temp & FG (enzyme kinetics) | High — no competitor has peer-reviewed enzyme models | Very High — cites Brandam, De Schepper, Evans |
+| 5 | Gravity & ABV | Medium — well-understood topic | Medium — sets expectations |
+| 6 | Yeast starters | Medium — niche but engaged audience | Medium — explains model choices |
+
+Every post ends with a CTA: "See all of this working together in the recipe builder" — not a link to a standalone calculator, but to the unified tool where IBU, gravity, pH, flavor, and everything else update in real time as you build your recipe.
 
 ---
 

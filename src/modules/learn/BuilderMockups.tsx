@@ -1,5 +1,7 @@
 "use client";
 
+import GrainGradient from "@/components/GrainGradient";
+
 /**
  * JSX mockup components that mimic slices of the recipe builder.
  * Used in the getting-started page to show what each section looks like.
@@ -27,14 +29,19 @@ function MockupCard({
           "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
       }}
     >
-      <div
-        className="px-5 py-2.5"
-        style={{
-          background: `linear-gradient(135deg, oklch(82% 0.1 ${hue}), oklch(78% 0.08 ${hue + 5}))`,
-        }}
-      >
+      <div className="relative px-5 py-2.5 overflow-hidden">
+        <GrainGradient
+          stops={[
+            { pos: 0, color: `oklch(82% 0.1 ${hue})` },
+            { pos: 1, color: `oklch(78% 0.08 ${hue + 5})` },
+          ]}
+          direction={135}
+          displacement={0.5}
+          grainOpacity={0.65}
+          radius={8}
+        />
         <span
-          className="text-sm font-black tracking-tight"
+          className="relative z-10 text-sm font-black tracking-tight"
           style={{ color: `oklch(25% 0.05 ${hue})` }}
         >
           {title}

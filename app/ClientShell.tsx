@@ -5,6 +5,7 @@ import Footer from "../src/components/Footer";
 import Toaster from "../src/components/Toaster";
 import AuthProvider from "../src/modules/auth/components/AuthProvider";
 import { useSrmTheme } from "../src/hooks/useSrmTheme";
+import GrainOverlay, { GRAIN_DEFAULTS } from "../src/components/GrainOverlay";
 
 export default function ClientShell({
   children,
@@ -31,6 +32,7 @@ export default function ClientShell({
         </main>
         <Footer />
         <Toaster />
+        <GrainOverlay {...GRAIN_DEFAULTS} />
       </div>
     </AuthProvider>
   );

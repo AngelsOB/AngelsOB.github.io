@@ -51,7 +51,7 @@ function PhGaugePreview() {
       }}
     >
       <div
-        className="px-5 py-3 flex items-center justify-between"
+        className="px-5 py-3 flex items-center justify-between grain"
         style={{ background: "linear-gradient(135deg, oklch(82% 0.08 220), oklch(78% 0.06 225))" }}
       >
         <span className="text-sm font-black tracking-tight" style={{ color: "oklch(25% 0.04 220)" }}>
@@ -147,9 +147,9 @@ export default function MashPhPage() {
 
         <div className="space-y-4 mt-6">
           <div
-            className="rounded-xl p-5"
+            className="grain rounded-xl p-5"
             style={{
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 220)), var(--card))`,
+              background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 220)), var(--card))`,
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
@@ -166,9 +166,9 @@ export default function MashPhPage() {
           </div>
 
           <div
-            className="rounded-xl p-5"
+            className="grain rounded-xl p-5"
             style={{
-              background: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") repeat, linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 180)), var(--card))`,
+              background: `linear-gradient(135deg, color-mix(in oklch, var(--card) 95%, oklch(80% 0.06 180)), var(--card))`,
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >

@@ -1,6 +1,6 @@
 # PRD-002: Users, Cloud Storage, Sharing & Community
 
-> **Status:** Phase 2 In Progress — Admin SDK workaround applied
+> **Status:** Phase 3 Complete (3A, 3B, 3C, 3D done)
 > **Created:** 2026-03-03
 > **Depends on:** PRD-001 (Next.js + Vercel Migration)
 > **Phases:** 3 (Auth + Cloud, Sharing, Community)
@@ -35,8 +35,8 @@ This PRD builds on the Next.js + Vercel foundation established by PRD-001.
 - Recipe comments or activity feeds
 - Real-time collaboration on recipes
 - Mobile native app (PWA is fine)
-- Full-text search (client-side filtering is sufficient for V1)
-- Recipe ratings/reviews
+- Full-text search (client-side filtering is sufficient for V1; see Phase 3A for scalability path)
+- Recipe comments or detailed reviews (ratings implemented in Phase 3D)
 
 ---
 
@@ -748,89 +748,155 @@ Shared recipe links (`/r/[slug]`) render the full `BetaBuilderPage` in read-only
 
 ## Phase 3: Community Features
 
+> **Status:** Complete (3A, 3B, 3C, 3D done)
+
 ### What We're Building
 
-A browse page where users can discover public recipes, filter by BJCP style, and view brewer profiles.
+Improve the existing browse page and add user profile pages so the community layer feels complete.
 
-### New Routes
+### Current State (Post Phase 3)
 
-```
-app/
-├── recipes/
-│   └── browse/
-│       └── page.tsx              ← Browse public recipes
-├── u/
-│   └── [userId]/
-│       └── page.tsx              ← User profile (public recipes)
-```
+The browse page (`app/browse/page.tsx` → `BrowseRecipesPage.tsx`):
+- ✅ Card grid with recipe name, style, stats (OG, FG, IBU, SRM, ABV), author, date, fork count
+- ✅ Sort toggle (newest / most forked) — client-side sorting
+- ✅ Client-side search (name, style, brewer, hops, tags) across all recipes
+- ✅ BJCP style filter dropdown (populated from loaded data)
+- ✅ Full index load (no pagination) — all `publicRecipeIndex` docs in one query
+- ✅ Seed/example recipes merged with community recipes
+- ✅ Firestore IndexedDB cache for instant repeat visits
+- ✅ Loading skeletons, empty states, error handling with retry
+- ✅ NavBar link to browse page
+- ✅ Author name links to user profile page
 
-### Browse Page
+User profile pages (`app/u/[userId]/page.tsx` → `UserProfileClient.tsx`):
+- ✅ Displays user name, recipe count, top styles
+- ✅ Recipe cards in same format as browse page (shared `BrowseCard` component)
+- ✅ Back to Browse link
+- ✅ Cache-first loading with graceful error handling
+- ✅ SEO metadata
 
-Card grid showing public recipes with:
-- Recipe name
-- BJCP style
-- Key stats: OG, FG, IBU, SRM, ABV
-- Owner display name + avatar
-- Published date
-- Fork count
+### What Was Changed
 
-**Filtering:** Dropdown to filter by BJCP style category
-**Sorting:** Newest first (default), most forked
-**Pagination:** 20 recipes per page, cursor-based (Firestore `startAfter`)
+#### 3A. Browse Page — Remove Pagination, Load Full Index
 
-Data source: `publicRecipeIndex` collection (lightweight documents, fast loading).
+**Problem:** Client-side search only works on loaded recipes. If a user searches for "IPA" but the matching recipe is on page 3, they'll never find it without clicking "Load More" repeatedly.
 
-### User Profile Page
+**Solution:** Remove pagination and load the entire `publicRecipeIndex` collection in one query. Each index doc is ~300-500 bytes, so this scales to 2,000+ recipes with no performance issues. Firestore's built-in IndexedDB cache means repeat visits load instantly with zero reads.
+
+**Why this is fine:**
+- At current scale (< 100 recipes), the full index is < 50KB — smaller than a single image
+- Firestore caches everything in IndexedDB automatically, so first visit = N reads, every subsequent visit = 0 reads (background refresh)
+- Search, filter, and sort all work instantly client-side across the full dataset
+- No "Load More" UX friction
+
+**When to revisit:** If the collection exceeds ~2,000 recipes and first-load latency becomes noticeable (> 2s), options are:
+1. **Firestore `where()` queries** — move search/filter server-side, free, handles 10K+ recipes
+2. **Chunked index docs** — pack ~2,000 recipes into a single Firestore doc, load everything in 1-2 reads instead of N
+3. **Algolia / Typesense** — dedicated search index with fuzzy matching, typo tolerance, autocomplete. Algolia free tier = 10K searches/month. Sync via Cloud Function on publish/unpublish
+
+**Changes:**
+- Remove `PAGE_SIZE`, `lastDoc`, `hasMore`, `isLoadingMore` state
+- Remove `startAfter` cursor logic from `fetchRecipes`
+- Remove "Load More" button
+- Simplify `fetchRecipes` to a single `getDocs(query(collection(db, 'publicRecipeIndex'), orderBy(...)))` call
+- Keep the cache-first pattern (`getDocsFromCache` → `getDocs`)
+- Search now works across all recipes
+
+#### 3B. BJCP Style Filter
+
+Add a dropdown/chip filter for BJCP style categories. Populate from distinct styles in the loaded data (since we now have all recipes in memory, this is trivial).
+
+#### 3C. User Profile Pages
 
 Public page at `/u/[userId]` showing:
 - Display name + avatar
 - List of their public recipes (same card format as browse)
 - Basic stats (total public recipes, favorite styles)
+- Link to user profile from recipe cards and public recipe pages
+
+#### 3D. Recipe Ratings (Future Consideration)
+
+A 1-5 star rating system where signed-in users rate public recipes. Enables "Top Rated" sort, star display on cards, and `aggregateRating` in JSON-LD for Google rich results. Also serves as a natural sign-up driver ("Sign in to rate this recipe").
+
+**Proposed data model:**
+```
+// On publicRecipeIndex doc:
+ratingSum: number       // sum of all ratings
+ratingCount: number     // number of ratings
+ratingAvg: number       // precomputed average
+
+// Separate collection for votes:
+ratings/{recipeId}__{userId} → {
+  recipeId, userId, value (1-5), createdAt
+}
+```
+
+Compound doc ID enforces one vote per user per recipe. Updates use Firestore `increment()` for atomic counter updates. Deferred until the community has enough active users to make ratings meaningful.
 
 ### Phase 3 Implementation Checklist
 
-#### Browse Page
-- [ ] Create `app/recipes/browse/page.tsx`
-- [ ] Fetch from `publicRecipeIndex` collection, ordered by `publishedAt desc`, limit 20
-- [ ] Create recipe card component (name, style, stats, author, date, fork count)
-- [ ] Add BJCP style filter dropdown (populated from distinct styles in index)
-- [ ] Add sort toggle (newest / most forked)
-- [ ] Implement cursor-based pagination ("Load More" button or infinite scroll)
-- [ ] Empty state when no recipes match filters
-- [ ] Link each card to `/r/[slug]` (public recipe page)
-- [ ] Add link to browse page in NavBar
+#### 3A — Browse: Full Index Load
+- [x] Remove pagination state (`lastDoc`, `hasMore`, `isLoadingMore`, `PAGE_SIZE`)
+- [x] Remove `startAfter` cursor logic from `fetchRecipes`
+- [x] Remove "Load More" button from UI
+- [x] Load full `publicRecipeIndex` in one query (no `limit()`)
+- [x] Keep cache-first pattern (`getDocsFromCache` then `getDocs`)
+- [x] Sorting now happens client-side (in `allRecipes` memo)
+- [x] Search works across all recipes (not just first page)
 
-#### User Profile Page
-- [ ] Create `app/u/[userId]/page.tsx`
-- [ ] Fetch user document for display name + avatar
-- [ ] Fetch their public recipes from `publicRecipeIndex` where `ownerId == userId`
-- [ ] Display recipe cards in same format as browse page
-- [ ] Show basic stats (recipe count, most-used styles)
-- [ ] Link to user profile from recipe cards and public recipe pages
+#### 3B — BJCP Style Filter
+- [x] Add style filter dropdown to browse page
+- [x] Populate filter options from distinct styles in loaded data
+- [x] Filter works in combination with search and sort
+
+#### 3C — User Profile Pages
+- [x] Create `app/u/[userId]/page.tsx` (server component with metadata)
+- [x] Create `UserProfileClient.tsx` (client component, queries `publicRecipeIndex` by `ownerId`)
+- [x] Fetch user's public recipes from `publicRecipeIndex` where `ownerId == userId`
+- [x] Display recipe cards in same format as browse page (shared `BrowseCard` component)
+- [x] Show basic stats (recipe count, most-used styles)
+- [x] Link to user profile from browse cards (click author name → `/u/[userId]`)
+- [x] Link to user profile from shared recipe pages (click author name → `/u/[userId]`)
+- [x] SEO: title and meta tags for profile pages
+- [x] Added composite Firestore index (`ownerId` + `publishedAt`) to `firestore.indexes.json`
+- [ ] Deploy Firestore index: `firebase deploy --only firestore:indexes`
+
+#### 3D — Recipe Ratings
+- [x] Add `ratingSum`, `ratingCount` fields to `publicRecipeIndex` docs (preserved during sync)
+- [x] Create `ratings` collection with compound doc IDs (`{recipeId}__{userId}`)
+- [x] Rating UI on public recipe page (1-5 stars, sign-in prompt for anonymous users)
+- [x] Star display on browse cards (footer — avg + count)
+- [x] "Top Rated" sort option on browse page
+- [x] Add `aggregateRating` to recipe JSON-LD schema
+- [x] Firestore security rules for ratings collection (value 1-5 validation, owner-only writes)
 
 #### Index Maintenance
-- [ ] Ensure `publicRecipeIndex` is written when a recipe is published (Phase 2 API route)
-- [ ] Ensure `publicRecipeIndex` is deleted when a recipe is unpublished
-- [ ] Ensure `publicRecipeIndex` is updated when a published recipe is edited (name, style, ingredients change → recalculate stats)
-- [ ] Handle `forkCount` increment when a recipe is forked
+- [x] `publicRecipeIndex` written on publish (via `publishService.ts`)
+- [x] `publicRecipeIndex` deleted on unpublish
+- [x] `publicRecipeIndex` updated when a published recipe is edited (via `syncPublicIndex()` in `recipeStore.saveCurrentRecipe()`)
+- [x] `forkCount` incremented on fork
 
 #### SEO
-- [ ] Browse page has proper title and meta tags
-- [ ] User profile pages have proper title and meta tags
-- [ ] Consider generating a sitemap (`app/sitemap.ts`) listing all public recipes
-- [ ] Submit sitemap to Google Search Console
+- [x] Browse page has proper title and meta tags
+- [x] User profile pages have proper title and meta tags
+- [x] Sitemap includes all public recipes (`app/sitemap.ts`)
+- [x] Sitemap submitted to Google Search Console
+
+#### Cleanup
+- [x] Deleted dead API routes (`/api/browse`, `/api/publish`, `/api/unpublish`, `/api/fork`) — replaced by client-side SDK
+- [x] Extracted `BrowseCard` component to `src/modules/sharing/BrowseCard.tsx` (shared between browse + profile)
 
 ### Phase 3 Testing
 
 #### Browse Page Tests
-- [ ] Browse page loads with public recipe cards
+- [ ] Browse page loads with all public recipe cards (no pagination)
 - [ ] Cards display correct data (name, style, stats, author, date)
+- [ ] Search finds recipes across the full dataset (not limited to a page)
 - [ ] BJCP style filter narrows results correctly
 - [ ] Sort by "newest" and "most forked" both work
-- [ ] Pagination loads next batch correctly (no duplicates, correct order)
 - [ ] Clicking a card navigates to the public recipe page
 - [ ] Empty state displays when no recipes match
-- [ ] Page performs well with 100+ recipes (no lag, pagination works)
+- [ ] Repeat visits load instantly from cache
 
 #### User Profile Tests
 - [ ] Profile page loads with correct user info
@@ -847,10 +913,10 @@ Public page at `/u/[userId]` showing:
 - [ ] Delete a published recipe → removed from browse
 
 #### Performance Tests
-- [ ] Browse page initial load < 2 seconds
-- [ ] "Load more" pagination responds < 1 second
+- [ ] Browse page initial load < 2 seconds with full index
 - [ ] Firestore reads stay within reasonable bounds (check Firebase Console usage tab)
 - [ ] No N+1 query issues (browse uses index collection, not full recipe documents)
+- [ ] Second visit loads from IndexedDB cache (0 reads)
 
 ---
 

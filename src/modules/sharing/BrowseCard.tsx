@@ -47,10 +47,16 @@ export function BrowseCard({
   recipe,
   isNavigating,
   onNavigate,
+  compareMode,
+  isSelected,
+  onToggleSelect,
 }: {
   recipe: BrowseRecipe;
   isNavigating?: boolean;
   onNavigate?: () => void;
+  compareMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -189,33 +195,76 @@ export function BrowseCard({
 
   return (
     <div
-      className={`group brew-recipe-card relative cursor-pointer overflow-visible ${isMenuOpen ? 'z-30' : 'z-10'}`}
-      style={{ '--card-srm': srmColor } as React.CSSProperties}
+      className={`group brew-recipe-card relative cursor-pointer overflow-visible ${isMenuOpen ? 'z-30' : 'z-10'} ${compareMode && isSelected ? 'ring-2' : ''}`}
+      style={{
+        '--card-srm': srmColor,
+        ...(compareMode && isSelected ? { '--tw-ring-color': `rgb(var(--accent))` } : {}),
+      } as React.CSSProperties}
       onClick={(e) => {
+        if (compareMode) {
+          e.preventDefault();
+          // In compare mode, only the menu button should bypass selection
+          if ((e.target as HTMLElement).closest('button[title="Recipe actions"], [role="menu"]')) return;
+          onToggleSelect?.(recipe.id);
+          return;
+        }
         // Only navigate if the click wasn't on an interactive child
         if ((e.target as HTMLElement).closest('button, a, [role="menu"]')) return
         onNavigate?.()
         router.push(cardPath)
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !(e.target as HTMLElement).closest('button, a, [role="menu"]')) {
-          onNavigate?.()
-          router.push(cardPath)
+        if (e.key === 'Enter') {
+          if (compareMode) {
+            e.preventDefault();
+            onToggleSelect?.(recipe.id);
+            return;
+          }
+          if (!(e.target as HTMLElement).closest('button, a, [role="menu"]')) {
+            onNavigate?.()
+            router.push(cardPath)
+          }
         }
       }}
       role="article"
       tabIndex={0}
     >
       {/* Hidden crawlable link for search engines */}
-      <Link href={cardPath} tabIndex={-1} aria-hidden className="absolute inset-0 z-0" prefetch={false}>
+      <Link
+        href={cardPath}
+        tabIndex={-1}
+        aria-hidden
+        className={`absolute inset-0 z-0 ${compareMode ? 'pointer-events-none' : ''}`}
+        prefetch={false}
+        onClick={compareMode ? (e) => e.preventDefault() : undefined}
+      >
         <span className="sr-only">{recipe.name}</span>
       </Link>
+      {/* Compare mode selection indicator */}
+      {compareMode && (
+        <div className="absolute top-3 left-3 z-20">
+          <div
+            className="flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors"
+            style={
+              isSelected
+                ? { borderColor: `rgb(var(--accent))`, backgroundColor: `rgb(var(--accent))` }
+                : { borderColor: 'var(--fg-muted)', backgroundColor: 'var(--brew-card)' }
+            }
+          >
+            {isSelected && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
       {(isNavigating || isBusy) && (
         <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[var(--brew-card)]" style={{ containerType: 'inline-size' }}>
+      <div className="rounded-xl overflow-hidden" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
 
