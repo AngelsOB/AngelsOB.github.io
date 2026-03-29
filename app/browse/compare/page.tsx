@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import CompareRecipesPage from '@/modules/compare/CompareRecipesPage';
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function ComparePage() {
-  return <CompareRecipesPage />;
+  return (
+    <Suspense>
+      <CompareRecipesPage />
+    </Suspense>
+  );
 }
