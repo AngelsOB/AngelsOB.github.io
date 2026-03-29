@@ -1,23 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 export interface GrainParams {
-  /** Grain size: 1 = fine film grain, 4 = coarse/chunky. Default: 1 */
+  /** Grain size: 1 = fine film grain, 4 = coarse/chunky. Default: 1.25 */
   blockSize: number;
-  /** Noise layers 1–6. More octaves = more complex texture. Default: 5 */
+  /** Noise layers 1–6. More octaves = more complex texture. Default: 6 */
   octaves: number;
-  /** Contrast of the noise 1–6. Default: 3.3 */
+  /** Contrast of the noise 1–6. Default: 4.5 */
   contrast: number;
-  /** Overall opacity of the overlay 0–1. Default: 0.06 */
+  /** Overall opacity 0–1. Default: 0.085 */
   opacity: number;
   /** Seed for different grain patterns. Default: 42 */
   seed: number;
   /**
-   * Blue noise mode: applies a high-pass SVG filter (noise minus blurred copy)
-   * to suppress low-frequency clumping, producing a more even, fine-grained distribution.
-   * Default: false (fractal/Perlin noise)
+   * Blue noise mode: Laplacian high-pass filter (feConvolveMatrix) on single-octave noise.
+   * Suppresses low-frequency clumping — produces a fine, even speckle distribution.
+   * Default: true
    */
   blueNoise: boolean;
 }
@@ -43,14 +43,6 @@ function buildNoiseUrl(
 
   let filter: string;
   if (blueNoise) {
-    // True high-pass via Laplacian feConvolveMatrix kernel:
-    //   -1 -1 -1
-    //   -1  8 -1
-    //   -1 -1 -1
-    // Sum = 0 → pure edge/high-frequency signal. bias=0.5 re-centers to [0,1].
-    // A 3×3 kernel only touches 1px at the tile edge, so seam artifacts are invisible.
-    // feTurbulence with 1 octave avoids Perlin's built-in low-freq octaves — the
-    // Laplacian then strips any remaining smooth structure, leaving an even fine speckle.
     filter = [
       `<filter id="g">`,
       `<feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="1" seed="${seed}" stitchTiles="stitch" result="n"/>`,
@@ -81,11 +73,27 @@ function buildNoiseUrl(
   return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
 }
 
-function GrainLayers({ blockSize, octaves, contrast, opacity, seed, blueNoise }: GrainParams) {
+function GrainLayer({ blockSize, octaves, contrast, opacity, seed, blueNoise }: GrainParams) {
+  const ref = useRef<HTMLDivElement>(null);
   const noiseUrl = buildNoiseUrl(blockSize, octaves, contrast, seed, blueNoise);
+
+  // Shift backgroundPosition to match scroll — grain tracks document coords
+  // rather than being anchored to the viewport (screen-space).
+  // Passive listener: no repaint, just a style property update per frame.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => {
+      el.style.backgroundPositionX = `${window.scrollX}px`;
+      el.style.backgroundPositionY = `${window.scrollY}px`;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div
+      ref={ref}
       aria-hidden
       style={{
         position: "fixed",
@@ -96,8 +104,6 @@ function GrainLayers({ blockSize, octaves, contrast, opacity, seed, blueNoise }:
         backgroundSize: "256px 256px",
         zIndex: 9998,
         opacity,
-        // No blend mode — mix-blend-mode on a fixed viewport-sized element
-        // forces full-viewport compositing on every scroll frame.
       }}
     />
   );
@@ -111,11 +117,9 @@ export default function GrainOverlay(params: GrainParams) {
     el.setAttribute("aria-hidden", "true");
     document.body.appendChild(el);
     setMount(el);
-    return () => {
-      document.body.removeChild(el);
-    };
+    return () => { document.body.removeChild(el); };
   }, []);
 
   if (!mount) return null;
-  return createPortal(<GrainLayers {...params} />, mount);
+  return createPortal(<GrainLayer {...params} />, mount);
 }
