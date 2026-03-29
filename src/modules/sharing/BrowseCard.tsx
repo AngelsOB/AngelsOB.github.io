@@ -264,6 +264,58 @@ export function BrowseCard({
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
+      {/* Actions menu — outside overflow-hidden so dropdown isn't clipped */}
+      <div
+        className="absolute top-6 right-4 z-30"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      >
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsMenuOpen((prev) => !prev);
+          }}
+          className="brew-tag shadow-sm"
+          title="Recipe actions"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="12" cy="19" r="1" />
+          </svg>
+        </button>
+        {isMenuOpen && (
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            className="absolute right-0 top-full mt-1 z-30"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseLeave={() => setIsMenuOpen(false)}
+          >
+            <div className="w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
+              <button onClick={handleFork} className="brew-menu-item w-full text-left">
+                {user ? 'Fork to My Recipes' : 'Sign in to Fork'}
+              </button>
+              <button onClick={handleCopyShareLink} className="brew-menu-item w-full text-left">
+                Copy Share Link
+              </button>
+              <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
+              <button onClick={(e) => handleExport('markdown', e)} className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}>
+                Export Markdown
+              </button>
+              <button onClick={(e) => handleExport('copy-md', e)} className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}>
+                Copy Markdown
+              </button>
+              <button onClick={(e) => handleExport('json', e)} className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}>
+                Export JSON
+              </button>
+              <button onClick={(e) => handleExport('beerxml', e)} className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}>
+                Export BeerXML
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="rounded-xl overflow-hidden" style={{ containerType: 'inline-size' }}>
         {/* SRM Color Strip */}
         <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
@@ -314,74 +366,10 @@ export function BrowseCard({
                 )}
               </p>
             </div>
-            {/* Right column: menu + rating */}
+            {/* Right column: rating only (menu button lives outside overflow-hidden) */}
             <div className="flex shrink-0 flex-col items-end gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-              {/* Actions menu trigger */}
-              <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsMenuOpen((prev) => !prev);
-                }}
-                className="brew-tag shadow-sm"
-                title="Recipe actions"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="5" r="1" />
-                  <circle cx="12" cy="12" r="1" />
-                  <circle cx="12" cy="19" r="1" />
-                </svg>
-              </button>
-              {isMenuOpen && (
-                // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-                <div
-                  className="absolute right-0 top-full -m-4 mt-2 z-30 p-4"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onMouseLeave={() => setIsMenuOpen(false)}
-                >
-                  <div className="w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
-                    <button
-                      onClick={handleFork}
-                      className="brew-menu-item w-full text-left"
-                    >
-                      {user ? 'Fork to My Recipes' : 'Sign in to Fork'}
-                    </button>
-                    <button
-                      onClick={handleCopyShareLink}
-                      className="brew-menu-item w-full text-left"
-                    >
-                      Copy Share Link
-                    </button>
-                    <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
-                    <button
-                      onClick={(e) => handleExport('markdown', e)}
-                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
-                    >
-                      Export Markdown
-                    </button>
-                    <button
-                      onClick={(e) => handleExport('copy-md', e)}
-                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
-                    >
-                      Copy Markdown
-                    </button>
-                    <button
-                      onClick={(e) => handleExport('json', e)}
-                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
-                    >
-                      Export JSON
-                    </button>
-                    <button
-                      onClick={(e) => handleExport('beerxml', e)}
-                      className={`brew-menu-item w-full text-left${!exportAllowed ? ' opacity-50' : ''}`}
-                    >
-                      Export BeerXML
-                    </button>
-                  </div>
-                </div>
-              )}
-              </div>
+              {/* Spacer so rating sits below where the menu button is */}
+              <div className="h-6" />
 
               {/* Rating — in header, right-aligned */}
               <div className="flex flex-col items-end gap-0.5">
