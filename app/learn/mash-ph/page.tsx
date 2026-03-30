@@ -15,6 +15,17 @@ export const metadata: Metadata = {
     "brewing water adjustment",
   ],
   alternates: { canonical: "/learn/mash-ph" },
+  openGraph: {
+    title: "Mash pH: The Proton Deficit Model | Brewing.It Learn",
+    description:
+      "How Brewing.It predicts mash pH from your grain bill and water chemistry using the proton deficit model. Understand the science behind pH adjustment.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Mash pH: The Proton Deficit Model | Brewing.It Learn",
+    description:
+      "How Brewing.It predicts mash pH from your grain bill and water chemistry using the proton deficit model. Understand the science behind pH adjustment.",
+  },
 };
 
 const jsonLd = {

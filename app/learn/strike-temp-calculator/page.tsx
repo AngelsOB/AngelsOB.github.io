@@ -16,6 +16,17 @@ export const metadata: Metadata = {
     "Palmer strike temperature",
   ],
   alternates: { canonical: "/learn/strike-temp-calculator" },
+  openGraph: {
+    title: "Strike Water Temperature Calculator | Brewing.It Learn",
+    description:
+      "Calculate the exact strike water temperature for your mash. Enter your target mash temp, grain temperature, and mash thickness — get the number instantly.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Strike Water Temperature Calculator | Brewing.It Learn",
+    description:
+      "Calculate the exact strike water temperature for your mash. Enter your target mash temp, grain temperature, and mash thickness — get the number instantly.",
+  },
 };
 
 const jsonLd = {

@@ -392,6 +392,83 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── Learn ── */}
+      <div className="px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="brew-section !mb-0" data-accent="mash">
+            <div className="brew-animate-in brew-stagger-10">
+              <h2 className="brew-section-title !text-2xl">Brewing Science</h2>
+              <p className="text-muted mt-2 mb-6 max-w-md text-sm leading-relaxed">
+                The formulas behind the numbers. Each article explains what we calculate and why.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/learn/getting-started"
+                className="brew-animate-in brew-stagger-11 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
+              >
+                <div className="min-w-0">
+                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
+                    How to Use Brewing.It
+                  </div>
+                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
+                    Quick start guide — what it calculates and how to use it on brew day.
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/learn/ibu"
+                className="brew-animate-in brew-stagger-12 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
+              >
+                <div className="min-w-0">
+                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
+                    Understanding IBU
+                  </div>
+                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
+                    How bitterness is calculated for boil, whirlpool, and dry hop additions.
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/learn/water-chemistry"
+                className="brew-animate-in brew-stagger-13 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
+              >
+                <div className="min-w-0">
+                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
+                    Water Chemistry
+                  </div>
+                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
+                    Source profiles, salt additions, and the auto-calculator that solves it for you.
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/learn/gravity"
+                className="brew-animate-in brew-stagger-14 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
+              >
+                <div className="min-w-0">
+                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
+                    Gravity &amp; ABV
+                  </div>
+                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
+                    How OG, FG, and alcohol content are calculated from your grain bill.
+                  </div>
+                </div>
+              </Link>
+            </div>
+            <div className="mt-4 text-center">
+              <Link
+                href="/learn"
+                className="text-xs font-medium tracking-wide uppercase transition-colors"
+                style={{ color: "var(--brew-accent-600)" }}
+              >
+                All articles →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* <HomePhysicsCansLoader /> */}
     </div>
   );

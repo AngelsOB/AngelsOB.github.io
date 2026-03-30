@@ -15,6 +15,17 @@ export const metadata: Metadata = {
     "braukaiser yeast model",
   ],
   alternates: { canonical: "/learn/yeast-starters" },
+  openGraph: {
+    title: "Yeast Starters: Cell Counts & Growth Models | Brewing.It Learn",
+    description:
+      "How Brewing.It calculates yeast pitching rates, viability decay, and starter sizes using the White and Braukaiser growth models.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Yeast Starters: Cell Counts & Growth Models | Brewing.It Learn",
+    description:
+      "How Brewing.It calculates yeast pitching rates, viability decay, and starter sizes using the White and Braukaiser growth models.",
+  },
 };
 
 const jsonLd = {

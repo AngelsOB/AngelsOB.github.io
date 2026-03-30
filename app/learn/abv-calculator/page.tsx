@@ -16,6 +16,17 @@ export const metadata: Metadata = {
     "beer alcohol calculator",
   ],
   alternates: { canonical: "/learn/abv-calculator" },
+  openGraph: {
+    title: "ABV Calculator: Alcohol by Volume | Brewing.It Learn",
+    description:
+      "Calculate alcohol by volume from original and final gravity readings. Learn how the formula works and when to use it on brew day.",
+  },
+  twitter: {
+    card: "summary",
+    title: "ABV Calculator: Alcohol by Volume | Brewing.It Learn",
+    description:
+      "Calculate alcohol by volume from original and final gravity readings. Learn how the formula works and when to use it on brew day.",
+  },
 };
 
 const jsonLd = {

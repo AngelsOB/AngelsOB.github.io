@@ -7,6 +7,17 @@ export const metadata: Metadata = {
   description:
     "Explore the science behind every calculation in Brewing.It: IBU, gravity, mash pH, enzyme kinetics, hop flavor, and more. Formulas explained with real sources.",
   alternates: { canonical: "/learn" },
+  openGraph: {
+    title: "Learn Brewing Science | Brewing.It Learn",
+    description:
+      "Explore the science behind every calculation in Brewing.It: IBU, gravity, mash pH, enzyme kinetics, hop flavor, and more. Formulas explained with real sources.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Learn Brewing Science | Brewing.It Learn",
+    description:
+      "Explore the science behind every calculation in Brewing.It: IBU, gravity, mash pH, enzyme kinetics, hop flavor, and more. Formulas explained with real sources.",
+  },
 };
 
 export default function LearnIndexPage() {

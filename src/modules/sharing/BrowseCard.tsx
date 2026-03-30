@@ -7,7 +7,7 @@ import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
 import { uid } from '@/utils/uid';
 import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
-import { findSeedRecipe } from '@/data/seed-recipes';
+import { findSeedRecipe, SEED_SLUG_MAP } from '@/data/seed-recipes';
 import {
   downloadTextFile,
   generateBeerXml,
@@ -144,7 +144,7 @@ export function BrowseCard({
     setIsMenuOpen(false);
 
     const path = recipe.source === 'official'
-      ? `/r/seed/${recipe.id}`
+      ? `/r/${SEED_SLUG_MAP[recipe.id] || recipe.id}`
       : `/r/${recipe.shareSlug}`;
     navigator.clipboard.writeText(`${window.location.origin}${path}`);
     toast.success('Share link copied');
@@ -190,7 +190,7 @@ export function BrowseCard({
   }
 
   const cardPath = recipe.source === 'official'
-    ? `/r/seed/${recipe.id}`
+    ? `/r/${SEED_SLUG_MAP[recipe.id] || recipe.id}`
     : `/r/${recipe.shareSlug}`;
 
   return (

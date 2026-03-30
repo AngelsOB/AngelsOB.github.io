@@ -14,6 +14,17 @@ export const metadata: Metadata = {
   description:
     "A quick overview of how the Brewing.It recipe builder works: what it calculates, what you need to set up, and how to use it on brew day.",
   alternates: { canonical: "/learn/getting-started" },
+  openGraph: {
+    title: "How To Use Brewing.It: Quick Start Guide | Brewing.It Learn",
+    description:
+      "A quick overview of how the Brewing.It recipe builder works: what it calculates, what you need to set up, and how to use it on brew day.",
+  },
+  twitter: {
+    card: "summary",
+    title: "How To Use Brewing.It: Quick Start Guide | Brewing.It Learn",
+    description:
+      "A quick overview of how the Brewing.It recipe builder works: what it calculates, what you need to set up, and how to use it on brew day.",
+  },
 };
 
 const jsonLd = {

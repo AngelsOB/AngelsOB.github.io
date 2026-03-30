@@ -14,6 +14,17 @@ export const metadata: Metadata = {
     "final gravity prediction",
   ],
   alternates: { canonical: "/learn/mash-temperature" },
+  openGraph: {
+    title: "Mash Temperature & Enzyme Kinetics | Brewing.It Learn",
+    description:
+      "How mash temperature controls fermentability through enzyme kinetics. Brewing.It offers three models (linear, enzyme kinetics, and ODE) for predicting final gravity.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Mash Temperature & Enzyme Kinetics | Brewing.It Learn",
+    description:
+      "How mash temperature controls fermentability through enzyme kinetics. Brewing.It offers three models (linear, enzyme kinetics, and ODE) for predicting final gravity.",
+  },
 };
 
 const jsonLd = {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BrowseRecipesPage from "../../src/modules/sharing/BrowseRecipesPage";
-import { SEED_RECIPES } from "@/data/seed-recipes";
+import { SEED_RECIPES, SEED_SLUG_MAP } from "@/data/seed-recipes";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600; // 1 hour
@@ -10,6 +10,17 @@ export const metadata: Metadata = {
   title: "Browse Recipes",
   description:
     "Discover homebrewing recipes shared by the community. Find inspiration for your next brew.",
+  openGraph: {
+    title: "Browse Recipes | Brewing.It",
+    description:
+      "Discover homebrewing recipes shared by the community. Find inspiration for your next brew.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Browse Recipes | Brewing.It",
+    description:
+      "Discover homebrewing recipes shared by the community. Find inspiration for your next brew.",
+  },
 };
 
 async function getRecipeIndex() {
@@ -46,7 +57,7 @@ export default async function BrowsePage() {
         <ul>
           {SEED_RECIPES.map((r) => (
             <li key={r.id} className="mb-1">
-              <Link href={`/r/seed/${r.id}`} className="text-[var(--brew-accent-700)] hover:underline" prefetch={false}>
+              <Link href={`/r/${SEED_SLUG_MAP[r.id] || r.id}`} className="text-[var(--brew-accent-700)] hover:underline" prefetch={false}>
                 {r.name}
               </Link>
               {r.style && <span className="text-muted ml-1 text-xs">({r.style})</span>}

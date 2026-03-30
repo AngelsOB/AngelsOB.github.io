@@ -12,28 +12,8 @@ import {
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { SEED_RECIPES } from '@/data/seed-recipes';
-import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 import { BrowseCard, type BrowseRecipe } from './BrowseCard';
 import Button from '@/components/Button';
-
-const calc = new RecipeCalculationService();
-const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
-  const c = calc.calculate(r);
-  return {
-    id: r.id,
-    name: r.name,
-    style: r.style || '',
-    ownerName: 'The Brewing.It Team',
-    shareSlug: '',
-    stats: { og: c.og, fg: c.fg, ibu: c.ibu, srm: c.srm, abv: c.abv },
-    tags: r.tags || [],
-    hopNames: r.hops.map((h) => h.name),
-    publishedAt: r.createdAt,
-    forkCount: 0,
-    source: 'official',
-  };
-});
 
 type SortOption = 'newest' | 'popular' | 'top-rated';
 
@@ -129,7 +109,7 @@ export default function BrowseRecipesPage() {
       if (sort === 'popular') return (b.forkCount || 0) - (a.forkCount || 0);
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
-    return [...seedBrowseRecipes, ...sorted];
+    return sorted;
   }, [recipes, sort]);
 
   const availableStyles = useMemo(() => {

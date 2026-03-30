@@ -5,6 +5,15 @@ export const metadata: Metadata = {
   description:
     "How Brewing.It collects, uses, and protects your data.",
   alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy Policy | Brewing.It",
+    description: "How Brewing.It collects, uses, and protects your data.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy | Brewing.It",
+    description: "How Brewing.It collects, uses, and protects your data.",
+  },
 };
 
 export default function PrivacyPolicyPage() {

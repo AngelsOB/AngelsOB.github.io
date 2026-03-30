@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   description: "Calculate how much water to add to hit your target gravity. Conservation of gravity points. Simple and exact.",
   keywords: ["dilution calculator", "gravity dilution", "water addition brewing", "sparge calculator"],
   alternates: { canonical: "/learn/dilution-calculator" },
+  openGraph: {
+    title: "Dilution Calculator: Hit Your Target Gravity | Brewing.It Learn",
+    description: "Calculate how much water to add to hit your target gravity. Conservation of gravity points. Simple and exact.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Dilution Calculator: Hit Your Target Gravity | Brewing.It Learn",
+    description: "Calculate how much water to add to hit your target gravity. Conservation of gravity points. Simple and exact.",
+  },
 };
 
 const jsonLd = {
