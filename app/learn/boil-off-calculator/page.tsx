@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   description: "Calculate your post-boil volume and how long to boil to hit your target OG. Same conservation principle as dilution, in reverse.",
   keywords: ["boil off calculator", "pre boil gravity", "post boil volume", "boil time calculator"],
   alternates: { canonical: "/learn/boil-off-calculator" },
+  openGraph: {
+    title: "Boil-Off Calculator: Pre-Boil to Post-Boil Volume | Brewing.It Learn",
+    description: "Calculate your post-boil volume and how long to boil to hit your target OG. Same conservation principle as dilution, in reverse.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Boil-Off Calculator: Pre-Boil to Post-Boil Volume | Brewing.It Learn",
+    description: "Calculate your post-boil volume and how long to boil to hit your target OG. Same conservation principle as dilution, in reverse.",
+  },
 };
 
 const jsonLd = {

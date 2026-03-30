@@ -16,6 +16,17 @@ export const metadata: Metadata = {
     "hop radar chart",
   ],
   alternates: { canonical: "/learn/hop-flavor" },
+  openGraph: {
+    title: "The Hop Flavor Radar: Mapping Hop Character Beyond IBU | Brewing.It Learn",
+    description:
+      "How Brewing.It maps hop flavor across 9 axes: citrus, tropical, resin, floral, and more. Understand the aroma model that shows what your hops actually taste like.",
+  },
+  twitter: {
+    card: "summary",
+    title: "The Hop Flavor Radar: Mapping Hop Character Beyond IBU | Brewing.It Learn",
+    description:
+      "How Brewing.It maps hop flavor across 9 axes: citrus, tropical, resin, floral, and more. Understand the aroma model that shows what your hops actually taste like.",
+  },
 };
 
 const jsonLd = {

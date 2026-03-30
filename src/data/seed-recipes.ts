@@ -522,6 +522,13 @@ export const SEED_RECIPES: Recipe[] = [
   },
 ];
 
+/** Seed recipe ID → public share slug */
+export const SEED_SLUG_MAP: Record<string, string> = {
+  'seed-american-ipa': 'west-coast-ipa',
+  'seed-saison': 'farmhouse-saison',
+  'seed-irish-stout': 'irish-stout',
+};
+
 /** Look up a seed recipe by its deterministic ID. */
 export function findSeedRecipe(id: string): Recipe | undefined {
   return SEED_RECIPES.find((r) => r.id === id);

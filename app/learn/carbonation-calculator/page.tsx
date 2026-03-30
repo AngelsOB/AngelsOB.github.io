@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   description: "Find the right keg pressure for your desired CO₂ volumes at serving temperature. Instant PSI and bar readings.",
   keywords: ["carbonation calculator", "CO2 volumes", "keg PSI", "force carbonation", "beer carbonation"],
   alternates: { canonical: "/learn/carbonation-calculator" },
+  openGraph: {
+    title: "Carbonation Calculator: PSI for Your CO₂ Volumes | Brewing.It Learn",
+    description: "Find the right keg pressure for your desired CO₂ volumes at serving temperature. Instant PSI and bar readings.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Carbonation Calculator: PSI for Your CO₂ Volumes | Brewing.It Learn",
+    description: "Find the right keg pressure for your desired CO₂ volumes at serving temperature. Instant PSI and bar readings.",
+  },
 };
 
 const jsonLd = {

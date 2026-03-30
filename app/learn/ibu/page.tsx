@@ -17,6 +17,17 @@ export const metadata: Metadata = {
     "humulinone",
   ],
   alternates: { canonical: "/learn/ibu" },
+  openGraph: {
+    title: "Understanding IBU: How Bitterness Is Calculated | Brewing.It Learn",
+    description:
+      "Learn how Brewing.It calculates IBU for every type of hop addition: boil, whirlpool, dry hop, and first wort. The formulas, the reasoning, and what makes our approach different.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Understanding IBU: How Bitterness Is Calculated | Brewing.It Learn",
+    description:
+      "Learn how Brewing.It calculates IBU for every type of hop addition: boil, whirlpool, dry hop, and first wort. The formulas, the reasoning, and what makes our approach different.",
+  },
 };
 
 const jsonLd = {

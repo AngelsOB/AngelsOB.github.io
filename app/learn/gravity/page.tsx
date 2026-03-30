@@ -15,6 +15,17 @@ export const metadata: Metadata = {
     "attenuation",
   ],
   alternates: { canonical: "/learn/gravity" },
+  openGraph: {
+    title: "Gravity & ABV: How Your Beer's Strength Is Built | Brewing.It Learn",
+    description:
+      "How Brewing.It calculates original gravity, final gravity, and ABV from your grain bill, mash efficiency, and yeast attenuation.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Gravity & ABV: How Your Beer's Strength Is Built | Brewing.It Learn",
+    description:
+      "How Brewing.It calculates original gravity, final gravity, and ABV from your grain bill, mash efficiency, and yeast attenuation.",
+  },
 };
 
 const jsonLd = {

@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   description: "Correct gravity readings for sample temperature differences. Uses the Kell (1975) water density equation for accurate results.",
   keywords: ["hydrometer correction", "temperature correction gravity", "hydrometer calibration", "gravity reading correction"],
   alternates: { canonical: "/learn/hydrometer-calculator" },
+  openGraph: {
+    title: "Hydrometer Correction Calculator | Brewing.It Learn",
+    description: "Correct gravity readings for sample temperature differences. Uses the Kell (1975) water density equation for accurate results.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Hydrometer Correction Calculator | Brewing.It Learn",
+    description: "Correct gravity readings for sample temperature differences. Uses the Kell (1975) water density equation for accurate results.",
+  },
 };
 
 const jsonLd = {

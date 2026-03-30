@@ -14,9 +14,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: { canonical: `/u/${userId}` },
     openGraph: {
       title: 'Brewer Profile | Brewing.It',
+      description: `View public recipes by this brewer on Brewing.It`,
       url: `/u/${userId}`,
       type: 'profile',
       siteName: 'Brewing.It',
+    },
+    twitter: {
+      card: 'summary',
+      title: 'Brewer Profile | Brewing.It',
+      description: `View public recipes by this brewer on Brewing.It`,
     },
   };
 }

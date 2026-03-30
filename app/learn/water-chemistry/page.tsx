@@ -15,6 +15,17 @@ export const metadata: Metadata = {
     "auto calculate water",
   ],
   alternates: { canonical: "/learn/water-chemistry" },
+  openGraph: {
+    title: "Water Chemistry & the Auto-Calculator | Brewing.It Learn",
+    description:
+      "How Brewing.It handles water chemistry: source profiles, style-based targets, the auto-calculator that solves for optimal salt additions, and what ions actually do to your beer.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Water Chemistry & the Auto-Calculator | Brewing.It Learn",
+    description:
+      "How Brewing.It handles water chemistry: source profiles, style-based targets, the auto-calculator that solves for optimal salt additions, and what ions actually do to your beer.",
+  },
 };
 
 const jsonLd = {

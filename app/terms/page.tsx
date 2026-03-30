@@ -5,6 +5,17 @@ export const metadata: Metadata = {
   description:
     "Terms of service for using the Brewing.It recipe builder and calculators.",
   alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms of Service | Brewing.It",
+    description:
+      "Terms of service for using the Brewing.It recipe builder and calculators.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Terms of Service | Brewing.It",
+    description:
+      "Terms of service for using the Brewing.It recipe builder and calculators.",
+  },
 };
 
 export default function TermsOfServicePage() {

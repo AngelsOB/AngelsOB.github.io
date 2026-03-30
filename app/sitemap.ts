@@ -35,11 +35,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ]
 
-  // Seed recipes (static, known IDs)
-  const seedRecipeIds = ['seed-american-ipa', 'seed-saison', 'seed-irish-stout']
-  const seedRoutes: MetadataRoute.Sitemap = seedRecipeIds.map((id) => ({
-    url: `${BASE_URL}/r/seed/${id}`,
-    lastModified: new Date('2025-01-01'),
+  // Seed recipes (static, clean slugs)
+  const seedSlugs = ['west-coast-ipa', 'farmhouse-saison', 'irish-stout']
+  const seedRoutes: MetadataRoute.Sitemap = seedSlugs.map((slug) => ({
+    url: `${BASE_URL}/r/${slug}`,
+    lastModified: LAST_DEPLOY,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }))
