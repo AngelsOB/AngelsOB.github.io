@@ -8,6 +8,7 @@ export const revalidate = 3600; // 1 hour
 
 export const metadata: Metadata = {
   title: "Browse Recipes",
+  alternates: { canonical: "/browse" },
   description:
     "Discover homebrewing recipes shared by the community. Find inspiration for your next brew.",
   openGraph: {

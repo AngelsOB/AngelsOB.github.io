@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Brewing.It" }],
   openGraph: {
     type: "website",
-    url: "./",
+    url: "/",
     title: "Brewing.It - Homebrewing Recipe Builder & Calculator",
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
