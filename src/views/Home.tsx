@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Typewriter from "@/components/Typewriter";
 import GrainGradient from "@/components/GrainGradient";
+import { learnNav } from "@/modules/learn/docsConfig";
 // import HomePhysicsCansLoader from "@/modules/labels/HomePhysicsCansLoader";
 
 export default function Home() {
@@ -249,225 +250,88 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Equipment */}
-          <Link href="/recipes" className="group block">
-            <div
-              className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
-              data-accent="equipment"
-              /* data-physics="card-2" */
-            >
-              <div className="brew-animate-in brew-stagger-9 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-                {/* Left — copy */}
-                <div className="min-w-0 flex-1">
-                  <h2 className="brew-section-title !text-2xl">Equipment Profiles</h2>
-                  <p className="text-muted mt-3 max-w-md text-sm leading-relaxed">
-                    Save your system — batch size, boil-off rate, dead spaces, efficiency. Every
-                    calculation adjusts to your gear.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="brew-tag">Grainfather G30</span>
-                    <span className="brew-tag">Anvil Foundry</span>
-                    <span className="brew-tag">BIAB</span>
-                    <span className="brew-tag">3-Vessel</span>
-                  </div>
-                </div>
-
-                {/* Right — decorative equipment preview */}
-                <div className="shrink-0 opacity-80 transition-opacity duration-200 group-hover:opacity-100 lg:w-72">
-                  <div className="space-y-2">
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <rect
-                            x="2"
-                            y="1"
-                            width="10"
-                            height="9"
-                            rx="2"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <rect
-                            x="4"
-                            y="10"
-                            width="6"
-                            height="2"
-                            rx="1"
-                            fill="var(--brew-accent-300)"
-                          />
-                          <line
-                            x1="5"
-                            y1="4"
-                            x2="9"
-                            y2="4"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="0.8"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="5"
-                            y1="6"
-                            x2="8"
-                            y2="6"
-                            stroke="var(--brew-accent-300)"
-                            strokeWidth="0.8"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Batch Size</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">23 L</span>
-                    </div>
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <path
-                            d="M3 11 L5 3 L9 3 L11 11"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <line
-                            x1="4"
-                            y1="8"
-                            x2="10"
-                            y2="8"
-                            stroke="var(--brew-accent-300)"
-                            strokeWidth="0.8"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Boil-Off</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">3.8 L/hr</span>
-                    </div>
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <circle
-                            cx="7"
-                            cy="7"
-                            r="5"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <path
-                            d="M7 4 L7 7 L9.5 8.5"
-                            stroke="var(--brew-accent-500)"
-                            strokeWidth="1"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Efficiency</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">72%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
         </div>
       </div>
 
       {/* ── Learn ── */}
-      <div className="px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="brew-section !mb-0" data-accent="mash">
-            <div className="brew-animate-in brew-stagger-10">
-              <h2 className="brew-section-title !text-2xl">Brewing Science</h2>
-              <p className="text-muted mt-2 mb-6 max-w-md text-sm leading-relaxed">
-                The formulas behind the numbers. Each article explains what we calculate and why.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Link
-                href="/learn/getting-started"
-                className="brew-animate-in brew-stagger-11 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
-              >
-                <div className="min-w-0">
-                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
-                    How to Use Brewing.It
+      {(() => {
+        const featured = [
+          learnNav[0].links[0],                                        // How To Use Brewing.It
+          ...learnNav[1].links.filter((l) =>
+            ["/learn/ibu", "/learn/water-chemistry", "/learn/gravity"].includes(l.href)
+          ),
+        ];
+        return (
+          <div className="px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-5xl">
+              <div className="brew-section !mb-0" data-accent="mash">
+                <div className="brew-animate-in brew-stagger-9 mb-6 flex items-end justify-between">
+                  <div>
+                    <p
+                      className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+                      style={{ color: "var(--fg-muted)" }}
+                    >
+                      Brewing Science
+                    </p>
+                    <h2
+                      className="inline-block pb-1 text-2xl font-extrabold tracking-tight"
+                      style={{ color: "var(--fg-strong)", borderBottom: "3px solid var(--brew-accent-500)" }}
+                    >
+                      The research behind the numbers.
+                    </h2>
                   </div>
-                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
-                    Quick start guide — what it calculates and how to use it on brew day.
-                  </div>
+                  <Link
+                    href="/learn"
+                    className="shrink-0 pb-0.5 text-xs font-semibold uppercase tracking-widest transition-colors"
+                    style={{ color: "var(--coral-500)" }}
+                  >
+                    All articles →
+                  </Link>
                 </div>
-              </Link>
-              <Link
-                href="/learn/ibu"
-                className="brew-animate-in brew-stagger-12 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
-              >
-                <div className="min-w-0">
-                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
-                    Understanding IBU
-                  </div>
-                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
-                    How bitterness is calculated for boil, whirlpool, and dry hop additions.
-                  </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {featured.map((link, i) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={[
+                        "group block rounded-2xl p-5 transition-all duration-200",
+                        "hover:-translate-y-1 hover:shadow-lg",
+                        "brew-animate-in",
+                        `brew-stagger-${i + 10}`,
+                      ].join(" ")}
+                      style={{
+                        background: "var(--brew-card)",
+                        boxShadow: "var(--shadow-card)",
+                        border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
+                      }}
+                    >
+                      <span
+                        className="text-sm font-bold transition-colors duration-150 group-hover:text-[var(--coral-500)]"
+                        style={{ color: "var(--fg-strong)" }}
+                      >
+                        {link.label}
+                      </span>
+                      <span
+                        className="mt-2 block text-xs leading-relaxed"
+                        style={{ color: "var(--fg-muted)" }}
+                      >
+                        {link.description}
+                      </span>
+                      <span
+                        className="mt-3 inline-block text-xs font-semibold opacity-40 transition-opacity duration-200 group-hover:opacity-100"
+                        style={{ color: "var(--coral-500)" }}
+                      >
+                        Read more →
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-              <Link
-                href="/learn/water-chemistry"
-                className="brew-animate-in brew-stagger-13 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
-              >
-                <div className="min-w-0">
-                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
-                    Water Chemistry
-                  </div>
-                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
-                    Source profiles, salt additions, and the auto-calculator that solves it for you.
-                  </div>
-                </div>
-              </Link>
-              <Link
-                href="/learn/gravity"
-                className="brew-animate-in brew-stagger-14 group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-[var(--bg-hover)]"
-              >
-                <div className="min-w-0">
-                  <div className="text-strong text-sm font-semibold group-hover:text-[var(--brew-accent-600)]">
-                    Gravity &amp; ABV
-                  </div>
-                  <div className="text-muted mt-0.5 text-xs leading-relaxed">
-                    How OG, FG, and alcohol content are calculated from your grain bill.
-                  </div>
-                </div>
-              </Link>
-            </div>
-            <div className="mt-4 text-center">
-              <Link
-                href="/learn"
-                className="text-xs font-medium tracking-wide uppercase transition-colors"
-                style={{ color: "var(--brew-accent-600)" }}
-              >
-                All articles →
-              </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* <HomePhysicsCansLoader /> */}
     </div>
