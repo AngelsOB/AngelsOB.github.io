@@ -301,7 +301,8 @@ export default function Home() {
                         `brew-stagger-${i + 10}`,
                       ].join(" ")}
                       style={{
-                        background: "var(--brew-card)",
+                        background: "color-mix(in oklch, var(--brew-card) 55%, transparent)",
+                        backdropFilter: "blur(8px)",
                         boxShadow: "var(--shadow-card)",
                         border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
                       }}

@@ -91,21 +91,24 @@ export default async function HomePage() {
               <div className="mb-6 flex items-end justify-between">
                 <div>
                   <p
-                    className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+                    className="mb-1 text-[10px] font-bold tracking-[0.18em] uppercase"
                     style={{ color: "var(--fg-muted)" }}
                   >
                     Community
                   </p>
                   <h2
                     className="inline-block pb-1 text-2xl font-extrabold tracking-tight"
-                    style={{ color: "var(--fg-strong)", borderBottom: "3px solid var(--brew-accent-500)" }}
+                    style={{
+                      color: "var(--fg-strong)",
+                      borderBottom: "3px solid var(--brew-accent-500)",
+                    }}
                   >
                     Fresh from the community.
                   </h2>
                 </div>
                 <Link
                   href="/browse"
-                  className="shrink-0 pb-0.5 text-xs font-semibold uppercase tracking-widest transition-colors"
+                  className="shrink-0 pb-0.5 text-xs font-semibold tracking-widest uppercase transition-colors"
                   style={{ color: "var(--coral-500)" }}
                 >
                   Browse all →
@@ -118,7 +121,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={recipe.shareSlug}
-                      className="brew-recipe-card group"
+                      className="brew-recipe-card brew-recipe-card--ghost group"
                       style={{ "--card-srm": srmColor } as React.CSSProperties}
                     >
                       {/* Hidden crawlable link */}
@@ -132,22 +135,32 @@ export default async function HomePage() {
                         <span className="sr-only">{recipe.name}</span>
                       </Link>
 
-                      <div className="rounded-xl overflow-hidden">
+                      <div className="overflow-hidden rounded-xl">
                         {/* SRM color strip */}
-                        <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmColor }} />
+                        <div
+                          className="h-2 w-full rounded-t-xl"
+                          style={{ backgroundColor: srmColor }}
+                        />
 
                         {/* Header */}
                         <div className="border-b border-[rgb(var(--brew-border))] p-4">
-                          <p className="font-extrabold tracking-tight leading-snug" style={{ fontSize: "clamp(1rem, 4cqw, 1.25rem)" }}>
+                          <p
+                            className="leading-snug font-extrabold tracking-tight"
+                            style={{ fontSize: "clamp(1rem, 4cqw, 1.25rem)" }}
+                          >
                             {recipe.name}
                           </p>
                           {recipe.style && (
-                            <p className="text-muted mt-0.5 truncate text-xs italic">{recipe.style}</p>
+                            <p className="text-muted mt-0.5 truncate text-xs italic">
+                              {recipe.style}
+                            </p>
                           )}
                           <p className="text-muted mt-1 text-xs">
                             by {recipe.ownerName}
                             {recipe.forkCount > 0 && (
-                              <span className="ml-2 opacity-60">{recipe.forkCount} {recipe.forkCount === 1 ? "fork" : "forks"}</span>
+                              <span className="ml-2 opacity-60">
+                                {recipe.forkCount} {recipe.forkCount === 1 ? "fork" : "forks"}
+                              </span>
                             )}
                           </p>
                         </div>
@@ -157,21 +170,32 @@ export default async function HomePage() {
                           {[
                             { label: "ABV", value: `${recipe.stats.abv.toFixed(1)}%` },
                             { label: "IBU", value: String(Math.round(recipe.stats.ibu)) },
-                            { label: "OG",  value: recipe.stats.og.toFixed(3) },
-                            { label: "FG",  value: recipe.stats.fg.toFixed(3) },
+                            { label: "OG", value: recipe.stats.og.toFixed(3) },
+                            { label: "FG", value: recipe.stats.fg.toFixed(3) },
                           ].map((stat, si) => (
-                            <div key={stat.label} className={si > 0 ? "border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] px-2" : "pr-2"}>
+                            <div
+                              key={stat.label}
+                              className={
+                                si > 0
+                                  ? "border-l border-[color-mix(in_oklch,var(--brew-accent-200)_25%,transparent)] px-2"
+                                  : "pr-2"
+                              }
+                            >
                               <div className="brew-gauge-label text-[10px]">{stat.label}</div>
-                              <div className="font-handwritten-alt text-sm tabular-nums">{stat.value}</div>
+                              <div className="font-handwritten-alt text-sm tabular-nums">
+                                {stat.value}
+                              </div>
                             </div>
                           ))}
                         </div>
 
                         {/* Tags */}
                         {recipe.tags.length > 0 && (
-                          <div className="px-4 pb-3 flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 px-4 pb-3">
                             {recipe.tags.slice(0, 3).map((tag) => (
-                              <span key={tag} className="brew-tag">{tag}</span>
+                              <span key={tag} className="brew-tag">
+                                {tag}
+                              </span>
                             ))}
                             {recipe.tags.length > 3 && (
                               <span className="brew-tag">+{recipe.tags.length - 3}</span>

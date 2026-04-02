@@ -39,6 +39,7 @@ import SignInPrompt from "../../../auth/components/SignInPrompt";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 import LabelUploader from "../../../labels/LabelUploader";
 import PhysicsCan from "../../../labels/PhysicsCan";
+import GrainGradient from "../../../../components/GrainGradient";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
@@ -350,7 +351,30 @@ export default function BetaBuilderPage({
   };
 
   return (
-    <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-1 sm:px-4 py-6">
+    <div className="brew-theme has-section-sidebar relative mx-auto max-w-4xl px-1 sm:px-4 py-6">
+      {/* Grainy ambient glow — warm accent wash behind all builder content (dark mode only) */}
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 h-[85vh] hidden dark:block"
+        style={{
+          zIndex: 0,
+          maskImage: 'linear-gradient(to bottom, black 0%, black 20%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3) 60%, transparent 80%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3) 60%, transparent 80%)',
+        }}
+        aria-hidden
+      >
+        <GrainGradient
+          stops={[
+            { pos: 0,    color: "color-mix(in oklch, var(--brew-accent-300) 14%, transparent)" },
+            { pos: 0.5,  color: "color-mix(in oklch, var(--brew-accent-200) 6%, transparent)" },
+            { pos: 1,    color: "transparent" },
+          ]}
+          direction={155}
+          displacement={0.5}
+          grainOpacity={0.65}
+          radius={10}
+          resolution={0.2}
+        />
+      </div>
       <SectionSidebar
         recipe={currentRecipe}
         calculations={calculations}

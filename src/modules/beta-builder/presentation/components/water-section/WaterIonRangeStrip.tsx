@@ -245,7 +245,7 @@ export default function WaterIonRangeStrip({
           style={{
             left: `${barWidth}%`,
             transform: `translateX(-50%) translateY(-8px) rotate(${jitterRotate}deg) translate(${jitterX}px, ${jitterY}px)`,
-            ...(hue !== undefined && { color: `oklch(0.45 0.16 ${hue})` }),
+            ...(hue !== undefined && { color: `oklch(var(--water-strip-text-l) 0.16 ${hue})` }),
           }}
         >
           {Math.round(finalValue)}
@@ -260,7 +260,7 @@ export default function WaterIonRangeStrip({
                 left: "0%",
                 width: `${barWidth}%`,
                 ...(hue !== undefined && {
-                  background: `linear-gradient(to bottom, oklch(0.7 0.14 ${hue}), oklch(0.55 0.16 ${hue}))`,
+                  background: `linear-gradient(to bottom, oklch(var(--water-strip-bar-l-from) 0.14 ${hue}), oklch(var(--water-strip-bar-l-to) 0.16 ${hue}))`,
                 }),
               }}
             />
@@ -285,7 +285,7 @@ export default function WaterIonRangeStrip({
                     left: `${sourcePos}%`,
                     width: `${barWidth - sourcePos}%`,
                     ...(hue !== undefined && {
-                      background: `linear-gradient(to bottom, oklch(0.7 0.14 ${hue}), oklch(0.55 0.16 ${hue}))`,
+                      background: `linear-gradient(to bottom, oklch(var(--water-strip-bar-l-from) 0.14 ${hue}), oklch(var(--water-strip-bar-l-to) 0.16 ${hue}))`,
                     }),
                   }}
                 />
@@ -367,7 +367,7 @@ export default function WaterIonRangeStrip({
             className={"water-strip-lbl water-strip-lbl-current" + (crowded ? " is-crowded" : "")}
             style={{
               left: `${barWidth}%`,
-              ...(hue !== undefined && { color: `oklch(0.45 0.16 ${hue})` }),
+              ...(hue !== undefined && { color: `oklch(var(--water-strip-text-l) 0.16 ${hue})` }),
             }}
           >
             Current
