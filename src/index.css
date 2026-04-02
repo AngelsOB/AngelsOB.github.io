@@ -27,7 +27,6 @@ input[type="number"],
   margin-left: -50vw;
 }
 
-
 /* Force dark mode to work with .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -177,12 +176,12 @@ input[type="number"],
 
 .dark {
   /* Dark theme — warm charcoal */
-  --bg: oklch(calc(16.54% * var(--srm-bg-l-scale)) calc(0.0053 * var(--srm-bg-c-scale)) 67.4);
-  --surface: oklch(calc(19.28% * var(--srm-bg-l-scale)) calc(0.0051 * var(--srm-bg-c-scale)) 67.5);
-  --card: oklch(calc(21.86% * var(--srm-bg-l-scale)) calc(0.0082 * var(--srm-bg-c-scale)) 84.6);
+  --bg: oklch(calc(20.5% * var(--srm-bg-l-scale)) calc(0.0053 * var(--srm-bg-c-scale)) 67.4);
+  --surface: oklch(calc(23.5% * var(--srm-bg-l-scale)) calc(0.0051 * var(--srm-bg-c-scale)) 67.5);
+  --card: oklch(calc(26.0% * var(--srm-bg-l-scale)) calc(0.0082 * var(--srm-bg-c-scale)) 84.6);
   --text: 240 238 232;
-  --text-muted: 160 152 140; /* warm gray */
-  --border: 54 50 44; /* warm border */
+  --text-muted: 170 162 150; /* warm gray */
+  --border: 64 60 54; /* warm border */
 
   --accent: 251 146 60;
   --glow: 234 88 12; /* orange-600 */
@@ -202,7 +201,7 @@ input[type="number"],
 
   /* Dark foreground — warm-tinted */
   --fg-strong: oklch(96% 0.006 50);
-  --fg-muted: oklch(68% 0.008 50);
+  --fg-muted: oklch(70% 0.008 50);
 
   /* Dark layered shadows */
   --shadow-card:
@@ -228,10 +227,10 @@ input[type="number"],
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(18.38% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5
+    calc(22.0% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5
   );
-  --brew-border: 54 50 44;
-  --brew-border-subtle: 42 38 34;
+  --brew-border: 64 60 54;
+  --brew-border-subtle: 52 48 44;
 }
 
 /* ========================================
@@ -270,8 +269,8 @@ input[type="number"],
 
   .dark body {
     background-image:
-      /* Vignette — more pronounced in dark for moody depth */
-      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.12) 100%),
+      /* Vignette — subtle edge darkening */
+      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.06) 100%),
       /* Ambient glow — deeper, richer in dark */
         radial-gradient(
           1000px 360px at 15% -10%,
@@ -491,29 +490,29 @@ input[type="number"],
 
 .dark.palette-vintage {
   /* Surfaces — deep warm charcoal */
-  --bg: oklch(calc(18.38% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5);
-  --surface: oklch(calc(21.58% * var(--srm-bg-l-scale)) calc(0.0075 * var(--srm-bg-c-scale)) 67.4);
-  --card: oklch(calc(24.54% * var(--srm-bg-l-scale)) calc(0.0087 * var(--srm-bg-c-scale)) 75.2);
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0075 * var(--srm-bg-c-scale)) 67.4);
+  --card: oklch(calc(28.0% * var(--srm-bg-l-scale)) calc(0.0087 * var(--srm-bg-c-scale)) 75.2);
   --text: 240 235 228;
-  --text-muted: 140 152 168; /* slate blue in dark */
-  --border: 60 55 48;
+  --text-muted: 150 162 178; /* slate blue in dark */
+  --border: 70 65 58;
 
   --accent: 215 140 70; /* warm amber-orange */
   --glow: 180 110 50;
 
   /* fg — warm light tones */
   --fg-strong: oklch(94% 0.006 50);
-  --fg-muted: oklch(65% 0.015 240);
+  --fg-muted: oklch(68% 0.015 240);
 
   /* Brew surfaces — dark warm */
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(20.14% * var(--srm-bg-l-scale)) calc(0.0067 * var(--srm-bg-c-scale)) 78.2
+    calc(23.8% * var(--srm-bg-l-scale)) calc(0.0067 * var(--srm-bg-c-scale)) 78.2
   );
-  --brew-border: 60 55 48;
-  --brew-border-subtle: 48 44 38;
+  --brew-border: 70 65 58;
+  --brew-border-subtle: 58 54 48;
 
   /* Darker shadows */
   --shadow-card:
@@ -619,27 +618,27 @@ input[type="number"],
   --sidebar-targets-text: oklch(94% 0.008 250);
 }
 .dark.palette-midnight {
-  --bg: oklch(calc(18.44% * var(--srm-bg-l-scale)) calc(0.0255 * var(--srm-bg-c-scale)) 269.7);
-  --surface: oklch(calc(21.74% * var(--srm-bg-l-scale)) calc(0.0344 * var(--srm-bg-c-scale)) 270.8);
-  --card: oklch(calc(25.69% * var(--srm-bg-l-scale)) calc(0.0407 * var(--srm-bg-c-scale)) 271.2);
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0255 * var(--srm-bg-c-scale)) 269.7);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0344 * var(--srm-bg-c-scale)) 270.8);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0407 * var(--srm-bg-c-scale)) 271.2);
   --text: 220 228 245;
-  --text-muted: 130 145 175;
-  --border: 45 55 80;
+  --text-muted: 140 155 185;
+  --border: 55 65 90;
 
   --accent: 80 145 255;
   --glow: 50 110 230;
 
   --fg-strong: oklch(95% 0.008 250);
-  --fg-muted: oklch(65% 0.015 250);
+  --fg-muted: oklch(68% 0.015 250);
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(19.6% * var(--srm-bg-l-scale)) calc(0.0329 * var(--srm-bg-c-scale)) 272.4
+    calc(23.2% * var(--srm-bg-l-scale)) calc(0.0329 * var(--srm-bg-c-scale)) 272.4
   );
-  --brew-border: 45 55 80;
-  --brew-border-subtle: 38 48 70;
+  --brew-border: 55 65 90;
+  --brew-border-subtle: 48 58 80;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 1px -0.5px rgba(0, 0, 0, 0.2),
@@ -834,27 +833,27 @@ input[type="number"],
   --sidebar-targets-text: oklch(95% 0.008 148);
 }
 .dark.palette-forest {
-  --bg: oklch(calc(18.26% * var(--srm-bg-l-scale)) calc(0.0152 * var(--srm-bg-c-scale)) 144.9);
-  --surface: oklch(calc(21.55% * var(--srm-bg-l-scale)) calc(0.0194 * var(--srm-bg-c-scale)) 144.9);
-  --card: oklch(calc(25.55% * var(--srm-bg-l-scale)) calc(0.0233 * var(--srm-bg-c-scale)) 144.9);
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0152 * var(--srm-bg-c-scale)) 144.9);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0194 * var(--srm-bg-c-scale)) 144.9);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0233 * var(--srm-bg-c-scale)) 144.9);
   --text: 225 238 220;
-  --text-muted: 130 155 125;
-  --border: 45 60 42;
+  --text-muted: 140 165 135;
+  --border: 55 70 52;
 
   --accent: 75 170 85;
   --glow: 50 140 60;
 
   --fg-strong: oklch(95% 0.008 145);
-  --fg-muted: oklch(65% 0.018 145);
+  --fg-muted: oklch(68% 0.018 145);
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(19.79% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 144.8
+    calc(23.5% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 144.8
   );
-  --brew-border: 45 60 42;
-  --brew-border-subtle: 38 52 36;
+  --brew-border: 55 70 52;
+  --brew-border-subtle: 48 62 46;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 1px -0.5px rgba(0, 0, 0, 0.16),
@@ -1049,27 +1048,27 @@ input[type="number"],
   --sidebar-targets-text: oklch(95% 0.008 35);
 }
 .dark.palette-copper {
-  --bg: oklch(calc(17.86% * var(--srm-bg-l-scale)) calc(0.0154 * var(--srm-bg-c-scale)) 66.6);
-  --surface: oklch(calc(20.75% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 66.4);
-  --card: oklch(calc(24.39% * var(--srm-bg-l-scale)) calc(0.0237 * var(--srm-bg-c-scale)) 66.3);
+  --bg: oklch(calc(21.5% * var(--srm-bg-l-scale)) calc(0.0154 * var(--srm-bg-c-scale)) 66.6);
+  --surface: oklch(calc(24.5% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 66.4);
+  --card: oklch(calc(28.0% * var(--srm-bg-l-scale)) calc(0.0237 * var(--srm-bg-c-scale)) 66.3);
   --text: 240 228 210;
-  --text-muted: 165 140 110;
-  --border: 65 52 38;
+  --text-muted: 175 150 120;
+  --border: 75 62 48;
 
   --accent: 210 135 55;
   --glow: 185 110 35;
 
   --fg-strong: oklch(95% 0.008 50);
-  --fg-muted: oklch(68% 0.02 50);
+  --fg-muted: oklch(70% 0.02 50);
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(18.91% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) 62.2
+    calc(22.5% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) 62.2
   );
-  --brew-border: 65 52 38;
-  --brew-border-subtle: 55 44 32;
+  --brew-border: 75 62 48;
+  --brew-border-subtle: 65 54 42;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
@@ -1260,27 +1259,27 @@ input[type="number"],
   --sidebar-targets-text: oklch(94% 0.004 260);
 }
 .dark.palette-ink {
-  --bg: oklch(calc(14.57% * var(--srm-bg-l-scale)) calc(0.0043 * var(--srm-bg-c-scale)) 285.9);
-  --surface: oklch(calc(17.39% * var(--srm-bg-l-scale)) calc(0.0041 * var(--srm-bg-c-scale)) 286);
-  --card: oklch(calc(20.15% * var(--srm-bg-l-scale)) calc(0.0059 * var(--srm-bg-c-scale)) 285.9);
+  --bg: oklch(calc(18.5% * var(--srm-bg-l-scale)) calc(0.0043 * var(--srm-bg-c-scale)) 285.9);
+  --surface: oklch(calc(21.5% * var(--srm-bg-l-scale)) calc(0.0041 * var(--srm-bg-c-scale)) 286);
+  --card: oklch(calc(24.0% * var(--srm-bg-l-scale)) calc(0.0059 * var(--srm-bg-c-scale)) 285.9);
   --text: 235 235 240;
-  --text-muted: 125 125 140;
-  --border: 40 40 48;
+  --text-muted: 135 135 150;
+  --border: 50 50 58;
 
   --accent: 200 200 215;
   --glow: 170 170 188;
 
   --fg-strong: oklch(96% 0.004 260);
-  --fg-muted: oklch(62% 0.006 260);
+  --fg-muted: oklch(65% 0.006 260);
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(15.53% * var(--srm-bg-l-scale)) calc(0.0042 * var(--srm-bg-c-scale)) 285.9
+    calc(19.5% * var(--srm-bg-l-scale)) calc(0.0042 * var(--srm-bg-c-scale)) 285.9
   );
-  --brew-border: 40 40 48;
-  --brew-border-subtle: 34 34 40;
+  --brew-border: 50 50 58;
+  --brew-border-subtle: 44 44 50;
 
   --shadow-card:
     0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.25);
@@ -1472,27 +1471,27 @@ input[type="number"],
   --sidebar-targets-text: oklch(95% 0.008 30);
 }
 .dark.palette-sahara {
-  --bg: oklch(calc(18.77% * var(--srm-bg-l-scale)) calc(0.0153 * var(--srm-bg-c-scale)) 66.7);
-  --surface: oklch(calc(21.62% * var(--srm-bg-l-scale)) calc(0.0196 * var(--srm-bg-c-scale)) 66.5);
-  --card: oklch(calc(25.22% * var(--srm-bg-l-scale)) calc(0.0235 * var(--srm-bg-c-scale)) 66.4);
+  --bg: oklch(calc(22.5% * var(--srm-bg-l-scale)) calc(0.0153 * var(--srm-bg-c-scale)) 66.7);
+  --surface: oklch(calc(25.5% * var(--srm-bg-l-scale)) calc(0.0196 * var(--srm-bg-c-scale)) 66.5);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0235 * var(--srm-bg-c-scale)) 66.4);
   --text: 242 230 212;
-  --text-muted: 165 145 118;
-  --border: 68 55 40;
+  --text-muted: 175 155 128;
+  --border: 78 65 50;
 
   --accent: 215 115 65;
   --glow: 195 90 40;
 
   --fg-strong: oklch(95% 0.008 45);
-  --fg-muted: oklch(68% 0.02 45);
+  --fg-muted: oklch(70% 0.02 45);
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(19.93% * var(--srm-bg-l-scale)) calc(0.0175 * var(--srm-bg-c-scale)) 58.4
+    calc(23.5% * var(--srm-bg-l-scale)) calc(0.0175 * var(--srm-bg-c-scale)) 58.4
   );
-  --brew-border: 68 55 40;
-  --brew-border-subtle: 58 46 34;
+  --brew-border: 78 65 50;
+  --brew-border-subtle: 68 56 44;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
@@ -1737,32 +1736,32 @@ input[type="number"],
 }
 .dark.palette-reactive {
   --bg: oklch(
-    calc(17.62% * var(--srm-bg-l-scale)) calc(0.0119 * var(--srm-bg-c-scale)) var(--srm-hue)
+    calc(21.5% * var(--srm-bg-l-scale)) calc(0.0119 * var(--srm-bg-c-scale)) var(--srm-hue)
   );
   --surface: oklch(
-    calc(20.51% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) var(--srm-hue)
+    calc(24.5% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) var(--srm-hue)
   );
   --card: oklch(
-    calc(24.18% * var(--srm-bg-l-scale)) calc(0.0191 * var(--srm-bg-c-scale)) var(--srm-hue)
+    calc(28.0% * var(--srm-bg-l-scale)) calc(0.0191 * var(--srm-bg-c-scale)) var(--srm-hue)
   );
   --text: 242 232 218;
-  --text-muted: 160 140 115;
-  --border: 62 52 40;
+  --text-muted: 170 150 125;
+  --border: 72 62 50;
 
   --accent: 220 165 65;
   --glow: 195 140 40;
 
   --fg-strong: oklch(95% 0.008 var(--srm-hue));
-  --fg-muted: oklch(68% 0.02 var(--srm-hue));
+  --fg-muted: oklch(70% 0.02 var(--srm-hue));
 
   --brew-bg: var(--bg);
   --brew-surface: var(--surface);
   --brew-card: var(--card);
   --brew-card-inset: oklch(
-    calc(18.8% * var(--srm-bg-l-scale)) calc(0.014 * var(--srm-bg-c-scale)) var(--srm-hue)
+    calc(22.5% * var(--srm-bg-l-scale)) calc(0.014 * var(--srm-bg-c-scale)) var(--srm-hue)
   );
-  --brew-border: 62 52 40;
-  --brew-border-subtle: 52 44 34;
+  --brew-border: 72 62 50;
+  --brew-border-subtle: 62 54 44;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
@@ -2201,15 +2200,14 @@ input[type="number"],
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background:
-    linear-gradient(
-      to bottom,
-      oklch(100% 0 0 / 0.2) 0%,
-      oklch(100% 0 0 / 0.06) 25%,
-      oklch(100% 0 0 / 0) 50%,
-      oklch(0% 0 0 / 0.08) 80%,
-      oklch(0% 0 0 / 0.18) 100%
-    );
+  background: linear-gradient(
+    to bottom,
+    oklch(100% 0 0 / 0.2) 0%,
+    oklch(100% 0 0 / 0.06) 25%,
+    oklch(100% 0 0 / 0) 50%,
+    oklch(0% 0 0 / 0.08) 80%,
+    oklch(0% 0 0 / 0.18) 100%
+  );
   background-size: auto;
   background-repeat: no-repeat;
 }
@@ -3400,12 +3398,7 @@ input[type="number"],
           color-mix(in oklch, var(--brew-accent-300) 30%, transparent)
         )
         border-box;
-    background-size:
-      auto,
-      auto,
-      auto,
-      auto,
-      auto;
+    background-size: auto, auto, auto, auto, auto;
     box-shadow:
       0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
       0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
@@ -3419,20 +3412,20 @@ input[type="number"],
   }
   .dark .brew-section {
     /* Dark section-local card colours — blend accent with SRM-tinted --bg */
-    --brew-card: color-mix(in oklch, var(--brew-accent-900) 55%, var(--bg));
-    --brew-card-inset: color-mix(in oklch, var(--brew-accent-950) 55%, var(--bg));
+    --brew-card: color-mix(in oklch, var(--brew-accent-700) 40%, var(--bg));
+    --brew-card-inset: color-mix(in oklch, var(--brew-accent-800) 40%, var(--bg));
 
     /*
      * Dark mode: card IS the section color with a subtle gradient.
      * Gradient border: accent glow at top, fading down — border-box trick.
      *
      * Tuning knobs — override per-palette or per-section:
-     *   --section-grad-from    start color  (default: accent-900)
-     *   --section-grad-to      end color    (default: ~925, midpoint of 900/950)
+     *   --section-grad-from    start color  (default: accent-700)
+     *   --section-grad-to      end color    (default: ~800)
      *   --section-grad-angle   direction    (default: to bottom)
      */
-    --section-grad-from: color-mix(in oklch, var(--brew-accent-800) 80%, var(--brew-accent-900));
-    --section-grad-to: color-mix(in oklch, var(--brew-accent-900) 10%, var(--brew-accent-950));
+    --section-grad-from: color-mix(in oklch, var(--brew-accent-600) 55%, var(--brew-accent-700));
+    --section-grad-to: color-mix(in oklch, var(--brew-accent-700) 30%, var(--brew-accent-800));
     --section-grad-angle: to bottom;
 
     border: 1px solid transparent;
@@ -3441,8 +3434,8 @@ input[type="number"],
         padding-box,
       linear-gradient(
           to bottom,
-          color-mix(in oklch, var(--brew-accent-600) 50%, transparent),
-          color-mix(in oklch, var(--brew-accent-800) 20%, transparent)
+          color-mix(in oklch, var(--brew-accent-400) 45%, transparent),
+          color-mix(in oklch, var(--brew-accent-600) 18%, transparent)
         )
         border-box;
     box-shadow:
@@ -3829,6 +3822,38 @@ input[type="number"],
       0 1px 2px rgba(0, 0, 0, 0.15);
   }
 
+  /* Ghost variant — dark mode only. Light mode inherits standard brew-recipe-card styles. */
+  .dark .brew-recipe-card--ghost {
+    background:
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent 50%, rgba(0, 0, 0, 0.06))
+        padding-box,
+      linear-gradient(
+          color-mix(in oklch, var(--_srm) 14%, var(--bg)),
+          color-mix(in oklch, var(--_srm) 14%, var(--bg))
+        )
+        padding-box,
+      linear-gradient(
+          to bottom,
+          color-mix(in oklch, var(--_srm) 40%, transparent),
+          color-mix(in oklch, var(--_srm) 12%, transparent)
+        )
+        border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 5px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 6px 4px rgba(0, 0, 0, 0.15),
+      0 10px 20px rgba(0, 0, 0, 0.2),
+      0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+  .dark .brew-recipe-card--ghost:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 7px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 8px 6px rgba(0, 0, 0, 0.2),
+      0 16px 32px rgba(0, 0, 0, 0.25),
+      0 32px 64px rgba(0, 0, 0, 0.15);
+  }
+
   /* Tag pill — translucent accent tinted */
   .brew-tag {
     @apply rounded-full px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm;
@@ -4139,8 +4164,21 @@ input[type="number"],
     opacity: 0.45;
   }
   .dark .water-strip-base-segment {
-    background: linear-gradient(to bottom, oklch(0.45 0.02 250), oklch(0.35 0.03 250));
-    opacity: 0.5;
+    background: linear-gradient(to bottom, oklch(0.50 0.02 250), oklch(0.40 0.03 250));
+    opacity: 0.55;
+  }
+
+  /* Water strip OKLCH lightness — dark mode needs brighter values for contrast
+     against the deep teal section background */
+  :root {
+    --water-strip-text-l: 0.45;
+    --water-strip-bar-l-from: 0.7;
+    --water-strip-bar-l-to: 0.55;
+  }
+  .dark {
+    --water-strip-text-l: 0.75;
+    --water-strip-bar-l-from: 0.78;
+    --water-strip-bar-l-to: 0.62;
   }
 
   /* Source positioned on bar (when source > target) */
@@ -4299,6 +4337,9 @@ input[type="number"],
     color: var(--fg-strong);
     opacity: 0.7;
   }
+  .dark .water-strip-num-source {
+    opacity: 0.85;
+  }
   .water-strip-num-target {
     top: 2px;
     transform: translateX(-50%);
@@ -4366,6 +4407,9 @@ input[type="number"],
     letter-spacing: 0.05em;
     color: var(--fg-strong);
     opacity: 0.5;
+  }
+  .dark .water-strip-lbl {
+    opacity: 0.7;
     white-space: nowrap;
     pointer-events: none;
   }
@@ -4384,7 +4428,7 @@ input[type="number"],
     font-size: 12px;
     font-weight: 400;
     letter-spacing: 0;
-    opacity: 0.6;
+    opacity: 0.65;
     -webkit-text-stroke: 0.3px currentColor;
     transition:
       left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
