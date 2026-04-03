@@ -121,7 +121,7 @@ export default function GrainOverlay(params: GrainParams) {
   }, []);
 
   if (!mount) return null;
-  return createPortal(<><GrainLayer {...params} />{/* <DustLayer /> */}</>, mount);
+  return createPortal(<><GrainLayer {...params} /><DustLayer /></>, mount);
 }
 
 /** Dust overlay — sparse specks, fixed to viewport */
