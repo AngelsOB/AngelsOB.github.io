@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useThemeStore, type Palette } from "../stores/useThemeStore";
 import { useRecipeStore } from "../modules/beta-builder/presentation/stores/recipeStore";
@@ -20,14 +20,14 @@ const DEFAULT_BG_C_SCALE = 1;
 
 /** Per-palette lightness range for SRM scaling on recipe pages (accents). */
 const PALETTE_L_RANGES: Record<Palette, { bright: number; dark: number }> = {
-  default: { bright: 1.1, dark: 0.75 },
-  vintage: { bright: 1.08, dark: 0.72 },
-  midnight: { bright: 1.15, dark: 0.8 },
-  forest: { bright: 1.15, dark: 0.8 },
-  copper: { bright: 1.15, dark: 0.8 },
-  ink: { bright: 1.05, dark: 0.8 },
-  sahara: { bright: 1.1, dark: 0.8 },
-  reactive: { bright: 1.15, dark: 0.6 },
+  default: { bright: 1.05, dark: 0.95 },
+  vintage: { bright: 1.05, dark: 0.95 },
+  midnight: { bright: 1.05, dark: 0.95 },
+  forest: { bright: 1.05, dark: 0.95 },
+  copper: { bright: 1.05, dark: 0.95 },
+  ink: { bright: 1.03, dark: 0.95 },
+  sahara: { bright: 1.05, dark: 0.95 },
+  reactive: { bright: 1.05, dark: 0.95 },
 };
 
 /**
@@ -53,14 +53,14 @@ const PALETTE_BG_L_LIGHT: Record<Palette, { bright: number; dark: number }> = {
 };
 
 const PALETTE_BG_L_DARK: Record<Palette, { bright: number; dark: number }> = {
-  default:  { bright: 1.18, dark: 0.92 },
-  vintage:  { bright: 1.18, dark: 0.91 },
-  midnight: { bright: 1.18, dark: 0.93 },
-  forest:   { bright: 1.18, dark: 0.92 },
-  copper:   { bright: 1.18, dark: 0.91 },
-  ink:      { bright: 1.12, dark: 0.95 },
-  sahara:   { bright: 1.18, dark: 0.91 },
-  reactive: { bright: 1.25, dark: 0.88 },
+  default:  { bright: 1.0, dark: 0.96 },
+  vintage:  { bright: 1.0, dark: 0.96 },
+  midnight: { bright: 1.0, dark: 0.97 },
+  forest:   { bright: 1.0, dark: 0.96 },
+  copper:   { bright: 1.0, dark: 0.96 },
+  ink:      { bright: 1.0, dark: 0.97 },
+  sahara:   { bright: 1.0, dark: 0.96 },
+  reactive: { bright: 1.0, dark: 0.94 },
 };
 
 /**
@@ -97,7 +97,7 @@ const PALETTE_BG_CHROMA: Record<Palette, { floor: number; boost: number }> = {
  * the tint feeling integrated.
  */
 const LIGHT_MODE_CHROMA_BOOST = 0.8;
-const DARK_MODE_CHROMA_BOOST = 0.2;
+const DARK_MODE_CHROMA_BOOST = 0.35;
 
 export function useSrmTheme() {
   const palette = useThemeStore((s) => s.palette);
@@ -105,15 +105,15 @@ export function useSrmTheme() {
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const pathname = usePathname();
   const isRecipePage = pathname?.startsWith("/recipes/") || pathname?.startsWith("/r/");
-  const rafRef = useRef<number>(0);
 
-  useEffect(() => {
+  // useLayoutEffect fires synchronously before the browser paints,
+  // eliminating the flash of unscaled colors on navigation.
+  useLayoutEffect(() => {
     const isReactive = palette === "reactive";
     const isDark = resolvedTheme === "dark";
 
     // Non-recipe page or no recipe → defaults
     if (!isRecipePage || !currentRecipe) {
-      // Always set l-scale to 1 (all palettes use it now)
       document.documentElement.style.setProperty("--srm-l-scale", String(DEFAULT_L_SCALE));
       document.documentElement.style.setProperty("--srm-bg-l-scale", String(DEFAULT_BG_L_SCALE));
       document.documentElement.style.setProperty("--srm-bg-c-scale", String(DEFAULT_BG_C_SCALE));
@@ -134,7 +134,10 @@ export function useSrmTheme() {
     // Recipe page with a recipe → calculate SRM-based values
     const srm = recipeCalculationService.calculateSRM(currentRecipe);
     const range = PALETTE_L_RANGES[palette] ?? { bright: 1.0, dark: 1.0 };
-    const lScale = srmToOklchLightnessScale(srm, range.bright, range.dark);
+    // In dark mode, cap accent lightness at 1.0 — pale beers should NOT
+    // brighten section colors, only stouts should darken them.
+    const rawLScale = srmToOklchLightnessScale(srm, range.bright, range.dark);
+    const lScale = isDark ? Math.min(rawLScale, 1.0) : rawLScale;
     const bgRanges = isDark ? PALETTE_BG_L_DARK : PALETTE_BG_L_LIGHT;
     const bgRange = bgRanges[palette] ?? { bright: 1.0, dark: 1.0 };
     const bgLScale = srmToOklchLightnessScale(srm, bgRange.bright, bgRange.dark);
@@ -142,39 +145,32 @@ export function useSrmTheme() {
     const darkMul = isDark ? DARK_MODE_CHROMA_BOOST : LIGHT_MODE_CHROMA_BOOST;
     const bgCScale = srmToBgChromaScale(srm, bgC.boost * darkMul, bgC.floor * darkMul);
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      // Lightness scaling applies to ALL palettes
-      document.documentElement.style.setProperty(
-        "--srm-l-scale",
-        String(Math.round(lScale * 100) / 100)
-      );
-      document.documentElement.style.setProperty(
-        "--srm-bg-l-scale",
-        String(Math.round(bgLScale * 100) / 100)
-      );
-      document.documentElement.style.setProperty(
-        "--srm-bg-c-scale",
-        String(Math.round(bgCScale * 100) / 100)
-      );
+    // Set synchronously — no rAF wrapper, so values are applied before paint
+    document.documentElement.style.setProperty(
+      "--srm-l-scale",
+      String(Math.round(lScale * 100) / 100)
+    );
+    document.documentElement.style.setProperty(
+      "--srm-bg-l-scale",
+      String(Math.round(bgLScale * 100) / 100)
+    );
+    document.documentElement.style.setProperty(
+      "--srm-bg-c-scale",
+      String(Math.round(bgCScale * 100) / 100)
+    );
 
-      // Hue + chroma shifting only applies to reactive palette
-      if (isReactive) {
-        const hue = srmToOklchHue(srm);
-        const chromaScale = srmToOklchChromaScale(srm);
-        document.documentElement.style.setProperty("--srm-hue", String(Math.round(hue * 10) / 10));
-        document.documentElement.style.setProperty(
-          "--srm-chroma-scale",
-          String(Math.round(chromaScale * 100) / 100)
-        );
-      } else {
-        document.documentElement.style.removeProperty("--srm-hue");
-        document.documentElement.style.removeProperty("--srm-chroma-scale");
-      }
-    });
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    // Hue + chroma shifting only applies to reactive palette
+    if (isReactive) {
+      const hue = srmToOklchHue(srm);
+      const chromaScale = srmToOklchChromaScale(srm);
+      document.documentElement.style.setProperty("--srm-hue", String(Math.round(hue * 10) / 10));
+      document.documentElement.style.setProperty(
+        "--srm-chroma-scale",
+        String(Math.round(chromaScale * 100) / 100)
+      );
+    } else {
+      document.documentElement.style.removeProperty("--srm-hue");
+      document.documentElement.style.removeProperty("--srm-chroma-scale");
+    }
   }, [palette, resolvedTheme, currentRecipe, isRecipePage]);
 }

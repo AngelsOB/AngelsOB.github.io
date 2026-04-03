@@ -3425,8 +3425,8 @@ input[type="number"],
      *   --section-grad-to      end color    (default: ~800)
      *   --section-grad-angle   direction    (default: to bottom)
      */
-    --section-grad-from: color-mix(in oklch, var(--brew-accent-600) 55%, var(--brew-accent-700));
-    --section-grad-to: color-mix(in oklch, var(--brew-accent-700) 30%, var(--brew-accent-800));
+    --section-grad-from: color-mix(in oklch, var(--brew-accent-700) 70%, var(--brew-accent-800));
+    --section-grad-to: color-mix(in oklch, var(--brew-accent-800) 40%, var(--brew-accent-900));
     --section-grad-angle: to bottom;
 
     border: 1px solid transparent;
