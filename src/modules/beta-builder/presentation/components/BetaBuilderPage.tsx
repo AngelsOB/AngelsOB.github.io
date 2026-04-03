@@ -354,11 +354,15 @@ export default function BetaBuilderPage({
     <div className="brew-theme has-section-sidebar relative mx-auto max-w-4xl px-1 sm:px-4 py-6">
       {/* Grainy ambient glow — warm accent wash behind all builder content (dark mode only) */}
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 h-[85vh] hidden dark:block"
+        className="brew-top-breathe pointer-events-none absolute h-[130vh] hidden dark:block"
         style={{
+          top: '-5rem',
+          left: 'calc(50% - 50vw)',
+          width: '100vw',
           zIndex: 0,
-          maskImage: 'linear-gradient(to bottom, black 0%, black 20%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3) 60%, transparent 80%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.3) 60%, transparent 80%)',
+          transformOrigin: '50% 0%',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
         }}
         aria-hidden
       >
@@ -956,6 +960,22 @@ export default function BetaBuilderPage({
         isOpen={isSignInModalOpen}
         onClose={() => setIsSignInModalOpen(false)}
       />
+
+      {/* Bottom glow — warm upward gradient with animated brightness wave (dark mode only) */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] hidden dark:block"
+        style={{ zIndex: 0 }}
+        aria-hidden
+      >
+        {/* Breathing ellipse glow */}
+        <div
+          className="brew-bottom-wave absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 70% 45% at 50% 100%, color-mix(in oklch, var(--brew-neutral-300) 6%, transparent) 0%, transparent 100%)',
+            transformOrigin: '50% 100%',
+          }}
+        />
+      </div>
     </div>
   );
 }

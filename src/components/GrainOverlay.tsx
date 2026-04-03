@@ -121,5 +121,28 @@ export default function GrainOverlay(params: GrainParams) {
   }, []);
 
   if (!mount) return null;
-  return createPortal(<GrainLayer {...params} />, mount);
+  return createPortal(<><GrainLayer {...params} /><DustLayer /></>, mount);
+}
+
+/** Dust overlay — sparse specks, fixed to viewport */
+function DustLayer() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><filter id="d"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="8" seed="19" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="discrete" tableValues="0 0 0 0 1"/><feFuncG type="discrete" tableValues="0 0 0 0 1"/><feFuncB type="discrete" tableValues="0 0 0 0 1"/></feComponentTransfer></filter><rect width="512" height="512" filter="url(%23d)"/></svg>`;
+  const dustUrl = `url("data:image/svg+xml;base64,${typeof btoa !== 'undefined' ? btoa(svg) : ''}")`;
+
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "fixed",
+        inset: 0,
+        pointerEvents: "none",
+        backgroundImage: dustUrl,
+        backgroundRepeat: "repeat",
+        backgroundSize: "2048px 2048px",
+        zIndex: 9997,
+        opacity: 0.07,
+        mixBlendMode: "screen",
+      }}
+    />
+  );
 }

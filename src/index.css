@@ -288,6 +288,7 @@ input[type="number"],
       auto;
     background-repeat: no-repeat, no-repeat, no-repeat;
   }
+
 }
 
 /* =============================================
@@ -3439,12 +3440,16 @@ input[type="number"],
         )
         border-box;
     box-shadow:
+      0 0 0 1px transparent,
       0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
       0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-900) 12%, transparent),
       0 6px 6px -3px color-mix(in oklch, var(--brew-accent-900) 10%, transparent),
       0 12px 12px -6px rgba(0, 0, 0, 0.1),
-      0 24px 24px -12px rgba(0, 0, 0, 0.08);
+      0 24px 24px -12px rgba(0, 0, 0, 0.08),
+      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
+    transition: box-shadow 0.3s ease;
   }
+
   .brew-section:hover {
     box-shadow:
       0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
@@ -3452,7 +3457,8 @@ input[type="number"],
       0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
       0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
       0 16px 16px -8px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
-      0 36px 36px -18px color-mix(in oklch, var(--brew-accent-500) 4%, transparent);
+      0 36px 36px -18px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
+      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
   }
   .dark .brew-section:hover {
     box-shadow:
@@ -3461,7 +3467,8 @@ input[type="number"],
       0 4px 4px -2px color-mix(in oklch, var(--brew-accent-900) 16%, transparent),
       0 8px 8px -4px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
       0 16px 16px -8px rgba(0, 0, 0, 0.12),
-      0 36px 36px -18px rgba(0, 0, 0, 0.1);
+      0 36px 36px -18px rgba(0, 0, 0, 0.1),
+      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
   }
 
   /* Warm inset input — translucent inside glass containers */
@@ -5675,6 +5682,55 @@ input[type="number"],
   50% {
     opacity: 0;
   }
+}
+
+/* Bottom glow — brightness wave sweeping left→right→left */
+/* Section & sidebar gentle breathe — in unison with the 15s top background breathe */
+@keyframes brew-element-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.009);
+  }
+}
+.dark .brew-section {
+  animation: brew-element-breathe 14s ease-in-out infinite !important;
+}
+.dark .section-sidebar-item {
+  animation: brew-element-breathe 15s ease-in-out infinite;
+}
+
+/* Top background glow — slow breathe */
+@keyframes brew-top-breathe {
+  0%, 100% {
+    transform: scale(1, 1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08, 1.12);
+    opacity: 1;
+  }
+}
+.brew-top-breathe {
+  animation: brew-top-breathe 15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Bottom glow — breathing ellipse */
+@keyframes brew-bottom-wave {
+  0%, 100% {
+    transform: scale(1, 1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3, 1.5);
+    opacity: 1;
+  }
+}
+.brew-bottom-wave {
+  animation: brew-bottom-wave 7.5s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes brew-slide-in-left {
