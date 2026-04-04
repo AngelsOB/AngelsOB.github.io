@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Recipe List Page Component
@@ -13,11 +13,14 @@
 
 import type React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useBrewSessionStore } from "../stores/brewSessionStore";
 import { useAuthStore } from "../../../auth/authStore";
+import { useUserTier } from "../../../auth/useUserTier";
+import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
+import UpgradeModal from "../../../auth/components/UpgradeModal";
+import { canAccess } from "../../../auth/tierAccess";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import {
   downloadTextFile,
@@ -65,6 +68,10 @@ export default function RecipeListPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showImportMenu, setShowImportMenu] = useState(false);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const { canCreate, userState } = useUserTier();
+  const atLimit = userState === "free" && !canCreate;
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Close import menu on outside click
   useEffect(() => {
@@ -154,27 +161,27 @@ export default function RecipeListPage() {
         {/* Header skeleton */}
         <div className="mb-8 animate-pulse">
           <div className="h-8 w-48 rounded bg-[var(--brew-accent-200)]" />
-          <div className="h-5 w-20 mt-2 rounded bg-[var(--brew-accent-100)]" />
+          <div className="mt-2 h-5 w-20 rounded bg-[var(--brew-accent-100)]" />
         </div>
         {/* Card grid skeleton */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-[rgb(var(--brew-card))] animate-pulse">
+            <div key={i} className="animate-pulse rounded-xl bg-[var(--brew-card)]">
               <div className="h-2 w-full rounded-t-xl bg-[var(--brew-accent-200)]" />
-              <div className="border-b border-[rgb(var(--brew-border))] p-4 space-y-2">
-                <div className="h-6 bg-[var(--brew-accent-100)] rounded w-3/4" />
-                <div className="h-3 bg-[var(--brew-accent-100)] rounded w-1/2" />
+              <div className="space-y-2 border-b border-[rgb(var(--brew-border))] p-4">
+                <div className="h-6 w-3/4 rounded bg-[var(--brew-accent-100)]" />
+                <div className="h-3 w-1/2 rounded bg-[var(--brew-accent-100)]" />
               </div>
               <div className="grid grid-cols-5 gap-0 px-4 py-3">
                 {Array.from({ length: 5 }).map((_, j) => (
                   <div key={j} className="space-y-1 px-1">
-                    <div className="h-2 bg-[var(--brew-accent-100)] rounded w-8" />
-                    <div className="h-4 bg-[var(--brew-accent-100)] rounded w-10" />
+                    <div className="h-2 w-8 rounded bg-[var(--brew-accent-100)]" />
+                    <div className="h-4 w-10 rounded bg-[var(--brew-accent-100)]" />
                   </div>
                 ))}
               </div>
-              <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
-                <div className="h-3 bg-[var(--brew-accent-100)] rounded w-24" />
+              <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[var(--brew-card-inset)] p-3">
+                <div className="h-3 w-24 rounded bg-[var(--brew-accent-100)]" />
               </div>
             </div>
           ))}
@@ -186,27 +193,59 @@ export default function RecipeListPage() {
   return (
     <div className="brew-theme mx-auto max-w-6xl px-2 py-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 flex items-baseline gap-3">
         <h1 className="brew-section-title text-3xl">My Recipes</h1>
-        <span className="brew-tag mt-2 inline-block">
-          {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
+        <span className="group relative">
+          <button
+            type="button"
+            className={`brew-tag${atLimit ? " cursor-pointer !border-[var(--brew-warning)] !text-[var(--brew-warning)]" : " cursor-default"}`}
+            onClick={atLimit ? () => setIsLimitModalOpen(true) : undefined}
+          >
+            {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
+          </button>
+          {atLimit && (
+            <>
+              <span
+                className="absolute -top-1.5 -right-1.5 inline-block cursor-pointer text-lg leading-none"
+                style={{ animation: "wiggle 4s ease-in-out infinite" }}
+                onClick={() => setIsLimitModalOpen(true)}
+              >
+                ⚠️
+              </span>
+              <span className="pointer-events-none absolute top-full left-1/2 z-50 mt-2 w-56 -translate-x-1/2 rounded-lg border border-[var(--brew-warning)] bg-[var(--brew-surface)] px-3 py-2 text-center text-xs text-[var(--brew-text-secondary)] opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                Free tier limit reached. Upgrade to Premium to save unlimited recipes.
+              </span>
+            </>
+          )}
         </span>
       </div>
 
-      {/* Local-only banner for unauthenticated users */}
+      {/* Sign-in prompt for anonymous users */}
       {!isAuthLoading && !user && (
         <div className="brew-alert-warning mb-6 flex items-center gap-4 px-4 py-3">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0" style={{ color: 'var(--brew-warning)' }}>
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 8v4"/>
-            <path d="M12 16h.01"/>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="shrink-0"
+            style={{ color: "var(--brew-warning)" }}
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
           </svg>
           <p className="flex-1 text-sm">
-            Your recipes are saved locally on this device. Sign in to sync across devices and share with others.
+            Sign in with Google to save recipes to the cloud, share with others, and access them
+            from any device.
           </p>
           <button
             onClick={signInWithGoogle}
-            className="brew-btn-ghost whitespace-nowrap text-sm px-3 py-1"
+            className="brew-btn-ghost px-3 py-1 text-sm whitespace-nowrap"
           >
             Sign in
           </button>
@@ -287,7 +326,7 @@ export default function RecipeListPage() {
             </button>
 
             {showImportMenu && (
-              <div className="absolute right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">
+              <div className="absolute right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
                 <button
                   onClick={() => {
                     fileInputRef.current?.click();
@@ -470,17 +509,30 @@ export default function RecipeListPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredAndSortedRecipes.map((recipe) => (
             <div key={recipe.id} className="flex flex-col overflow-visible">
-              <Link
-                href={`/recipes/${recipe.id}`}
-                onClick={() => { handlePreloadRecipe(recipe); setNavigatingId(recipe.id); }}
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={() => {
+                  handlePreloadRecipe(recipe);
+                  setNavigatingId(recipe.id);
+                  router.push(`/recipes/${recipe.id}`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handlePreloadRecipe(recipe);
+                    setNavigatingId(recipe.id);
+                    router.push(`/recipes/${recipe.id}`);
+                  }
+                }}
                 className="contents"
               >
                 <RecipeCard
                   recipe={recipe}
                   onDelete={(e) => handleDeleteClick(recipe.id, e)}
                   isNavigating={navigatingId === recipe.id}
+                  onUpgrade={() => setIsUpgradeModalOpen(true)}
                 />
-              </Link>
+              </div>
               <RecipeSessionsBar recipeId={recipe.id} />
             </div>
           ))}
@@ -510,6 +562,16 @@ export default function RecipeListPage() {
           </div>
         </div>
       )}
+
+      {/* Recipe Limit Modal */}
+      <RecipeLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)} />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        reason="Export is a Premium feature."
+      />
     </div>
   );
 }
@@ -519,10 +581,12 @@ function RecipeCard({
   recipe,
   onDelete,
   isNavigating,
+  onUpgrade,
 }: {
   recipe: Recipe;
   onDelete: (e: React.MouseEvent) => void;
   isNavigating?: boolean;
+  onUpgrade: () => void;
 }) {
   const router = useRouter();
   // Calculate stats for the recipe
@@ -534,6 +598,8 @@ function RecipeCard({
   const variationNameRef = useRef<HTMLInputElement>(null);
   const { createNewVersion, createVariation } = useRecipeStore();
   const { createSession, saveCurrentSession } = useBrewSessionStore();
+  const { userState } = useUserTier();
+  const canExport = canAccess('export', userState);
 
   const handleExportMarkdown = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -563,9 +629,9 @@ function RecipeCard({
     e.stopPropagation();
     if (recipe.shareSlug) {
       navigator.clipboard.writeText(`${window.location.origin}/r/${recipe.shareSlug}`);
-      toast.success('Share link copied to clipboard');
+      toast.success("Share link copied to clipboard");
     } else {
-      toast.error('Recipe is private — open it and make it public to share');
+      toast.error("Recipe is private — open it and make it public to share");
     }
   };
 
@@ -601,77 +667,65 @@ function RecipeCard({
       }
     >
       {isNavigating && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[rgb(var(--brew-card))]/40">
+        <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[var(--brew-card)]/40">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--brew-accent-300)] border-t-[var(--brew-accent-700)]" />
         </div>
       )}
-      <div className="rounded-xl bg-[rgb(var(--brew-card))]" style={{ containerType: 'inline-size' }}>
-        {/* SRM Color Strip */}
-        {calculations && (
-          <div className="h-2 w-full rounded-t-xl" style={{ backgroundColor: srmToRgb(calculations.srm) }} />
-        )}
-
-        {/* Header */}
-        <div className="border-b border-[rgb(var(--brew-border))] p-4">
-          <div className="flex items-start gap-3">
-            <ScalableText className="min-w-0 flex-1 font-extrabold tracking-tight" minScale={0.75} maxLines={2} style={{ fontSize: 'clamp(1rem, calc(8px + 3cqw), 1.5rem)' }}>
-              {recipe.name}
-            </ScalableText>
-            <div
-              className="relative flex shrink-0 items-center gap-2"
-              onClickCapture={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <button
-                onClick={handleStartSession}
-                className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
-                style={{
-                  background: "color-mix(in oklch, var(--brew-accent-200) 40%, transparent)",
-                  color: "var(--brew-accent-700)",
-                  border: "1px solid var(--brew-accent-300)",
-                }}
-                title="Brew this beer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 8h10v9a3 3 0 01-3 3H7a3 3 0 01-3-3V8z"
-                  />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 9h2a3 3 0 010 6h-2" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h7" />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsVersionMenuOpen((prev) => !prev);
-                }}
-                className="brew-tag shadow-sm"
-                title="Version actions"
-              >
-                v{recipe.currentVersion}
-              </button>
-              {isVersionMenuOpen && (
+      {/* Action buttons — outside overflow-hidden so the dropdown isn't clipped */}
+      <div
+        className="absolute top-6 right-4 z-30 flex items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStartSession(e);
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-transform hover:-rotate-12"
+          style={{
+            background: "color-mix(in oklch, var(--brew-accent-200) 40%, transparent)",
+            color: "var(--brew-accent-700)",
+            border: "1px solid var(--brew-accent-300)",
+          }}
+          title="Brew this beer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h10v9a3 3 0 01-3 3H7a3 3 0 01-3-3V8z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14 9h2a3 3 0 010 6h-2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h7" />
+          </svg>
+        </button>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsVersionMenuOpen((prev) => !prev);
+            }}
+            className="brew-tag shadow-sm"
+            title="Version actions"
+          >
+            v{recipe.currentVersion}
+          </button>
+          {isVersionMenuOpen && (
                 // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                 <div
-                  className="absolute right-0 top-full -m-4 mt-2 z-20 p-4"
+                  className="absolute top-full right-0 z-20 -m-4 mt-2 p-4"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}
                   onMouseLeave={() => setIsVersionMenuOpen(false)}
                 >
-                  <div className="w-40 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card))] shadow-lg">
+                  <div className="w-40 overflow-hidden rounded-lg border border-[rgb(var(--brew-border))] bg-[var(--brew-card)] shadow-lg">
                     <button
                       onClick={(e) => {
                         handleNewVersion(e);
@@ -702,37 +756,45 @@ function RecipeCard({
                     <div className="my-1 border-t border-[rgb(var(--brew-border))]" />
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportMarkdown(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export Markdown
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleCopyMarkdown(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Copy Markdown
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportJson(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export JSON
                     </button>
                     <button
                       onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canExport) { onUpgrade(); setIsVersionMenuOpen(false); return; }
                         handleExportBeerXml(e);
                         setIsVersionMenuOpen(false);
                       }}
-                      className="brew-menu-item w-full text-left"
+                      className={`brew-menu-item w-full text-left${!canExport ? " opacity-50" : ""}`}
                     >
                       Export BeerXML
                     </button>
@@ -759,7 +821,39 @@ function RecipeCard({
                   </div>
                 </div>
               )}
-            </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl overflow-hidden" style={{ containerType: "inline-size" }}>
+        {/* SRM Color Strip */}
+        {calculations && (
+          <div
+            className="h-2 w-full rounded-t-xl"
+            style={{ backgroundColor: srmToRgb(calculations.srm) }}
+          />
+        )}
+
+        {/* Header */}
+        <div className="border-b border-[rgb(var(--brew-border))] p-4">
+          <div className="flex items-start gap-3">
+            {recipe.labelUrl && (
+              <img
+                src={recipe.labelUrl}
+                alt=""
+                className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
+                loading="lazy"
+              />
+            )}
+            <ScalableText
+              className="min-w-0 flex-1 font-extrabold tracking-tight"
+              minScale={0.75}
+              maxLines={2}
+              style={{ fontSize: "clamp(1rem, calc(8px + 3cqw), 1.5rem)" }}
+            >
+              {recipe.name}
+            </ScalableText>
+            {/* Spacer so title doesn't overlap the absolutely-positioned buttons */}
+            <div className="w-20 shrink-0" />
           </div>
           {recipe.style && <p className="text-muted truncate text-xs italic">{recipe.style}</p>}
         </div>
@@ -826,7 +920,7 @@ function RecipeCard({
         )}
 
         {/* Footer */}
-        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[rgb(var(--brew-card-inset))] p-3">
+        <div className="rounded-b-xl border-t border-[rgb(var(--brew-border))] bg-[var(--brew-card-inset)] p-3">
           <div className="text-muted text-xs">
             {new Date(recipe.updatedAt).toLocaleDateString()}
           </div>

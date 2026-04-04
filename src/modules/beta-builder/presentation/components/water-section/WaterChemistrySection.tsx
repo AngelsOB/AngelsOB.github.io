@@ -1,16 +1,13 @@
 /**
  * Water Chemistry Section Component
  *
- * Expandable section for managing water chemistry settings.
- * Shows final ion metrics inline, with expandable detailed view
- * for source/target profiles, salt additions, and comparison table.
+ * Shows final ion metrics inline, source/target profiles,
+ * salt additions, and ion comparison table.
  */
 
 import type { SaltAdditions, WaterProfile } from "../../../domain/services/WaterChemistryService";
-import SaltSummary from "./SaltSummary";
 import SaltAdditionsPanel from "./SaltAdditionsPanel";
 import WaterProfileComparison from "./WaterProfileComparison";
-import { ION_LABELS } from "./constants";
 
 type TargetStyle = {
   profile: WaterProfile;
@@ -18,18 +15,18 @@ type TargetStyle = {
 };
 
 type Props = {
-  /** Whether the chemistry details are expanded */
-  isExpanded: boolean;
-  /** Callback to toggle expanded state */
-  onToggleExpanded: () => void;
   /** Source water profile */
   sourceProfile: WaterProfile;
   /** Source water profile name */
   sourceProfileName?: string;
   /** Target style profile with ratio description */
   targetStyle: TargetStyle | undefined;
-  /** Target style name */
+  /** Target style name (auto-detected or custom) */
   targetStyleName?: string;
+  /** Whether the target is a user-defined custom profile (vs BJCP auto-detected) */
+  isCustomTarget?: boolean;
+  /** BJCP auto-detected target profile (for per-ion custom detection) */
+  bjcpTargetProfile?: WaterProfile;
   /** Calculated final water profile */
   finalProfile: WaterProfile;
   /** Current salt additions */
@@ -40,121 +37,123 @@ type Props = {
   spargeSalts: Partial<SaltAdditions>;
   /** Callback to open source water profile modal */
   onOpenSourceModal: () => void;
-  /** Callback to open target style modal */
-  onOpenTargetModal: () => void;
+  /** Callback to revert to BJCP auto-detected target */
+  onSwitchToBjcp: () => void;
+  /** Callback to open custom target modal */
+  onOpenCustomTarget: () => void;
   /** Callback when a salt amount changes */
   onSaltChange: (saltKey: keyof SaltAdditions, value: number) => void;
+  /** Callback when user drags a target needle */
+  onTargetDrag?: (ion: keyof WaterProfile, value: number) => void;
+  /** Callback to auto-calculate salt additions (premium feature) */
+  onAutoCalculate?: () => void;
+  /** Whether the user has access to auto-calculate */
+  canAutoCalc?: boolean;
+  /** Whether baking soda is included in auto-calculate */
+  includeBakingSoda?: boolean;
+  /** Callback when baking soda toggle changes */
+  onToggleBakingSoda?: (include: boolean) => void;
 };
 
 export default function WaterChemistrySection({
-  isExpanded,
-  onToggleExpanded,
   sourceProfile,
   sourceProfileName,
   targetStyle,
   targetStyleName,
+  isCustomTarget,
+  bjcpTargetProfile,
   finalProfile,
   saltAdditions,
   mashSalts,
   spargeSalts,
   onOpenSourceModal,
-  onOpenTargetModal,
+  onSwitchToBjcp,
+  onOpenCustomTarget,
   onSaltChange,
+  onTargetDrag,
+  onAutoCalculate,
+  canAutoCalc,
+  includeBakingSoda,
+  onToggleBakingSoda,
 }: Props) {
   const targetProfile = targetStyle?.profile || { Ca: 75, Mg: 10, Na: 10, Cl: 75, SO4: 75, HCO3: 75 };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--fg-strong)' }}>
-          Water Chemistry
-        </h3>
-
-        {/* Final Water Metrics - Inline */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted">Final:</span>
-          {ION_LABELS.map((ion) => {
-            const finalValue = Math.round(finalProfile[ion]);
-            return (
-              <div key={ion} className="text-xs">
-                <span className="font-semibold text-muted">
-                  {ion}:
-                </span>
-                <span className="ml-1 font-bold" style={{ color: 'var(--fg-strong)' }}>
-                  {finalValue}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+      {/* Source → Target Profiles */}
+      <div className="water-source-target-row">
+        <span id="water-source-label" className="text-sm font-semibold">Source Water</span>
+        <div />
+        <span className="text-sm font-semibold">Target Water</span>
 
         <button
-          onClick={onToggleExpanded}
-          className="text-sm brew-link hover:underline whitespace-nowrap"
+          aria-labelledby="water-source-label"
+          onClick={onOpenSourceModal}
+          className="brew-btn-ghost brew-btn-ghost--inset text-left self-end"
         >
-          {isExpanded ? "Hide Details" : "Show Details"}
+          {sourceProfileName || "Custom"}
         </button>
+
+        <span className="text-muted self-end">→</span>
+
+        <div className="self-end">
+          <div className="brew-segmented-toggle brew-segmented-toggle--lg w-fit">
+            <button
+              onClick={() => isCustomTarget && onSwitchToBjcp()}
+              className={!isCustomTarget ? "is-active" : ""}
+            >
+              BJCP
+            </button>
+            <button
+              onClick={onOpenCustomTarget}
+              className={isCustomTarget ? "is-active" : ""}
+            >
+              Custom
+            </button>
+          </div>
+        </div>
+
+        {/* Row 3: target info — spans only the target column */}
+        {targetStyle ? (
+          <>
+            <div />
+            <div />
+            <p className="text-xs text-muted mt-0.5">
+              {targetStyleName || "Balanced"} — Cl:SO₄ {targetStyle.clToSo4Ratio}
+              {isCustomTarget && (
+                <button
+                  onClick={onOpenCustomTarget}
+                  className="brew-link ml-1.5 text-xs"
+                >
+                  Edit
+                </button>
+              )}
+            </p>
+          </>
+        ) : null}
       </div>
 
-      {/* Collapsed View - Salt Summary */}
-      {!isExpanded && (
-        <SaltSummary
-          saltAdditions={saltAdditions}
-          mashSalts={mashSalts}
-          spargeSalts={spargeSalts}
-          sourceProfileName={sourceProfileName}
-        />
-      )}
+      {/* Salt Additions */}
+      <SaltAdditionsPanel
+        saltAdditions={saltAdditions}
+        mashSalts={mashSalts}
+        spargeSalts={spargeSalts}
+        onSaltChange={onSaltChange}
+        onAutoCalculate={onAutoCalculate}
+        canAutoCalc={canAutoCalc}
+        includeBakingSoda={includeBakingSoda}
+        onToggleBakingSoda={onToggleBakingSoda}
+      />
 
-      {/* Expanded View - Full Controls */}
-      {isExpanded && (
-        <>
-          {/* Source and Target Profiles */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span id="water-source-label" className="block text-sm font-semibold mb-2">Source Water</span>
-              <button
-                aria-labelledby="water-source-label"
-                onClick={onOpenSourceModal}
-                className="brew-input w-full text-left cursor-pointer"
-              >
-                {sourceProfileName || "Custom"}
-              </button>
-            </div>
-
-            <div>
-              <span id="water-target-label" className="block text-sm font-semibold mb-2">Target Style</span>
-              <button
-                aria-labelledby="water-target-label"
-                onClick={onOpenTargetModal}
-                className="brew-input w-full text-left cursor-pointer"
-              >
-                {targetStyleName || "Balanced"}
-              </button>
-              {targetStyle && (
-                <p className="text-xs text-muted mt-1">
-                  {targetStyle.clToSo4Ratio}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Salt Additions */}
-          <SaltAdditionsPanel
-            saltAdditions={saltAdditions}
-            mashSalts={mashSalts}
-            spargeSalts={spargeSalts}
-            onSaltChange={onSaltChange}
-          />
-
-          {/* Water Profile Comparison */}
-          <WaterProfileComparison
-            sourceProfile={sourceProfile}
-            targetProfile={targetProfile}
-            finalProfile={finalProfile}
-          />
-        </>
-      )}
+      {/* Water Profile Comparison */}
+      <WaterProfileComparison
+        sourceProfile={sourceProfile}
+        targetProfile={targetProfile}
+        bjcpTargetProfile={bjcpTargetProfile}
+        finalProfile={finalProfile}
+        isCustomTarget={isCustomTarget}
+        onTargetDrag={onTargetDrag}
+      />
     </div>
   );
 }

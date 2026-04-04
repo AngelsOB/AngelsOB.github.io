@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/config/firebase-admin';
+import { adminDb, adminAuth, adminStorage } from '@/config/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,15 +24,33 @@ export async function POST(req: NextRequest) {
       if (recipeSnap.data()?.ownerId !== decoded.uid) {
         return NextResponse.json({ error: 'Not your recipe' }, { status: 403 });
       }
-      await recipeRef.delete();
-    }
-    // If document doesn't exist, that's fine — it's already gone
 
-    // Also delete from publicRecipeIndex if it exists
-    const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);
-    const indexSnap = await indexRef.get();
-    if (indexSnap.exists) {
-      await indexRef.delete();
+      // Batch: delete recipe + decrement user's recipeCount atomically
+      const batch = adminDb.batch();
+      batch.delete(recipeRef);
+      const userRef = adminDb.collection('users').doc(decoded.uid);
+      batch.update(userRef, { recipeCount: FieldValue.increment(-1) });
+
+      // Also delete from publicRecipeIndex if it exists
+      const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);
+      const indexSnap = await indexRef.get();
+      if (indexSnap.exists) {
+        batch.delete(indexRef);
+      }
+
+      await batch.commit();
+
+      // Clean up label image from Storage (best-effort)
+      try {
+        await adminStorage.bucket().file(`labels/${decoded.uid}/${recipeId}`).delete();
+      } catch { /* file may not exist */ }
+    } else {
+      // Recipe already gone — still clean up index if present
+      const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);
+      const indexSnap = await indexRef.get();
+      if (indexSnap.exists) {
+        await indexRef.delete();
+      }
     }
 
     return NextResponse.json({ ok: true });

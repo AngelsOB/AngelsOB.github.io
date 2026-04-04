@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   collection,
   query,
@@ -12,31 +12,15 @@ import {
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { SEED_RECIPES } from '@/data/seed-recipes';
-import { RecipeCalculationService } from '../beta-builder/domain/services/RecipeCalculationService';
 import { BrowseCard, type BrowseRecipe } from './BrowseCard';
-
-const calc = new RecipeCalculationService();
-const seedBrowseRecipes: BrowseRecipe[] = SEED_RECIPES.map((r) => {
-  const c = calc.calculate(r);
-  return {
-    id: r.id,
-    name: r.name,
-    style: r.style || '',
-    ownerName: 'The Brewing.It Team',
-    shareSlug: '',
-    stats: { og: c.og, fg: c.fg, ibu: c.ibu, srm: c.srm, abv: c.abv },
-    tags: r.tags || [],
-    hopNames: r.hops.map((h) => h.name),
-    publishedAt: r.createdAt,
-    forkCount: 0,
-    source: 'official',
-  };
-});
+import Button from '@/components/Button';
 
 type SortOption = 'newest' | 'popular' | 'top-rated';
 
+const MAX_COMPARE = 8;
+
 export default function BrowseRecipesPage() {
+  const router = useRouter();
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sort, setSort] = useState<SortOption>('newest');
@@ -44,6 +28,25 @@ export default function BrowseRecipesPage() {
   const [styleFilter, setStyleFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < MAX_COMPARE) {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCompare = useCallback(() => {
+    if (selectedIds.size < 2) return;
+    router.push(`/browse/compare?ids=${Array.from(selectedIds).join(',')}`);
+  }, [selectedIds, router]);
 
   const fetchRecipes = useCallback(async () => {
     setError(null);
@@ -66,6 +69,7 @@ export default function BrowseRecipesPage() {
           ratingSum: data.ratingSum || 0,
           ratingCount: data.ratingCount || 0,
           ratingAvg: data.ratingCount > 0 ? (data.ratingSum || 0) / data.ratingCount : 0,
+          labelUrl: data.labelUrl || undefined,
         } as BrowseRecipe;
       });
 
@@ -105,7 +109,7 @@ export default function BrowseRecipesPage() {
       if (sort === 'popular') return (b.forkCount || 0) - (a.forkCount || 0);
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
-    return [...seedBrowseRecipes, ...sorted];
+    return sorted;
   }, [recipes, sort]);
 
   const availableStyles = useMemo(() => {
@@ -188,6 +192,24 @@ export default function BrowseRecipesPage() {
               <option value="popular">Most Forked</option>
             </select>
           </div>
+          <Button
+            variant={compareMode ? 'neon' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setCompareMode((prev) => !prev);
+              if (compareMode) setSelectedIds(new Set());
+            }}
+            leftIcon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+            }
+          >
+            Compare
+          </Button>
         </div>
       </div>
 
@@ -208,7 +230,7 @@ export default function BrowseRecipesPage() {
       {isLoading && !error && recipes.length === 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-[rgb(var(--brew-card))] animate-pulse">
+            <div key={i} className="rounded-xl bg-[var(--brew-card)] animate-pulse">
               <div className="h-2 w-full rounded-t-xl bg-[var(--brew-accent-200)]" />
               <div className="p-4 space-y-3">
                 <div className="h-5 bg-[var(--brew-accent-100)] rounded w-3/4" />
@@ -268,22 +290,50 @@ export default function BrowseRecipesPage() {
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
-              <Link
+              <BrowseCard
                 key={recipe.id}
-                href={
-                  recipe.source === 'official'
-                    ? `/r/seed/${recipe.id}`
-                    : `/r/${recipe.shareSlug}`
-                }
-                onClick={() => setNavigatingId(recipe.id)}
-                className="contents"
-              >
-                <BrowseCard recipe={recipe} isNavigating={navigatingId === recipe.id} />
-              </Link>
+                recipe={recipe}
+                isNavigating={navigatingId === recipe.id}
+                onNavigate={() => setNavigatingId(recipe.id)}
+                compareMode={compareMode}
+                isSelected={selectedIds.has(recipe.id)}
+                onToggleSelect={toggleSelect}
+              />
             ))}
           </div>
 
         </>
+      )}
+
+      {/* Floating compare action bar */}
+      {compareMode && selectedIds.size >= 1 && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+          <div className="card-glass flex items-center gap-4 rounded-2xl px-6 py-3 shadow-lg backdrop-blur-md">
+            <span className="text-sm font-semibold whitespace-nowrap" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {selectedIds.size} recipe{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+            <Button
+              variant="neon"
+              size="sm"
+              onClick={handleCompare}
+              loading={false}
+              leftIcon={
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
+                </svg>
+              }
+            >
+              Compare{selectedIds.size < 2 ? ` (${2 - selectedIds.size} more)` : ''}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -56,7 +56,7 @@ export function IngredientsDisplaySection({
             )}
             <div className="space-y-2">
               {recipe.fermentables.map((f) => (
-                <div key={f.id} className="flex items-center justify-between rounded-md bg-[rgb(var(--bg))] p-2">
+                <div key={f.id} className="flex items-center justify-between rounded-md bg-[var(--bg)] p-2">
                   <div>
                     <div className="text-sm font-medium">{f.name}</div>
                     <div className="text-xs text-gray-500">{f.colorLovibond} L</div>
@@ -81,7 +81,7 @@ export function IngredientsDisplaySection({
             )}
             <div className="space-y-2">
               {recipe.hops.map((h) => (
-                <div key={h.id} className="flex items-center justify-between rounded-md bg-[rgb(var(--bg))] p-2">
+                <div key={h.id} className="flex items-center justify-between rounded-md bg-[var(--bg)] p-2">
                   <div>
                     <div className="text-sm font-medium">{h.name}</div>
                     <div className="text-xs text-gray-500">
@@ -105,7 +105,7 @@ export function IngredientsDisplaySection({
           <div className="space-y-3">
             <SubSectionHeader title="Yeast" />
             {recipe.yeasts?.[0] ? (
-              <div className="space-y-2 rounded-md bg-[rgb(var(--bg))] p-3">
+              <div className="space-y-2 rounded-md bg-[var(--bg)] p-3">
                 <div className="text-sm font-medium">{recipe.yeasts?.[0].name}</div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center justify-between">
@@ -155,7 +155,7 @@ export function IngredientsDisplaySection({
           <div className="space-y-3">
             <SubSectionHeader title="Water & Salts" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-md bg-[rgb(var(--bg))] p-3">
+              <div className="rounded-md bg-[var(--bg)] p-3">
                 <div className="text-xs text-gray-500 uppercase">Strike Water</div>
                 <div className="flex items-center justify-between text-sm mt-2">
                   <span className="text-gray-500">Target</span>
@@ -172,7 +172,7 @@ export function IngredientsDisplaySection({
                   />
                 </div>
               </div>
-              <div className="rounded-md bg-[rgb(var(--bg))] p-3">
+              <div className="rounded-md bg-[var(--bg)] p-3">
                 <div className="text-xs text-gray-500 uppercase">Sparge Water</div>
                 <div className="flex items-center justify-between text-sm mt-2">
                   <span className="text-gray-500">Target</span>
@@ -191,7 +191,7 @@ export function IngredientsDisplaySection({
               </div>
             </div>
 
-            <div className="rounded-md bg-[rgb(var(--bg))] p-3">
+            <div className="rounded-md bg-[var(--bg)] p-3">
               <div className="text-xs text-gray-500 uppercase">Salts (grams)</div>
               <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 mt-2">
                 <span>Salt</span>

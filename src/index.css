@@ -3,6 +3,28 @@
 @theme {
   --font-handwritten: "Shadows Into Light", cursive;
   --font-handwritten-alt: "Rock Salt", cursive;
+  --font-display: "Bitter", serif;
+}
+
+/* Tabular nums globally — fixed-width digits for all numeric displays */
+input[type="number"],
+[class*="value"],
+[class*="metric"],
+[class*="readout"],
+[class*="total"],
+[class*="stat"],
+[class*="gauge"],
+[class*="strip-num"],
+[class*="strip-tick"] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Full-bleed: break out of max-w container to fill viewport width */
+@utility full-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
 }
 
 /* Force dark mode to work with .dark class */
@@ -15,10 +37,14 @@
    ======================================== */
 
 :root {
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+
   /* Light theme — warm cream */
-  --bg: 252 249 244; /* warm off-white */
-  --surface: 248 244 238; /* warm cream */
-  --card: 255 253 249; /* warm white */
+  --bg: oklch(calc(98.3% * var(--srm-bg-l-scale)) calc(0.0074 * var(--srm-bg-c-scale)) 80.7);
+  --surface: oklch(calc(96.86% * var(--srm-bg-l-scale)) calc(0.0091 * var(--srm-bg-c-scale)) 78.3);
+  --card: oklch(calc(99.45% * var(--srm-bg-l-scale)) calc(0.0057 * var(--srm-bg-c-scale)) 84.6);
   --text: 0 0 0; /* black */
   --text-muted: 100 90 75; /* warm gray */
   --border: 212 205 190; /* warm border */
@@ -30,13 +56,13 @@
   /* Coral theme (OKLCH) */
   --coral-50: oklch(96.75% 0.017 44.86);
   --coral-100: oklch(93.36% 0.035 41.97);
-  --coral-200: oklch(87.71% 0.071 47);
-  --coral-300: oklch(81.06% 0.12 50.84);
-  --coral-400: oklch(75.22% 0.179 58.74);
-  --coral-500: oklch(64.96% 0.154 58.7);
-  --coral-600: oklch(54.28% 0.129 58.65);
-  --coral-700: oklch(44.82% 0.107 58.53);
-  --coral-800: oklch(34.32% 0.082 58.51);
+  --coral-200: oklch(calc(87.71% * var(--srm-l-scale)) 0.071 47);
+  --coral-300: oklch(calc(81.06% * var(--srm-l-scale)) 0.12 50.84);
+  --coral-400: oklch(calc(75.22% * var(--srm-l-scale)) 0.179 58.74);
+  --coral-500: oklch(calc(64.96% * var(--srm-l-scale)) 0.154 58.7);
+  --coral-600: oklch(calc(54.28% * var(--srm-l-scale)) 0.129 58.65);
+  --coral-700: oklch(calc(44.82% * var(--srm-l-scale)) 0.107 58.53);
+  --coral-800: oklch(calc(34.32% * var(--srm-l-scale)) 0.082 58.51);
   --coral-900: oklch(24.44% 0.058 58.7);
   --coral-950: oklch(19.22% 0.046 58.17);
 
@@ -51,13 +77,13 @@
   /* Default accent: Warm brown/amber (hue 45) — approachable default for non-section areas */
   --brew-accent-50: oklch(97% 0.012 45);
   --brew-accent-100: oklch(94% 0.03 45);
-  --brew-accent-200: oklch(88% 0.065 45);
-  --brew-accent-300: oklch(78% 0.105 45);
-  --brew-accent-400: oklch(70% 0.135 45);
-  --brew-accent-500: oklch(60% 0.14 45);
-  --brew-accent-600: oklch(50% 0.125 45);
-  --brew-accent-700: oklch(42% 0.1 45);
-  --brew-accent-800: oklch(34% 0.075 45);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.065 45);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.105 45);
+  --brew-accent-400: oklch(calc(70% * var(--srm-l-scale)) 0.135 45);
+  --brew-accent-500: oklch(calc(60% * var(--srm-l-scale)) 0.14 45);
+  --brew-accent-600: oklch(calc(50% * var(--srm-l-scale)) 0.125 45);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.1 45);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.075 45);
   --brew-accent-900: oklch(26% 0.05 45);
   --brew-accent-950: oklch(20% 0.035 45);
 
@@ -95,11 +121,9 @@
   --shadow-inset:
     inset 0 1px 2px rgba(140, 120, 90, 0.09), inset 0 2px 4px rgba(140, 120, 90, 0.06);
 
-  /* Noise texture — warm-tinted, tactile paper grain */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
-
-  /* Paper fiber texture — coarser grain for tactile paper feel */
-  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05 0 0.85 0 0 0.03 0 0 0.75 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.14'/%3E%3C/svg%3E");
+  /* Dither-grain texture — injected at runtime by useGrainTexture (canvas-generated, no feTurbulence) */
+  --noise-texture: none;
+  --paper-texture: none; /* kept for fallback; always overridden to none at runtime */
 
   /* Typography */
   --brew-tracking-tight: -0.025em;
@@ -107,31 +131,35 @@
   --brew-tracking-widest: 0.14em;
 
   /* Brew theme surfaces — warm cream */
-  --brew-bg: 252 249 244;
-  --brew-surface: 248 244 238;
-  --brew-card: 255 253 249;
-  --brew-card-inset: 244 240 232;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(95.6% * var(--srm-bg-l-scale)) calc(0.0115 * var(--srm-bg-c-scale)) 84.6
+  );
   --brew-border: 215 208 194;
   --brew-border-subtle: 202 194 180;
 
   /* Sidebar section colors — bold & saturated by default */
-  --sidebar-recipe-bg: oklch(65% 0.12 55);
+  --sidebar-recipe-bg: oklch(calc(65% * var(--srm-l-scale)) 0.12 55);
   --sidebar-recipe-text: oklch(98% 0.005 55);
-  --sidebar-equipment-bg: oklch(42% 0.12 260);
+  --sidebar-equipment-bg: oklch(calc(42% * var(--srm-l-scale)) 0.12 260);
   --sidebar-equipment-text: oklch(92% 0.02 260);
-  --sidebar-grain-bg: oklch(62% 0.16 75);
+  --sidebar-grain-bg: oklch(calc(62% * var(--srm-l-scale)) 0.16 75);
   --sidebar-grain-text: oklch(98% 0.01 75);
-  --sidebar-mash-bg: oklch(60% 0.16 55);
+  --sidebar-mash-bg: oklch(calc(60% * var(--srm-l-scale)) 0.16 55);
   --sidebar-mash-text: oklch(98% 0.005 55);
-  --sidebar-hops-bg: oklch(48% 0.14 145);
+  --sidebar-hops-bg: oklch(calc(48% * var(--srm-l-scale)) 0.14 145);
   --sidebar-hops-text: oklch(95% 0.02 145);
-  --sidebar-yeast-bg: oklch(45% 0.16 310);
+  --sidebar-yeast-bg: oklch(calc(45% * var(--srm-l-scale)) 0.16 310);
   --sidebar-yeast-text: oklch(92% 0.02 310);
-  --sidebar-water-bg: oklch(48% 0.18 250);
+  --sidebar-water-bg: oklch(calc(48% * var(--srm-l-scale)) 0.18 250);
   --sidebar-water-text: oklch(93% 0.02 250);
-  --sidebar-fermentation-bg: oklch(52% 0.17 15);
+  --sidebar-fermentation-bg: oklch(calc(52% * var(--srm-l-scale)) 0.17 15);
   --sidebar-fermentation-text: oklch(95% 0.01 15);
-  --sidebar-targets-bg: oklch(58% 0.14 25);
+  --sidebar-packaging-bg: oklch(calc(55% * var(--srm-l-scale)) 0.15 50);
+  --sidebar-packaging-text: oklch(95% 0.01 50);
+  --sidebar-targets-bg: oklch(calc(58% * var(--srm-l-scale)) 0.14 25);
   --sidebar-targets-text: oklch(96% 0.01 25);
 
   /* Legacy aliases (temporary — removed after component migration) */
@@ -148,12 +176,12 @@
 
 .dark {
   /* Dark theme — warm charcoal */
-  --bg: 16 14 12;
-  --surface: 22 20 18;
-  --card: 28 26 22;
+  --bg: oklch(calc(20.5% * var(--srm-bg-l-scale)) calc(0.0053 * var(--srm-bg-c-scale)) 67.4);
+  --surface: oklch(calc(23.5% * var(--srm-bg-l-scale)) calc(0.0051 * var(--srm-bg-c-scale)) 67.5);
+  --card: oklch(calc(26.0% * var(--srm-bg-l-scale)) calc(0.0082 * var(--srm-bg-c-scale)) 84.6);
   --text: 240 238 232;
-  --text-muted: 160 152 140; /* warm gray */
-  --border: 54 50 44; /* warm border */
+  --text-muted: 170 162 150; /* warm gray */
+  --border: 64 60 54; /* warm border */
 
   --accent: 251 146 60;
   --glow: 234 88 12; /* orange-600 */
@@ -161,19 +189,19 @@
   /* repeat coral theme for dark */
   --coral-50: oklch(96.75% 0.017 44.86);
   --coral-100: oklch(93.36% 0.035 41.97);
-  --coral-200: oklch(87.71% 0.071 47);
-  --coral-300: oklch(81.06% 0.12 50.84);
-  --coral-400: oklch(75.22% 0.179 58.74);
-  --coral-500: oklch(64.96% 0.154 58.7);
-  --coral-600: oklch(54.28% 0.129 58.65);
-  --coral-700: oklch(44.82% 0.107 58.53);
-  --coral-800: oklch(34.32% 0.082 58.51);
+  --coral-200: oklch(calc(87.71% * var(--srm-l-scale)) 0.071 47);
+  --coral-300: oklch(calc(81.06% * var(--srm-l-scale)) 0.12 50.84);
+  --coral-400: oklch(calc(75.22% * var(--srm-l-scale)) 0.179 58.74);
+  --coral-500: oklch(calc(64.96% * var(--srm-l-scale)) 0.154 58.7);
+  --coral-600: oklch(calc(54.28% * var(--srm-l-scale)) 0.129 58.65);
+  --coral-700: oklch(calc(44.82% * var(--srm-l-scale)) 0.107 58.53);
+  --coral-800: oklch(calc(34.32% * var(--srm-l-scale)) 0.082 58.51);
   --coral-900: oklch(24.44% 0.058 58.7);
   --coral-950: oklch(19.22% 0.046 58.17);
 
   /* Dark foreground — warm-tinted */
   --fg-strong: oklch(96% 0.006 50);
-  --fg-muted: oklch(68% 0.008 50);
+  --fg-muted: oklch(70% 0.008 50);
 
   /* Dark layered shadows */
   --shadow-card:
@@ -190,19 +218,19 @@
     0 24px 24px -12px rgba(0, 0, 0, 0.15), 0 48px 48px -24px rgba(0, 0, 0, 0.12);
   --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.14);
 
-  /* Noise texture (more visible in dark — matte brushed feel) */
-  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-
-  /* Paper fiber texture — subtler in dark mode */
-  --paper-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E");
+  /* Dark mode — also injected at runtime, no feTurbulence */
+  --noise-texture: none;
+  --paper-texture: none;
 
   /* Brew theme surfaces — warm charcoal */
-  --brew-bg: 16 14 12;
-  --brew-surface: 22 20 18;
-  --brew-card: 28 26 22;
-  --brew-card-inset: 20 18 16;
-  --brew-border: 54 50 44;
-  --brew-border-subtle: 42 38 34;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(22.0% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5
+  );
+  --brew-border: 64 60 54;
+  --brew-border-subtle: 52 48 44;
 }
 
 /* ========================================
@@ -214,7 +242,7 @@
 
 @layer base {
   body {
-    background-color: rgb(var(--bg));
+    background-color: var(--bg);
     background-image:
       /* Vignette — edge darkening to focus attention on center content */
       radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0, 0, 0, 0.07) 100%),
@@ -230,21 +258,19 @@
           color-mix(in oklch, var(--brew-accent-200) 20%, transparent),
           transparent 55%
         ),
-      /* Noise grain — warm paper-like texture */ var(--noise-texture);
+      transparent;
     background-size:
       100% 100%,
       auto,
-      auto,
-      200px 200px;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-    background-attachment: fixed;
+      auto;
+    background-repeat: no-repeat, no-repeat, no-repeat;
     transition: background-color 0.3s ease;
   }
 
   .dark body {
     background-image:
-      /* Vignette — more pronounced in dark for moody depth */
-      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.12) 100%),
+      /* Vignette — subtle edge darkening */
+      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.06) 100%),
       /* Ambient glow — deeper, richer in dark */
         radial-gradient(
           1000px 360px at 15% -10%,
@@ -255,15 +281,14 @@
         900px 300px at 85% -10%,
         color-mix(in oklch, var(--brew-accent-600) 8%, transparent),
         transparent 50%
-      ),
-      /* Noise grain — matte brushed surface */ var(--noise-texture);
+      );
     background-size:
       100% 100%,
       auto,
-      auto,
-      200px 200px;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+      auto;
+    background-repeat: no-repeat, no-repeat, no-repeat;
   }
+
 }
 
 /* =============================================
@@ -273,10 +298,14 @@
    ============================================= */
 
 .palette-vintage {
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+
   /* Surfaces — warm parchment / paper */
-  --bg: 255 248 240;
-  --surface: 250 243 234;
-  --card: 255 252 247;
+  --bg: oklch(calc(98.24% * var(--srm-bg-l-scale)) calc(0.013 * var(--srm-bg-c-scale)) 71.3);
+  --surface: oklch(calc(96.71% * var(--srm-bg-l-scale)) calc(0.0141 * var(--srm-bg-c-scale)) 74.4);
+  --card: oklch(calc(99.2% * var(--srm-bg-l-scale)) calc(0.0073 * var(--srm-bg-c-scale)) 80.7);
   --text: 59 56 51; /* #3B3833 charcoal */
   --text-muted: 107 125 148; /* slate blue */
   --border: 220 210 195;
@@ -288,13 +317,13 @@
   /* Coral scale — hue ~55 (same orange family), reduced chroma for vintage feel */
   --coral-50: oklch(97% 0.012 55);
   --coral-100: oklch(93% 0.028 55);
-  --coral-200: oklch(87% 0.058 52);
-  --coral-300: oklch(78% 0.095 54);
-  --coral-400: oklch(72% 0.13 57);
-  --coral-500: oklch(62% 0.12 57);
-  --coral-600: oklch(52% 0.105 57);
-  --coral-700: oklch(43% 0.088 57);
-  --coral-800: oklch(34% 0.068 57);
+  --coral-200: oklch(calc(87% * var(--srm-l-scale)) 0.058 52);
+  --coral-300: oklch(calc(78% * var(--srm-l-scale)) 0.095 54);
+  --coral-400: oklch(calc(72% * var(--srm-l-scale)) 0.13 57);
+  --coral-500: oklch(calc(62% * var(--srm-l-scale)) 0.12 57);
+  --coral-600: oklch(calc(52% * var(--srm-l-scale)) 0.105 57);
+  --coral-700: oklch(calc(43% * var(--srm-l-scale)) 0.088 57);
+  --coral-800: oklch(calc(34% * var(--srm-l-scale)) 0.068 57);
   --coral-900: oklch(26% 0.048 57);
   --coral-950: oklch(20% 0.036 57);
 
@@ -303,44 +332,48 @@
   --fg-muted: oklch(52% 0.02 240);
 
   /* Brew surfaces — warm paper */
-  --brew-bg: 255 248 240;
-  --brew-surface: 250 243 234;
-  --brew-card: 255 252 247;
-  --brew-card-inset: 246 238 228;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(95.26% * var(--srm-bg-l-scale)) calc(0.0159 * var(--srm-bg-c-scale)) 73.7
+  );
   --brew-border: 220 210 195;
   --brew-border-subtle: 210 200 185;
 
   /* Default brew accent — muted vintage orange hue ~55 */
   --brew-accent-50: oklch(97% 0.01 55);
   --brew-accent-100: oklch(94% 0.025 55);
-  --brew-accent-200: oklch(88% 0.055 55);
-  --brew-accent-300: oklch(78% 0.09 55);
-  --brew-accent-400: oklch(70% 0.115 55);
-  --brew-accent-500: oklch(60% 0.115 55);
-  --brew-accent-600: oklch(50% 0.1 55);
-  --brew-accent-700: oklch(42% 0.085 55);
-  --brew-accent-800: oklch(34% 0.065 55);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.055 55);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.09 55);
+  --brew-accent-400: oklch(calc(70% * var(--srm-l-scale)) 0.115 55);
+  --brew-accent-500: oklch(calc(60% * var(--srm-l-scale)) 0.115 55);
+  --brew-accent-600: oklch(calc(50% * var(--srm-l-scale)) 0.1 55);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.085 55);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.065 55);
   --brew-accent-900: oklch(26% 0.045 55);
   --brew-accent-950: oklch(20% 0.032 55);
 
   /* Sidebar — slightly muted vintage (≈75% of default chroma) */
-  --sidebar-recipe-bg: oklch(63% 0.09 55);
+  --sidebar-recipe-bg: oklch(calc(63% * var(--srm-l-scale)) 0.09 55);
   --sidebar-recipe-text: oklch(97% 0.005 55);
-  --sidebar-equipment-bg: oklch(42% 0.09 260);
+  --sidebar-equipment-bg: oklch(calc(42% * var(--srm-l-scale)) 0.09 260);
   --sidebar-equipment-text: oklch(91% 0.015 260);
-  --sidebar-grain-bg: oklch(60% 0.12 75);
+  --sidebar-grain-bg: oklch(calc(60% * var(--srm-l-scale)) 0.12 75);
   --sidebar-grain-text: oklch(97% 0.008 75);
-  --sidebar-mash-bg: oklch(58% 0.12 55);
+  --sidebar-mash-bg: oklch(calc(58% * var(--srm-l-scale)) 0.12 55);
   --sidebar-mash-text: oklch(97% 0.005 55);
-  --sidebar-hops-bg: oklch(47% 0.1 145);
+  --sidebar-hops-bg: oklch(calc(47% * var(--srm-l-scale)) 0.1 145);
   --sidebar-hops-text: oklch(94% 0.015 145);
-  --sidebar-yeast-bg: oklch(44% 0.12 310);
+  --sidebar-yeast-bg: oklch(calc(44% * var(--srm-l-scale)) 0.12 310);
   --sidebar-yeast-text: oklch(91% 0.015 310);
-  --sidebar-water-bg: oklch(47% 0.14 250);
+  --sidebar-water-bg: oklch(calc(47% * var(--srm-l-scale)) 0.14 250);
   --sidebar-water-text: oklch(92% 0.015 250);
-  --sidebar-fermentation-bg: oklch(50% 0.13 15);
+  --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.13 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
-  --sidebar-targets-bg: oklch(55% 0.1 25);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.11 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
+  --sidebar-targets-bg: oklch(calc(55% * var(--srm-l-scale)) 0.1 25);
   --sidebar-targets-text: oklch(95% 0.008 25);
 
   /* Warmer shadows */
@@ -368,117 +401,119 @@
 
 /* Vintage palette — muted section accents (reduced chroma for vintage feel) */
 .palette-vintage .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.025 260);
-  --brew-accent-300: oklch(80% 0.042 260);
-  --brew-accent-400: oklch(68% 0.058 260);
-  --brew-accent-500: oklch(55% 0.065 260);
-  --brew-accent-600: oklch(45% 0.055 260);
-  --brew-accent-700: oklch(38% 0.045 260);
-  --brew-accent-800: oklch(30% 0.032 260);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.025 260);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.042 260);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.058 260);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.065 260);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.055 260);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.045 260);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.032 260);
   --brew-accent-900: oklch(26% 0.023 260);
   --brew-accent-950: oklch(20% 0.017 260);
 }
 .palette-vintage .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.058 75);
-  --brew-accent-300: oklch(80% 0.095 75);
-  --brew-accent-400: oklch(72% 0.115 75);
-  --brew-accent-500: oklch(62% 0.118 75);
-  --brew-accent-600: oklch(52% 0.105 75);
-  --brew-accent-700: oklch(42% 0.088 75);
-  --brew-accent-800: oklch(34% 0.065 75);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.058 75);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.095 75);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.115 75);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.118 75);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.105 75);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.088 75);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.065 75);
   --brew-accent-900: oklch(26% 0.047 75);
   --brew-accent-950: oklch(20% 0.034 75);
 }
 .palette-vintage .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.058 55);
-  --brew-accent-300: oklch(80% 0.092 55);
-  --brew-accent-400: oklch(72% 0.11 55);
-  --brew-accent-500: oklch(62% 0.115 55);
-  --brew-accent-600: oklch(52% 0.1 55);
-  --brew-accent-700: oklch(42% 0.085 55);
-  --brew-accent-800: oklch(34% 0.062 55);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.058 55);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.092 55);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.11 55);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.115 55);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.1 55);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.085 55);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.062 55);
   --brew-accent-900: oklch(26% 0.045 55);
   --brew-accent-950: oklch(20% 0.032 55);
 }
 .palette-vintage .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.055 145);
-  --brew-accent-300: oklch(80% 0.088 145);
-  --brew-accent-400: oklch(68% 0.108 145);
-  --brew-accent-500: oklch(55% 0.118 145);
-  --brew-accent-600: oklch(45% 0.102 145);
-  --brew-accent-700: oklch(38% 0.085 145);
-  --brew-accent-800: oklch(30% 0.058 145);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.055 145);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.088 145);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.108 145);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.118 145);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.102 145);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.085 145);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.058 145);
   --brew-accent-900: oklch(26% 0.042 145);
   --brew-accent-950: oklch(20% 0.03 145);
 }
 .palette-vintage .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.048 310);
-  --brew-accent-300: oklch(78% 0.078 310);
-  --brew-accent-400: oklch(68% 0.108 310);
-  --brew-accent-500: oklch(55% 0.12 310);
-  --brew-accent-600: oklch(45% 0.108 310);
-  --brew-accent-700: oklch(38% 0.09 310);
-  --brew-accent-800: oklch(30% 0.065 310);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.048 310);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.078 310);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.108 310);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.12 310);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.108 310);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.09 310);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.065 310);
   --brew-accent-900: oklch(26% 0.047 310);
   --brew-accent-950: oklch(20% 0.034 310);
 }
 .palette-vintage .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.05 230);
-  --brew-accent-300: oklch(80% 0.082 230);
-  --brew-accent-400: oklch(68% 0.105 230);
-  --brew-accent-500: oklch(55% 0.115 230);
-  --brew-accent-600: oklch(45% 0.1 230);
-  --brew-accent-700: oklch(38% 0.085 230);
-  --brew-accent-800: oklch(30% 0.06 230);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.05 230);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.082 230);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.105 230);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.115 230);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.1 230);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.085 230);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.06 230);
   --brew-accent-900: oklch(26% 0.043 230);
   --brew-accent-950: oklch(20% 0.031 230);
 }
 .palette-vintage .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.05 15);
-  --brew-accent-300: oklch(78% 0.082 15);
-  --brew-accent-400: oklch(68% 0.11 15);
-  --brew-accent-500: oklch(55% 0.125 15);
-  --brew-accent-600: oklch(45% 0.11 15);
-  --brew-accent-700: oklch(38% 0.09 15);
-  --brew-accent-800: oklch(30% 0.065 15);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.05 15);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.082 15);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.11 15);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.125 15);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.11 15);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.09 15);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.065 15);
   --brew-accent-900: oklch(26% 0.047 15);
   --brew-accent-950: oklch(20% 0.034 15);
 }
 .palette-vintage .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.048 25);
-  --brew-accent-300: oklch(78% 0.078 25);
-  --brew-accent-400: oklch(68% 0.1 25);
-  --brew-accent-500: oklch(55% 0.112 25);
-  --brew-accent-600: oklch(45% 0.1 25);
-  --brew-accent-700: oklch(38% 0.082 25);
-  --brew-accent-800: oklch(30% 0.06 25);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.048 25);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.078 25);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.1 25);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.112 25);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.1 25);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.082 25);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.06 25);
   --brew-accent-900: oklch(26% 0.043 25);
   --brew-accent-950: oklch(20% 0.031 25);
 }
 
 .dark.palette-vintage {
   /* Surfaces — deep warm charcoal */
-  --bg: 20 18 16;
-  --surface: 28 25 22;
-  --card: 35 32 28;
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0052 * var(--srm-bg-c-scale)) 67.5);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0075 * var(--srm-bg-c-scale)) 67.4);
+  --card: oklch(calc(28.0% * var(--srm-bg-l-scale)) calc(0.0087 * var(--srm-bg-c-scale)) 75.2);
   --text: 240 235 228;
-  --text-muted: 140 152 168; /* slate blue in dark */
-  --border: 60 55 48;
+  --text-muted: 150 162 178; /* slate blue in dark */
+  --border: 70 65 58;
 
   --accent: 215 140 70; /* warm amber-orange */
   --glow: 180 110 50;
 
   /* fg — warm light tones */
   --fg-strong: oklch(94% 0.006 50);
-  --fg-muted: oklch(65% 0.015 240);
+  --fg-muted: oklch(68% 0.015 240);
 
   /* Brew surfaces — dark warm */
-  --brew-bg: 20 18 16;
-  --brew-surface: 28 25 22;
-  --brew-card: 35 32 28;
-  --brew-card-inset: 24 22 19;
-  --brew-border: 60 55 48;
-  --brew-border-subtle: 48 44 38;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(23.8% * var(--srm-bg-l-scale)) calc(0.0067 * var(--srm-bg-c-scale)) 78.2
+  );
+  --brew-border: 70 65 58;
+  --brew-border-subtle: 58 54 48;
 
   /* Darker shadows */
   --shadow-card:
@@ -493,9 +528,12 @@
 
 /* ── MIDNIGHT ── Cool navy, electric blue accent ── */
 .palette-midnight {
-  --bg: 240 243 249;
-  --surface: 233 237 245;
-  --card: 245 247 252;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+  --bg: oklch(calc(96.36% * var(--srm-bg-l-scale)) calc(0.0086 * var(--srm-bg-c-scale)) 264.5);
+  --surface: oklch(calc(94.54% * var(--srm-bg-l-scale)) calc(0.0116 * var(--srm-bg-c-scale)) 264.5);
+  --card: oklch(calc(97.6% * var(--srm-bg-l-scale)) calc(0.007 * var(--srm-bg-c-scale)) 268.5);
   --text: 30 40 65;
   --text-muted: 100 115 145;
   --border: 205 215 230;
@@ -505,35 +543,37 @@
 
   --coral-50: oklch(97% 0.012 250);
   --coral-100: oklch(94% 0.028 250);
-  --coral-200: oklch(88% 0.06 250);
-  --coral-300: oklch(78% 0.11 250);
-  --coral-400: oklch(68% 0.16 250);
-  --coral-500: oklch(58% 0.17 250);
-  --coral-600: oklch(48% 0.155 250);
-  --coral-700: oklch(40% 0.13 250);
-  --coral-800: oklch(32% 0.1 250);
+  --coral-200: oklch(calc(88% * var(--srm-l-scale)) 0.06 250);
+  --coral-300: oklch(calc(78% * var(--srm-l-scale)) 0.11 250);
+  --coral-400: oklch(calc(68% * var(--srm-l-scale)) 0.16 250);
+  --coral-500: oklch(calc(58% * var(--srm-l-scale)) 0.17 250);
+  --coral-600: oklch(calc(48% * var(--srm-l-scale)) 0.155 250);
+  --coral-700: oklch(calc(40% * var(--srm-l-scale)) 0.13 250);
+  --coral-800: oklch(calc(32% * var(--srm-l-scale)) 0.1 250);
   --coral-900: oklch(24% 0.07 250);
   --coral-950: oklch(18% 0.05 250);
 
   --fg-strong: oklch(18% 0.015 250);
   --fg-muted: oklch(50% 0.02 250);
 
-  --brew-bg: 240 243 249;
-  --brew-surface: 233 237 245;
-  --brew-card: 245 247 252;
-  --brew-card-inset: 228 233 242;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(93.28% * var(--srm-bg-l-scale)) calc(0.0133 * var(--srm-bg-c-scale)) 262.4
+  );
   --brew-border: 205 215 230;
   --brew-border-subtle: 195 205 222;
 
   --brew-accent-50: oklch(97% 0.01 250);
   --brew-accent-100: oklch(94% 0.024 250);
-  --brew-accent-200: oklch(88% 0.05 250);
-  --brew-accent-300: oklch(78% 0.095 250);
-  --brew-accent-400: oklch(68% 0.14 250);
-  --brew-accent-500: oklch(58% 0.15 250);
-  --brew-accent-600: oklch(48% 0.135 250);
-  --brew-accent-700: oklch(40% 0.115 250);
-  --brew-accent-800: oklch(32% 0.085 250);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.05 250);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.095 250);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.14 250);
+  --brew-accent-500: oklch(calc(58% * var(--srm-l-scale)) 0.15 250);
+  --brew-accent-600: oklch(calc(48% * var(--srm-l-scale)) 0.135 250);
+  --brew-accent-700: oklch(calc(40% * var(--srm-l-scale)) 0.115 250);
+  --brew-accent-800: oklch(calc(32% * var(--srm-l-scale)) 0.085 250);
   --brew-accent-900: oklch(24% 0.06 250);
   --brew-accent-950: oklch(18% 0.042 250);
 
@@ -557,45 +597,49 @@
     0 4px 4px -2px rgba(60, 80, 130, 0.07), 0 8px 8px -4px rgba(60, 80, 130, 0.06),
     0 16px 16px -8px rgba(60, 80, 130, 0.05), 0 36px 36px -18px rgba(60, 80, 130, 0.04);
 
-  --sidebar-recipe-bg: oklch(55% 0.14 250);
+  --sidebar-recipe-bg: oklch(calc(55% * var(--srm-l-scale)) 0.14 250);
   --sidebar-recipe-text: oklch(96% 0.008 250);
-  --sidebar-equipment-bg: oklch(40% 0.1 260);
+  --sidebar-equipment-bg: oklch(calc(40% * var(--srm-l-scale)) 0.1 260);
   --sidebar-equipment-text: oklch(92% 0.015 260);
-  --sidebar-grain-bg: oklch(58% 0.12 82);
+  --sidebar-grain-bg: oklch(calc(58% * var(--srm-l-scale)) 0.12 82);
   --sidebar-grain-text: oklch(97% 0.008 82);
-  --sidebar-mash-bg: oklch(55% 0.14 55);
+  --sidebar-mash-bg: oklch(calc(55% * var(--srm-l-scale)) 0.14 55);
   --sidebar-mash-text: oklch(96% 0.005 55);
-  --sidebar-hops-bg: oklch(46% 0.11 160);
+  --sidebar-hops-bg: oklch(calc(46% * var(--srm-l-scale)) 0.11 160);
   --sidebar-hops-text: oklch(94% 0.012 160);
-  --sidebar-yeast-bg: oklch(42% 0.13 290);
+  --sidebar-yeast-bg: oklch(calc(42% * var(--srm-l-scale)) 0.13 290);
   --sidebar-yeast-text: oklch(91% 0.015 290);
-  --sidebar-water-bg: oklch(48% 0.16 250);
+  --sidebar-water-bg: oklch(calc(48% * var(--srm-l-scale)) 0.16 250);
   --sidebar-water-text: oklch(93% 0.015 250);
-  --sidebar-fermentation-bg: oklch(48% 0.14 15);
+  --sidebar-fermentation-bg: oklch(calc(48% * var(--srm-l-scale)) 0.14 15);
   --sidebar-fermentation-text: oklch(94% 0.008 15);
-  --sidebar-targets-bg: oklch(50% 0.12 250);
+  --sidebar-packaging-bg: oklch(calc(49% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(94% 0.008 50);
+  --sidebar-targets-bg: oklch(calc(50% * var(--srm-l-scale)) 0.12 250);
   --sidebar-targets-text: oklch(94% 0.008 250);
 }
 .dark.palette-midnight {
-  --bg: 14 18 30;
-  --surface: 20 25 42;
-  --card: 28 34 55;
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0255 * var(--srm-bg-c-scale)) 269.7);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0344 * var(--srm-bg-c-scale)) 270.8);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0407 * var(--srm-bg-c-scale)) 271.2);
   --text: 220 228 245;
-  --text-muted: 130 145 175;
-  --border: 45 55 80;
+  --text-muted: 140 155 185;
+  --border: 55 65 90;
 
   --accent: 80 145 255;
   --glow: 50 110 230;
 
   --fg-strong: oklch(95% 0.008 250);
-  --fg-muted: oklch(65% 0.015 250);
+  --fg-muted: oklch(68% 0.015 250);
 
-  --brew-bg: 14 18 30;
-  --brew-surface: 20 25 42;
-  --brew-card: 28 34 55;
-  --brew-card-inset: 16 20 36;
-  --brew-border: 45 55 80;
-  --brew-border-subtle: 38 48 70;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(23.2% * var(--srm-bg-l-scale)) calc(0.0329 * var(--srm-bg-c-scale)) 272.4
+  );
+  --brew-border: 55 65 90;
+  --brew-border-subtle: 48 58 80;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 1px -0.5px rgba(0, 0, 0, 0.2),
@@ -609,99 +653,102 @@
 
 /* Midnight — cooled-down section accents, blues pop */
 .palette-midnight .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.035 255);
-  --brew-accent-300: oklch(80% 0.065 255);
-  --brew-accent-400: oklch(68% 0.095 255);
-  --brew-accent-500: oklch(55% 0.105 255);
-  --brew-accent-600: oklch(45% 0.092 255);
-  --brew-accent-700: oklch(38% 0.075 255);
-  --brew-accent-800: oklch(30% 0.055 255);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.035 255);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.065 255);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.095 255);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.105 255);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.092 255);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.075 255);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.055 255);
   --brew-accent-900: oklch(26% 0.04 255);
   --brew-accent-950: oklch(20% 0.029 255);
 }
 .palette-midnight .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.05 85);
-  --brew-accent-300: oklch(80% 0.082 85);
-  --brew-accent-400: oklch(72% 0.105 85);
-  --brew-accent-500: oklch(62% 0.108 85);
-  --brew-accent-600: oklch(52% 0.095 85);
-  --brew-accent-700: oklch(42% 0.078 85);
-  --brew-accent-800: oklch(34% 0.058 85);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.05 85);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.082 85);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.105 85);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.108 85);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.095 85);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.078 85);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.058 85);
   --brew-accent-900: oklch(26% 0.042 85);
   --brew-accent-950: oklch(20% 0.03 85);
 }
 .palette-midnight .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.048 65);
-  --brew-accent-300: oklch(80% 0.078 65);
-  --brew-accent-400: oklch(72% 0.098 65);
-  --brew-accent-500: oklch(62% 0.102 65);
-  --brew-accent-600: oklch(52% 0.09 65);
-  --brew-accent-700: oklch(42% 0.075 65);
-  --brew-accent-800: oklch(34% 0.055 65);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.048 65);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.078 65);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.098 65);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.102 65);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.09 65);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.075 65);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.055 65);
   --brew-accent-900: oklch(26% 0.04 65);
   --brew-accent-950: oklch(20% 0.029 65);
 }
 .palette-midnight .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.048 160);
-  --brew-accent-300: oklch(80% 0.078 160);
-  --brew-accent-400: oklch(68% 0.1 160);
-  --brew-accent-500: oklch(55% 0.11 160);
-  --brew-accent-600: oklch(45% 0.095 160);
-  --brew-accent-700: oklch(38% 0.08 160);
-  --brew-accent-800: oklch(30% 0.058 160);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.048 160);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.078 160);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.1 160);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.11 160);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.095 160);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.08 160);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.058 160);
   --brew-accent-900: oklch(26% 0.042 160);
   --brew-accent-950: oklch(20% 0.03 160);
 }
 .palette-midnight .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.042 280);
-  --brew-accent-300: oklch(78% 0.07 280);
-  --brew-accent-400: oklch(68% 0.098 280);
-  --brew-accent-500: oklch(55% 0.112 280);
-  --brew-accent-600: oklch(45% 0.1 280);
-  --brew-accent-700: oklch(38% 0.082 280);
-  --brew-accent-800: oklch(30% 0.06 280);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.042 280);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.07 280);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.098 280);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.112 280);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.1 280);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.082 280);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.06 280);
   --brew-accent-900: oklch(26% 0.043 280);
   --brew-accent-950: oklch(20% 0.031 280);
 }
 .palette-midnight .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.05 240);
-  --brew-accent-300: oklch(80% 0.088 240);
-  --brew-accent-400: oklch(68% 0.12 240);
-  --brew-accent-500: oklch(55% 0.135 240);
-  --brew-accent-600: oklch(45% 0.118 240);
-  --brew-accent-700: oklch(38% 0.098 240);
-  --brew-accent-800: oklch(30% 0.072 240);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.05 240);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.088 240);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.12 240);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.135 240);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.118 240);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.098 240);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.072 240);
   --brew-accent-900: oklch(26% 0.052 240);
   --brew-accent-950: oklch(20% 0.037 240);
 }
 .palette-midnight .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.038 270);
-  --brew-accent-300: oklch(78% 0.062 270);
-  --brew-accent-400: oklch(68% 0.088 270);
-  --brew-accent-500: oklch(55% 0.1 270);
-  --brew-accent-600: oklch(45% 0.088 270);
-  --brew-accent-700: oklch(38% 0.072 270);
-  --brew-accent-800: oklch(30% 0.052 270);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.038 270);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.062 270);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.088 270);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.1 270);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.088 270);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.072 270);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.052 270);
   --brew-accent-900: oklch(26% 0.037 270);
   --brew-accent-950: oklch(20% 0.027 270);
 }
 .palette-midnight .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.035 250);
-  --brew-accent-300: oklch(78% 0.06 250);
-  --brew-accent-400: oklch(68% 0.085 250);
-  --brew-accent-500: oklch(55% 0.098 250);
-  --brew-accent-600: oklch(45% 0.085 250);
-  --brew-accent-700: oklch(38% 0.07 250);
-  --brew-accent-800: oklch(30% 0.05 250);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.035 250);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.06 250);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.085 250);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.098 250);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.085 250);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.07 250);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.05 250);
   --brew-accent-900: oklch(26% 0.036 250);
   --brew-accent-950: oklch(20% 0.026 250);
 }
 
 /* ── FOREST ── Deep greens, earthy, natural ── */
 .palette-forest {
-  --bg: 243 247 240;
-  --surface: 236 242 232;
-  --card: 248 251 245;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+  --bg: oklch(calc(97.12% * var(--srm-bg-l-scale)) calc(0.0101 * var(--srm-bg-c-scale)) 131.4);
+  --surface: oklch(calc(95.39% * var(--srm-bg-l-scale)) calc(0.0147 * var(--srm-bg-c-scale)) 132.5);
+  --card: oklch(calc(98.42% * var(--srm-bg-l-scale)) calc(0.0085 * var(--srm-bg-c-scale)) 128.6);
   --text: 35 50 30;
   --text-muted: 95 120 85;
   --border: 200 215 190;
@@ -711,35 +758,37 @@
 
   --coral-50: oklch(97% 0.015 148);
   --coral-100: oklch(94% 0.032 148);
-  --coral-200: oklch(88% 0.065 148);
-  --coral-300: oklch(78% 0.11 148);
-  --coral-400: oklch(68% 0.145 148);
-  --coral-500: oklch(55% 0.14 148);
-  --coral-600: oklch(46% 0.125 148);
-  --coral-700: oklch(38% 0.105 148);
-  --coral-800: oklch(30% 0.08 148);
+  --coral-200: oklch(calc(88% * var(--srm-l-scale)) 0.065 148);
+  --coral-300: oklch(calc(78% * var(--srm-l-scale)) 0.11 148);
+  --coral-400: oklch(calc(68% * var(--srm-l-scale)) 0.145 148);
+  --coral-500: oklch(calc(55% * var(--srm-l-scale)) 0.14 148);
+  --coral-600: oklch(calc(46% * var(--srm-l-scale)) 0.125 148);
+  --coral-700: oklch(calc(38% * var(--srm-l-scale)) 0.105 148);
+  --coral-800: oklch(calc(30% * var(--srm-l-scale)) 0.08 148);
   --coral-900: oklch(24% 0.055 148);
   --coral-950: oklch(18% 0.04 148);
 
   --fg-strong: oklch(18% 0.02 145);
   --fg-muted: oklch(48% 0.025 145);
 
-  --brew-bg: 243 247 240;
-  --brew-surface: 236 242 232;
-  --brew-card: 248 251 245;
-  --brew-card-inset: 230 238 225;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(93.95% * var(--srm-bg-l-scale)) calc(0.0192 * var(--srm-bg-c-scale)) 133.1
+  );
   --brew-border: 200 215 190;
   --brew-border-subtle: 188 205 178;
 
   --brew-accent-50: oklch(97% 0.012 148);
   --brew-accent-100: oklch(94% 0.028 148);
-  --brew-accent-200: oklch(88% 0.055 148);
-  --brew-accent-300: oklch(78% 0.095 148);
-  --brew-accent-400: oklch(68% 0.125 148);
-  --brew-accent-500: oklch(55% 0.125 148);
-  --brew-accent-600: oklch(46% 0.108 148);
-  --brew-accent-700: oklch(38% 0.09 148);
-  --brew-accent-800: oklch(30% 0.068 148);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.055 148);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.095 148);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.125 148);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.125 148);
+  --brew-accent-600: oklch(calc(46% * var(--srm-l-scale)) 0.108 148);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.09 148);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.068 148);
   --brew-accent-900: oklch(24% 0.048 148);
   --brew-accent-950: oklch(18% 0.035 148);
 
@@ -763,45 +812,49 @@
     0 4px 4px -2px rgba(50, 90, 40, 0.07), 0 8px 8px -4px rgba(50, 90, 40, 0.06),
     0 16px 16px -8px rgba(50, 90, 40, 0.05), 0 36px 36px -18px rgba(50, 90, 40, 0.04);
 
-  --sidebar-recipe-bg: oklch(55% 0.12 148);
+  --sidebar-recipe-bg: oklch(calc(55% * var(--srm-l-scale)) 0.12 148);
   --sidebar-recipe-text: oklch(96% 0.008 148);
-  --sidebar-equipment-bg: oklch(40% 0.1 200);
+  --sidebar-equipment-bg: oklch(calc(40% * var(--srm-l-scale)) 0.1 200);
   --sidebar-equipment-text: oklch(92% 0.012 200);
-  --sidebar-grain-bg: oklch(58% 0.13 70);
+  --sidebar-grain-bg: oklch(calc(58% * var(--srm-l-scale)) 0.13 70);
   --sidebar-grain-text: oklch(97% 0.008 70);
-  --sidebar-mash-bg: oklch(55% 0.12 70);
+  --sidebar-mash-bg: oklch(calc(55% * var(--srm-l-scale)) 0.12 70);
   --sidebar-mash-text: oklch(96% 0.005 70);
-  --sidebar-hops-bg: oklch(48% 0.15 148);
+  --sidebar-hops-bg: oklch(calc(48% * var(--srm-l-scale)) 0.15 148);
   --sidebar-hops-text: oklch(95% 0.015 148);
-  --sidebar-yeast-bg: oklch(42% 0.14 320);
+  --sidebar-yeast-bg: oklch(calc(42% * var(--srm-l-scale)) 0.14 320);
   --sidebar-yeast-text: oklch(91% 0.015 320);
-  --sidebar-water-bg: oklch(46% 0.14 200);
+  --sidebar-water-bg: oklch(calc(46% * var(--srm-l-scale)) 0.14 200);
   --sidebar-water-text: oklch(92% 0.012 200);
-  --sidebar-fermentation-bg: oklch(50% 0.14 20);
+  --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.14 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
-  --sidebar-targets-bg: oklch(52% 0.1 148);
+  --sidebar-packaging-bg: oklch(calc(51% * var(--srm-l-scale)) 0.12 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
+  --sidebar-targets-bg: oklch(calc(52% * var(--srm-l-scale)) 0.1 148);
   --sidebar-targets-text: oklch(95% 0.008 148);
 }
 .dark.palette-forest {
-  --bg: 14 20 14;
-  --surface: 20 28 20;
-  --card: 28 38 28;
+  --bg: oklch(calc(22.0% * var(--srm-bg-l-scale)) calc(0.0152 * var(--srm-bg-c-scale)) 144.9);
+  --surface: oklch(calc(25.0% * var(--srm-bg-l-scale)) calc(0.0194 * var(--srm-bg-c-scale)) 144.9);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0233 * var(--srm-bg-c-scale)) 144.9);
   --text: 225 238 220;
-  --text-muted: 130 155 125;
-  --border: 45 60 42;
+  --text-muted: 140 165 135;
+  --border: 55 70 52;
 
   --accent: 75 170 85;
   --glow: 50 140 60;
 
   --fg-strong: oklch(95% 0.008 145);
-  --fg-muted: oklch(65% 0.018 145);
+  --fg-muted: oklch(68% 0.018 145);
 
-  --brew-bg: 14 20 14;
-  --brew-surface: 20 28 20;
-  --brew-card: 28 38 28;
-  --brew-card-inset: 16 24 16;
-  --brew-border: 45 60 42;
-  --brew-border-subtle: 38 52 36;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(23.5% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 144.8
+  );
+  --brew-border: 55 70 52;
+  --brew-border-subtle: 48 62 46;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.2), 0 1px 1px -0.5px rgba(0, 0, 0, 0.16),
@@ -815,99 +868,102 @@
 
 /* Forest — greens pop, warm sections go earthy/olive */
 .palette-forest .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.022 220);
-  --brew-accent-300: oklch(80% 0.04 220);
-  --brew-accent-400: oklch(68% 0.055 220);
-  --brew-accent-500: oklch(55% 0.062 220);
-  --brew-accent-600: oklch(45% 0.052 220);
-  --brew-accent-700: oklch(38% 0.042 220);
-  --brew-accent-800: oklch(30% 0.03 220);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.022 220);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.04 220);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.055 220);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.062 220);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.052 220);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.042 220);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.03 220);
   --brew-accent-900: oklch(26% 0.022 220);
   --brew-accent-950: oklch(20% 0.016 220);
 }
 .palette-forest .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.058 90);
-  --brew-accent-300: oklch(80% 0.095 88);
-  --brew-accent-400: oklch(72% 0.118 85);
-  --brew-accent-500: oklch(62% 0.12 82);
-  --brew-accent-600: oklch(52% 0.105 80);
-  --brew-accent-700: oklch(42% 0.088 80);
-  --brew-accent-800: oklch(34% 0.065 80);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.058 90);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.095 88);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.118 85);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.12 82);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.105 80);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.088 80);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.065 80);
   --brew-accent-900: oklch(26% 0.047 80);
   --brew-accent-950: oklch(20% 0.034 80);
 }
 .palette-forest .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.052 70);
-  --brew-accent-300: oklch(80% 0.085 68);
-  --brew-accent-400: oklch(72% 0.108 65);
-  --brew-accent-500: oklch(62% 0.112 62);
-  --brew-accent-600: oklch(52% 0.098 60);
-  --brew-accent-700: oklch(42% 0.082 60);
-  --brew-accent-800: oklch(34% 0.06 60);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.052 70);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.085 68);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.108 65);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.112 62);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.098 60);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.082 60);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.06 60);
   --brew-accent-900: oklch(26% 0.043 60);
   --brew-accent-950: oklch(20% 0.031 60);
 }
 .palette-forest .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.065 148);
-  --brew-accent-300: oklch(80% 0.11 148);
-  --brew-accent-400: oklch(68% 0.145 148);
-  --brew-accent-500: oklch(55% 0.155 148);
-  --brew-accent-600: oklch(45% 0.135 148);
-  --brew-accent-700: oklch(38% 0.112 148);
-  --brew-accent-800: oklch(30% 0.082 148);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.065 148);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.11 148);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.145 148);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.155 148);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.135 148);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.112 148);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.082 148);
   --brew-accent-900: oklch(26% 0.059 148);
   --brew-accent-950: oklch(20% 0.043 148);
 }
 .palette-forest .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.035 290);
-  --brew-accent-300: oklch(78% 0.058 290);
-  --brew-accent-400: oklch(68% 0.078 290);
-  --brew-accent-500: oklch(55% 0.088 290);
-  --brew-accent-600: oklch(45% 0.078 290);
-  --brew-accent-700: oklch(38% 0.065 290);
-  --brew-accent-800: oklch(30% 0.048 290);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.035 290);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.058 290);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.078 290);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.088 290);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.078 290);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.065 290);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.048 290);
   --brew-accent-900: oklch(26% 0.035 290);
   --brew-accent-950: oklch(20% 0.025 290);
 }
 .palette-forest .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.048 180);
-  --brew-accent-300: oklch(80% 0.08 180);
-  --brew-accent-400: oklch(68% 0.108 180);
-  --brew-accent-500: oklch(55% 0.12 180);
-  --brew-accent-600: oklch(45% 0.105 180);
-  --brew-accent-700: oklch(38% 0.088 180);
-  --brew-accent-800: oklch(30% 0.062 180);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.048 180);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.08 180);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.108 180);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.12 180);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.105 180);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.088 180);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.062 180);
   --brew-accent-900: oklch(26% 0.045 180);
   --brew-accent-950: oklch(20% 0.032 180);
 }
 .palette-forest .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.042 30);
-  --brew-accent-300: oklch(78% 0.068 30);
-  --brew-accent-400: oklch(68% 0.09 30);
-  --brew-accent-500: oklch(55% 0.102 30);
-  --brew-accent-600: oklch(45% 0.09 30);
-  --brew-accent-700: oklch(38% 0.075 30);
-  --brew-accent-800: oklch(30% 0.055 30);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.042 30);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.068 30);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.09 30);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.102 30);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.09 30);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.075 30);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.055 30);
   --brew-accent-900: oklch(26% 0.04 30);
   --brew-accent-950: oklch(20% 0.029 30);
 }
 .palette-forest .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.038 130);
-  --brew-accent-300: oklch(78% 0.062 130);
-  --brew-accent-400: oklch(68% 0.082 130);
-  --brew-accent-500: oklch(55% 0.092 130);
-  --brew-accent-600: oklch(45% 0.08 130);
-  --brew-accent-700: oklch(38% 0.066 130);
-  --brew-accent-800: oklch(30% 0.048 130);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.038 130);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.062 130);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.082 130);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.092 130);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.08 130);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.066 130);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.048 130);
   --brew-accent-900: oklch(26% 0.035 130);
   --brew-accent-950: oklch(20% 0.025 130);
 }
 
 /* ── COPPER ── Rich bronze metallics, brewery feel ── */
 .palette-copper {
-  --bg: 250 245 238;
-  --surface: 244 238 228;
-  --card: 252 249 243;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+  --bg: oklch(calc(97.21% * var(--srm-bg-l-scale)) calc(0.0107 * var(--srm-bg-c-scale)) 76.6);
+  --surface: oklch(calc(95.11% * var(--srm-bg-l-scale)) calc(0.0148 * var(--srm-bg-c-scale)) 80.7);
+  --card: oklch(calc(98.28% * var(--srm-bg-l-scale)) calc(0.0086 * var(--srm-bg-c-scale)) 84.6);
   --text: 55 38 22;
   --text-muted: 130 105 75;
   --border: 215 200 175;
@@ -917,35 +973,37 @@
 
   --coral-50: oklch(97% 0.015 65);
   --coral-100: oklch(93% 0.035 62);
-  --coral-200: oklch(86% 0.075 58);
-  --coral-300: oklch(77% 0.13 52);
-  --coral-400: oklch(70% 0.16 48);
-  --coral-500: oklch(60% 0.155 45);
-  --coral-600: oklch(50% 0.14 44);
-  --coral-700: oklch(42% 0.115 44);
-  --coral-800: oklch(34% 0.088 44);
+  --coral-200: oklch(calc(86% * var(--srm-l-scale)) 0.075 58);
+  --coral-300: oklch(calc(77% * var(--srm-l-scale)) 0.13 52);
+  --coral-400: oklch(calc(70% * var(--srm-l-scale)) 0.16 48);
+  --coral-500: oklch(calc(60% * var(--srm-l-scale)) 0.155 45);
+  --coral-600: oklch(calc(50% * var(--srm-l-scale)) 0.14 44);
+  --coral-700: oklch(calc(42% * var(--srm-l-scale)) 0.115 44);
+  --coral-800: oklch(calc(34% * var(--srm-l-scale)) 0.088 44);
   --coral-900: oklch(26% 0.062 44);
   --coral-950: oklch(20% 0.045 44);
 
   --fg-strong: oklch(20% 0.018 50);
   --fg-muted: oklch(50% 0.028 50);
 
-  --brew-bg: 250 245 238;
-  --brew-surface: 244 238 228;
-  --brew-card: 252 249 243;
-  --brew-card-inset: 240 234 222;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(93.85% * var(--srm-bg-l-scale)) calc(0.0173 * var(--srm-bg-c-scale)) 84.6
+  );
   --brew-border: 215 200 175;
   --brew-border-subtle: 205 190 165;
 
   --brew-accent-50: oklch(97% 0.012 48);
   --brew-accent-100: oklch(94% 0.03 48);
-  --brew-accent-200: oklch(88% 0.065 48);
-  --brew-accent-300: oklch(78% 0.112 48);
-  --brew-accent-400: oklch(70% 0.145 48);
-  --brew-accent-500: oklch(60% 0.14 45);
-  --brew-accent-600: oklch(50% 0.125 44);
-  --brew-accent-700: oklch(42% 0.105 44);
-  --brew-accent-800: oklch(34% 0.078 44);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.065 48);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.112 48);
+  --brew-accent-400: oklch(calc(70% * var(--srm-l-scale)) 0.145 48);
+  --brew-accent-500: oklch(calc(60% * var(--srm-l-scale)) 0.14 45);
+  --brew-accent-600: oklch(calc(50% * var(--srm-l-scale)) 0.125 44);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.105 44);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.078 44);
   --brew-accent-900: oklch(26% 0.055 44);
   --brew-accent-950: oklch(20% 0.04 44);
 
@@ -969,45 +1027,49 @@
     0 4px 4px -2px rgba(120, 80, 30, 0.08), 0 8px 8px -4px rgba(120, 80, 30, 0.07),
     0 16px 16px -8px rgba(120, 80, 30, 0.06), 0 36px 36px -18px rgba(120, 80, 30, 0.05);
 
-  --sidebar-recipe-bg: oklch(60% 0.12 45);
+  --sidebar-recipe-bg: oklch(calc(60% * var(--srm-l-scale)) 0.12 45);
   --sidebar-recipe-text: oklch(97% 0.005 45);
-  --sidebar-equipment-bg: oklch(40% 0.1 240);
+  --sidebar-equipment-bg: oklch(calc(40% * var(--srm-l-scale)) 0.1 240);
   --sidebar-equipment-text: oklch(91% 0.012 240);
-  --sidebar-grain-bg: oklch(58% 0.15 60);
+  --sidebar-grain-bg: oklch(calc(58% * var(--srm-l-scale)) 0.15 60);
   --sidebar-grain-text: oklch(97% 0.008 60);
-  --sidebar-mash-bg: oklch(56% 0.14 45);
+  --sidebar-mash-bg: oklch(calc(56% * var(--srm-l-scale)) 0.14 45);
   --sidebar-mash-text: oklch(97% 0.005 45);
-  --sidebar-hops-bg: oklch(46% 0.12 120);
+  --sidebar-hops-bg: oklch(calc(46% * var(--srm-l-scale)) 0.12 120);
   --sidebar-hops-text: oklch(94% 0.012 120);
-  --sidebar-yeast-bg: oklch(42% 0.14 330);
+  --sidebar-yeast-bg: oklch(calc(42% * var(--srm-l-scale)) 0.14 330);
   --sidebar-yeast-text: oklch(91% 0.012 330);
-  --sidebar-water-bg: oklch(46% 0.15 230);
+  --sidebar-water-bg: oklch(calc(46% * var(--srm-l-scale)) 0.15 230);
   --sidebar-water-text: oklch(92% 0.012 230);
-  --sidebar-fermentation-bg: oklch(50% 0.15 20);
+  --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.15 20);
   --sidebar-fermentation-text: oklch(94% 0.008 20);
-  --sidebar-targets-bg: oklch(54% 0.12 35);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
+  --sidebar-targets-bg: oklch(calc(54% * var(--srm-l-scale)) 0.12 35);
   --sidebar-targets-text: oklch(95% 0.008 35);
 }
 .dark.palette-copper {
-  --bg: 22 16 10;
-  --surface: 30 22 14;
-  --card: 40 30 20;
+  --bg: oklch(calc(21.5% * var(--srm-bg-l-scale)) calc(0.0154 * var(--srm-bg-c-scale)) 66.6);
+  --surface: oklch(calc(24.5% * var(--srm-bg-l-scale)) calc(0.0198 * var(--srm-bg-c-scale)) 66.4);
+  --card: oklch(calc(28.0% * var(--srm-bg-l-scale)) calc(0.0237 * var(--srm-bg-c-scale)) 66.3);
   --text: 240 228 210;
-  --text-muted: 165 140 110;
-  --border: 65 52 38;
+  --text-muted: 175 150 120;
+  --border: 75 62 48;
 
   --accent: 210 135 55;
   --glow: 185 110 35;
 
   --fg-strong: oklch(95% 0.008 50);
-  --fg-muted: oklch(68% 0.02 50);
+  --fg-muted: oklch(70% 0.02 50);
 
-  --brew-bg: 22 16 10;
-  --brew-surface: 30 22 14;
-  --brew-card: 40 30 20;
-  --brew-card-inset: 25 18 12;
-  --brew-border: 65 52 38;
-  --brew-border-subtle: 55 44 32;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(22.5% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) 62.2
+  );
+  --brew-border: 75 62 48;
+  --brew-border-subtle: 65 54 42;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
@@ -1021,99 +1083,102 @@
 
 /* Copper — everything warmer/richer, shifted toward amber-bronze hues */
 .palette-copper .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.025 250);
-  --brew-accent-300: oklch(80% 0.045 248);
-  --brew-accent-400: oklch(68% 0.062 245);
-  --brew-accent-500: oklch(55% 0.07 245);
-  --brew-accent-600: oklch(45% 0.06 245);
-  --brew-accent-700: oklch(38% 0.048 245);
-  --brew-accent-800: oklch(30% 0.035 245);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.025 250);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.045 248);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.062 245);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.07 245);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.06 245);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.048 245);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.035 245);
   --brew-accent-900: oklch(26% 0.025 245);
   --brew-accent-950: oklch(20% 0.018 245);
 }
 .palette-copper .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.072 65);
-  --brew-accent-300: oklch(80% 0.125 60);
-  --brew-accent-400: oklch(72% 0.155 55);
-  --brew-accent-500: oklch(62% 0.16 50);
-  --brew-accent-600: oklch(52% 0.145 48);
-  --brew-accent-700: oklch(42% 0.12 48);
-  --brew-accent-800: oklch(34% 0.09 48);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.072 65);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.125 60);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.155 55);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.16 50);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.145 48);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.12 48);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.09 48);
   --brew-accent-900: oklch(26% 0.065 48);
   --brew-accent-950: oklch(20% 0.047 48);
 }
 .palette-copper .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.068 50);
-  --brew-accent-300: oklch(80% 0.118 48);
-  --brew-accent-400: oklch(72% 0.148 46);
-  --brew-accent-500: oklch(62% 0.155 44);
-  --brew-accent-600: oklch(52% 0.14 44);
-  --brew-accent-700: oklch(42% 0.115 44);
-  --brew-accent-800: oklch(34% 0.085 44);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.068 50);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.118 48);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.148 46);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.155 44);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.14 44);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.115 44);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.085 44);
   --brew-accent-900: oklch(26% 0.061 44);
   --brew-accent-950: oklch(20% 0.044 44);
 }
 .palette-copper .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.048 140);
-  --brew-accent-300: oklch(80% 0.078 140);
-  --brew-accent-400: oklch(68% 0.1 140);
-  --brew-accent-500: oklch(55% 0.112 140);
-  --brew-accent-600: oklch(45% 0.098 140);
-  --brew-accent-700: oklch(38% 0.08 140);
-  --brew-accent-800: oklch(30% 0.058 140);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.048 140);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.078 140);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.1 140);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.112 140);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.098 140);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.08 140);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.058 140);
   --brew-accent-900: oklch(26% 0.042 140);
   --brew-accent-950: oklch(20% 0.03 140);
 }
 .palette-copper .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.04 305);
-  --brew-accent-300: oklch(78% 0.065 305);
-  --brew-accent-400: oklch(68% 0.088 305);
-  --brew-accent-500: oklch(55% 0.1 305);
-  --brew-accent-600: oklch(45% 0.088 305);
-  --brew-accent-700: oklch(38% 0.072 305);
-  --brew-accent-800: oklch(30% 0.052 305);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.04 305);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.065 305);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.088 305);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.1 305);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.088 305);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.072 305);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.052 305);
   --brew-accent-900: oklch(26% 0.037 305);
   --brew-accent-950: oklch(20% 0.027 305);
 }
 .palette-copper .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.042 225);
-  --brew-accent-300: oklch(80% 0.07 225);
-  --brew-accent-400: oklch(68% 0.092 225);
-  --brew-accent-500: oklch(55% 0.102 225);
-  --brew-accent-600: oklch(45% 0.09 225);
-  --brew-accent-700: oklch(38% 0.075 225);
-  --brew-accent-800: oklch(30% 0.055 225);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.042 225);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.07 225);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.092 225);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.102 225);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.09 225);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.075 225);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.055 225);
   --brew-accent-900: oklch(26% 0.04 225);
   --brew-accent-950: oklch(20% 0.029 225);
 }
 .palette-copper .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.055 25);
-  --brew-accent-300: oklch(78% 0.092 25);
-  --brew-accent-400: oklch(68% 0.125 25);
-  --brew-accent-500: oklch(55% 0.138 25);
-  --brew-accent-600: oklch(45% 0.122 25);
-  --brew-accent-700: oklch(38% 0.1 25);
-  --brew-accent-800: oklch(30% 0.072 25);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.055 25);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.092 25);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.125 25);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.138 25);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.122 25);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.1 25);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.072 25);
   --brew-accent-900: oklch(26% 0.052 25);
   --brew-accent-950: oklch(20% 0.037 25);
 }
 .palette-copper .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.048 42);
-  --brew-accent-300: oklch(78% 0.08 42);
-  --brew-accent-400: oklch(68% 0.105 42);
-  --brew-accent-500: oklch(55% 0.118 42);
-  --brew-accent-600: oklch(45% 0.105 42);
-  --brew-accent-700: oklch(38% 0.088 42);
-  --brew-accent-800: oklch(30% 0.062 42);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.048 42);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.08 42);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.105 42);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.118 42);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.105 42);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.088 42);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.062 42);
   --brew-accent-900: oklch(26% 0.045 42);
   --brew-accent-950: oklch(20% 0.032 42);
 }
 
 /* ── INK ── Minimal monochrome, high contrast, subtle blue-gray ── */
 .palette-ink {
-  --bg: 248 248 250;
-  --surface: 242 242 245;
-  --card: 255 255 255;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+  --bg: oklch(calc(97.97% * var(--srm-bg-l-scale)) calc(0.0026 * var(--srm-bg-c-scale)) 286.4);
+  --surface: oklch(calc(96.2% * var(--srm-bg-l-scale)) calc(0.004 * var(--srm-bg-c-scale)) 286.3);
+  --card: oklch(calc(100% * var(--srm-bg-l-scale)) calc(0 * var(--srm-bg-c-scale)) 0);
   --text: 18 18 22;
   --text-muted: 110 110 125;
   --border: 220 220 228;
@@ -1123,35 +1188,37 @@
 
   --coral-50: oklch(97% 0.004 260);
   --coral-100: oklch(93% 0.008 260);
-  --coral-200: oklch(86% 0.015 260);
-  --coral-300: oklch(75% 0.025 260);
-  --coral-400: oklch(62% 0.03 260);
-  --coral-500: oklch(48% 0.028 260);
-  --coral-600: oklch(38% 0.025 260);
-  --coral-700: oklch(30% 0.02 260);
-  --coral-800: oklch(24% 0.015 260);
+  --coral-200: oklch(calc(86% * var(--srm-l-scale)) 0.015 260);
+  --coral-300: oklch(calc(75% * var(--srm-l-scale)) 0.025 260);
+  --coral-400: oklch(calc(62% * var(--srm-l-scale)) 0.03 260);
+  --coral-500: oklch(calc(48% * var(--srm-l-scale)) 0.028 260);
+  --coral-600: oklch(calc(38% * var(--srm-l-scale)) 0.025 260);
+  --coral-700: oklch(calc(30% * var(--srm-l-scale)) 0.02 260);
+  --coral-800: oklch(calc(24% * var(--srm-l-scale)) 0.015 260);
   --coral-900: oklch(18% 0.01 260);
   --coral-950: oklch(14% 0.008 260);
 
   --fg-strong: oklch(10% 0.005 260);
   --fg-muted: oklch(50% 0.008 260);
 
-  --brew-bg: 248 248 250;
-  --brew-surface: 242 242 245;
-  --brew-card: 255 255 255;
-  --brew-card-inset: 238 238 242;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(95.03% * var(--srm-bg-l-scale)) calc(0.0053 * var(--srm-bg-c-scale)) 286.3
+  );
   --brew-border: 220 220 228;
   --brew-border-subtle: 210 210 218;
 
   --brew-accent-50: oklch(97% 0.004 260);
   --brew-accent-100: oklch(94% 0.006 260);
-  --brew-accent-200: oklch(88% 0.012 260);
-  --brew-accent-300: oklch(78% 0.02 260);
-  --brew-accent-400: oklch(65% 0.025 260);
-  --brew-accent-500: oklch(50% 0.025 260);
-  --brew-accent-600: oklch(40% 0.022 260);
-  --brew-accent-700: oklch(32% 0.018 260);
-  --brew-accent-800: oklch(25% 0.014 260);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.012 260);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.02 260);
+  --brew-accent-400: oklch(calc(65% * var(--srm-l-scale)) 0.025 260);
+  --brew-accent-500: oklch(calc(50% * var(--srm-l-scale)) 0.025 260);
+  --brew-accent-600: oklch(calc(40% * var(--srm-l-scale)) 0.022 260);
+  --brew-accent-700: oklch(calc(32% * var(--srm-l-scale)) 0.018 260);
+  --brew-accent-800: oklch(calc(25% * var(--srm-l-scale)) 0.014 260);
   --brew-accent-900: oklch(18% 0.01 260);
   --brew-accent-950: oklch(14% 0.008 260);
 
@@ -1171,45 +1238,49 @@
   --shadow-card-hover:
     0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06), 0 6px 12px rgba(0, 0, 0, 0.04);
 
-  --sidebar-recipe-bg: oklch(35% 0.01 260);
+  --sidebar-recipe-bg: oklch(calc(35% * var(--srm-l-scale)) 0.01 260);
   --sidebar-recipe-text: oklch(96% 0.004 260);
-  --sidebar-equipment-bg: oklch(42% 0.012 260);
+  --sidebar-equipment-bg: oklch(calc(42% * var(--srm-l-scale)) 0.012 260);
   --sidebar-equipment-text: oklch(92% 0.004 260);
-  --sidebar-grain-bg: oklch(48% 0.01 80);
+  --sidebar-grain-bg: oklch(calc(48% * var(--srm-l-scale)) 0.01 80);
   --sidebar-grain-text: oklch(96% 0.004 80);
-  --sidebar-mash-bg: oklch(40% 0.01 50);
+  --sidebar-mash-bg: oklch(calc(40% * var(--srm-l-scale)) 0.01 50);
   --sidebar-mash-text: oklch(96% 0.004 50);
-  --sidebar-hops-bg: oklch(38% 0.015 145);
+  --sidebar-hops-bg: oklch(calc(38% * var(--srm-l-scale)) 0.015 145);
   --sidebar-hops-text: oklch(94% 0.004 145);
-  --sidebar-yeast-bg: oklch(35% 0.015 310);
+  --sidebar-yeast-bg: oklch(calc(35% * var(--srm-l-scale)) 0.015 310);
   --sidebar-yeast-text: oklch(92% 0.004 310);
-  --sidebar-water-bg: oklch(40% 0.018 250);
+  --sidebar-water-bg: oklch(calc(40% * var(--srm-l-scale)) 0.018 250);
   --sidebar-water-text: oklch(93% 0.004 250);
-  --sidebar-fermentation-bg: oklch(38% 0.012 15);
+  --sidebar-fermentation-bg: oklch(calc(38% * var(--srm-l-scale)) 0.012 15);
   --sidebar-fermentation-text: oklch(94% 0.004 15);
-  --sidebar-targets-bg: oklch(30% 0.008 260);
+  --sidebar-packaging-bg: oklch(calc(34% * var(--srm-l-scale)) 0.01 50);
+  --sidebar-packaging-text: oklch(94% 0.004 50);
+  --sidebar-targets-bg: oklch(calc(30% * var(--srm-l-scale)) 0.008 260);
   --sidebar-targets-text: oklch(94% 0.004 260);
 }
 .dark.palette-ink {
-  --bg: 10 10 12;
-  --surface: 16 16 18;
-  --card: 22 22 25;
+  --bg: oklch(calc(18.5% * var(--srm-bg-l-scale)) calc(0.0043 * var(--srm-bg-c-scale)) 285.9);
+  --surface: oklch(calc(21.5% * var(--srm-bg-l-scale)) calc(0.0041 * var(--srm-bg-c-scale)) 286);
+  --card: oklch(calc(24.0% * var(--srm-bg-l-scale)) calc(0.0059 * var(--srm-bg-c-scale)) 285.9);
   --text: 235 235 240;
-  --text-muted: 125 125 140;
-  --border: 40 40 48;
+  --text-muted: 135 135 150;
+  --border: 50 50 58;
 
   --accent: 200 200 215;
   --glow: 170 170 188;
 
   --fg-strong: oklch(96% 0.004 260);
-  --fg-muted: oklch(62% 0.006 260);
+  --fg-muted: oklch(65% 0.006 260);
 
-  --brew-bg: 10 10 12;
-  --brew-surface: 16 16 18;
-  --brew-card: 22 22 25;
-  --brew-card-inset: 12 12 14;
-  --brew-border: 40 40 48;
-  --brew-border-subtle: 34 34 40;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(19.5% * var(--srm-bg-l-scale)) calc(0.0042 * var(--srm-bg-c-scale)) 285.9
+  );
+  --brew-border: 50 50 58;
+  --brew-border-subtle: 44 44 50;
 
   --shadow-card:
     0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.25);
@@ -1220,99 +1291,102 @@
 
 /* Ink — near-monochrome, very low chroma, elegant restraint */
 .palette-ink .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.01 260);
-  --brew-accent-300: oklch(80% 0.018 260);
-  --brew-accent-400: oklch(68% 0.025 260);
-  --brew-accent-500: oklch(55% 0.028 260);
-  --brew-accent-600: oklch(45% 0.024 260);
-  --brew-accent-700: oklch(38% 0.02 260);
-  --brew-accent-800: oklch(30% 0.015 260);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.01 260);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.018 260);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.025 260);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.028 260);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.024 260);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.02 260);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.015 260);
   --brew-accent-900: oklch(26% 0.011 260);
   --brew-accent-950: oklch(20% 0.008 260);
 }
 .palette-ink .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.018 75);
-  --brew-accent-300: oklch(80% 0.03 75);
-  --brew-accent-400: oklch(72% 0.04 75);
-  --brew-accent-500: oklch(62% 0.042 75);
-  --brew-accent-600: oklch(52% 0.036 75);
-  --brew-accent-700: oklch(42% 0.03 75);
-  --brew-accent-800: oklch(34% 0.022 75);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.018 75);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.03 75);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.04 75);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.042 75);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.036 75);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.03 75);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.022 75);
   --brew-accent-900: oklch(26% 0.016 75);
   --brew-accent-950: oklch(20% 0.011 75);
 }
 .palette-ink .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.016 55);
-  --brew-accent-300: oklch(80% 0.028 55);
-  --brew-accent-400: oklch(72% 0.036 55);
-  --brew-accent-500: oklch(62% 0.038 55);
-  --brew-accent-600: oklch(52% 0.032 55);
-  --brew-accent-700: oklch(42% 0.026 55);
-  --brew-accent-800: oklch(34% 0.02 55);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.016 55);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.028 55);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.036 55);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.038 55);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.032 55);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.026 55);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.02 55);
   --brew-accent-900: oklch(26% 0.014 55);
   --brew-accent-950: oklch(20% 0.01 55);
 }
 .palette-ink .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.014 145);
-  --brew-accent-300: oklch(80% 0.024 145);
-  --brew-accent-400: oklch(68% 0.032 145);
-  --brew-accent-500: oklch(55% 0.035 145);
-  --brew-accent-600: oklch(45% 0.03 145);
-  --brew-accent-700: oklch(38% 0.025 145);
-  --brew-accent-800: oklch(30% 0.018 145);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.014 145);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.024 145);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.032 145);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.035 145);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.03 145);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.025 145);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.018 145);
   --brew-accent-900: oklch(26% 0.013 145);
   --brew-accent-950: oklch(20% 0.009 145);
 }
 .palette-ink .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.012 310);
-  --brew-accent-300: oklch(78% 0.02 310);
-  --brew-accent-400: oklch(68% 0.028 310);
-  --brew-accent-500: oklch(55% 0.032 310);
-  --brew-accent-600: oklch(45% 0.028 310);
-  --brew-accent-700: oklch(38% 0.022 310);
-  --brew-accent-800: oklch(30% 0.016 310);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.012 310);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.02 310);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.028 310);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.032 310);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.028 310);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.022 310);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.016 310);
   --brew-accent-900: oklch(26% 0.012 310);
   --brew-accent-950: oklch(20% 0.008 310);
 }
 .palette-ink .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.015 230);
-  --brew-accent-300: oklch(80% 0.025 230);
-  --brew-accent-400: oklch(68% 0.035 230);
-  --brew-accent-500: oklch(55% 0.038 230);
-  --brew-accent-600: oklch(45% 0.032 230);
-  --brew-accent-700: oklch(38% 0.026 230);
-  --brew-accent-800: oklch(30% 0.02 230);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.015 230);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.025 230);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.035 230);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.038 230);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.032 230);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.026 230);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.02 230);
   --brew-accent-900: oklch(26% 0.014 230);
   --brew-accent-950: oklch(20% 0.01 230);
 }
 .palette-ink .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.014 15);
-  --brew-accent-300: oklch(78% 0.024 15);
-  --brew-accent-400: oklch(68% 0.032 15);
-  --brew-accent-500: oklch(55% 0.036 15);
-  --brew-accent-600: oklch(45% 0.03 15);
-  --brew-accent-700: oklch(38% 0.025 15);
-  --brew-accent-800: oklch(30% 0.018 15);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.014 15);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.024 15);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.032 15);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.036 15);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.03 15);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.025 15);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.018 15);
   --brew-accent-900: oklch(26% 0.013 15);
   --brew-accent-950: oklch(20% 0.009 15);
 }
 .palette-ink .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.01 260);
-  --brew-accent-300: oklch(78% 0.018 260);
-  --brew-accent-400: oklch(68% 0.024 260);
-  --brew-accent-500: oklch(55% 0.028 260);
-  --brew-accent-600: oklch(45% 0.024 260);
-  --brew-accent-700: oklch(38% 0.02 260);
-  --brew-accent-800: oklch(30% 0.014 260);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.01 260);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.018 260);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.024 260);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.028 260);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.024 260);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.02 260);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.014 260);
   --brew-accent-900: oklch(26% 0.01 260);
   --brew-accent-950: oklch(20% 0.007 260);
 }
 
 /* ── SAHARA ── Sandy desert warmth, terracotta accent ── */
 .palette-sahara {
-  --bg: 252 247 238;
-  --surface: 246 240 228;
-  --card: 255 251 243;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+  --bg: oklch(calc(97.75% * var(--srm-bg-l-scale)) calc(0.013 * var(--srm-bg-c-scale)) 82.4);
+  --surface: oklch(calc(95.65% * var(--srm-bg-l-scale)) calc(0.0172 * var(--srm-bg-c-scale)) 84.6);
+  --card: oklch(calc(98.9% * var(--srm-bg-l-scale)) calc(0.0114 * var(--srm-bg-c-scale)) 84.6);
   --text: 65 48 30;
   --text-muted: 145 120 90;
   --border: 225 210 185;
@@ -1322,35 +1396,37 @@
 
   --coral-50: oklch(97% 0.015 42);
   --coral-100: oklch(93% 0.035 40);
-  --coral-200: oklch(86% 0.072 38);
-  --coral-300: oklch(77% 0.125 35);
-  --coral-400: oklch(68% 0.155 32);
-  --coral-500: oklch(58% 0.15 30);
-  --coral-600: oklch(48% 0.135 28);
-  --coral-700: oklch(40% 0.112 28);
-  --coral-800: oklch(32% 0.085 28);
+  --coral-200: oklch(calc(86% * var(--srm-l-scale)) 0.072 38);
+  --coral-300: oklch(calc(77% * var(--srm-l-scale)) 0.125 35);
+  --coral-400: oklch(calc(68% * var(--srm-l-scale)) 0.155 32);
+  --coral-500: oklch(calc(58% * var(--srm-l-scale)) 0.15 30);
+  --coral-600: oklch(calc(48% * var(--srm-l-scale)) 0.135 28);
+  --coral-700: oklch(calc(40% * var(--srm-l-scale)) 0.112 28);
+  --coral-800: oklch(calc(32% * var(--srm-l-scale)) 0.085 28);
   --coral-900: oklch(24% 0.06 28);
   --coral-950: oklch(18% 0.042 28);
 
   --fg-strong: oklch(20% 0.02 45);
   --fg-muted: oklch(52% 0.025 45);
 
-  --brew-bg: 252 247 238;
-  --brew-surface: 246 240 228;
-  --brew-card: 255 251 243;
-  --brew-card-inset: 242 235 222;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(94.2% * var(--srm-bg-l-scale)) calc(0.0189 * var(--srm-bg-c-scale)) 83.1
+  );
   --brew-border: 225 210 185;
   --brew-border-subtle: 215 200 175;
 
   --brew-accent-50: oklch(97% 0.012 35);
   --brew-accent-100: oklch(94% 0.028 35);
-  --brew-accent-200: oklch(88% 0.06 35);
-  --brew-accent-300: oklch(78% 0.105 33);
-  --brew-accent-400: oklch(68% 0.135 30);
-  --brew-accent-500: oklch(58% 0.132 28);
-  --brew-accent-600: oklch(48% 0.118 28);
-  --brew-accent-700: oklch(40% 0.098 28);
-  --brew-accent-800: oklch(32% 0.075 28);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.06 35);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.105 33);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.135 30);
+  --brew-accent-500: oklch(calc(58% * var(--srm-l-scale)) 0.132 28);
+  --brew-accent-600: oklch(calc(48% * var(--srm-l-scale)) 0.118 28);
+  --brew-accent-700: oklch(calc(40% * var(--srm-l-scale)) 0.098 28);
+  --brew-accent-800: oklch(calc(32% * var(--srm-l-scale)) 0.075 28);
   --brew-accent-900: oklch(24% 0.052 28);
   --brew-accent-950: oklch(18% 0.038 28);
 
@@ -1374,45 +1450,49 @@
     0 4px 4px -2px rgba(140, 100, 50, 0.07), 0 8px 8px -4px rgba(140, 100, 50, 0.065),
     0 16px 16px -8px rgba(140, 100, 50, 0.055), 0 36px 36px -18px rgba(140, 100, 50, 0.045);
 
-  --sidebar-recipe-bg: oklch(58% 0.14 30);
+  --sidebar-recipe-bg: oklch(calc(58% * var(--srm-l-scale)) 0.14 30);
   --sidebar-recipe-text: oklch(96% 0.006 30);
-  --sidebar-equipment-bg: oklch(40% 0.1 245);
+  --sidebar-equipment-bg: oklch(calc(40% * var(--srm-l-scale)) 0.1 245);
   --sidebar-equipment-text: oklch(91% 0.012 245);
-  --sidebar-grain-bg: oklch(60% 0.14 65);
+  --sidebar-grain-bg: oklch(calc(60% * var(--srm-l-scale)) 0.14 65);
   --sidebar-grain-text: oklch(97% 0.008 65);
-  --sidebar-mash-bg: oklch(56% 0.14 40);
+  --sidebar-mash-bg: oklch(calc(56% * var(--srm-l-scale)) 0.14 40);
   --sidebar-mash-text: oklch(96% 0.005 40);
-  --sidebar-hops-bg: oklch(46% 0.12 135);
+  --sidebar-hops-bg: oklch(calc(46% * var(--srm-l-scale)) 0.12 135);
   --sidebar-hops-text: oklch(94% 0.012 135);
-  --sidebar-yeast-bg: oklch(42% 0.14 315);
+  --sidebar-yeast-bg: oklch(calc(42% * var(--srm-l-scale)) 0.14 315);
   --sidebar-yeast-text: oklch(91% 0.012 315);
-  --sidebar-water-bg: oklch(46% 0.15 240);
+  --sidebar-water-bg: oklch(calc(46% * var(--srm-l-scale)) 0.15 240);
   --sidebar-water-text: oklch(92% 0.012 240);
-  --sidebar-fermentation-bg: oklch(50% 0.15 18);
+  --sidebar-fermentation-bg: oklch(calc(50% * var(--srm-l-scale)) 0.15 18);
   --sidebar-fermentation-text: oklch(94% 0.008 18);
-  --sidebar-targets-bg: oklch(54% 0.12 30);
+  --sidebar-packaging-bg: oklch(calc(52% * var(--srm-l-scale)) 0.13 50);
+  --sidebar-packaging-text: oklch(95% 0.008 50);
+  --sidebar-targets-bg: oklch(calc(54% * var(--srm-l-scale)) 0.12 30);
   --sidebar-targets-text: oklch(95% 0.008 30);
 }
 .dark.palette-sahara {
-  --bg: 24 18 12;
-  --surface: 32 24 16;
-  --card: 42 32 22;
+  --bg: oklch(calc(22.5% * var(--srm-bg-l-scale)) calc(0.0153 * var(--srm-bg-c-scale)) 66.7);
+  --surface: oklch(calc(25.5% * var(--srm-bg-l-scale)) calc(0.0196 * var(--srm-bg-c-scale)) 66.5);
+  --card: oklch(calc(29.0% * var(--srm-bg-l-scale)) calc(0.0235 * var(--srm-bg-c-scale)) 66.4);
   --text: 242 230 212;
-  --text-muted: 165 145 118;
-  --border: 68 55 40;
+  --text-muted: 175 155 128;
+  --border: 78 65 50;
 
   --accent: 215 115 65;
   --glow: 195 90 40;
 
   --fg-strong: oklch(95% 0.008 45);
-  --fg-muted: oklch(68% 0.02 45);
+  --fg-muted: oklch(70% 0.02 45);
 
-  --brew-bg: 24 18 12;
-  --brew-surface: 32 24 16;
-  --brew-card: 42 32 22;
-  --brew-card-inset: 28 20 14;
-  --brew-border: 68 55 40;
-  --brew-border-subtle: 58 46 34;
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(23.5% * var(--srm-bg-l-scale)) calc(0.0175 * var(--srm-bg-c-scale)) 58.4
+  );
+  --brew-border: 78 65 50;
+  --brew-border-subtle: 68 56 44;
 
   --shadow-card:
     0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
@@ -1426,92 +1506,394 @@
 
 /* Sahara — warmer hues across the board, terracotta influence */
 .palette-sahara .brew-section[data-accent="equipment"] {
-  --brew-accent-200: oklch(90% 0.022 255);
-  --brew-accent-300: oklch(80% 0.04 252);
-  --brew-accent-400: oklch(68% 0.055 250);
-  --brew-accent-500: oklch(55% 0.062 250);
-  --brew-accent-600: oklch(45% 0.052 250);
-  --brew-accent-700: oklch(38% 0.042 250);
-  --brew-accent-800: oklch(30% 0.03 250);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.022 255);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.04 252);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.055 250);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.062 250);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.052 250);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.042 250);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.03 250);
   --brew-accent-900: oklch(26% 0.022 250);
   --brew-accent-950: oklch(20% 0.016 250);
 }
 .palette-sahara .brew-section[data-accent="grain"] {
-  --brew-accent-200: oklch(90% 0.068 60);
-  --brew-accent-300: oklch(80% 0.115 55);
-  --brew-accent-400: oklch(72% 0.145 50);
-  --brew-accent-500: oklch(62% 0.15 48);
-  --brew-accent-600: oklch(52% 0.135 46);
-  --brew-accent-700: oklch(42% 0.112 46);
-  --brew-accent-800: oklch(34% 0.082 46);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.068 60);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.115 55);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.145 50);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.15 48);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.135 46);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.112 46);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.082 46);
   --brew-accent-900: oklch(26% 0.059 46);
   --brew-accent-950: oklch(20% 0.043 46);
 }
 .palette-sahara .brew-section[data-accent="mash"] {
-  --brew-accent-200: oklch(90% 0.062 45);
-  --brew-accent-300: oklch(80% 0.108 42);
-  --brew-accent-400: oklch(72% 0.138 40);
-  --brew-accent-500: oklch(62% 0.142 38);
-  --brew-accent-600: oklch(52% 0.128 38);
-  --brew-accent-700: oklch(42% 0.105 38);
-  --brew-accent-800: oklch(34% 0.078 38);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.062 45);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.108 42);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.138 40);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.142 38);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.128 38);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.105 38);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.078 38);
   --brew-accent-900: oklch(26% 0.056 38);
   --brew-accent-950: oklch(20% 0.041 38);
 }
 .palette-sahara .brew-section[data-accent="hops"] {
-  --brew-accent-200: oklch(90% 0.045 142);
-  --brew-accent-300: oklch(80% 0.072 140);
-  --brew-accent-400: oklch(68% 0.095 138);
-  --brew-accent-500: oklch(55% 0.105 138);
-  --brew-accent-600: oklch(45% 0.092 138);
-  --brew-accent-700: oklch(38% 0.075 138);
-  --brew-accent-800: oklch(30% 0.055 138);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.045 142);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.072 140);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.095 138);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.105 138);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.092 138);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.075 138);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.055 138);
   --brew-accent-900: oklch(26% 0.04 138);
   --brew-accent-950: oklch(20% 0.029 138);
 }
 .palette-sahara .brew-section[data-accent="yeast"] {
-  --brew-accent-200: oklch(88% 0.038 305);
-  --brew-accent-300: oklch(78% 0.062 305);
-  --brew-accent-400: oklch(68% 0.085 305);
-  --brew-accent-500: oklch(55% 0.095 305);
-  --brew-accent-600: oklch(45% 0.085 305);
-  --brew-accent-700: oklch(38% 0.07 305);
-  --brew-accent-800: oklch(30% 0.05 305);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.038 305);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.062 305);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.085 305);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.095 305);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.085 305);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.07 305);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.05 305);
   --brew-accent-900: oklch(26% 0.036 305);
   --brew-accent-950: oklch(20% 0.026 305);
 }
 .palette-sahara .brew-section[data-accent="water"] {
-  --brew-accent-200: oklch(90% 0.04 225);
-  --brew-accent-300: oklch(80% 0.068 222);
-  --brew-accent-400: oklch(68% 0.088 220);
-  --brew-accent-500: oklch(55% 0.098 220);
-  --brew-accent-600: oklch(45% 0.085 220);
-  --brew-accent-700: oklch(38% 0.07 220);
-  --brew-accent-800: oklch(30% 0.05 220);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.04 225);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.068 222);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.088 220);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.098 220);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.085 220);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.07 220);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.05 220);
   --brew-accent-900: oklch(26% 0.036 220);
   --brew-accent-950: oklch(20% 0.026 220);
 }
 .palette-sahara .brew-section[data-accent="fermentation"] {
-  --brew-accent-200: oklch(88% 0.058 22);
-  --brew-accent-300: oklch(78% 0.098 20);
-  --brew-accent-400: oklch(68% 0.13 18);
-  --brew-accent-500: oklch(55% 0.145 18);
-  --brew-accent-600: oklch(45% 0.128 18);
-  --brew-accent-700: oklch(38% 0.105 18);
-  --brew-accent-800: oklch(30% 0.078 18);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.058 22);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.098 20);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.13 18);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.145 18);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.128 18);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.105 18);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.078 18);
   --brew-accent-900: oklch(26% 0.056 18);
   --brew-accent-950: oklch(20% 0.041 18);
 }
 .palette-sahara .brew-section[data-accent="targets"] {
-  --brew-accent-200: oklch(88% 0.048 35);
-  --brew-accent-300: oklch(78% 0.082 33);
-  --brew-accent-400: oklch(68% 0.108 32);
-  --brew-accent-500: oklch(55% 0.12 30);
-  --brew-accent-600: oklch(45% 0.108 30);
-  --brew-accent-700: oklch(38% 0.088 30);
-  --brew-accent-800: oklch(30% 0.065 30);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.048 35);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.082 33);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.108 32);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.12 30);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.108 30);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.088 30);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.065 30);
   --brew-accent-900: oklch(26% 0.047 30);
   --brew-accent-950: oklch(20% 0.034 30);
+}
+
+/* ── REACTIVE ── SRM-reactive palette, accent hue driven by recipe color ── */
+.palette-reactive {
+  --srm-hue: 65;
+  --srm-chroma-scale: 1;
+  --srm-l-scale: 1;
+  --srm-bg-l-scale: 1;
+  --srm-bg-c-scale: 1;
+
+  --bg: oklch(
+    calc(97.81% * var(--srm-bg-l-scale)) calc(0.0107 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --surface: oklch(
+    calc(95.98% * var(--srm-bg-l-scale)) calc(0.0119 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --card: oklch(
+    calc(98.9% * var(--srm-bg-l-scale)) calc(0.0073 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --text: 50 38 24;
+  --text-muted: 125 105 78;
+  --border: 218 206 185;
+
+  --accent: 210 160 60;
+  --glow: 195 140 40;
+
+  --coral-50: oklch(97% 0.015 var(--srm-hue));
+  --coral-100: oklch(93% 0.035 var(--srm-hue));
+  --coral-200: oklch(
+    calc(86% * var(--srm-l-scale)) calc(0.075 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-300: oklch(
+    calc(77% * var(--srm-l-scale)) calc(0.13 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-400: oklch(
+    calc(70% * var(--srm-l-scale)) calc(0.16 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-500: oklch(
+    calc(60% * var(--srm-l-scale)) calc(0.155 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-600: oklch(
+    calc(50% * var(--srm-l-scale)) calc(0.14 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-700: oklch(
+    calc(42% * var(--srm-l-scale)) calc(0.115 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --coral-800: oklch(calc(34% * var(--srm-l-scale)) 0.088 var(--srm-hue));
+  --coral-900: oklch(26% 0.062 var(--srm-hue));
+  --coral-950: oklch(20% 0.045 var(--srm-hue));
+
+  --fg-strong: oklch(20% 0.018 var(--srm-hue));
+  --fg-muted: oklch(50% 0.028 var(--srm-hue));
+
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(94.5% * var(--srm-bg-l-scale)) calc(0.0148 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --brew-border: 218 206 185;
+  --brew-border-subtle: 208 196 175;
+
+  --brew-accent-50: oklch(97% 0.012 var(--srm-hue));
+  --brew-accent-100: oklch(94% 0.03 var(--srm-hue));
+  --brew-accent-200: oklch(
+    calc(88% * var(--srm-l-scale)) calc(0.065 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-300: oklch(
+    calc(78% * var(--srm-l-scale)) calc(0.112 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-400: oklch(
+    calc(70% * var(--srm-l-scale)) calc(0.145 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-500: oklch(
+    calc(60% * var(--srm-l-scale)) calc(0.14 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-600: oklch(
+    calc(50% * var(--srm-l-scale)) calc(0.125 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-700: oklch(
+    calc(42% * var(--srm-l-scale)) calc(0.105 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-800: oklch(
+    calc(34% * var(--srm-l-scale)) calc(0.078 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --brew-accent-900: oklch(26% 0.055 var(--srm-hue));
+  --brew-accent-950: oklch(20% 0.04 var(--srm-hue));
+
+  --brew-neutral-50: oklch(98% 0.008 var(--srm-hue));
+  --brew-neutral-100: oklch(95% 0.012 var(--srm-hue));
+  --brew-neutral-200: oklch(90% 0.015 var(--srm-hue));
+  --brew-neutral-300: oklch(82% 0.018 var(--srm-hue));
+  --brew-neutral-400: oklch(65% 0.014 var(--srm-hue));
+  --brew-neutral-500: oklch(55% 0.014 var(--srm-hue));
+  --brew-neutral-600: oklch(45% 0.012 var(--srm-hue));
+  --brew-neutral-700: oklch(35% 0.012 var(--srm-hue));
+  --brew-neutral-800: oklch(25% 0.012 var(--srm-hue));
+  --brew-neutral-900: oklch(18% 0.01 var(--srm-hue));
+
+  --shadow-card:
+    0 0 0 1px rgba(140, 100, 30, 0.06), 0 1px 1px -0.5px rgba(140, 100, 30, 0.06),
+    0 3px 3px -1.5px rgba(140, 100, 30, 0.06), 0 6px 6px -3px rgba(140, 100, 30, 0.05),
+    0 12px 12px -6px rgba(140, 100, 30, 0.04), 0 24px 24px -12px rgba(140, 100, 30, 0.035);
+  --shadow-card-hover:
+    0 0 0 1px rgba(140, 100, 30, 0.08), 0 1px 1px -0.5px rgba(140, 100, 30, 0.08),
+    0 4px 4px -2px rgba(140, 100, 30, 0.08), 0 8px 8px -4px rgba(140, 100, 30, 0.07),
+    0 16px 16px -8px rgba(140, 100, 30, 0.06), 0 36px 36px -18px rgba(140, 100, 30, 0.05);
+
+  --sidebar-recipe-bg: oklch(
+    calc(60% * var(--srm-l-scale)) calc(0.12 * var(--srm-chroma-scale)) var(--srm-hue)
+  );
+  --sidebar-recipe-text: oklch(97% 0.005 var(--srm-hue));
+  --sidebar-equipment-bg: oklch(
+    calc(40% * var(--srm-l-scale)) calc(0.1 * var(--srm-chroma-scale)) 240
+  );
+  --sidebar-equipment-text: oklch(91% 0.012 240);
+  --sidebar-grain-bg: oklch(calc(58% * var(--srm-l-scale)) calc(0.15 * var(--srm-chroma-scale)) 60);
+  --sidebar-grain-text: oklch(97% 0.008 60);
+  --sidebar-mash-bg: oklch(calc(56% * var(--srm-l-scale)) calc(0.14 * var(--srm-chroma-scale)) 45);
+  --sidebar-mash-text: oklch(97% 0.005 45);
+  --sidebar-hops-bg: oklch(calc(46% * var(--srm-l-scale)) calc(0.12 * var(--srm-chroma-scale)) 120);
+  --sidebar-hops-text: oklch(94% 0.012 120);
+  --sidebar-yeast-bg: oklch(
+    calc(42% * var(--srm-l-scale)) calc(0.14 * var(--srm-chroma-scale)) 330
+  );
+  --sidebar-yeast-text: oklch(91% 0.012 330);
+  --sidebar-water-bg: oklch(
+    calc(46% * var(--srm-l-scale)) calc(0.15 * var(--srm-chroma-scale)) 230
+  );
+  --sidebar-water-text: oklch(92% 0.012 230);
+  --sidebar-fermentation-bg: oklch(
+    calc(50% * var(--srm-l-scale)) calc(0.15 * var(--srm-chroma-scale)) 20
+  );
+  --sidebar-fermentation-text: oklch(94% 0.008 20);
+  --sidebar-packaging-bg: oklch(
+    calc(52% * var(--srm-l-scale)) calc(0.13 * var(--srm-chroma-scale)) 50
+  );
+  --sidebar-packaging-text: oklch(95% 0.008 50);
+  --sidebar-targets-bg: oklch(
+    calc(54% * var(--srm-l-scale)) calc(0.12 * var(--srm-chroma-scale)) 35
+  );
+  --sidebar-targets-text: oklch(95% 0.008 35);
+}
+.dark.palette-reactive {
+  --bg: oklch(
+    calc(21.5% * var(--srm-bg-l-scale)) calc(0.0119 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --surface: oklch(
+    calc(24.5% * var(--srm-bg-l-scale)) calc(0.0164 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --card: oklch(
+    calc(28.0% * var(--srm-bg-l-scale)) calc(0.0191 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --text: 242 232 218;
+  --text-muted: 170 150 125;
+  --border: 72 62 50;
+
+  --accent: 220 165 65;
+  --glow: 195 140 40;
+
+  --fg-strong: oklch(95% 0.008 var(--srm-hue));
+  --fg-muted: oklch(70% 0.02 var(--srm-hue));
+
+  --brew-bg: var(--bg);
+  --brew-surface: var(--surface);
+  --brew-card: var(--card);
+  --brew-card-inset: oklch(
+    calc(22.5% * var(--srm-bg-l-scale)) calc(0.014 * var(--srm-bg-c-scale)) var(--srm-hue)
+  );
+  --brew-border: 72 62 50;
+  --brew-border-subtle: 62 54 44;
+
+  --shadow-card:
+    0 0 0 1px rgba(0, 0, 0, 0.22), 0 1px 1px -0.5px rgba(0, 0, 0, 0.18),
+    0 3px 3px -1.5px rgba(0, 0, 0, 0.18), 0 6px 6px -3px rgba(0, 0, 0, 0.15),
+    0 12px 12px -6px rgba(0, 0, 0, 0.12), 0 24px 24px -12px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 1px -0.5px rgba(0, 0, 0, 0.22),
+    0 4px 4px -2px rgba(0, 0, 0, 0.22), 0 8px 8px -4px rgba(0, 0, 0, 0.2),
+    0 16px 16px -8px rgba(0, 0, 0, 0.16), 0 36px 36px -18px rgba(0, 0, 0, 0.12);
+}
+
+/* Reactive — section accents keep semantic hues but respond to SRM via chroma + lightness scales */
+.palette-reactive .brew-section[data-accent="equipment"] {
+  --brew-accent-200: oklch(
+    calc(90% * var(--srm-l-scale)) calc(0.025 * var(--srm-chroma-scale)) 250
+  );
+  --brew-accent-300: oklch(
+    calc(80% * var(--srm-l-scale)) calc(0.045 * var(--srm-chroma-scale)) 248
+  );
+  --brew-accent-400: oklch(
+    calc(68% * var(--srm-l-scale)) calc(0.062 * var(--srm-chroma-scale)) 245
+  );
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) calc(0.07 * var(--srm-chroma-scale)) 245);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) calc(0.06 * var(--srm-chroma-scale)) 245);
+  --brew-accent-700: oklch(
+    calc(38% * var(--srm-l-scale)) calc(0.048 * var(--srm-chroma-scale)) 245
+  );
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.035 245);
+  --brew-accent-900: oklch(26% 0.025 245);
+  --brew-accent-950: oklch(20% 0.018 245);
+}
+.palette-reactive .brew-section[data-accent="grain"] {
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) calc(0.072 * var(--srm-chroma-scale)) 65);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) calc(0.125 * var(--srm-chroma-scale)) 60);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) calc(0.155 * var(--srm-chroma-scale)) 55);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) calc(0.16 * var(--srm-chroma-scale)) 50);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) calc(0.145 * var(--srm-chroma-scale)) 48);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) calc(0.12 * var(--srm-chroma-scale)) 48);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.09 48);
+  --brew-accent-900: oklch(26% 0.065 48);
+  --brew-accent-950: oklch(20% 0.047 48);
+}
+.palette-reactive .brew-section[data-accent="mash"] {
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) calc(0.068 * var(--srm-chroma-scale)) 50);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) calc(0.118 * var(--srm-chroma-scale)) 48);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) calc(0.148 * var(--srm-chroma-scale)) 46);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) calc(0.155 * var(--srm-chroma-scale)) 44);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) calc(0.14 * var(--srm-chroma-scale)) 44);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) calc(0.115 * var(--srm-chroma-scale)) 44);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.085 44);
+  --brew-accent-900: oklch(26% 0.061 44);
+  --brew-accent-950: oklch(20% 0.044 44);
+}
+.palette-reactive .brew-section[data-accent="hops"] {
+  --brew-accent-200: oklch(
+    calc(90% * var(--srm-l-scale)) calc(0.048 * var(--srm-chroma-scale)) 140
+  );
+  --brew-accent-300: oklch(
+    calc(80% * var(--srm-l-scale)) calc(0.078 * var(--srm-chroma-scale)) 140
+  );
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) calc(0.1 * var(--srm-chroma-scale)) 140);
+  --brew-accent-500: oklch(
+    calc(55% * var(--srm-l-scale)) calc(0.112 * var(--srm-chroma-scale)) 140
+  );
+  --brew-accent-600: oklch(
+    calc(45% * var(--srm-l-scale)) calc(0.098 * var(--srm-chroma-scale)) 140
+  );
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) calc(0.08 * var(--srm-chroma-scale)) 140);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.058 140);
+  --brew-accent-900: oklch(26% 0.042 140);
+  --brew-accent-950: oklch(20% 0.03 140);
+}
+.palette-reactive .brew-section[data-accent="yeast"] {
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) calc(0.04 * var(--srm-chroma-scale)) 305);
+  --brew-accent-300: oklch(
+    calc(78% * var(--srm-l-scale)) calc(0.065 * var(--srm-chroma-scale)) 305
+  );
+  --brew-accent-400: oklch(
+    calc(68% * var(--srm-l-scale)) calc(0.088 * var(--srm-chroma-scale)) 305
+  );
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) calc(0.1 * var(--srm-chroma-scale)) 305);
+  --brew-accent-600: oklch(
+    calc(45% * var(--srm-l-scale)) calc(0.088 * var(--srm-chroma-scale)) 305
+  );
+  --brew-accent-700: oklch(
+    calc(38% * var(--srm-l-scale)) calc(0.072 * var(--srm-chroma-scale)) 305
+  );
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.052 305);
+  --brew-accent-900: oklch(26% 0.037 305);
+  --brew-accent-950: oklch(20% 0.027 305);
+}
+.palette-reactive .brew-section[data-accent="water"] {
+  --brew-accent-200: oklch(
+    calc(90% * var(--srm-l-scale)) calc(0.042 * var(--srm-chroma-scale)) 225
+  );
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) calc(0.07 * var(--srm-chroma-scale)) 225);
+  --brew-accent-400: oklch(
+    calc(68% * var(--srm-l-scale)) calc(0.092 * var(--srm-chroma-scale)) 225
+  );
+  --brew-accent-500: oklch(
+    calc(55% * var(--srm-l-scale)) calc(0.102 * var(--srm-chroma-scale)) 225
+  );
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) calc(0.09 * var(--srm-chroma-scale)) 225);
+  --brew-accent-700: oklch(
+    calc(38% * var(--srm-l-scale)) calc(0.075 * var(--srm-chroma-scale)) 225
+  );
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.055 225);
+  --brew-accent-900: oklch(26% 0.04 225);
+  --brew-accent-950: oklch(20% 0.029 225);
+}
+.palette-reactive .brew-section[data-accent="fermentation"] {
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) calc(0.055 * var(--srm-chroma-scale)) 25);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) calc(0.092 * var(--srm-chroma-scale)) 25);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) calc(0.125 * var(--srm-chroma-scale)) 25);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) calc(0.138 * var(--srm-chroma-scale)) 25);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) calc(0.122 * var(--srm-chroma-scale)) 25);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) calc(0.1 * var(--srm-chroma-scale)) 25);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.072 25);
+  --brew-accent-900: oklch(26% 0.052 25);
+  --brew-accent-950: oklch(20% 0.037 25);
+}
+.palette-reactive .brew-section[data-accent="targets"] {
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) calc(0.048 * var(--srm-chroma-scale)) 42);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) calc(0.08 * var(--srm-chroma-scale)) 42);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) calc(0.105 * var(--srm-chroma-scale)) 42);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) calc(0.118 * var(--srm-chroma-scale)) 42);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) calc(0.105 * var(--srm-chroma-scale)) 42);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) calc(0.088 * var(--srm-chroma-scale)) 42);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.062 42);
+  --brew-accent-900: oklch(26% 0.045 42);
+  --brew-accent-950: oklch(20% 0.032 42);
 }
 
 /* =============================================
@@ -1524,13 +1906,13 @@
 .brew-section[data-accent="equipment"] {
   --brew-accent-50: oklch(97% 0.008 260);
   --brew-accent-100: oklch(94% 0.015 260);
-  --brew-accent-200: oklch(90% 0.03 260);
-  --brew-accent-300: oklch(80% 0.05 260);
-  --brew-accent-400: oklch(68% 0.07 260);
-  --brew-accent-500: oklch(55% 0.08 260);
-  --brew-accent-600: oklch(45% 0.07 260);
-  --brew-accent-700: oklch(38% 0.055 260);
-  --brew-accent-800: oklch(30% 0.04 260);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.03 260);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.05 260);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.07 260);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.08 260);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.07 260);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.055 260);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.04 260);
   --brew-accent-900: oklch(24% 0.03 260);
   --brew-accent-950: oklch(18% 0.02 260);
 }
@@ -1539,13 +1921,13 @@
 .brew-section[data-accent="grain"] {
   --brew-accent-50: oklch(97% 0.012 75);
   --brew-accent-100: oklch(94% 0.035 75);
-  --brew-accent-200: oklch(90% 0.075 75);
-  --brew-accent-300: oklch(80% 0.12 75);
-  --brew-accent-400: oklch(72% 0.15 75);
-  --brew-accent-500: oklch(62% 0.155 75);
-  --brew-accent-600: oklch(52% 0.14 75);
-  --brew-accent-700: oklch(42% 0.115 75);
-  --brew-accent-800: oklch(34% 0.085 75);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.075 75);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.12 75);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.15 75);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.155 75);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.14 75);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.115 75);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.085 75);
   --brew-accent-900: oklch(26% 0.06 75);
   --brew-accent-950: oklch(20% 0.04 75);
 }
@@ -1554,13 +1936,13 @@
 .brew-section[data-accent="mash"] {
   --brew-accent-50: oklch(97% 0.012 55);
   --brew-accent-100: oklch(94% 0.035 55);
-  --brew-accent-200: oklch(90% 0.075 55);
-  --brew-accent-300: oklch(80% 0.12 55);
-  --brew-accent-400: oklch(72% 0.145 55);
-  --brew-accent-500: oklch(62% 0.15 55);
-  --brew-accent-600: oklch(52% 0.135 55);
-  --brew-accent-700: oklch(42% 0.11 55);
-  --brew-accent-800: oklch(34% 0.08 55);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.075 55);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.12 55);
+  --brew-accent-400: oklch(calc(72% * var(--srm-l-scale)) 0.145 55);
+  --brew-accent-500: oklch(calc(62% * var(--srm-l-scale)) 0.15 55);
+  --brew-accent-600: oklch(calc(52% * var(--srm-l-scale)) 0.135 55);
+  --brew-accent-700: oklch(calc(42% * var(--srm-l-scale)) 0.11 55);
+  --brew-accent-800: oklch(calc(34% * var(--srm-l-scale)) 0.08 55);
   --brew-accent-900: oklch(26% 0.055 55);
   --brew-accent-950: oklch(20% 0.038 55);
 }
@@ -1569,13 +1951,13 @@
 .brew-section[data-accent="hops"] {
   --brew-accent-50: oklch(97% 0.01 145);
   --brew-accent-100: oklch(94% 0.03 145);
-  --brew-accent-200: oklch(90% 0.07 145);
-  --brew-accent-300: oklch(80% 0.11 145);
-  --brew-accent-400: oklch(68% 0.14 145);
-  --brew-accent-500: oklch(55% 0.155 145);
-  --brew-accent-600: oklch(45% 0.135 145);
-  --brew-accent-700: oklch(38% 0.11 145);
-  --brew-accent-800: oklch(30% 0.07 145);
+  --brew-accent-200: oklch(calc(90% * var(--srm-l-scale)) 0.07 145);
+  --brew-accent-300: oklch(calc(80% * var(--srm-l-scale)) 0.11 145);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.14 145);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.155 145);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.135 145);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.11 145);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.07 145);
   --brew-accent-900: oklch(24% 0.05 145);
   --brew-accent-950: oklch(18% 0.035 145);
 }
@@ -1584,13 +1966,13 @@
 .brew-section[data-accent="yeast"] {
   --brew-accent-50: oklch(97% 0.01 310);
   --brew-accent-100: oklch(94% 0.025 310);
-  --brew-accent-200: oklch(88% 0.06 310);
-  --brew-accent-300: oklch(78% 0.1 310);
-  --brew-accent-400: oklch(68% 0.14 310);
-  --brew-accent-500: oklch(55% 0.16 310);
-  --brew-accent-600: oklch(45% 0.145 310);
-  --brew-accent-700: oklch(38% 0.12 310);
-  --brew-accent-800: oklch(30% 0.085 310);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.06 310);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.1 310);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.14 310);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.16 310);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.145 310);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.12 310);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.085 310);
   --brew-accent-900: oklch(24% 0.06 310);
   --brew-accent-950: oklch(18% 0.04 310);
 }
@@ -1599,13 +1981,13 @@
 .brew-section[data-accent="water"] {
   --brew-accent-50: oklch(97% 0.01 230);
   --brew-accent-100: oklch(94% 0.025 230);
-  --brew-accent-200: oklch(88% 0.06 230);
-  --brew-accent-300: oklch(78% 0.1 230);
-  --brew-accent-400: oklch(68% 0.145 230);
-  --brew-accent-500: oklch(55% 0.16 230);
-  --brew-accent-600: oklch(45% 0.145 230);
-  --brew-accent-700: oklch(38% 0.12 230);
-  --brew-accent-800: oklch(30% 0.085 230);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.06 230);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.1 230);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.145 230);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.16 230);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.145 230);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.12 230);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.085 230);
   --brew-accent-900: oklch(24% 0.06 230);
   --brew-accent-950: oklch(18% 0.04 230);
 }
@@ -1614,13 +1996,13 @@
 .brew-section[data-accent="fermentation"] {
   --brew-accent-50: oklch(97% 0.01 15);
   --brew-accent-100: oklch(94% 0.03 15);
-  --brew-accent-200: oklch(88% 0.065 15);
-  --brew-accent-300: oklch(78% 0.11 15);
-  --brew-accent-400: oklch(68% 0.15 15);
-  --brew-accent-500: oklch(55% 0.17 15);
-  --brew-accent-600: oklch(45% 0.155 15);
-  --brew-accent-700: oklch(38% 0.125 15);
-  --brew-accent-800: oklch(30% 0.09 15);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.065 15);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.11 15);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.15 15);
+  --brew-accent-500: oklch(calc(55% * var(--srm-l-scale)) 0.17 15);
+  --brew-accent-600: oklch(calc(45% * var(--srm-l-scale)) 0.155 15);
+  --brew-accent-700: oklch(calc(38% * var(--srm-l-scale)) 0.125 15);
+  --brew-accent-800: oklch(calc(30% * var(--srm-l-scale)) 0.09 15);
   --brew-accent-900: oklch(24% 0.065 15);
   --brew-accent-950: oklch(18% 0.045 15);
 }
@@ -1629,13 +2011,13 @@
 .brew-section[data-accent="targets"] {
   --brew-accent-50: oklch(97% 0.01 25);
   --brew-accent-100: oklch(94% 0.03 25);
-  --brew-accent-200: oklch(88% 0.065 25);
-  --brew-accent-300: oklch(78% 0.11 25);
-  --brew-accent-400: oklch(68% 0.15 25);
-  --brew-accent-500: oklch(58% 0.165 25);
-  --brew-accent-600: oklch(48% 0.15 25);
-  --brew-accent-700: oklch(40% 0.12 25);
-  --brew-accent-800: oklch(32% 0.085 25);
+  --brew-accent-200: oklch(calc(88% * var(--srm-l-scale)) 0.065 25);
+  --brew-accent-300: oklch(calc(78% * var(--srm-l-scale)) 0.11 25);
+  --brew-accent-400: oklch(calc(68% * var(--srm-l-scale)) 0.15 25);
+  --brew-accent-500: oklch(calc(58% * var(--srm-l-scale)) 0.165 25);
+  --brew-accent-600: oklch(calc(48% * var(--srm-l-scale)) 0.15 25);
+  --brew-accent-700: oklch(calc(40% * var(--srm-l-scale)) 0.12 25);
+  --brew-accent-800: oklch(calc(32% * var(--srm-l-scale)) 0.085 25);
   --brew-accent-900: oklch(24% 0.06 25);
   --brew-accent-950: oklch(18% 0.04 25);
 }
@@ -1677,13 +2059,31 @@
   width: 0;
 }
 
+/* Nav button slot — sits below navbar, above the tile track */
+.sidebar-nav-slot {
+  padding-top: 88px; /* Clear navbar */
+  padding-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.sidebar-nav-slot.sidebar-nav-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
 .section-sidebar-track {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 124px; /* Clear navbar + page header without pushing tiles too low */
+  padding-top: 16px;
   padding-bottom: 120px; /* Ensure last tile isn't cut off at bottom */
 }
 
@@ -1801,16 +2201,16 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  background:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E"),
-    linear-gradient(
-      to bottom,
-      oklch(100% 0 0 / 0.2) 0%,
-      oklch(100% 0 0 / 0.06) 25%,
-      oklch(100% 0 0 / 0) 50%,
-      oklch(0% 0 0 / 0.08) 80%,
-      oklch(0% 0 0 / 0.18) 100%
-    );
+  background: linear-gradient(
+    to bottom,
+    oklch(100% 0 0 / 0.2) 0%,
+    oklch(100% 0 0 / 0.06) 25%,
+    oklch(100% 0 0 / 0) 50%,
+    oklch(0% 0 0 / 0.08) 80%,
+    oklch(0% 0 0 / 0.18) 100%
+  );
+  background-size: auto;
+  background-repeat: no-repeat;
 }
 
 .section-sidebar-item:not(.is-active) {
@@ -2342,6 +2742,22 @@
     height: 1.5px;
     opacity: 0.45;
   }
+  .mobile-sidebar-title-input {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    text-align: center;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .mobile-sidebar-title-input::placeholder {
+    color: var(--fg-muted);
+    opacity: 0.4;
+  }
 
   /* ── Accordion tile header ── */
   .mobile-accordion-tile {
@@ -2596,7 +3012,7 @@
         color-mix(in oklch, var(--brew-accent-200) 12%, transparent),
         transparent 55%
       ),
-      rgb(var(--bg));
+      var(--bg);
     background-attachment: fixed;
   }
 
@@ -2613,12 +3029,12 @@
         color-mix(in oklch, var(--brew-accent-600) 6%, transparent),
         transparent 50%
       ),
-      linear-gradient(180deg, rgb(18 16 14) 0%, rgb(16 14 12) 35%, rgb(var(--bg)) 100%);
+      linear-gradient(180deg, rgb(18 16 14) 0%, rgb(16 14 12) 35%, var(--bg) 100%);
     background-attachment: fixed;
   }
 
   .card-glass {
-    @apply relative rounded-2xl border border-[rgb(var(--border))] bg-[rgb(var(--card))] backdrop-blur-md;
+    @apply relative rounded-2xl border border-[rgb(var(--border))] bg-[var(--card)] backdrop-blur-md;
     box-shadow: var(--shadow-card);
     transition:
       box-shadow 200ms ease,
@@ -2629,7 +3045,7 @@
     transform: translateY(-2px);
   }
   .dark .card-glass {
-    @apply border-white/10 bg-[rgb(var(--card))]/65;
+    @apply border-white/10 bg-[var(--card)]/65;
   }
   .card-inner-ring::after {
     content: "";
@@ -2720,8 +3136,8 @@
     color: var(--coral-700);
     background: linear-gradient(
       to bottom,
-      rgb(var(--card)),
-      color-mix(in oklch, rgb(var(--card)) 96%, var(--coral-100))
+      var(--card),
+      color-mix(in oklch, var(--card) 96%, var(--coral-100))
     );
     border: 1.5px solid var(--coral-400);
     box-shadow:
@@ -2737,8 +3153,8 @@
   .btn-outline:hover {
     background: linear-gradient(
       to bottom,
-      rgb(var(--card)),
-      color-mix(in oklch, var(--coral-100) 40%, rgb(var(--card)))
+      var(--card),
+      color-mix(in oklch, var(--coral-100) 40%, var(--card))
     );
     transform: translateY(-1px);
     box-shadow:
@@ -2757,8 +3173,8 @@
     color: var(--coral-400);
     background: linear-gradient(
       to bottom,
-      rgb(var(--card)),
-      color-mix(in oklch, rgb(var(--card)) 97%, black)
+      var(--card),
+      color-mix(in oklch, var(--card) 97%, black)
     );
     border-color: var(--coral-500);
     box-shadow:
@@ -2782,8 +3198,8 @@
     color: var(--fg-strong);
     background: linear-gradient(
       to bottom,
-      color-mix(in oklch, var(--coral-100) 20%, rgb(var(--card))),
-      color-mix(in oklch, var(--coral-100) 12%, rgb(var(--card)))
+      color-mix(in oklch, var(--coral-100) 20%, var(--card)),
+      color-mix(in oklch, var(--coral-100) 12%, var(--card))
     );
     border: 1px solid color-mix(in oklch, var(--fg-strong) 12%, transparent);
     box-shadow:
@@ -2799,8 +3215,8 @@
   .btn-tonal:hover {
     background: linear-gradient(
       to bottom,
-      color-mix(in oklch, var(--coral-100) 30%, rgb(var(--card))),
-      color-mix(in oklch, var(--coral-100) 20%, rgb(var(--card)))
+      color-mix(in oklch, var(--coral-100) 30%, var(--card)),
+      color-mix(in oklch, var(--coral-100) 20%, var(--card))
     );
     transform: translateY(-1px);
     box-shadow:
@@ -2938,7 +3354,16 @@
 
   /* Section card — accent-tinted background with prominent noise & top border */
   .brew-section {
-    @apply mb-6 rounded-2xl p-6;
+    @apply mb-6 rounded-2xl p-6 relative;
+    z-index: 1;
+
+    /* Section-local card colours — blend accent with SRM-tinted --bg so
+       sections track the page background while keeping their accent hue.
+       When SRM is neutral, --bg is near-white → mostly accent-50.
+       When SRM darkens (stout), --bg shifts → sections shift with it. */
+    --brew-card: color-mix(in oklch, var(--brew-accent-50) 55%, var(--bg));
+    --brew-card-inset: color-mix(in oklch, var(--brew-accent-100) 55%, var(--bg));
+
     /*
      * Layer stack (top → bottom):
      *  1. Heavy noise — gives tactile grain over the tinted surface
@@ -2949,8 +3374,6 @@
      */
     border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E")
-        padding-box,
       radial-gradient(
           ellipse 140% 100% at 5% -10%,
           color-mix(in oklch, var(--brew-accent-200) 65%, transparent),
@@ -2970,91 +3393,74 @@
           color-mix(in oklch, var(--brew-accent-50) 20%, transparent) 100%
         )
         padding-box,
-      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
+      linear-gradient(var(--brew-card), var(--brew-card)) padding-box,
       linear-gradient(
           to bottom,
           color-mix(in oklch, var(--brew-accent-400) 65%, transparent),
           color-mix(in oklch, var(--brew-accent-300) 30%, transparent)
         )
         border-box;
-    background-size:
-      180px 180px,
-      auto,
-      auto,
-      auto,
-      auto,
-      auto;
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
-      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
-      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
-      0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
-      0 24px 24px -12px color-mix(in oklch, var(--brew-accent-500) 3%, transparent);
-    transition-property: box-shadow;
-    transition-duration: 200ms;
-    transition-timing-function: ease;
+    background-size: auto, auto, auto, auto, auto;
+    --glow-opacity: 0.18;
+  }
+  .brew-section::before {
+    content: "";
+    position: absolute;
+    left: -120px;
+    right: -120px;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    border-radius: 24px;
+    background: var(--brew-accent-500);
+    opacity: var(--glow-opacity);
+    filter: blur(100px);
+    pointer-events: none;
   }
   .dark .brew-section {
+    /* Dark section-local card colours — blend accent with SRM-tinted --bg */
+    --brew-card: color-mix(in oklch, var(--brew-accent-700) 40%, var(--bg));
+    --brew-card-inset: color-mix(in oklch, var(--brew-accent-800) 40%, var(--bg));
+
     /*
      * Dark mode: card IS the section color with a subtle gradient.
      * Gradient border: accent glow at top, fading down — border-box trick.
      *
      * Tuning knobs — override per-palette or per-section:
-     *   --section-grad-from    start color  (default: accent-900)
-     *   --section-grad-to      end color    (default: ~925, midpoint of 900/950)
+     *   --section-grad-from    start color  (default: accent-700)
+     *   --section-grad-to      end color    (default: ~800)
      *   --section-grad-angle   direction    (default: to bottom)
      */
-    --section-grad-from: color-mix(in oklch, var(--brew-accent-800) 80%, var(--brew-accent-900));
-    --section-grad-to: color-mix(in oklch, var(--brew-accent-900) 10%, var(--brew-accent-950));
+    --section-grad-from: color-mix(in oklch, var(--brew-accent-700) 70%, var(--brew-accent-800));
+    --section-grad-to: color-mix(in oklch, var(--brew-accent-800) 40%, var(--brew-accent-900));
     --section-grad-angle: to bottom;
 
     border: 1px solid transparent;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")
-        padding-box,
       linear-gradient(var(--section-grad-angle), var(--section-grad-from), var(--section-grad-to))
         padding-box,
       linear-gradient(
           to bottom,
-          color-mix(in oklch, var(--brew-accent-600) 50%, transparent),
-          color-mix(in oklch, var(--brew-accent-800) 20%, transparent)
+          color-mix(in oklch, var(--brew-accent-400) 45%, transparent),
+          color-mix(in oklch, var(--brew-accent-600) 18%, transparent)
         )
         border-box;
-    background-size:
-      180px 180px,
-      auto,
-      auto;
     box-shadow:
+      0 0 0 1px transparent,
       0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
       0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-900) 12%, transparent),
       0 6px 6px -3px color-mix(in oklch, var(--brew-accent-900) 10%, transparent),
       0 12px 12px -6px rgba(0, 0, 0, 0.1),
       0 24px 24px -12px rgba(0, 0, 0, 0.08);
+    --glow-opacity: 0.25;
+    transition: box-shadow 0.3s ease;
   }
-  .brew-section:hover {
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
-      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
-      0 16px 16px -8px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
-      0 36px 36px -18px color-mix(in oklch, var(--brew-accent-500) 4%, transparent);
-  }
-  .dark .brew-section:hover {
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-700) 18%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 18%, transparent),
-      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-900) 16%, transparent),
-      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
-      0 16px 16px -8px rgba(0, 0, 0, 0.12),
-      0 36px 36px -18px rgba(0, 0, 0, 0.1);
-  }
+
 
   /* Warm inset input — translucent inside glass containers */
   .brew-input {
     @apply rounded-lg px-3 py-2 text-sm transition-all duration-150;
-    background: rgb(var(--brew-card-inset) / 0.6);
+    background: color-mix(in oklch, var(--brew-card-inset) 60%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     color: var(--fg-strong);
@@ -3065,13 +3471,17 @@
     }
   }
   .dark .brew-input {
-    background: color-mix(in oklch, var(--brew-accent-900) 20%, rgb(var(--brew-card-inset) / 0.35));
+    background: color-mix(
+      in oklch,
+      var(--brew-accent-900) 20%,
+      color-mix(in oklch, var(--brew-card-inset) 35%, transparent)
+    );
     border-color: color-mix(in oklch, var(--brew-accent-700) 20%, rgb(255 255 255 / 0.08));
   }
   .brew-input:focus {
     outline: none;
     border-color: var(--brew-accent-400);
-    background: rgb(var(--brew-card-inset) / 0.8);
+    background: color-mix(in oklch, var(--brew-card-inset) 80%, transparent);
     box-shadow:
       var(--shadow-inset),
       0 0 0 2px color-mix(in oklch, var(--brew-accent-400) 30%, transparent);
@@ -3104,7 +3514,7 @@
   /* Stat gauge — translucent glass surface */
   .brew-gauge {
     @apply overflow-hidden rounded-xl p-4 text-center backdrop-blur-sm;
-    background: rgb(var(--brew-card) / 0.55);
+    background: color-mix(in oklch, var(--brew-card) 55%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
     box-shadow:
@@ -3123,10 +3533,9 @@
   .dark .brew-gauge {
     background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
     border: 1px solid transparent;
-    background-clip: padding-box, padding-box, border-box;
-    background-origin: padding-box, padding-box, border-box;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
     background-image:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
       linear-gradient(
         to bottom,
         color-mix(in oklch, var(--brew-accent-800) 20%, transparent),
@@ -3151,7 +3560,6 @@
     @apply text-2xl font-black;
     letter-spacing: var(--brew-tracking-tight);
     color: var(--fg-strong);
-    font-variant-numeric: tabular-nums lining-nums;
   }
 
   /* Section title — bold with accent underline */
@@ -3201,8 +3609,8 @@
     color: var(--fg-strong);
     background: linear-gradient(
       to bottom,
-      rgb(var(--brew-card)),
-      color-mix(in oklch, rgb(var(--brew-card)) 97%, black)
+      var(--brew-card),
+      color-mix(in oklch, var(--brew-card) 97%, black)
     );
     border: 1px solid color-mix(in oklch, var(--fg-strong) 14%, transparent);
     box-shadow:
@@ -3216,11 +3624,26 @@
       background 100ms ease,
       color 100ms ease;
   }
+  .brew-btn-ghost--inset {
+    background: linear-gradient(
+      to bottom,
+      var(--brew-card-inset),
+      color-mix(in oklch, var(--brew-card-inset) 97%, black)
+    );
+  }
+  .dark .brew-btn-ghost--inset {
+    background: linear-gradient(
+      to bottom,
+      var(--brew-card-inset),
+      color-mix(in oklch, var(--brew-card-inset) 95%, black)
+    );
+  }
+
   .dark .brew-btn-ghost {
     background: linear-gradient(
       to bottom,
-      rgb(var(--brew-card)),
-      color-mix(in oklch, rgb(var(--brew-card)) 95%, black)
+      var(--brew-card),
+      color-mix(in oklch, var(--brew-card) 95%, black)
     );
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow:
@@ -3258,7 +3681,7 @@
   /* Ingredient row — translucent glass surface with accent-tinted gradient border */
   .brew-ingredient-row {
     @apply rounded-lg p-3 backdrop-blur-sm;
-    background: rgb(var(--brew-card) / 0.45);
+    background: color-mix(in oklch, var(--brew-card) 45%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
@@ -3284,7 +3707,11 @@
       );
   }
   .brew-ingredient-row:hover {
-    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    background: color-mix(
+      in oklch,
+      var(--brew-accent-100) 12%,
+      color-mix(in oklch, var(--brew-card) 60%, transparent)
+    );
     border-color: color-mix(in oklch, var(--brew-accent-400) 40%, rgb(var(--brew-border)));
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.06),
@@ -3312,23 +3739,15 @@
     position: relative;
     border: 1.5px solid transparent;
     background:
-      var(--noise-texture) padding-box,
-      var(--paper-texture) padding-box,
       linear-gradient(to bottom, rgba(255, 255, 255, 0.08), transparent 50%, rgba(0, 0, 0, 0.02))
         padding-box,
-      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
+      linear-gradient(var(--brew-card), var(--brew-card)) padding-box,
       linear-gradient(
           to bottom,
           color-mix(in oklch, var(--_srm) 60%, transparent),
           color-mix(in oklch, var(--_srm) 20%, transparent)
         )
         border-box;
-    background-size:
-      200px 200px,
-      300px 300px,
-      auto,
-      auto,
-      auto;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.4),
       0 5px 0 0 color-mix(in oklch, var(--_srm) 45%, rgb(185, 180, 172)),
@@ -3348,7 +3767,7 @@
       0 16px 32px rgba(0, 0, 0, 0.1),
       0 32px 64px rgba(0, 0, 0, 0.06);
   }
-  .brew-recipe-card:active {
+  .brew-recipe-card:active:not(:has(button:active)) {
     transform: translateY(5px);
     box-shadow:
       inset 0 2px 6px rgba(0, 0, 0, 0.12),
@@ -3356,27 +3775,24 @@
       0 1px 2px rgba(0, 0, 0, 0.06);
     transition-duration: 80ms;
   }
+  .brew-recipe-card button:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    transition-duration: 80ms;
+  }
 
   /* Dark mode depth adjustments for recipe card */
   .dark .brew-recipe-card {
     background:
-      var(--noise-texture) padding-box,
-      var(--paper-texture) padding-box,
       linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent 50%, rgba(0, 0, 0, 0.06))
         padding-box,
-      linear-gradient(rgb(var(--brew-card)), rgb(var(--brew-card))) padding-box,
+      linear-gradient(var(--brew-card), var(--brew-card)) padding-box,
       linear-gradient(
           to bottom,
           color-mix(in oklch, var(--_srm) 40%, transparent),
           color-mix(in oklch, var(--_srm) 12%, transparent)
         )
         border-box;
-    background-size:
-      200px 200px,
-      300px 300px,
-      auto,
-      auto,
-      auto;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
       0 5px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
@@ -3392,11 +3808,43 @@
       0 16px 32px rgba(0, 0, 0, 0.25),
       0 32px 64px rgba(0, 0, 0, 0.15);
   }
-  .dark .brew-recipe-card:active {
+  .dark .brew-recipe-card:active:not(:has(button:active)) {
     box-shadow:
       inset 0 2px 6px rgba(0, 0, 0, 0.4),
       0 0px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
       0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Ghost variant — dark mode only. Light mode inherits standard brew-recipe-card styles. */
+  .dark .brew-recipe-card--ghost {
+    background:
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent 50%, rgba(0, 0, 0, 0.06))
+        padding-box,
+      linear-gradient(
+          color-mix(in oklch, var(--_srm) 14%, var(--bg)),
+          color-mix(in oklch, var(--_srm) 14%, var(--bg))
+        )
+        padding-box,
+      linear-gradient(
+          to bottom,
+          color-mix(in oklch, var(--_srm) 40%, transparent),
+          color-mix(in oklch, var(--_srm) 12%, transparent)
+        )
+        border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      0 5px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 6px 4px rgba(0, 0, 0, 0.15),
+      0 10px 20px rgba(0, 0, 0, 0.2),
+      0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+  .dark .brew-recipe-card--ghost:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 7px 0 0 color-mix(in oklch, var(--_srm) 35%, rgb(40, 38, 35)),
+      0 8px 6px rgba(0, 0, 0, 0.2),
+      0 16px 32px rgba(0, 0, 0, 0.25),
+      0 32px 64px rgba(0, 0, 0, 0.15);
   }
 
   /* Tag pill — translucent accent tinted */
@@ -3416,7 +3864,7 @@
   /* Journal textarea — warm inset */
   .brew-journal {
     @apply w-full rounded-lg p-4 text-sm leading-relaxed;
-    background: rgb(var(--brew-card-inset) / 0.5);
+    background: color-mix(in oklch, var(--brew-card-inset) 50%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     color: var(--fg-strong);
@@ -3444,7 +3892,6 @@
   .brew-modal {
     @apply overflow-hidden rounded-2xl backdrop-blur-xl;
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0.04 0 0.9 0 0 0.02 0 0 0.8 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E"),
       radial-gradient(
         ellipse 140% 100% at 5% -10%,
         color-mix(in oklch, var(--brew-accent-100) 50%, transparent),
@@ -3461,13 +3908,7 @@
         color-mix(in oklch, var(--brew-accent-50) 15%, transparent) 50%,
         transparent 100%
       ),
-      rgb(var(--brew-card) / 0.88);
-    background-size:
-      180px 180px,
-      auto,
-      auto,
-      auto,
-      auto;
+      color-mix(in oklch, var(--brew-card) 88%, transparent);
     border: 1px solid color-mix(in oklch, var(--brew-accent-200) 30%, rgb(var(--brew-border) / 0.6));
     border-top: 3px solid var(--brew-accent-500);
     box-shadow:
@@ -3476,7 +3917,6 @@
   }
   .dark .brew-modal {
     background:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
       radial-gradient(
         ellipse 140% 100% at 5% -10%,
         color-mix(in oklch, var(--brew-accent-900) 50%, transparent),
@@ -3493,13 +3933,7 @@
         color-mix(in oklch, var(--brew-accent-950) 20%, transparent) 50%,
         transparent 100%
       ),
-      rgb(var(--brew-card) / 0.75);
-    background-size:
-      180px 180px,
-      auto,
-      auto,
-      auto,
-      auto;
+      color-mix(in oklch, var(--brew-card) 75%, transparent);
     border-color: color-mix(in oklch, var(--brew-accent-800) 20%, rgb(255 255 255 / 0.08));
     box-shadow:
       var(--shadow-elevated),
@@ -3540,12 +3974,12 @@
   /* Outer panel — matches brew-section glass card feel */
   .style-strip-panel {
     @apply rounded-xl p-6 backdrop-blur-sm;
-    background: rgb(var(--brew-card-inset) / 0.45);
+    background: color-mix(in oklch, var(--brew-card-inset) 45%, transparent);
     border: 1px solid rgb(var(--brew-border-subtle));
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
   }
   .dark .style-strip-panel {
-    background: rgb(var(--brew-card-inset) / 0.35);
+    background: color-mix(in oklch, var(--brew-card-inset) 35%, transparent);
     border-color: rgb(255 255 255 / 0.08);
   }
 
@@ -3588,6 +4022,7 @@
     white-space: nowrap;
     pointer-events: none;
     z-index: 3;
+    transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .style-strip-value.is-out {
     color: var(--brew-danger);
@@ -3606,7 +4041,8 @@
     position: relative;
     height: 14px;
     border-radius: 8px;
-    background: rgb(var(--brew-card-inset));
+    overflow: visible;
+    background: var(--brew-card-inset);
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
@@ -3631,6 +4067,9 @@
     border-radius: 6px;
     background: linear-gradient(to bottom, var(--brew-accent-400), var(--brew-accent-600));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .dark .style-strip-range {
     background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-700));
@@ -3641,20 +4080,29 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.25),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   }
-
-  /* Needle — hand-drawn tick mark */
+  /* Needle — pen-stroke tick (aggressive taper: fine tip widens to a pressed base) */
   .style-strip-needle {
     position: absolute;
-    width: 2.5px;
+    width: 3px;
     height: 30px;
     top: 50%;
     transform: translateY(-50%);
     margin-left: -1.5px;
-    border-radius: 1px 2px 2px 0.5px;
+    border-radius: 0.5px 1px 2px 1px;
     background: var(--fg-strong);
     opacity: 0.65;
     transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 2;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 40%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 40%);
+  }
+
+  /* SRM needle — chisel-tip marker: broad nib pressed at an angle */
+  .style-strip-needle.is-srm {
+    width: 10px;
+    height: 34px;
+    margin-left: -5px;
+    border-radius: 1px 4px 2px 1px;
+    clip-path: polygon(25% 0%, 90% 0%, 100% 12%, 100% 88%, 80% 100%, 10% 100%, 0% 88%, 0% 12%);
   }
 
   /* Out-of-range needle */
@@ -3672,9 +4120,326 @@
     font-weight: 600;
     color: var(--fg-muted);
     opacity: 0.55;
-    font-variant-numeric: tabular-nums lining-nums;
     white-space: nowrap;
     pointer-events: none;
+  }
+  /* Source → Target grid — titles share a row so they align */
+  .water-source-target-row {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 4px 16px;
+    align-items: end;
+    width: fit-content;
+  }
+
+  /* ---- Water ion range strips ---- */
+
+  /* Reversed range (source > target) — muted warning tint */
+  .style-strip-range.is-reversed {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--brew-accent-400) 50%, var(--brew-danger)),
+      color-mix(in oklch, var(--brew-accent-600) 50%, var(--brew-danger))
+    );
+    opacity: 0.7;
+  }
+  .dark .style-strip-range.is-reversed {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--brew-accent-500) 50%, var(--brew-danger)),
+      color-mix(in oklch, var(--brew-accent-700) 50%, var(--brew-danger))
+    );
+  }
+
+  /* Base water segment when source > target — muted, can't be reduced */
+  .water-strip-base-segment {
+    background: linear-gradient(to bottom, oklch(0.72 0.02 250), oklch(0.62 0.03 250));
+    opacity: 0.45;
+  }
+  .dark .water-strip-base-segment {
+    background: linear-gradient(to bottom, oklch(0.50 0.02 250), oklch(0.40 0.03 250));
+    opacity: 0.55;
+  }
+
+  /* Water strip OKLCH lightness — dark mode needs brighter values for contrast
+     against the deep teal section background */
+  :root {
+    --water-strip-text-l: 0.45;
+    --water-strip-bar-l-from: 0.7;
+    --water-strip-bar-l-to: 0.55;
+  }
+  .dark {
+    --water-strip-text-l: 0.75;
+    --water-strip-bar-l-from: 0.78;
+    --water-strip-bar-l-to: 0.62;
+  }
+
+  /* Source positioned on bar (when source > target) */
+  .water-strip-num-source.is-positioned {
+    left: auto;
+    transform: translateX(-50%);
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .water-strip-lbl-source.is-positioned {
+    left: auto;
+    transform: translateX(-50%);
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Source tick mark at split point */
+  .water-strip-source-tick {
+    position: absolute;
+    top: 50%;
+    width: 2px;
+    height: 18px;
+    margin-left: -1px;
+    transform: translateY(-50%);
+    background: var(--fg-muted);
+    opacity: 0.4;
+    z-index: 2;
+    transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Source↔target crowding: only target expands (same pattern as current↔target) */
+  .water-strip-num-target.is-src-tgt-crowded {
+    top: -18px;
+  }
+  .water-strip-lbl-target.is-src-tgt-crowded {
+    top: 12px;
+  }
+  /* Extend target needle when source crowds it */
+  .water-strip-needle.is-src-tgt-crowded {
+    height: 36px;
+    clip-path: none;
+  }
+
+  /* Water strip — target needle is always black (white in dark) */
+  .water-strip-needle {
+    background: #000;
+    opacity: 0.75;
+    transition:
+      height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      clip-path 0.3s ease;
+  }
+  .dark .water-strip-needle {
+    background: #fff;
+  }
+
+  /* BJCP target needle — clean computer line, small */
+  .style-strip-needle.water-strip-needle-bjcp {
+    clip-path: none !important;
+    border-radius: 0;
+    width: 1.5px;
+    height: 14px;
+    margin-left: -0.75px;
+    opacity: 0.5;
+  }
+  /* Custom target needle — small pen-stroke */
+  .water-strip-needle:not(.water-strip-needle-bjcp) {
+    height: 16px;
+  }
+
+  /* Draggable needle — expanded hit area, cursor, and spring grow on hover/drag */
+  .water-strip-needle-draggable {
+    cursor: ew-resize;
+    z-index: 3;
+    touch-action: none;
+    transform-origin: center center;
+    transition:
+      scale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.2s ease;
+  }
+  .water-strip-needle-draggable::before {
+    content: "";
+    position: absolute;
+    top: -16px;
+    left: -28px;
+    right: -28px;
+    bottom: -16px;
+  }
+  /* Hover: spring-scale both directions + full opacity */
+  .water-strip-needle-draggable:hover {
+    opacity: 1;
+    scale: 1.6 1.6;
+  }
+
+  /* During drag: kill left/position transitions, spring the scale */
+  .is-dragging .style-strip-needle {
+    transition:
+      scale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.15s ease !important;
+  }
+  .style-strip.is-dragging .water-strip-num-target {
+    transition:
+      top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+      font-size 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  .is-dragging .water-strip-lbl-target {
+    transition: none !important;
+  }
+  /* During drag: spring-grow uniformly + full opacity */
+  .is-dragging .water-strip-needle {
+    opacity: 1;
+    scale: 2 2;
+  }
+
+  /* Current tick — pen-stroke style, colored, at bar end */
+  .water-strip-current-tick {
+    position: absolute;
+    top: 50%;
+    width: 3px;
+    height: 26px;
+    margin-left: -1.5px;
+    border-radius: 0.5px 1px 2px 1px;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 40%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 40%);
+    z-index: 2;
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      clip-path 0.3s ease;
+  }
+  /* Extend tick downward when target & current overlap, reaching below-track label */
+  .water-strip-current-tick.is-crowded {
+    height: 36px;
+    clip-path: none;
+  }
+
+  /* Water strip — padding for numbers above + labels below */
+  .water-strip-track-wrap {
+    padding-top: 22px;
+    padding-bottom: 16px;
+  }
+
+  /* --- Numbers above the track --- */
+  .water-strip-num {
+    position: absolute;
+    top: -2px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 3;
+  }
+  .water-strip-num-source {
+    left: 0;
+    top: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--fg-strong);
+    opacity: 0.7;
+  }
+  .dark .water-strip-num-source {
+    opacity: 0.85;
+  }
+  .water-strip-num-target {
+    top: 2px;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--fg-strong);
+    opacity: 0.7;
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+      font-size 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  /* Lift target number when needle grows on hover */
+  .style-strip:has(.water-strip-needle-draggable:hover) .water-strip-num-target {
+    top: -10px;
+  }
+  /* Lift + enlarge target number during drag (clears 2x scaled needle).
+     :has() adds specificity, so we match it here to win over the hover rule. */
+  .style-strip.is-dragging:has(.water-strip-needle-draggable) .water-strip-num-target {
+    top: -20px;
+    font-size: 16px;
+    opacity: 1;
+  }
+  .water-strip-num-current {
+    font-family: var(--font-handwritten);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--fg-strong);
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      color 0.4s ease;
+  }
+  .water-strip-num-current.is-out {
+    color: var(--brew-danger);
+  }
+  /* When current & target overlap, push current number higher to clear target */
+  .water-strip-num-current.is-crowded {
+    top: -18px;
+  }
+  /* Custom target number — handwritten */
+  .water-strip-num-hand {
+    font-family: var(--font-handwritten);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--fg-strong);
+    opacity: 0.8;
+  }
+
+  /* --- Labels below the track --- */
+  .water-strip-labels-below {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    pointer-events: none;
+  }
+  .water-strip-lbl {
+    position: absolute;
+    top: 0;
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-strong);
+    opacity: 0.5;
+  }
+  .dark .water-strip-lbl {
+    opacity: 0.7;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .water-strip-lbl-source {
+    left: 0;
+  }
+  .water-strip-lbl-target {
+    transform: translateX(-50%);
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .water-strip-lbl-current {
+    transform: translateX(-50%);
+    font-family: var(--font-handwritten);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    opacity: 0.65;
+    -webkit-text-stroke: 0.3px currentColor;
+    transition:
+      left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+      top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      color 0.4s ease;
+  }
+  /* When crowded, drop "Current" label below "Target" label */
+  .water-strip-lbl-current.is-crowded {
+    top: 12px;
+  }
+  /* Custom target label — handwritten */
+  .water-strip-lbl-hand {
+    font-family: var(--font-handwritten);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    opacity: 0.6;
+    -webkit-text-stroke: 0.3px currentColor;
   }
 
   /* ---- Unified filter chip system ---- */
@@ -3682,7 +4447,7 @@
   /* Inactive chip — translucent */
   .brew-chip {
     @apply cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-all duration-150;
-    background: rgb(var(--brew-card-inset) / 0.5);
+    background: color-mix(in oklch, var(--brew-card-inset) 50%, transparent);
     color: var(--fg-muted);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-border-subtle)));
@@ -3692,7 +4457,11 @@
     border-color: color-mix(in oklch, var(--brew-accent-700) 18%, rgb(255 255 255 / 0.06));
   }
   .brew-chip:hover {
-    background: color-mix(in oklch, var(--brew-accent-100) 25%, rgb(var(--brew-card-inset) / 0.6));
+    background: color-mix(
+      in oklch,
+      var(--brew-accent-100) 25%,
+      color-mix(in oklch, var(--brew-card-inset) 60%, transparent)
+    );
     border-color: color-mix(in oklch, var(--brew-accent-400) 35%, rgb(var(--brew-border)));
     color: var(--fg-strong);
   }
@@ -3747,12 +4516,12 @@
   /* ---- Picker row (modal lists) ---- */
   .brew-picker-row {
     @apply w-full rounded-lg px-4 py-2.5 text-left transition-all duration-100;
-    background: rgb(var(--brew-card-inset) / 0.35);
+    background: color-mix(in oklch, var(--brew-card-inset) 35%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 15%, rgb(var(--brew-border-subtle) / 0.4));
   }
   .brew-picker-row:hover {
-    background: rgb(var(--brew-card-inset) / 0.7);
+    background: color-mix(in oklch, var(--brew-card-inset) 70%, transparent);
     border-color: color-mix(in oklch, var(--brew-accent-400) 30%, rgb(var(--brew-border-subtle)));
     box-shadow:
       0 0 0 1px rgb(0 0 0 / 0.03),
@@ -3778,7 +4547,7 @@
     color: var(--fg-strong);
   }
   .brew-menu-item:hover {
-    background: rgb(var(--brew-card-inset));
+    background: var(--brew-card-inset);
   }
 
   /* ---- Danger text ---- */
@@ -3796,12 +4565,20 @@
   /* ---- Alert/warning box ---- */
   .brew-alert-warning {
     @apply rounded-lg p-3 text-sm backdrop-blur-sm;
-    background: color-mix(in oklch, var(--brew-warning) 10%, rgb(var(--brew-card) / 0.5));
+    background: color-mix(
+      in oklch,
+      var(--brew-warning) 10%,
+      color-mix(in oklch, var(--brew-card) 50%, transparent)
+    );
     border: 1px solid color-mix(in oklch, var(--brew-warning) 25%, transparent);
     color: var(--fg-strong);
   }
   .dark .brew-alert-warning {
-    background: color-mix(in oklch, var(--brew-warning) 6%, rgb(var(--brew-card) / 0.35));
+    background: color-mix(
+      in oklch,
+      var(--brew-warning) 6%,
+      color-mix(in oklch, var(--brew-card) 35%, transparent)
+    );
   }
 
   /* ---- Hover-reveal row actions (shared across builder) ---- */
@@ -3905,7 +4682,6 @@
     flex-direction: column;
     gap: 6px;
   }
-
 
   .mash-step-index {
     flex-shrink: 0;
@@ -4051,7 +4827,7 @@
     padding: 14px 8px 12px;
     border-radius: 10px;
     overflow: visible;
-    background: rgb(var(--brew-card) / 0.45);
+    background: color-mix(in oklch, var(--brew-card) 45%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
@@ -4060,7 +4836,11 @@
     transition: all 150ms ease;
   }
   .equip-datum:focus-within {
-    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    background: color-mix(
+      in oklch,
+      var(--brew-accent-100) 12%,
+      color-mix(in oklch, var(--brew-card) 60%, transparent)
+    );
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       var(--shadow-card);
@@ -4187,6 +4967,30 @@
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 6px;
   }
+
+  /* Salt additions — full-width 5-column grid */
+  .salt-additions-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .salt-additions-grid .starter-stepper-center {
+    flex: 1;
+  }
+  .salt-additions-grid .equip-datum-input {
+    width: 4ch;
+  }
+  @media (max-width: 768px) {
+    .salt-additions-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (max-width: 420px) {
+    .salt-additions-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
   /* Narrower stepper buttons on small datum cards */
   .equip-datum.is-small .starter-stepper-btn {
     width: 24px;
@@ -4199,7 +5003,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 10px;
-    background: rgb(var(--brew-card) / 0.45);
+    background: color-mix(in oklch, var(--brew-card) 45%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
@@ -4208,7 +5012,11 @@
     transition: all 150ms ease;
   }
   .yeast-card:hover {
-    background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+    background: color-mix(
+      in oklch,
+      var(--brew-accent-100) 12%,
+      color-mix(in oklch, var(--brew-card) 60%, transparent)
+    );
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       var(--shadow-card);
@@ -4289,7 +5097,6 @@
     width: 100%;
     font-family: inherit;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
   }
   .yeast-header-inputs .equip-datum.is-small select.equip-datum-input {
     font-size: 14px;
@@ -4335,7 +5142,11 @@
   /* Danger state for metric card (underpitched) */
   .starter-metric.is-danger {
     border-color: color-mix(in oklch, var(--brew-danger) 25%, rgb(var(--brew-border-subtle)));
-    background: color-mix(in oklch, var(--brew-danger) 5%, rgb(var(--brew-card) / 0.55));
+    background: color-mix(
+      in oklch,
+      var(--brew-danger) 5%,
+      color-mix(in oklch, var(--brew-card) 55%, transparent)
+    );
   }
   .dark .starter-metric.is-danger {
     border-color: color-mix(in oklch, var(--brew-danger) 30%, transparent);
@@ -4376,7 +5187,7 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--fg-strong);
-    background: rgb(var(--brew-card) / 0.4);
+    background: color-mix(in oklch, var(--brew-card) 40%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 15%, rgb(var(--brew-border-subtle)));
     border-radius: 6px;
@@ -4393,7 +5204,7 @@
       background 150ms ease;
   }
   .starter-model-select:hover {
-    background: rgb(var(--brew-card) / 0.6);
+    background: color-mix(in oklch, var(--brew-card) 60%, transparent);
     border-color: color-mix(in oklch, var(--brew-accent-300) 25%, rgb(var(--brew-border-subtle)));
   }
   .starter-model-select:focus {
@@ -4423,7 +5234,6 @@
   .starter-input-grid .equip-datum-input {
     font-family: inherit;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
     width: 100%;
   }
   .starter-input-grid select.equip-datum-input {
@@ -4473,7 +5283,6 @@
   .starter-step-row .starter-readout-value {
     font-family: inherit;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
     font-size: 18px;
     color: var(--fg-strong);
     line-height: 1;
@@ -4513,12 +5322,20 @@
   .starter-stepper-btn:first-child {
     left: 0;
     border-radius: 10px 0 0 10px;
-    background: linear-gradient(to left, transparent, rgb(var(--brew-card) / 0.5));
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in oklch, var(--brew-card) 50%, transparent)
+    );
   }
   .starter-stepper-btn:last-child {
     right: 0;
     border-radius: 0 10px 10px 0;
-    background: linear-gradient(to right, transparent, rgb(var(--brew-card) / 0.5));
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--brew-card) 50%, transparent)
+    );
   }
   .starter-stepper-btn:hover {
     color: var(--fg-strong);
@@ -4527,28 +5344,28 @@
     background: linear-gradient(
       to left,
       transparent,
-      color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)))
+      color-mix(in oklch, var(--brew-accent-300) 18%, var(--brew-card))
     );
   }
   .starter-stepper-btn:last-child:hover {
     background: linear-gradient(
       to right,
       transparent,
-      color-mix(in oklch, var(--brew-accent-300) 18%, rgb(var(--brew-card)))
+      color-mix(in oklch, var(--brew-accent-300) 18%, var(--brew-card))
     );
   }
   .starter-stepper-btn:first-child:active {
     background: linear-gradient(
       to left,
       transparent,
-      color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)))
+      color-mix(in oklch, var(--brew-accent-300) 28%, var(--brew-card))
     );
   }
   .starter-stepper-btn:last-child:active {
     background: linear-gradient(
       to right,
       transparent,
-      color-mix(in oklch, var(--brew-accent-300) 28%, rgb(var(--brew-card)))
+      color-mix(in oklch, var(--brew-accent-300) 28%, var(--brew-card))
     );
   }
   .starter-stepper-center {
@@ -4626,7 +5443,7 @@
     gap: 2px;
     padding: 10px 16px 8px;
     border-radius: 10px;
-    background: rgb(var(--brew-card) / 0.55);
+    background: color-mix(in oklch, var(--brew-card) 55%, transparent);
     border: 1px solid
       color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
     box-shadow:
@@ -4657,7 +5474,6 @@
   .starter-metric-value {
     font-family: inherit;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
     font-size: 26px;
     color: var(--fg-strong);
     line-height: 1.1;
@@ -4720,6 +5536,43 @@
     z-index: 1;
   }
 
+  /* pH adjustment scribble — big diagonal across top-left of card */
+  .ph-adjust-flag {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    transform: rotate(-16deg);
+    transform-origin: left center;
+    font-family: var(--font-handwritten);
+    font-size: 32px;
+    color: var(--brew-danger);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Hover state for actionable pH card — lift like brew-btn-primary */
+  .ph-card-actionable {
+    transition:
+      transform 100ms ease,
+      box-shadow 100ms ease,
+      border-color 100ms ease;
+  }
+  .ph-card-actionable:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklch, var(--brew-danger) 50%, rgb(var(--brew-border-subtle)));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 4px 12px color-mix(in oklch, var(--brew-danger) 20%, transparent),
+      0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+  .ph-card-actionable:active {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 2px 3px rgba(0, 0, 0, 0.1),
+      0 0 0 0 transparent;
+  }
+
   /* Dimmed add-starter button when already above cell count */
   .starter-add-faded {
     opacity: 0.5;
@@ -4727,6 +5580,32 @@
   }
   .starter-add-faded:hover {
     opacity: 0.9;
+  }
+}
+
+/* Modal entrance animations */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(4px);
+  }
+}
+
+@keyframes modal-scale-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--modal-dx, 0px), var(--modal-dy, 0px)) scale(0.6);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
   }
 }
 
@@ -4751,6 +5630,36 @@
   }
 }
 
+@keyframes wiggle {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  5% {
+    transform: rotate(-12deg) scale(1.25);
+  }
+  10% {
+    transform: rotate(10deg) scale(1.25);
+  }
+  15% {
+    transform: rotate(-6deg) scale(1.15);
+  }
+  20% {
+    transform: rotate(4deg) scale(1.05);
+  }
+  25% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  75% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes blink {
   0%,
   100% {
@@ -4759,6 +5668,55 @@
   50% {
     opacity: 0;
   }
+}
+
+/* Bottom glow — brightness wave sweeping left→right→left */
+/* Section & sidebar gentle breathe — in unison with the 15s top background breathe */
+@keyframes brew-element-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.009);
+  }
+}
+.dark .brew-section {
+  animation: brew-element-breathe 14s ease-in-out infinite !important;
+}
+.dark .section-sidebar-item {
+  animation: brew-element-breathe 15s ease-in-out infinite;
+}
+
+/* Top background glow — slow breathe */
+@keyframes brew-top-breathe {
+  0%, 100% {
+    transform: scale(1, 1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08, 1.12);
+    opacity: 1;
+  }
+}
+.brew-top-breathe {
+  animation: brew-top-breathe 15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Bottom glow — breathing ellipse */
+@keyframes brew-bottom-wave {
+  0%, 100% {
+    transform: scale(1, 1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3, 1.5);
+    opacity: 1;
+  }
+}
+.brew-bottom-wave {
+  animation: brew-bottom-wave 7.5s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes brew-slide-in-left {
@@ -4926,10 +5884,40 @@
 }
 .brew-gauge-animated.is-changed {
   color: color-mix(in oklch, var(--brew-accent-500) 40%, currentColor);
-  transform: scale(1.08);
+  transform: scale(1.15);
   transition:
     color 60ms ease-in-out,
     transform 80ms ease-in-out;
+}
+
+/* AnimatedNumberInput — subtle scale pulse on stepper value change */
+.ani-stepper-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ani-stepper-wrap.is-changed {
+  transform: scale(1.22);
+  transition: transform 65ms ease-in-out;
+}
+.ani-stepper-wrap.is-changed > input {
+  color: color-mix(in oklch, var(--brew-accent-500) 40%, currentColor);
+  transition: color 0ms;
+}
+.ani-stepper-wrap > input {
+  transition: color 300ms ease-out;
+}
+
+/* Stepper button press micro-interaction */
+.starter-stepper-btn:active {
+  transform: scale(0.85);
+  transition: transform 60ms ease-out;
+}
+.hop-stepper-btn:active,
+.mash-stepper-btn:active,
+.fermentable-stepper-btn:active {
+  transform: scale(0.85);
+  transition: transform 60ms ease-out;
 }
 
 /* Respect reduced motion preference — disable transforms & animations */
@@ -4965,7 +5953,7 @@
   .brew-btn-ghost:hover {
     transform: none !important;
   }
-  .brew-recipe-card:active,
+  .brew-recipe-card:active:not(:has(button:active)),
   .btn-neon:active,
   .btn-outline:active,
   .btn-tonal:active,
@@ -4988,7 +5976,13 @@
   .brew-gauge-animated.is-changed {
     transition: none !important;
   }
-  .style-strip-needle {
+  .ani-stepper-wrap,
+  .ani-stepper-wrap > input {
+    transition: none !important;
+  }
+  .style-strip-needle,
+  .style-strip-range,
+  .style-strip-value {
     transition: none !important;
   }
   .beer-bubble {
@@ -5314,7 +6308,7 @@
 .hop-variety-card {
   padding: 16px;
   border-radius: 10px;
-  background: rgb(var(--brew-card) / 0.45);
+  background: color-mix(in oklch, var(--brew-card) 45%, transparent);
   border: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
@@ -5324,7 +6318,11 @@
     transform 200ms ease;
 }
 .hop-variety-card:hover {
-  background: color-mix(in oklch, var(--brew-accent-100) 12%, rgb(var(--brew-card) / 0.6));
+  background: color-mix(
+    in oklch,
+    var(--brew-accent-100) 12%,
+    color-mix(in oklch, var(--brew-card) 60%, transparent)
+  );
   border-color: color-mix(in oklch, var(--brew-accent-400) 40%, rgb(var(--brew-border)));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -5419,13 +6417,21 @@
   gap: 8px;
   padding: 6px 10px;
   border-radius: 8px;
-  background: color-mix(in oklch, var(--brew-accent-900) 10%, rgb(var(--brew-card-inset) / 0.35));
+  background: color-mix(
+    in oklch,
+    var(--brew-accent-900) 10%,
+    color-mix(in oklch, var(--brew-card-inset) 35%, transparent)
+  );
   border: 1px solid color-mix(in oklch, var(--brew-accent-700) 10%, rgb(var(--brew-border-subtle)));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
   transition: all 150ms ease;
 }
 .hop-addition-row:hover {
-  background: color-mix(in oklch, var(--brew-accent-100) 10%, rgb(var(--brew-card) / 0.5));
+  background: color-mix(
+    in oklch,
+    var(--brew-accent-100) 10%,
+    color-mix(in oklch, var(--brew-card) 50%, transparent)
+  );
 }
 .dark .hop-addition-row {
   background: color-mix(in oklch, var(--brew-accent-950) 35%, transparent);
@@ -5721,7 +6727,11 @@
   padding: 8px 12px 12px;
   border-radius: 12px;
   overflow: hidden;
-  background: color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35));
+  background: color-mix(
+    in oklch,
+    var(--brew-accent-900) 15%,
+    color-mix(in oklch, var(--brew-card-inset) 35%, transparent)
+  );
   border: 1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
@@ -5730,11 +6740,39 @@
   border-color: color-mix(in oklch, var(--brew-accent-700) 25%, transparent);
 }
 
+/* BJCP hop guideline note beneath radar */
+.bjcp-hop-note {
+  margin: 0 4px 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--brew-accent-700);
+  background: color-mix(
+    in oklch,
+    var(--brew-accent-200) 15%,
+    color-mix(in oklch, var(--brew-card) 40%, transparent)
+  );
+  border: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
+}
+.bjcp-hop-note-label {
+  font-weight: 600;
+  color: var(--brew-accent-800);
+}
+.dark .bjcp-hop-note {
+  color: var(--brew-accent-300);
+  background: color-mix(in oklch, var(--brew-accent-900) 25%, transparent);
+  border-color: color-mix(in oklch, var(--brew-accent-700) 20%, transparent);
+}
+.dark .bjcp-hop-note-label {
+  color: var(--brew-accent-200);
+}
+
 /* Radar legend — machined inset box matching equip-datum */
 .hop-radar-legend-wrap {
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgb(var(--brew-card) / 0.45);
+  background: color-mix(in oklch, var(--brew-card) 45%, transparent);
   border: 1px solid color-mix(in oklch, var(--brew-accent-300) 20%, rgb(var(--brew-border-subtle)));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
@@ -5772,74 +6810,548 @@
   flex-shrink: 0;
 }
 
-/* Flavor view toggle (Preset / Estimated) — machined segmented control */
-.hop-flavor-toggle {
-  display: flex;
+/* Segmented toggle — machined control with spring-sliding ::before pill */
+.brew-segmented-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   border-radius: 10px;
-  padding: 3px;
   font-size: 11px;
   letter-spacing: 0.02em;
-  background: color-mix(in oklch, var(--brew-accent-100) 30%, rgb(var(--brew-card-inset)));
+  background: color-mix(in oklch, var(--brew-accent-100) 30%, var(--brew-card-inset));
   border: 1px solid color-mix(in oklch, var(--brew-accent-300) 25%, transparent);
   box-shadow: inset 0 2px 4px color-mix(in oklch, var(--brew-accent-900) 8%, transparent);
-  gap: 2px;
+  --_pad: 3px;
+  --_gap: 2px;
+  --_radius: 7px;
+  padding: var(--_pad);
+  gap: var(--_gap);
 }
-.hop-flavor-toggle button {
-  position: relative;
-  padding: 5px 14px;
-  font-weight: 500;
-  color: var(--brew-accent-700);
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  cursor: pointer;
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease,
-    transform 100ms ease;
-}
-.hop-flavor-toggle button:hover:not(.is-active) {
-  color: var(--brew-accent-800);
-  background: color-mix(in oklch, var(--brew-accent-200) 25%, transparent);
-}
-.hop-flavor-toggle button.is-active {
-  font-weight: 600;
-  color: white;
+
+/* Sliding pill — leading edge is fast, trailing edge lags for gooey stretch */
+.brew-segmented-toggle::before {
+  content: "";
+  position: absolute;
+  top: var(--_pad);
+  bottom: var(--_pad);
+  left: var(--_pad);
+  right: calc(50% + var(--_gap) / 2);
+  border-radius: var(--_radius);
   background: linear-gradient(to bottom, var(--brew-accent-400), var(--brew-accent-500));
   border: 1px solid color-mix(in oklch, var(--brew-accent-600) 80%, var(--brew-accent-500));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 2px 0 0 color-mix(in oklch, var(--brew-accent-700) 60%, black),
     0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  /* Default (returning left): right lags 37ms, faster + bouncier to compress on arrival */
+  transition:
+    left 392ms cubic-bezier(0.22, 1.7, 0.36, 1),
+    right 342ms 37ms cubic-bezier(0.16, 2.2, 0.36, 1);
 }
-.hop-flavor-toggle button.is-active:active {
+/* Hover hint — pill's front edge nudges toward the hovered inactive side */
+.brew-segmented-toggle:has(button:first-child.is-active):has(button:last-child:hover)::before {
+  left: calc(var(--_pad) + 1.5px);
+  right: calc(50% + var(--_gap) / 2 - 3px);
+}
+.brew-segmented-toggle:has(button:last-child.is-active):has(button:first-child:hover)::before {
+  left: calc(50% + var(--_gap) / 2 - 3px);
+  right: calc(var(--_pad) + 1.5px);
+}
+
+/* Moving right: left (trailing) lags 37ms, faster + bouncier to compress on arrival */
+.brew-segmented-toggle:has(button:last-child.is-active)::before {
+  left: calc(50% + var(--_gap) / 2);
+  right: var(--_pad);
+  transition:
+    left 342ms 37ms cubic-bezier(0.16, 2.2, 0.36, 1),
+    right 392ms cubic-bezier(0.22, 1.7, 0.36, 1);
+}
+/* Vertical squash & stretch — skinny while stretched, overshoots taller on landing */
+/* Two different names so toggling between states re-triggers the animation */
+.brew-segmented-toggle:has(button:last-child.is-active)::before {
+  animation: pill-vert-a 412ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.brew-segmented-toggle:has(button:first-child.is-active)::before {
+  animation: pill-vert-b 412ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes pill-vert-a {
+  0% {
+    scale: 1 1;
+  }
+  20% {
+    scale: 1 0.88;
+  }
+  55% {
+    scale: 1 1.06;
+  }
+  75% {
+    scale: 1 0.97;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+@keyframes pill-vert-b {
+  0% {
+    scale: 1 1;
+  }
+  20% {
+    scale: 1 0.88;
+  }
+  55% {
+    scale: 1 1.06;
+  }
+  75% {
+    scale: 1 0.97;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+
+/* Background well — follows the pill, same timing as leading edge */
+.brew-segmented-toggle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: calc(50% - var(--_gap) / 2);
+  border-radius: calc(var(--_radius) + var(--_pad));
+  background: color-mix(in oklch, var(--brew-accent-100) 30%, var(--brew-card-inset));
+  z-index: 0;
+  transition:
+    left 392ms cubic-bezier(0.22, 1.7, 0.36, 1),
+    right 392ms cubic-bezier(0.22, 1.7, 0.36, 1);
+}
+.brew-segmented-toggle:has(button:last-child.is-active)::after {
+  left: calc(50% - var(--_gap) / 2);
+  right: 0;
+}
+
+.brew-segmented-toggle button {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 5px 14px;
+  font-weight: 500;
+  color: var(--brew-accent-700);
+  border: none;
+  border-radius: var(--_radius);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    transform 100ms ease;
+}
+.brew-segmented-toggle button:hover:not(.is-active) {
+  color: var(--brew-accent-800);
+}
+.brew-segmented-toggle button.is-active {
+  font-weight: 600;
+  color: white;
+}
+.brew-segmented-toggle button.is-active:active {
   transform: translateY(1px);
-  background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-600));
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.12),
-    0 0px 0 0 transparent;
 }
 /* Dark mode */
-.dark .hop-flavor-toggle {
+.dark .brew-segmented-toggle {
   background: color-mix(in oklch, var(--brew-accent-950) 60%, transparent);
   border-color: color-mix(in oklch, var(--brew-accent-800) 30%, transparent);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
 }
-.dark .hop-flavor-toggle button {
+.dark .brew-segmented-toggle button {
   color: var(--brew-accent-400);
 }
-.dark .hop-flavor-toggle button:hover:not(.is-active) {
+.dark .brew-segmented-toggle button:hover:not(.is-active) {
   color: var(--brew-accent-300);
-  background: color-mix(in oklch, var(--brew-accent-800) 30%, transparent);
 }
-.dark .hop-flavor-toggle button.is-active {
+.dark .brew-segmented-toggle button.is-active {
   color: white;
-  background: linear-gradient(to bottom, var(--brew-accent-500), var(--brew-accent-600));
-  border-color: var(--brew-accent-400);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 2px 0 0 rgba(0, 0, 0, 0.4),
-    0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Larger segmented toggle — outer height matches brew-btn-ghost */
+.brew-segmented-toggle.brew-segmented-toggle--lg {
+  --_pad: 2px;
+  --_radius: 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.brew-segmented-toggle--lg button {
+  padding: 6px 15px;
+}
+
+/* ── Handwritten recipe name title ── */
+.recipe-name-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  margin-bottom: 2px;
+}
+.recipe-name-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  padding-bottom: 6px;
+}
+.recipe-name-wrapper::before,
+.recipe-name-wrapper::after {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  height: 2.5px;
+  background: var(--fg-strong);
+  border-radius: 2px;
+  pointer-events: none;
+  transform-origin: left center;
+  transform: scaleX(0) rotate(0.8deg);
+}
+.recipe-name-wrapper::before {
+  bottom: 1px;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent);
+}
+.recipe-name-wrapper::after {
+  bottom: -2px;
+  left: 8%;
+  right: 6%;
+  height: 2px;
+  opacity: 0.5;
+  mask-image: linear-gradient(to right, transparent, black 20%, black 65%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 65%, transparent);
+  transform: scaleX(0) rotate(-0.5deg);
+}
+.recipe-name-wrapper.is-drawn::before {
+  animation: title-stroke-1 80ms ease-out forwards;
+}
+.recipe-name-wrapper.is-drawn::after {
+  animation: title-stroke-2 60ms ease-out 80ms forwards;
+}
+.recipe-name-input {
+  font-family: var(--font-handwritten);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1.3;
+  color: var(--fg-strong);
+  background: transparent !important;
+  border: none;
+  outline: none;
+  padding: 0;
+  min-width: 3ch;
+  max-width: 100%;
+}
+.recipe-name-input::placeholder {
+  color: var(--fg-muted);
+  opacity: 0.5;
+}
+/* Prevent browser autofill background */
+.recipe-name-input:-webkit-autofill,
+.recipe-name-input:-webkit-autofill:hover,
+.recipe-name-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--fg-strong);
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Sidebar nav compound button ── */
+.sidebar-nav-button-wrapper {
+  position: relative;
+  width: 16vw;
+  z-index: 10;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+.sidebar-nav-button-wrapper:hover {
+  opacity: 0.85;
+}
+.sidebar-nav-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 !important;
+  overflow: visible;
+  gap: 0 !important;
+}
+.sidebar-nav-back {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-strong);
+  transition: background 0.15s ease;
+}
+.sidebar-nav-back:hover {
+  background: color-mix(in oklch, var(--fg-strong) 6%, transparent);
+}
+.sidebar-nav-arrow {
+  font-size: 14px;
+  line-height: 1;
+}
+.sidebar-nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-nav-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgb(var(--brew-border));
+  flex-shrink: 0;
+}
+.sidebar-nav-status {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 20%;
+  min-width: 36px;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sidebar-nav-status:hover {
+  background: color-mix(in oklch, var(--fg-strong) 6%, transparent);
+}
+
+/* Glowing status dot */
+.sidebar-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.sidebar-nav-dot.is-public {
+  background-color: #22c55e;
+  box-shadow: 0 0 6px 2px rgba(34, 197, 94, 0.45);
+}
+.sidebar-nav-dot.is-private {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px 2px rgba(239, 68, 68, 0.35);
+}
+
+/* Dropdown panel — uses position:fixed via inline style to escape sidebar overflow */
+.sidebar-nav-dropdown {
+  width: max-content;
+  min-width: 220px;
+  background: var(--brew-card);
+  border: 1px solid rgb(var(--brew-border));
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+  pointer-events: auto;
+  animation: sidebar-dropdown-in 0.15s ease-out;
+}
+@keyframes sidebar-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.sidebar-nav-dropdown-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-strong);
+}
+.sidebar-nav-dropdown-link {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.sidebar-nav-dropdown-link input {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-nav-copy-btn {
+  all: unset;
+  box-sizing: border-box;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--brew-accent-600);
+  border: 1px solid rgb(var(--brew-border));
+  background: var(--brew-card);
+  transition: all 0.15s ease;
+}
+.sidebar-nav-copy-btn:hover {
+  background: color-mix(in oklch, var(--brew-accent-600) 8%, var(--brew-card));
+}
+.sidebar-nav-toggle-btn {
+  all: unset;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--fg-strong);
+  border: 1px solid rgb(var(--brew-border));
+  background: var(--brew-card);
+  transition: all 0.15s ease;
+}
+.sidebar-nav-toggle-btn:hover {
+  background: color-mix(in oklch, var(--fg-strong) 6%, var(--brew-card));
+}
+.sidebar-nav-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Sticky bar action buttons ── */
+.sticky-bar-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--brew-border));
+  background: var(--brew-card);
+  color: var(--fg-strong);
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.sticky-bar-btn:hover {
+  background: color-mix(in oklch, var(--fg-strong) 6%, var(--brew-card));
+}
+.sticky-bar-btn-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ========================================
+   LEARN / DOCS PROSE STYLING
+   Long-form reading typography for /learn pages
+   ======================================== */
+
+.learn-prose h2 {
+  scroll-margin-top: 5rem;
+}
+
+.learn-prose p {
+  line-height: 1.75;
+}
+
+.learn-prose strong {
+  font-weight: 700;
+  color: var(--fg-strong);
+}
+
+.learn-prose em {
+  font-style: italic;
+}
+
+.learn-prose a {
+  color: var(--coral-500);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.learn-prose a:hover {
+  text-decoration: underline;
+  color: var(--coral-600);
+}
+
+.learn-prose ul,
+.learn-prose ol {
+  padding-left: 1.25rem;
+}
+
+.learn-prose li {
+  line-height: 1.75;
+}
+
+.learn-prose li + li {
+  margin-top: 0.25rem;
+}
+
+.learn-prose code {
+  font-size: 0.875em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: color-mix(in oklch, var(--fg-strong) 6%, transparent);
+  color: var(--fg-strong);
+}
+
+.learn-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 1.5rem 0;
+}
+
+.learn-prose th {
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid color-mix(in oklch, var(--fg-strong) 12%, transparent);
+}
+
+.learn-prose td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--fg-strong) 6%, transparent);
+  color: var(--fg-strong);
+}
+
+.learn-prose tr:hover td {
+  background: color-mix(in oklch, var(--fg-strong) 3%, transparent);
+}
+
+/* =========================================
+   GRAIN OVERLAY UTILITY
+   Canvas-generated noise applied as a pseudo-element.
+   --grain-overlay is injected at runtime by useGrainTexture.
+   --grain-opacity controls per-element intensity (default: 1).
+   Usage: add class="grain" to any element with a gradient bg.
+   ========================================= */
+.grain {
+  position: relative;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain-overlay);
+  background-size: 256px 256px;
+  background-repeat: repeat;
+  opacity: var(--grain-opacity, 1);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
 }

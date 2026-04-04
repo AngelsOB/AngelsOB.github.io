@@ -20,6 +20,11 @@ import { useHopGroups } from "../hooks/useHopGroups";
 import type { Hop } from "../../domain/models/Recipe";
 import type { HopPreset, HopFlavorProfile } from "../../domain/models/Presets";
 import { hopFlavorCalculationService } from "../../domain/services/HopFlavorCalculationService";
+import {
+  getBjcpFlavorProfile,
+  getBjcpFlavorLabel,
+  getBjcpHopNote,
+} from "@/data/bjcpFlavorProfiles";
 import HopFlavorMini from "./HopFlavorMini";
 import HopFlavorRadar from "./HopFlavorRadar";
 import HopVarietyCard from "./HopVarietyCard";
@@ -281,7 +286,7 @@ export default function HopSection() {
                     ? "Estimated Recipe Aroma Profile"
                     : "Individual Hop Flavor Profiles"}
                 </h3>
-                <div className="hop-flavor-toggle pointer-events-auto">
+                <div className="brew-segmented-toggle pointer-events-auto">
                   <button
                     onClick={() => setFlavorViewMode("individual")}
                     className={flavorViewMode === "individual" ? "is-active" : ""}
@@ -297,27 +302,52 @@ export default function HopSection() {
                 </div>
               </div>
               <HopFlavorRadar
-                series={
-                  flavorViewMode === "combined" && combinedFlavor
-                    ? [{ name: "Total (est.)", flavor: combinedFlavor }]
-                    : currentRecipe.hops
-                        .map((hop) => {
-                          const preset = hopPresets.find((p) => p.name === hop.name);
-                          return preset?.flavor
-                            ? { name: hop.name, flavor: preset.flavor }
-                            : null;
-                        })
-                        .filter((s): s is { name: string; flavor: HopFlavorProfile } => s !== null)
-                        .filter((s, i, arr) => arr.findIndex((x) => x.name === s.name) === i)
-                }
+                series={(() => {
+                  const recipeSeries: { name: string; flavor: HopFlavorProfile; isTarget?: boolean }[] =
+                    flavorViewMode === "combined" && combinedFlavor
+                      ? [{ name: "Your Recipe", flavor: combinedFlavor }]
+                      : currentRecipe.hops
+                          .map((hop) => {
+                            const preset = hopPresets.find((p) => p.name === hop.name);
+                            return preset?.flavor
+                              ? { name: hop.name, flavor: preset.flavor }
+                              : null;
+                          })
+                          .filter((s): s is { name: string; flavor: HopFlavorProfile } => s !== null)
+                          .filter((s, i, arr) => arr.findIndex((x) => x.name === s.name) === i);
+
+                  const styleTarget = currentRecipe.style
+                    ? getBjcpFlavorProfile(currentRecipe.style)
+                    : null;
+                  if (styleTarget && flavorViewMode === "combined") {
+                    recipeSeries.push({
+                      name: getBjcpFlavorLabel(currentRecipe.style!),
+                      flavor: styleTarget,
+                      isTarget: true,
+                    });
+                  }
+                  return recipeSeries;
+                })()}
                 maxValue={5}
                 emptyHint="No flavor data available"
-                colorStrategy={flavorViewMode === "combined" ? "dominant" : "index"}
-                showLegend={flavorViewMode === "individual"}
+                colorStrategy={flavorViewMode === "combined" ? "index" : "index"}
+                showLegend={flavorViewMode === "individual" || !!getBjcpFlavorProfile(currentRecipe.style)}
                 legendPosition="side"
                 labelColorize={true}
                 responsive
               />
+              {/* BJCP hop guideline note */}
+              {flavorViewMode === "combined" && (() => {
+                const note = getBjcpHopNote(currentRecipe.style);
+                if (!note) return null;
+                const styleName = currentRecipe.style?.split(".").slice(1).join(".").trim();
+                return (
+                  <p className="bjcp-hop-note">
+                    <span className="bjcp-hop-note-label">BJCP — {styleName}:</span>{" "}
+                    {note}
+                  </p>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -489,7 +519,7 @@ export default function HopSection() {
                 maxWidth: "calc(100vw - 16px)",
                 maxHeight: "calc(100vh - 16px)",
               }}
-              className="bg-[rgb(var(--card))] border-2 border-[var(--brew-accent-400)] rounded-lg shadow-2xl p-4 pointer-events-none"
+              className="bg-[var(--card)] border-2 border-[var(--brew-accent-400)] rounded-lg shadow-2xl p-4 pointer-events-none"
             >
               <div className="text-sm font-semibold mb-2 text-center">
                 {hoveredPreset.name}

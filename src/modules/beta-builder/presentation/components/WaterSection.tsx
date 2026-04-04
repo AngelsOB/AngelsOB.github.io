@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * Water Section Component
+ * Water Chemistry Section
  *
  * Shows:
- * 1. Calculated water volumes for brew day
- * 2. Water chemistry with salt additions
+ * 1. Estimated mash pH with adjustment suggestions
+ * 2. Water chemistry — source/target profiles, salt additions, ion comparison
  * 3. Other ingredients (finings, spices, water agents, etc.)
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { uid } from "@/utils/uid";
 import type { RecipeCalculations, OtherIngredientCategory } from "../../domain/models/Recipe";
 import type { Recipe } from "../../domain/models/Recipe";
@@ -17,14 +17,19 @@ import {
   waterChemistryService,
   COMMON_WATER_PROFILES,
   BEER_STYLE_TARGETS,
+  getWaterTargetForBjcpStyle,
   type WaterProfile,
   type SaltAdditions,
 } from "../../domain/services/WaterChemistryService";
+import { optimizeSaltAdditions } from "../../domain/services/WaterSaltOptimizer";
 import { useRecipeStore } from "../stores/recipeStore";
-import TargetStyleModal from "./TargetStyleModal";
+// TODO: Re-enable premium gating once Stripe is live
+// import { useUserTier } from "../../../auth/useUserTier";
+// import { canAccess } from "../../../auth/tierAccess";
+import UpgradeModal from "../../../auth/components/UpgradeModal";
 import SourceWaterModal from "./SourceWaterModal";
+import CustomTargetStyleModal from "./CustomTargetStyleModal";
 import {
-  WaterVolumesDisplay,
   PhAdjustmentsSection,
   WaterChemistrySection,
   OtherIngredientsPanel,
@@ -32,6 +37,7 @@ import {
   CustomWaterIngredientModal,
   getDefaultUnit,
   getDefaultTiming,
+  ION_LABELS,
 } from "./water-section";
 
 type Props = {
@@ -42,11 +48,15 @@ type Props = {
 export default function WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe, addOtherIngredient, updateOtherIngredient, removeOtherIngredient } =
     useRecipeStore();
-  const [isChemistryExpanded, setIsChemistryExpanded] = useState(false);
-  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+  // TODO: Re-enable premium gating once Stripe is live
+  // const { userState } = useUserTier();
+  // const canAutoCalc = canAccess('auto_water_calc', userState);
+  const [isCustomTargetModalOpen, setIsCustomTargetModalOpen] = useState(false);
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
   const [isIngredientPickerOpen, setIsIngredientPickerOpen] = useState(false);
   const [isCustomIngredientModalOpen, setIsCustomIngredientModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [includeBakingSoda, setIncludeBakingSoda] = useState(false);
 
   // Initialize water chemistry if not present
   const waterChem = recipe.waterChemistry || {
@@ -96,16 +106,6 @@ export default function WaterSection({ calculations, recipe }: Props) {
     });
   };
 
-  const handleTargetStyleChange = (styleName: string) => {
-    updateRecipe({
-      waterChemistry: {
-        ...waterChem,
-        targetStyleName: styleName,
-        customTargetProfile: undefined,
-      },
-    });
-  };
-
   const handleCustomTargetChange = (profile: WaterProfile, name: string) => {
     updateRecipe({
       waterChemistry: {
@@ -116,6 +116,47 @@ export default function WaterSection({ calculations, recipe }: Props) {
     });
   };
 
+  const handleSwitchToBjcp = () => {
+    updateRecipe({
+      waterChemistry: {
+        ...waterChem,
+        targetStyleName: undefined,
+        customTargetProfile: undefined,
+      },
+    });
+  };
+
+  const handleTargetDrag = useCallback((ion: keyof WaterProfile, value: number) => {
+    const wc = recipe.waterChemistry || {
+      sourceProfile: COMMON_WATER_PROFILES.RO,
+      saltAdditions: {},
+      sourceProfileName: "RO",
+    };
+    const isCurrentlyCustom = !!wc.customTargetProfile;
+
+    let baseProfile: WaterProfile;
+    let baseName: string;
+
+    if (isCurrentlyCustom && wc.customTargetProfile) {
+      baseProfile = wc.customTargetProfile;
+      baseName = wc.targetStyleName || "Custom Target";
+    } else {
+      // Snapshot current BJCP target and switch to custom
+      const bjcpKey = getWaterTargetForBjcpStyle(recipe.style || "");
+      const bjcpTarget = BEER_STYLE_TARGETS[bjcpKey] || BEER_STYLE_TARGETS["Balanced"];
+      baseProfile = { ...bjcpTarget.profile };
+      baseName = `${bjcpKey} (adjusted)`;
+    }
+
+    updateRecipe({
+      waterChemistry: {
+        ...wc,
+        targetStyleName: baseName,
+        customTargetProfile: { ...baseProfile, [ion]: value },
+      },
+    });
+  }, [recipe.waterChemistry, recipe.style, updateRecipe]);
+
   const handleSaltChange = (saltKey: keyof SaltAdditions, value: number) => {
     updateRecipe({
       waterChemistry: {
@@ -124,6 +165,36 @@ export default function WaterSection({ calculations, recipe }: Props) {
           ...waterChem.saltAdditions,
           [saltKey]: value || undefined,
         },
+      },
+    });
+  };
+
+  const handleAutoCalculate = () => {
+    // TODO: Re-enable premium gating once Stripe is live
+    // if (!canAutoCalc) {
+    //   setIsUpgradeModalOpen(true);
+    //   return;
+    // }
+    if (!calculations) return;
+
+    const totalWaterL = calculations.mashWaterL + calculations.spargeWaterL;
+    if (totalWaterL <= 0) return;
+
+    // Resolve the effective target profile
+    const isCustom = !!waterChem.customTargetProfile;
+    const bjcpKey = getWaterTargetForBjcpStyle(recipe.style || "");
+    const effectiveTarget = isCustom && waterChem.customTargetProfile
+      ? waterChem.customTargetProfile
+      : (BEER_STYLE_TARGETS[bjcpKey] || BEER_STYLE_TARGETS["Balanced"]).profile;
+
+    const { salts } = optimizeSaltAdditions(waterChem.sourceProfile, effectiveTarget, totalWaterL, {
+      includeBakingSoda,
+    });
+
+    updateRecipe({
+      waterChemistry: {
+        ...waterChem,
+        saltAdditions: salts,
       },
     });
   };
@@ -176,45 +247,77 @@ export default function WaterSection({ calculations, recipe }: Props) {
     return null;
   }
 
-  // Get target profile for comparison — use custom profile if set, else look up built-in style
-  const targetStyle = BEER_STYLE_TARGETS[waterChem.targetStyleName || "Balanced"]
-    || (waterChem.customTargetProfile
-      ? {
-          profile: waterChem.customTargetProfile,
-          clToSo4Ratio: `${waterChem.customTargetProfile.SO4 > 0 ? (waterChem.customTargetProfile.Cl / waterChem.customTargetProfile.SO4).toFixed(1) : "∞"}:1`,
-        }
-      : undefined);
+  // Auto-detect water target from recipe's BJCP style
+  const isCustomTarget = !!waterChem.customTargetProfile;
+  const bjcpWaterTarget = getWaterTargetForBjcpStyle(recipe.style || "");
+
+  const targetStyle = isCustomTarget && waterChem.customTargetProfile
+    ? {
+        profile: waterChem.customTargetProfile,
+        clToSo4Ratio: `${waterChem.customTargetProfile.SO4 > 0 ? (waterChem.customTargetProfile.Cl / waterChem.customTargetProfile.SO4).toFixed(1) : "∞"}:1`,
+      }
+    : BEER_STYLE_TARGETS[bjcpWaterTarget] || BEER_STYLE_TARGETS["Balanced"];
+
+  const effectiveTargetName = isCustomTarget
+    ? (waterChem.targetStyleName || "Custom Target")
+    : bjcpWaterTarget;
 
   return (
     <div className="brew-section brew-animate-in brew-stagger-6" data-accent="water">
-      <h2 className="brew-section-title mb-4">Water</h2>
-
-      {/* Water Volumes */}
-      <WaterVolumesDisplay calculations={calculations} recipe={recipe} />
-
-      {/* Estimated Mash pH */}
-      <PhAdjustmentsSection
-        calculations={calculations}
-        hasWaterChemistry={!!recipe.waterChemistry}
-        onAddPhAdjustment={handleAddPhAdjustment}
-      />
+      <h2 className="brew-section-title mb-4">Water Chemistry</h2>
 
       {/* Water Chemistry */}
       <WaterChemistrySection
-        isExpanded={isChemistryExpanded}
-        onToggleExpanded={() => setIsChemistryExpanded(!isChemistryExpanded)}
         sourceProfile={waterChem.sourceProfile}
         sourceProfileName={waterChem.sourceProfileName}
         targetStyle={targetStyle}
-        targetStyleName={waterChem.targetStyleName}
+        targetStyleName={effectiveTargetName}
+        isCustomTarget={isCustomTarget}
+        bjcpTargetProfile={(BEER_STYLE_TARGETS[bjcpWaterTarget] || BEER_STYLE_TARGETS["Balanced"]).profile}
         finalProfile={finalProfile}
         saltAdditions={waterChem.saltAdditions}
         mashSalts={mashSalts}
         spargeSalts={spargeSalts}
         onOpenSourceModal={() => setIsSourceModalOpen(true)}
-        onOpenTargetModal={() => setIsTargetModalOpen(true)}
+        onSwitchToBjcp={handleSwitchToBjcp}
+        onOpenCustomTarget={() => setIsCustomTargetModalOpen(true)}
         onSaltChange={handleSaltChange}
+        onTargetDrag={handleTargetDrag}
+        onAutoCalculate={handleAutoCalculate}
+        canAutoCalc={true /* TODO: restore canAutoCalc once Stripe is live */}
+        includeBakingSoda={includeBakingSoda}
+        onToggleBakingSoda={setIncludeBakingSoda}
       />
+
+      {/* Final Ion Profile + Mash pH */}
+      <h3 className="text-sm font-semibold mb-3 mt-4" style={{ color: 'var(--fg-strong)' }}>
+        Final Ion Profile
+      </h3>
+      <div className="flex items-stretch gap-2">
+        {/* Ion grid — 3 cols × 2 rows */}
+        <div className="flex-1 min-w-0 grid grid-cols-3 gap-2">
+          {ION_LABELS.map((ion) => {
+            const finalValue = Math.round(finalProfile[ion]);
+            return (
+              <div key={ion} className="equip-datum" style={{ padding: '8px 10px' }}>
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted">
+                  {ion === 'SO4' ? 'SO₄' : ion === 'HCO3' ? 'HCO₃' : ion}
+                </div>
+                <div className="text-lg font-bold tabular-nums" style={{ color: 'var(--fg-strong)' }}>
+                  {finalValue}
+                </div>
+                <div className="text-[9px] text-muted">ppm</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mash pH — stretches to match ion grid height */}
+        <PhAdjustmentsSection
+          calculations={calculations}
+          onAddPhAdjustment={handleAddPhAdjustment}
+        />
+      </div>
 
       {/* Other Ingredients */}
       <OtherIngredientsPanel
@@ -223,12 +326,6 @@ export default function WaterSection({ calculations, recipe }: Props) {
         onUpdate={updateOtherIngredient}
         onRemove={removeOtherIngredient}
       />
-
-      {/* Info note */}
-      <div className="mt-4 text-xs p-3 rounded-lg" style={{ background: 'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))', border: '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))', boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.04)' }}>
-        <strong>Note:</strong> Water volumes account for grain absorption, boil-off, hop
-        absorption, deadspace, and all equipment losses.
-      </div>
 
       {/* Source Water Modal */}
       <SourceWaterModal
@@ -239,13 +336,13 @@ export default function WaterSection({ calculations, recipe }: Props) {
         currentProfileName={waterChem.sourceProfileName}
       />
 
-      {/* Target Style Modal */}
-      <TargetStyleModal
-        isOpen={isTargetModalOpen}
-        onClose={() => setIsTargetModalOpen(false)}
-        onSelect={handleTargetStyleChange}
-        onSelectCustom={handleCustomTargetChange}
-        currentStyleName={waterChem.targetStyleName}
+      {/* Custom Target Style Modal */}
+      <CustomTargetStyleModal
+        isOpen={isCustomTargetModalOpen}
+        onClose={() => setIsCustomTargetModalOpen(false)}
+        onSave={handleCustomTargetChange}
+        initialProfile={waterChem.customTargetProfile}
+        initialName={isCustomTarget ? waterChem.targetStyleName : undefined}
       />
 
       {/* Other Ingredient Picker Modal */}
@@ -261,6 +358,13 @@ export default function WaterSection({ calculations, recipe }: Props) {
         isOpen={isCustomIngredientModalOpen}
         onClose={() => setIsCustomIngredientModalOpen(false)}
         onAdd={handleAddCustomIngredient}
+      />
+
+      {/* Upgrade Modal for premium features */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        reason="Auto water salt calculation is a Premium feature. Upgrade to automatically optimize your salt additions to match any target water profile."
       />
     </div>
   );

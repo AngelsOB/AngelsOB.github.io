@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/recipes", label: "My Recipes" },
   { href: "/browse", label: "Browse" },
   { href: "/calculators", label: "Calculators" },
+  { href: "/learn", label: "Learn" },
 ] as const;
 
 function NavLinkItem({
@@ -115,7 +116,7 @@ export default function NavBar() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="relative top-0 z-50 border-b border-[rgb(var(--border))] bg-[rgb(var(--surface))]/80 backdrop-blur">
+    <nav className="relative top-0 z-50 border-b border-[rgb(var(--border))] bg-[var(--surface)]/80 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           {/* Logo */}
@@ -186,7 +187,7 @@ export default function NavBar() {
         <div
           ref={menuRef}
           id="mobile-menu"
-          className="sm:hidden border-t border-[rgb(var(--border))] bg-[rgb(var(--surface))]"
+          className="sm:hidden border-t border-[rgb(var(--border))] bg-[var(--surface)]"
         >
           <div className="py-2">
             {navLinks.map((link) => (

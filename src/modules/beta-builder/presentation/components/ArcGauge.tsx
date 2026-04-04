@@ -50,9 +50,7 @@ export default function ArcGauge({
   // Compare at display precision so "1.014" is never flagged out of a
   // range that also displays as "1.014" (avoids floating-point edge cases).
   const fmtNum = (n: number) => parseFloat(format(n).replace(/[^0-9.-]/g, ""));
-  const inRange = range
-    ? fmtNum(value) >= fmtNum(lo) && fmtNum(value) <= fmtNum(hi)
-    : true;
+  const inRange = range ? fmtNum(value) >= fmtNum(lo) && fmtNum(value) <= fmtNum(hi) : true;
 
   // Stretch the range block to cover in-range values that slightly
   // overshoot the raw boundary (e.g. 1.0145 displays as "1.014").
@@ -76,8 +74,12 @@ export default function ArcGauge({
     srmGradient = `linear-gradient(to right, ${parts.join(", ")})`;
   }
 
-  // --- SRM needle color (actual beer color) ---
+  // --- SRM colors ---
   const srmNeedleColor = isSrm ? srmToRgb(Math.max(1, value)) : undefined;
+  // Lighter SRM for chisel-tip shadow (offset bottom-right)
+  const srmShadowColor = isSrm
+    ? `color-mix(in oklch, ${srmToRgb(Math.max(1, value))} 30%, white)`
+    : undefined;
 
   // --- Hand-drawn jitter (seeded for determinism, wilder ranges) ---
   const seed = value * 1000 + lo * 100 + hi;
@@ -106,7 +108,6 @@ export default function ArcGauge({
           style={{
             left: `${needlePos}%`,
             transform: `rotate(${jitterRotate}deg) translate(${jitterX}px, ${jitterY}px)`,
-            ...(srmNeedleColor ? { color: srmNeedleColor } : {}),
           }}
         >
           {format(value)}
@@ -136,7 +137,11 @@ export default function ArcGauge({
               left: `${needlePos}%`,
               transform: `translateY(-50%) rotate(${needleRotate}deg)`,
               ...(srmNeedleColor
-                ? { background: srmNeedleColor, opacity: 0.85, width: "3.5px" }
+                ? {
+                    background: srmNeedleColor,
+                    opacity: 0.85,
+                    filter: `drop-shadow(2px 2px 2px ${srmShadowColor})`,
+                  }
                 : {}),
             }}
           />
@@ -145,16 +150,10 @@ export default function ArcGauge({
         {/* Range tick labels — positioned at the range edges below the track */}
         {range && (
           <>
-            <span
-              className="style-strip-tick"
-              style={{ left: `${rangeLeft}%` }}
-            >
+            <span className="style-strip-tick" style={{ left: `${rangeLeft}%` }}>
               {format(lo)}
             </span>
-            <span
-              className="style-strip-tick"
-              style={{ left: `${rangeRight}%` }}
-            >
+            <span className="style-strip-tick" style={{ left: `${rangeRight}%` }}>
               {format(hi)}
             </span>
           </>

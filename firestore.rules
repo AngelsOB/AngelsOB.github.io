@@ -13,8 +13,13 @@ service cloud.firestore {
       allow read: if resource.data.isPublic == true;
       allow read: if request.auth != null
                    && request.auth.uid == resource.data.ownerId;
+      // Create: enforce recipe limit — free users capped at 5
       allow create: if request.auth != null
-                     && request.resource.data.ownerId == request.auth.uid;
+                     && request.resource.data.ownerId == request.auth.uid
+                     && (
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'premium'
+                       || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recipeCount < 5
+                     );
       allow update: if request.auth != null
                      && request.auth.uid == resource.data.ownerId;
       allow delete: if request.auth != null

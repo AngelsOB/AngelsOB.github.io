@@ -12,7 +12,7 @@ export default function RouteErrorPage({
   const router = useRouter();
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-[rgb(var(--bg))] px-4 text-center text-[rgb(var(--text))]">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-[var(--bg)] px-4 text-center text-[rgb(var(--text))]">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-500/20">
         <svg
           className="h-10 w-10 text-red-500"

@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!result) return { title: 'Recipe Not Found' }
 
-    const { recipe, calc } = result
-    const description = [
+    const { recipe, calc, ownerName } = result
+    const stats = [
       recipe.style,
       `${calc.abv.toFixed(1)}% ABV`,
       `${Math.round(calc.ibu)} IBU`,
@@ -24,22 +24,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ]
       .filter(Boolean)
       .join(' | ')
+    const description = recipe.notes
+      ? `${recipe.notes.slice(0, 120).trim()}${recipe.notes.length > 120 ? '...' : ''} — ${stats}`
+      : `${recipe.name} homebrew recipe by ${ownerName}. ${stats}. Full ingredients, mash schedule & brew-day instructions.`
+
+    const images = recipe.labelUrl ? [{ url: recipe.labelUrl }] : []
 
     return {
       title: recipe.name,
       description,
       alternates: { canonical: `/r/${slug}` },
       openGraph: {
-        title: `${recipe.name} — BeerApp`,
+        title: `${recipe.name} | Brewing.It`,
         description,
         url: `/r/${slug}`,
         type: 'article',
-        siteName: 'BeerApp',
+        siteName: 'Brewing.It',
+        ...(images.length > 0 ? { images } : {}),
       },
       twitter: {
-        card: 'summary_large_image',
-        title: `${recipe.name} — BeerApp`,
+        card: images.length > 0 ? 'summary_large_image' : 'summary',
+        title: `${recipe.name} | Brewing.It`,
         description,
+        ...(images.length > 0 ? { images: [recipe.labelUrl!] } : {}),
       },
     }
   } catch {

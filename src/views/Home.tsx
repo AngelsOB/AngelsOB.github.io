@@ -1,25 +1,43 @@
 import Link from "next/link";
 import Typewriter from "@/components/Typewriter";
+import GrainGradient from "@/components/GrainGradient";
+import { learnNav } from "@/modules/learn/docsConfig";
+// import HomePhysicsCansLoader from "@/modules/labels/HomePhysicsCansLoader";
 
 export default function Home() {
   return (
-    <div className="-mx-4 -mt-6 sm:-mx-6 lg:-mx-8">
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden px-4 pt-12 pb-14 sm:px-6 sm:pt-24 sm:pb-28 lg:px-8">
-        {/* Warm ambient glow */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 50% at 20% 0%, color-mix(in oklch, var(--coral-300) 12%, transparent), transparent 70%),
-              radial-gradient(ellipse 60% 60% at 80% 20%, color-mix(in oklch, var(--coral-400) 8%, transparent), transparent 60%)
-            `,
-          }}
+    <div className="relative -mt-6">
+      {/* Grainy ambient glow — behind all content, fades out over the feature cards */}
+      <div
+        className="pointer-events-none absolute top-0 h-[130vh]"
+        style={{
+          left: 'calc(50% - 50vw)',
+          width: '100vw',
+          zIndex: -1,
+          maskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+        }}
+        aria-hidden
+      >
+        <GrainGradient
+          stops={[
+            { pos: 0,    color: "color-mix(in oklch, var(--coral-300) 18%, transparent)" },
+            { pos: 0.55, color: "color-mix(in oklch, var(--coral-200) 8%, transparent)" },
+            { pos: 1,    color: "transparent" },
+          ]}
+          direction={145}
+          displacement={0.6}
+          grainOpacity={0.7}
+          radius={12}
+          resolution={0.2}
         />
+      </div>
 
+      {/* ── Hero ── */}
+      <section className="full-bleed relative pt-12 pb-14 sm:pt-24 sm:pb-28">
         {/* Decorative hop cone — layered petal watermark */}
         <div
-          className="pointer-events-none absolute top-1/2 -right-12 w-[280px] -translate-y-[45%] opacity-[0.06] sm:right-0 sm:w-[360px] lg:right-[4%] lg:w-[420px] dark:opacity-[0.035]"
+          className="pointer-events-none absolute top-1/2 right-[max(0px,calc(50%-38rem))] w-[280px] -translate-y-[45%] opacity-[0.06] sm:w-[360px] lg:w-[420px] dark:opacity-[0.035]"
           aria-hidden="true"
         >
           <svg viewBox="0 0 240 320" className="h-auto w-full">
@@ -52,7 +70,7 @@ export default function Home() {
           </svg>
         </div>
 
-        <div className="brew-animate-in relative mx-auto max-w-3xl">
+        <div className="brew-animate-in relative z-10 mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="brew-animate-in brew-stagger-1">
             <span
               className="mb-6 inline-block text-xs font-bold tracking-[0.2em] uppercase"
@@ -103,6 +121,7 @@ export default function Home() {
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="grain"
+              /* data-physics="card-0" */
             >
               <div className="brew-animate-in brew-stagger-5 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                 {/* Left — copy */}
@@ -180,6 +199,7 @@ export default function Home() {
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="mash"
+              /* data-physics="card-1" */
             >
               <div className="brew-animate-in brew-stagger-7 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                 {/* Left — copy */}
@@ -230,147 +250,91 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Equipment */}
-          <Link href="/recipes" className="group block">
-            <div
-              className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
-              data-accent="equipment"
-            >
-              <div className="brew-animate-in brew-stagger-9 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-                {/* Left — copy */}
-                <div className="min-w-0 flex-1">
-                  <h2 className="brew-section-title !text-2xl">Equipment Profiles</h2>
-                  <p className="text-muted mt-3 max-w-md text-sm leading-relaxed">
-                    Save your system — batch size, boil-off rate, dead spaces, efficiency. Every
-                    calculation adjusts to your gear.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="brew-tag">Grainfather G30</span>
-                    <span className="brew-tag">Anvil Foundry</span>
-                    <span className="brew-tag">BIAB</span>
-                    <span className="brew-tag">3-Vessel</span>
+        </div>
+      </div>
+
+      {/* ── Learn ── */}
+      {(() => {
+        const featured = [
+          learnNav[0].links[0],                                        // How To Use Brewing.It
+          ...learnNav[1].links.filter((l) =>
+            ["/learn/ibu", "/learn/water-chemistry", "/learn/gravity"].includes(l.href)
+          ),
+        ];
+        return (
+          <div className="px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-5xl">
+              <div className="brew-section !mb-0" data-accent="mash">
+                <div className="brew-animate-in brew-stagger-9 mb-6 flex items-end justify-between">
+                  <div>
+                    <p
+                      className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em]"
+                      style={{ color: "var(--fg-muted)" }}
+                    >
+                      Brewing Science
+                    </p>
+                    <h2
+                      className="inline-block pb-1 text-2xl font-extrabold tracking-tight"
+                      style={{ color: "var(--fg-strong)", borderBottom: "3px solid var(--brew-accent-500)" }}
+                    >
+                      The research behind the numbers.
+                    </h2>
                   </div>
+                  <Link
+                    href="/learn"
+                    className="shrink-0 pb-0.5 text-xs font-semibold uppercase tracking-widest transition-colors"
+                    style={{ color: "var(--coral-500)" }}
+                  >
+                    All articles →
+                  </Link>
                 </div>
 
-                {/* Right — decorative equipment preview */}
-                <div className="shrink-0 opacity-80 transition-opacity duration-200 group-hover:opacity-100 lg:w-72">
-                  <div className="space-y-2">
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <rect
-                            x="2"
-                            y="1"
-                            width="10"
-                            height="9"
-                            rx="2"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <rect
-                            x="4"
-                            y="10"
-                            width="6"
-                            height="2"
-                            rx="1"
-                            fill="var(--brew-accent-300)"
-                          />
-                          <line
-                            x1="5"
-                            y1="4"
-                            x2="9"
-                            y2="4"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="0.8"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="5"
-                            y1="6"
-                            x2="8"
-                            y2="6"
-                            stroke="var(--brew-accent-300)"
-                            strokeWidth="0.8"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Batch Size</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">23 L</span>
-                    </div>
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <path
-                            d="M3 11 L5 3 L9 3 L11 11"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <line
-                            x1="4"
-                            y1="8"
-                            x2="10"
-                            y2="8"
-                            stroke="var(--brew-accent-300)"
-                            strokeWidth="0.8"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Boil-Off</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">3.8 L/hr</span>
-                    </div>
-                    <div className="brew-ingredient-row flex items-center justify-between !p-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 14 14"
-                          fill="none"
-                          className="shrink-0"
-                        >
-                          <circle
-                            cx="7"
-                            cy="7"
-                            r="5"
-                            stroke="var(--brew-accent-400)"
-                            strokeWidth="1.2"
-                            fill="color-mix(in oklch, var(--brew-accent-200) 30%, transparent)"
-                          />
-                          <path
-                            d="M7 4 L7 7 L9.5 8.5"
-                            stroke="var(--brew-accent-500)"
-                            strokeWidth="1"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        <span className="text-strong text-xs font-medium">Efficiency</span>
-                      </div>
-                      <span className="text-muted text-xs tabular-nums">72%</span>
-                    </div>
-                  </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {featured.map((link, i) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={[
+                        "group block rounded-2xl p-5 transition-all duration-200",
+                        "hover:-translate-y-1 hover:shadow-lg",
+                        "brew-animate-in",
+                        `brew-stagger-${i + 10}`,
+                      ].join(" ")}
+                      style={{
+                        background: "color-mix(in oklch, var(--brew-card) 55%, transparent)",
+                        backdropFilter: "blur(8px)",
+                        boxShadow: "var(--shadow-card)",
+                        border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
+                      }}
+                    >
+                      <span
+                        className="text-sm font-bold transition-colors duration-150 group-hover:text-[var(--coral-500)]"
+                        style={{ color: "var(--fg-strong)" }}
+                      >
+                        {link.label}
+                      </span>
+                      <span
+                        className="mt-2 block text-xs leading-relaxed"
+                        style={{ color: "var(--fg-muted)" }}
+                      >
+                        {link.description}
+                      </span>
+                      <span
+                        className="mt-3 inline-block text-xs font-semibold opacity-40 transition-opacity duration-200 group-hover:opacity-100"
+                        style={{ color: "var(--coral-500)" }}
+                      >
+                        Read more →
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
-          </Link>
-        </div>
-      </div>
+          </div>
+        );
+      })()}
+
+      {/* <HomePhysicsCansLoader /> */}
     </div>
   );
 }

@@ -17,6 +17,7 @@
 import { useMemo } from 'react';
 import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
 import { recipeCalculationService } from '../../domain/services/RecipeCalculationService';
+import { usePreferencesStore } from '../../../auth/preferencesStore';
 
 /**
  * Calculate all recipe values (memoized for performance)
@@ -27,12 +28,14 @@ import { recipeCalculationService } from '../../domain/services/RecipeCalculatio
  *   return <div>ABV: {calculations?.abv}%</div>
  */
 export function useRecipeCalculations(recipe: Recipe | null): RecipeCalculations | null {
+  const attenuationModel = usePreferencesStore((s) => s.attenuationModel);
+
   return useMemo(() => {
     if (!recipe) return null;
 
     // Call the domain service (your "Manager")
-    return recipeCalculationService.calculate(recipe);
-  }, [recipe]); // Only recalculate when recipe changes
+    return recipeCalculationService.calculate(recipe, { attenuationModel });
+  }, [recipe, attenuationModel]); // Recalculate when recipe or model changes
 }
 
 /**

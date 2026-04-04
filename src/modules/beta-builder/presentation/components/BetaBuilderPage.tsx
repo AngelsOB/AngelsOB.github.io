@@ -7,7 +7,7 @@
  * It uses the store (like @ObservedObject) and hooks (for calculations).
  */
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
@@ -18,6 +18,7 @@ import HopSection from "./HopSection";
 import YeastSection from "./YeastSection";
 import WaterSection from "./WaterSection";
 import FermentationSection from "./FermentationSection";
+import PackagingSection from "./PackagingSection";
 import { EquipmentSection } from "./EquipmentSection";
 import StyleSelectorModal from "./StyleSelectorModal";
 import StyleRangeComparison from "./StyleRangeComparison";
@@ -32,7 +33,13 @@ import ShareModal from "../../../sharing/ShareModal";
 import ForkButton from "../../../sharing/ForkButton";
 import RatingStars from "../../../sharing/RatingStars";
 import { useAuthStore } from "../../../auth/authStore";
+import { useUserTier } from "../../../auth/useUserTier";
+import RecipeLimitModal from "../../../auth/components/RecipeLimitModal";
+import SignInPrompt from "../../../auth/components/SignInPrompt";
 import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
+import LabelUploader from "../../../labels/LabelUploader";
+import PhysicsCan from "../../../labels/PhysicsCan";
+import GrainGradient from "../../../../components/GrainGradient";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
@@ -156,14 +163,26 @@ export default function BetaBuilderPage({
   const calculations = useRecipeCalculations(currentRecipe);
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const { canCreate: canCreateMore } = useUserTier();
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const wasAnonymousRef = useRef(!user && !isAuthLoading);
   const [showStickyTop, setShowStickyTop] = useState(false);
   const [showStickyBottom, setShowStickyBottom] = useState(false);
+  const [titleUnderline, setTitleUnderline] = useState(false);
   const [mobileOpenSection, setMobileOpenSection] = useState<Set<string>>(() => new Set(["recipe"]));
+  const [canCount, setCanCount] = useState(0);
   const calculatedValuesRef = React.useRef<HTMLDivElement>(null);
+  const recipes = useRecipeStore((s) => s.recipes);
   const isShared = Boolean(sharedRecipe);
   const isReadOnly = Boolean(versionNumber) || isShared;
+  // A recipe is "new" if it hasn't been saved yet (not in the recipes list)
+  const isNewRecipe = currentRecipe ? !recipes.some((r) => r.id === currentRecipe.id) : false;
+  // Disable save for new recipes when at the free tier limit
+  const saveDisabled = isNewRecipe && !canCreateMore;
 
   const toggleMobileSection = useCallback((key: string) => {
     setMobileOpenSection((prev) => {
@@ -175,6 +194,17 @@ export default function BetaBuilderPage({
       }
       return next;
     });
+  }, []);
+
+  // Reset spawned cans when label changes or is removed
+  useEffect(() => {
+    setCanCount(0);
+  }, [currentRecipe?.labelUrl]);
+
+  // Delayed underline animation for recipe name
+  useEffect(() => {
+    const timer = setTimeout(() => setTitleUnderline(true), 750);
+    return () => clearTimeout(timer);
   }, []);
 
   // Load recipe based on URL param, shared prop, or create new.
@@ -214,6 +244,24 @@ export default function BetaBuilderPage({
     createNewRecipe,
     setCurrentRecipe,
   ]);
+
+  // Auto-save after sign-in: if user was anonymous and just signed in via popup,
+  // save the in-progress recipe automatically.
+  useEffect(() => {
+    if (wasAnonymousRef.current && user && currentRecipe && !isReadOnly) {
+      wasAnonymousRef.current = false;
+      // Small delay to let AuthProvider sync user doc + reload recipes
+      const timer = setTimeout(() => {
+        saveCurrentRecipe();
+        router.push("/recipes");
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // Track anonymous state for next transition
+    if (!user && !isAuthLoading) {
+      wasAnonymousRef.current = true;
+    }
+  }, [user, isAuthLoading, currentRecipe, isReadOnly, saveCurrentRecipe, router]);
 
   // Update document title with recipe name
   useEffect(() => {
@@ -277,7 +325,7 @@ export default function BetaBuilderPage({
             <p className="mb-4">Version not found.</p>
             <button
               onClick={() => router.push("/recipes")}
-              className="rounded-md border border-[rgb(var(--border))] px-4 py-2 hover:bg-[rgb(var(--bg))]"
+              className="rounded-md border border-[rgb(var(--border))] px-4 py-2 hover:bg-[var(--bg)]"
             >
               Back to Recipes
             </button>
@@ -290,114 +338,230 @@ export default function BetaBuilderPage({
   }
 
   const handleSave = () => {
+    if (!user) {
+      setIsSignInModalOpen(true);
+      return;
+    }
+    if (saveDisabled) {
+      setIsLimitModalOpen(true);
+      return;
+    }
     saveCurrentRecipe();
     router.push("/recipes");
   };
 
   return (
-    <div className="brew-theme has-section-sidebar mx-auto max-w-4xl px-1 sm:px-4 py-6">
-      <SectionSidebar recipe={currentRecipe} calculations={calculations} />
+    <div className="brew-theme has-section-sidebar relative mx-auto max-w-4xl px-1 sm:px-4 py-6">
+      {/* Grainy ambient glow — warm accent wash behind all builder content (dark mode only) */}
+      <div
+        className="brew-top-breathe pointer-events-none absolute h-[130vh] hidden dark:block"
+        style={{
+          top: '-5rem',
+          left: 'calc(50% - 50vw)',
+          width: '100vw',
+          zIndex: 0,
+          transformOrigin: '50% 0%',
+          maskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 25%, rgba(0,0,0,0.85) 45%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.15) 75%, transparent 90%)',
+        }}
+        aria-hidden
+      >
+        <GrainGradient
+          stops={[
+            { pos: 0,    color: "color-mix(in oklch, var(--brew-accent-300) 14%, transparent)" },
+            { pos: 0.5,  color: "color-mix(in oklch, var(--brew-accent-200) 6%, transparent)" },
+            { pos: 1,    color: "transparent" },
+          ]}
+          direction={155}
+          displacement={0.5}
+          grainOpacity={0.65}
+          radius={10}
+          resolution={0.2}
+        />
+      </div>
+      <SectionSidebar
+        recipe={currentRecipe}
+        calculations={calculations}
+        hideSidebarNav={showStickyTop || showStickyBottom}
+        navButton={{
+          backPath: isShared ? "/browse" : "/recipes",
+          backLabel: isShared ? "Back to Browse" : "Back to Recipes",
+          showShareControl: !isReadOnly && !isShared && !!user && !!id,
+          isPublic: currentRecipe?.isPublic ?? false,
+          shareSlug: currentRecipe?.shareSlug,
+          recipeName: currentRecipe?.name,
+          recipeId: currentRecipe?.id,
+          onPublished: (slug) => {
+            updateRecipe({
+              isPublic: true,
+              shareSlug: slug,
+              publishedAt: new Date().toISOString(),
+            });
+            saveCurrentRecipe();
+          },
+          onUnpublished: () => {
+            updateRecipe({ isPublic: false, shareSlug: undefined, publishedAt: undefined });
+            saveCurrentRecipe();
+          },
+        }}
+      />
       {/* Sticky Stats Bars */}
       {calculations && (
         <>
-          <StickyStatsBar calculations={calculations} position="top" isVisible={showStickyTop} />
+          <StickyStatsBar
+            calculations={calculations}
+            position="top"
+            isVisible={showStickyTop}
+            leftAction={
+              <button
+                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                className="sticky-bar-btn"
+              >
+                <span className="sticky-bar-btn-arrow">&#8592;</span>
+                {isShared ? "Back to Browse" : "Back to Recipes"}
+              </button>
+            }
+            rightAction={
+              <>
+                {isShared && currentRecipe && (
+                  <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+                )}
+                {!isShared && isReadOnly && id && (
+                  <button onClick={() => router.push(`/recipes/${id}`)} className="sticky-bar-btn">
+                    Current
+                  </button>
+                )}
+                {!isReadOnly && user && id && currentRecipe && (
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="sticky-bar-btn"
+                  >
+                    {currentRecipe.isPublic && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    )}
+                    {currentRecipe.isPublic ? "Shared" : "Share"}
+                  </button>
+                )}
+              </>
+            }
+          />
           <StickyStatsBar
             calculations={calculations}
             position="bottom"
             isVisible={showStickyBottom}
+            leftAction={
+              <button
+                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                className="sticky-bar-btn"
+              >
+                <span className="sticky-bar-btn-arrow">&#8592;</span>
+                {isShared ? "Back to Browse" : "Back to Recipes"}
+              </button>
+            }
+            rightAction={
+              <>
+                {isShared && currentRecipe && (
+                  <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
+                )}
+                {!isShared && isReadOnly && id && (
+                  <button onClick={() => router.push(`/recipes/${id}`)} className="sticky-bar-btn">
+                    Current
+                  </button>
+                )}
+                {!isReadOnly && user && id && currentRecipe && (
+                  <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="sticky-bar-btn"
+                  >
+                    {currentRecipe.isPublic && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                    )}
+                    {currentRecipe.isPublic ? "Shared" : "Share"}
+                  </button>
+                )}
+              </>
+            }
           />
         </>
       )}
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between bg-[rgb(var(--surface))]/80 backdrop-blur">
-          <div>
-            <button
-              onClick={() => router.push(isShared ? "/browse" : "/recipes")}
-              className="mb-3 flex items-center gap-1.5 text-sm font-medium transition-colors"
-              style={{ color: "var(--brew-accent-600)" }}
-            >
-              <span className="text-xs">&#8592;</span>{" "}
-              {isShared ? "Back to Browse" : "Back to Recipes"}
-            </button>
-            <h1 className="brew-section-title text-3xl">
+      {/* Shared/read-only info banner */}
+      {(isShared || isReadOnly || (currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName)) && (
+        <div className="mb-4 text-center">
+          {(isShared || isReadOnly) && (
+            <h1 className="brew-section-title text-xl">
               {isShared
                 ? "Shared Recipe (Read-only)"
-                : isReadOnly
-                  ? `Version ${versionNumber} (Read-only)`
-                  : "Recipe Builder"}
+                : `Version ${versionNumber} (Read-only)`}
             </h1>
-            {isShared && sharedOwnerName && (
-              <p className="mt-1 text-xs text-[var(--fg-muted)]">
-                by{" "}
-                {sharedOwnerId ? (
-                  <Link href={`/u/${sharedOwnerId}`} className="font-medium hover:underline">
-                    {sharedOwnerName}
-                  </Link>
-                ) : (
-                  <span className="font-medium">{sharedOwnerName}</span>
-                )}
-              </p>
-            )}
-            {isShared && currentRecipe && (
-              <div className="mt-2">
-                <RatingStars
-                  recipeId={currentRecipe.id}
-                  ratingAvg={sharedRatingAvg}
-                  ratingCount={sharedRatingCount}
-                />
-              </div>
-            )}
-            {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
-              <p className="mt-1 text-xs text-[var(--fg-muted)]">
-                Forked from{" "}
-                {currentRecipe.parentRecipeShareSlug ? (
-                  <Link
-                    href={`/r/${currentRecipe.parentRecipeShareSlug}`}
-                    className="font-medium underline transition-colors hover:text-[var(--brew-accent-600)]"
-                    style={{ pointerEvents: "auto" }}
-                  >
-                    {currentRecipe.parentRecipeName}
-                  </Link>
-                ) : (
-                  <span className="font-medium">{currentRecipe.parentRecipeName}</span>
-                )}
-                {currentRecipe.parentRecipeOwnerName && (
-                  <> by {currentRecipe.parentRecipeOwnerName}</>
-                )}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isShared && currentRecipe && (
-              <ForkButton recipeId={currentRecipe.id} recipeName={currentRecipe.name} />
-            )}
-            {!isShared && isReadOnly && id && (
-              <button onClick={() => router.push(`/recipes/${id}`)} className="brew-btn-ghost">
-                Open Current Recipe
-              </button>
-            )}
-            {!isReadOnly && user && id && currentRecipe && (
-              <button
-                onClick={() => setIsShareModalOpen(true)}
-                className="brew-btn-ghost flex items-center gap-1.5"
-              >
-                {currentRecipe.isPublic && (
-                  <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                )}
-                {currentRecipe.isPublic ? "Shared" : "Share"}
-              </button>
-            )}
-          </div>
+          )}
+          {isShared && sharedOwnerName && (
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              by{" "}
+              {sharedOwnerId ? (
+                <Link href={`/u/${sharedOwnerId}`} className="font-medium hover:underline">
+                  {sharedOwnerName}
+                </Link>
+              ) : (
+                <span className="font-medium">{sharedOwnerName}</span>
+              )}
+            </p>
+          )}
+          {isShared && currentRecipe && (
+            <div className="mt-2">
+              <RatingStars
+                recipeId={currentRecipe.id}
+                ratingAvg={sharedRatingAvg}
+                ratingCount={sharedRatingCount}
+              />
+            </div>
+          )}
+          {!isShared && currentRecipe?.parentRecipeId && currentRecipe.parentRecipeName && (
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              Forked from{" "}
+              {currentRecipe.parentRecipeShareSlug ? (
+                <Link
+                  href={`/r/${currentRecipe.parentRecipeShareSlug}`}
+                  className="font-medium underline transition-colors hover:text-[var(--brew-accent-600)]"
+                  style={{ pointerEvents: "auto" }}
+                >
+                  {currentRecipe.parentRecipeName}
+                </Link>
+              ) : (
+                <span className="font-medium">{currentRecipe.parentRecipeName}</span>
+              )}
+              {currentRecipe.parentRecipeOwnerName && (
+                <> by {currentRecipe.parentRecipeOwnerName}</>
+              )}
+            </p>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Anonymous sign-in banner */}
+      {!user && !isAuthLoading && !isReadOnly && !bannerDismissed && (
+        <div className="brew-section mb-4 flex items-center justify-between gap-3 py-3 px-4 rounded-lg border border-[var(--brew-accent-400)]/30 bg-[var(--brew-accent-400)]/5">
+          <p className="text-sm text-[var(--brew-text-secondary)]">
+            <button
+              onClick={() => setIsSignInModalOpen(true)}
+              className="font-medium text-[var(--brew-accent-500)] hover:underline cursor-pointer"
+            >
+              Sign in with Google
+            </button>{" "}
+            to save your recipe — it&apos;s free and takes one click.
+          </p>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="shrink-0 text-[var(--brew-text-tertiary)] hover:text-[var(--brew-text-secondary)] transition-colors cursor-pointer"
+            aria-label="Dismiss"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <div className={`brew-main-fade-in ${isReadOnly ? "brew-read-only" : ""}`}>
-        {currentRecipe?.name && (
-          <div className="mobile-sidebar-title">
-            <span>{currentRecipe.name}</span>
-          </div>
-        )}
         {/* Recipe Name & Metadata */}
         <div>
           <AccordionSection
@@ -408,16 +572,37 @@ export default function BetaBuilderPage({
             onToggle={toggleMobileSection}
           >
             <div className="brew-section space-y-5">
-              <div>
+              {/* Handwritten recipe name — desktop only */}
+              <div className="hidden md:block text-center">
+                {!currentRecipe.name && (
+                  <span className="recipe-name-label">Title:</span>
+                )}
+                <div className={"recipe-name-wrapper" + (titleUnderline && currentRecipe.name ? " is-drawn" : "")}>
+                  <input
+                    id="recipe-name"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Untitled Recipe"
+                    value={currentRecipe.name}
+                    onChange={(e) => updateRecipe({ name: e.target.value })}
+                    size={currentRecipe.name.length || 16}
+                    className="recipe-name-input text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Mobile recipe name — plain input */}
+              <div className="md:hidden">
                 <label
-                  htmlFor="recipe-name"
+                  htmlFor="recipe-name-mobile"
                   className="text-muted mb-2 block text-xs font-semibold tracking-wider uppercase"
                 >
                   Recipe Name
                 </label>
                 <input
-                  id="recipe-name"
+                  id="recipe-name-mobile"
                   type="text"
+                  autoComplete="off"
                   value={currentRecipe.name}
                   onChange={(e) => updateRecipe({ name: e.target.value })}
                   className="brew-input w-full text-lg font-semibold"
@@ -464,6 +649,14 @@ export default function BetaBuilderPage({
                   />
                 </div>
               </div>
+
+              {/* Beer Label */}
+              <LabelUploader
+                labelUrl={currentRecipe.labelUrl}
+                isReadOnly={!!sharedRecipe}
+                onSpawnCan={currentRecipe.labelUrl ? () => setCanCount((c) => c + 1) : undefined}
+              />
+              {/* PhysicsCan is rendered at page level as a fixed overlay */}
 
               {/* Calculated Values - Gauge Style */}
               {calculations && (
@@ -666,7 +859,20 @@ export default function BetaBuilderPage({
           </AccordionSection>
         </div>
 
-        {/* Brew Day Targets */}
+        {/* Packaging */}
+        <div>
+          <AccordionSection
+            sectionKey="packaging"
+            recipe={currentRecipe}
+            calculations={calculations}
+            mobileOpen={mobileOpenSection}
+            onToggle={toggleMobileSection}
+          >
+            <PackagingSection />
+          </AccordionSection>
+        </div>
+
+        {/* Brew Day Numbers */}
         <div>
           <AccordionSection
             sectionKey="targets"
@@ -691,13 +897,25 @@ export default function BetaBuilderPage({
               >
                 Cancel
               </button>
-              <button onClick={handleSave} className="brew-btn-primary flex-1 py-3 text-base">
-                Save & Close
+              <button
+                onClick={handleSave}
+                className={`brew-btn-primary flex-1 py-3 text-base${saveDisabled ? ' opacity-50' : ''}`}
+              >
+                {user ? 'Save & Close' : 'Sign In to Save'}
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Physics Beer Can — floating overlay, spawned on demand */}
+      {currentRecipe.labelUrl && canCount > 0 && (
+        <PhysicsCan
+          labelUrl={currentRecipe.labelUrl}
+          srmColor={calculations ? srmToRgb(calculations.srm) : undefined}
+          canCount={canCount}
+        />
+      )}
 
       {/* Style Selector Modal */}
       <StyleSelectorModal
@@ -730,6 +948,34 @@ export default function BetaBuilderPage({
           }}
         />
       )}
+
+      {/* Recipe Limit Modal */}
+      <RecipeLimitModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+      />
+
+      {/* Sign In Prompt Modal */}
+      <SignInPrompt
+        isOpen={isSignInModalOpen}
+        onClose={() => setIsSignInModalOpen(false)}
+      />
+
+      {/* Bottom glow — warm upward gradient with animated brightness wave (dark mode only) */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-[35vh] hidden dark:block"
+        style={{ zIndex: 0 }}
+        aria-hidden
+      >
+        {/* Breathing ellipse glow */}
+        <div
+          className="brew-bottom-wave absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 70% 45% at 50% 100%, color-mix(in oklch, var(--brew-neutral-300) 6%, transparent) 0%, transparent 100%)',
+            transformOrigin: '50% 100%',
+          }}
+        />
+      </div>
     </div>
   );
 }

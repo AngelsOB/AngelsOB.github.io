@@ -7,6 +7,8 @@
  * - Chloride:Sulfate ratio
  */
 
+import { optimizeSaltAdditions } from './WaterSaltOptimizer';
+
 export type WaterProfile = {
   Ca: number; // ppm
   Mg: number; // ppm
@@ -26,7 +28,7 @@ export type SaltAdditions = {
 
 // Ion contributions per 1 g of salt added to 1 L of water (mg/L aka ppm)
 // Mass fractions computed from molar masses.
-const ION_PPM_PER_G_PER_L = {
+export const ION_PPM_PER_G_PER_L = {
   gypsum: {
     Ca: 0.2328 * 1000, // 40.078 / 172.169
     SO4: 0.5583 * 1000, // 96.061 / 172.169
@@ -200,45 +202,24 @@ export class WaterChemistryService {
   }
 
   /**
-   * Calculate total salts needed to hit a target profile
-   * Returns salt additions split between mash and sparge water
+   * Calculate optimal salts to hit a target profile using bounded least squares.
+   * Returns total salt additions and the split between mash and sparge water.
    */
   calculateSaltsForTarget(
     sourceProfile: WaterProfile,
     targetProfile: WaterProfile,
     mashWaterL: number,
     spargeWaterL: number
-  ): { mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
-    // For now, distribute salts proportionally to water volumes
-    // This is a simplified approach - a more sophisticated algorithm would
-    // optimize for specific ions, but that requires solving a system of equations
+  ): { totalSalts: SaltAdditions; mashSalts: SaltAdditions; spargeSalts: SaltAdditions } {
     const totalWaterL = mashWaterL + spargeWaterL;
     if (totalWaterL <= 0) {
-      return { mashSalts: {}, spargeSalts: {} };
+      return { totalSalts: {}, mashSalts: {}, spargeSalts: {} };
     }
 
-    const mashRatio = mashWaterL / totalWaterL;
-    const spargeRatio = spargeWaterL / totalWaterL;
+    const { salts: totalSalts } = optimizeSaltAdditions(sourceProfile, targetProfile, totalWaterL);
+    const { mashSalts, spargeSalts } = this.splitSaltsProportionally(totalSalts, mashWaterL, spargeWaterL);
 
-    // Calculate deltas needed
-    const clDelta = Math.max(0, targetProfile.Cl - sourceProfile.Cl);
-    const so4Delta = Math.max(0, targetProfile.SO4 - sourceProfile.SO4);
-
-    // Use gypsum for sulfate and calcium chloride for chloride
-    // This is a simplified approach that covers the most common adjustments
-    const gypsumTotal = so4Delta > 0 ? (so4Delta * totalWaterL) / ION_PPM_PER_G_PER_L.gypsum.SO4 : 0;
-    const cacl2Total = clDelta > 0 ? (clDelta * totalWaterL) / ION_PPM_PER_G_PER_L.cacl2.Cl : 0;
-
-    return {
-      mashSalts: {
-        gypsum_g: gypsumTotal > 0 ? gypsumTotal * mashRatio : undefined,
-        cacl2_g: cacl2Total > 0 ? cacl2Total * mashRatio : undefined,
-      },
-      spargeSalts: {
-        gypsum_g: gypsumTotal > 0 ? gypsumTotal * spargeRatio : undefined,
-        cacl2_g: cacl2Total > 0 ? cacl2Total * spargeRatio : undefined,
-      },
-    };
+    return { totalSalts, mashSalts, spargeSalts };
   }
 }
 
@@ -310,9 +291,9 @@ export const BEER_STYLE_TARGETS: Record<string, BeerStyleTarget> = {
     clToSo4Ratio: "1:1 (Balanced)",
   },
   "Irish Stout": {
-    profile: { Ca: 120, Mg: 4, Na: 12, Cl: 19, SO4: 53, HCO3: 319 },
-    description: "Dublin water profile. Very high bicarbonate for roast character.",
-    clToSo4Ratio: "0.4:1 (Balanced)",
+    profile: { Ca: 42, Mg: 7, Na: 45, Cl: 48, SO4: 62, HCO3: 117 },
+    description: "Dublin-inspired water profile. Higher bicarbonate for roast character.",
+    clToSo4Ratio: "0.8:1 (Balanced)",
   },
   "Belgian Ale": {
     profile: { Ca: 75, Mg: 15, Na: 20, Cl: 100, SO4: 75, HCO3: 120 },
@@ -335,3 +316,172 @@ export const BEER_STYLE_TARGETS: Record<string, BeerStyleTarget> = {
     clToSo4Ratio: "1:1 (Balanced)",
   },
 };
+
+// Maps BJCP style names → closest BEER_STYLE_TARGETS key
+const BJCP_TO_WATER_TARGET: Record<string, string> = {
+  // 1 – Standard American Beer
+  "American Light Lager": "Pilsner",
+  "American Lager": "Pilsner",
+  "Cream Ale": "Blonde / Cream Ale",
+  "American Wheat Beer": "Balanced",
+  // 2 – International Lager
+  "International Pale Lager": "Pilsner",
+  "International Amber Lager": "Balanced",
+  "International Dark Lager": "Munich Helles",
+  // 3 – Czech Lager
+  "Czech Pale Lager": "Pilsner",
+  "Czech Premium Pale Lager": "Pilsner",
+  "Czech Amber Lager": "Balanced",
+  "Czech Dark Lager": "Munich Helles",
+  // 4 – Pale Malty European Lager
+  "Munich Helles": "Munich Helles",
+  "Festbier": "Munich Helles",
+  "Helles Bock": "Munich Helles",
+  // 5 – Pale Bitter European Beer
+  "German Leichtbier": "German Pilsner",
+  "Kölsch": "German Pilsner",
+  "German Helles Exportbier": "German Pilsner",
+  "German Pils": "German Pilsner",
+  // 6 – Amber Malty European Lager
+  "Märzen": "Munich Helles",
+  "Rauchbier": "Munich Helles",
+  "Dunkles Bock": "Munich Helles",
+  // 7 – Amber Bitter European Beer
+  "Vienna Lager": "Balanced",
+  "Altbier": "Balanced",
+  // 8 – Dark European Lager
+  "Munich Dunkel": "Munich Helles",
+  "Schwarzbier": "Munich Helles",
+  // 9 – Strong European Beer
+  "Doppelbock": "Munich Helles",
+  "Eisbock": "Munich Helles",
+  "Baltic Porter": "Stout / Porter",
+  // 10 – German Wheat Beer
+  "Weissbier": "Balanced",
+  "Dunkles Weissbier": "Balanced",
+  "Weizenbock": "Balanced",
+  // 11 – British Bitter
+  "Ordinary Bitter": "English IPA",
+  "Best Bitter": "English IPA",
+  "Strong Bitter": "English IPA",
+  // 12 – Pale Commonwealth Beer
+  "British Golden Ale": "English IPA",
+  "Australian Sparkling Ale": "Balanced",
+  "English IPA": "English IPA",
+  // 13 – Brown British Beer
+  "Dark Mild": "Brown Ale",
+  "British Brown Ale": "Brown Ale",
+  "English Porter": "Stout / Porter",
+  // 14 – Scottish Ale
+  "Scottish Light": "Brown Ale",
+  "Scottish Heavy": "Brown Ale",
+  "Scottish Export": "Brown Ale",
+  // 15 – Irish Beer
+  "Irish Red Ale": "Brown Ale",
+  "Irish Stout": "Irish Stout",
+  "Irish Extra Stout": "Irish Stout",
+  // 16 – Dark British Beer
+  "Sweet Stout": "Stout / Porter",
+  "Oatmeal Stout": "Stout / Porter",
+  "Tropical Stout": "Stout / Porter",
+  "Foreign Extra Stout": "Stout / Porter",
+  // 17 – Strong British Ale
+  "British Strong Ale": "English IPA",
+  "Old Ale": "Brown Ale",
+  "Wee Heavy": "Brown Ale",
+  "English Barley Wine": "English IPA",
+  // 18 – Pale American Ale
+  "Blonde Ale": "Blonde / Cream Ale",
+  "American Pale Ale": "American Pale Ale",
+  // 19 – Amber and Brown American Beer
+  "American Amber Ale": "Balanced",
+  "California Common": "Balanced",
+  "American Brown Ale": "Brown Ale",
+  // 20 – American Porter and Stout
+  "American Porter": "Stout / Porter",
+  "American Stout": "Stout / Porter",
+  "Imperial Stout": "Stout / Porter",
+  // 21 – IPA
+  "American IPA": "American IPA",
+  "Specialty IPA": "American IPA",
+  "Specialty IPA: Belgian IPA": "American IPA",
+  "Specialty IPA: Black IPA": "American IPA",
+  "Specialty IPA: Brown IPA": "American IPA",
+  "Specialty IPA: Red IPA": "American IPA",
+  "Specialty IPA: Rye IPA": "American IPA",
+  "Specialty IPA: White IPA": "American IPA",
+  "Specialty IPA: Brut IPA": "American IPA",
+  "Hazy IPA": "NEIPA / Hazy IPA",
+  // 22 – Strong American Ale
+  "Double IPA": "West Coast IPA",
+  "American Strong Ale": "American IPA",
+  "American Barleywine": "English IPA",
+  "Wheatwine": "Balanced",
+  // 23 – European Sour Ale
+  "Berliner Weisse": "Pilsner",
+  "Flanders Red Ale": "Balanced",
+  "Oud Bruin": "Balanced",
+  "Lambic": "Pilsner",
+  "Gueuze": "Pilsner",
+  "Fruit Lambic": "Pilsner",
+  "Gose": "Pilsner",
+  // 24 – Belgian Ale
+  "Witbier": "Belgian Ale",
+  "Belgian Pale Ale": "Belgian Ale",
+  "Bière de Garde": "Belgian Ale",
+  // 25 – Strong Belgian Ale
+  "Belgian Blond Ale": "Belgian Ale",
+  "Saison": "Belgian Ale",
+  "Belgian Golden Strong Ale": "Belgian Ale",
+  // 26 – Monastic Ale
+  "Belgian Single": "Belgian Ale",
+  "Belgian Dubbel": "Belgian Ale",
+  "Belgian Tripel": "Belgian Ale",
+  "Belgian Dark Strong Ale": "Belgian Ale",
+  // 27 – Historical Beer
+  "Kellerbier": "German Pilsner",
+  "Kentucky Common": "Balanced",
+  "Lichtenhainer": "Pilsner",
+  "London Brown Ale": "Brown Ale",
+  "Piwo Grodziskie": "Pilsner",
+  "Pre-Prohibition Lager": "Pilsner",
+  "Pre-Prohibition Porter": "Stout / Porter",
+  "Roggenbier": "Balanced",
+  "Sahti": "Balanced",
+  // 28 – American Wild Ale
+  "Brett Beer": "Balanced",
+  "Mixed-Fermentation Sour Beer": "Balanced",
+  "Wild Specialty Beer": "Balanced",
+  "Straight Sour Beer": "Balanced",
+  "Catharina Sour": "Balanced",
+  // 29+ – Specialty
+  "Fruit Beer": "Balanced",
+  "Fruit and Spice Beer": "Balanced",
+  "Specialty Fruit Beer": "Balanced",
+  "Grape Ale": "Balanced",
+  "Spice, Herb, or Vegetable Beer": "Balanced",
+  "Autumn Seasonal Beer": "Balanced",
+  "Winter Seasonal Beer": "Balanced",
+  "Specialty Spice Beer": "Balanced",
+  "Alternative Grain Beer": "Balanced",
+  "Alternative Sugar Beer": "Balanced",
+  "Classic Style Smoked Beer": "Balanced",
+  "Specialty Smoked Beer": "Balanced",
+  "Wood-Aged Beer": "Balanced",
+  "Specialty Wood-Aged Beer": "Balanced",
+  "Commercial Specialty Beer": "Balanced",
+  "Mixed-Style Beer": "Balanced",
+  "New Zealand Pilsner": "German Pilsner",
+};
+
+/**
+ * Maps a recipe's BJCP style string (e.g. "21A. American IPA") to the
+ * closest BEER_STYLE_TARGETS key for water chemistry auto-detection.
+ */
+export function getWaterTargetForBjcpStyle(recipeStyle: string): string {
+  if (!recipeStyle) return "Balanced";
+  // Recipe style is stored as "21A. American IPA" — extract name after ". "
+  const dotIndex = recipeStyle.indexOf(". ");
+  const styleName = dotIndex >= 0 ? recipeStyle.substring(dotIndex + 2) : recipeStyle;
+  return BJCP_TO_WATER_TARGET[styleName] || "Balanced";
+}

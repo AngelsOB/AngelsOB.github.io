@@ -50,7 +50,7 @@ export function BrewInstructionsSection({
         {hasStarter && (
           <InstructionStep number={1} title="Starter (if using)">
             <div className="space-y-2">
-              <div className="flex items-center justify-between rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+              <div className="flex items-center justify-between rounded-md bg-[var(--bg)] p-2 text-sm">
                 <span className="text-gray-500">Packs</span>
                 <ReadOnlyNumber
                   value={recipe.yeasts?.[0].starter?.packs}
@@ -58,7 +58,7 @@ export function BrewInstructionsSection({
                 />
               </div>
               {recipe.yeasts?.[0].starter?.steps?.map((step) => (
-                <div key={step.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+                <div key={step.id} className="rounded-md bg-[var(--bg)] p-2 text-sm">
                   <div className="flex flex-wrap gap-2">
                     <InfoPill text={`${step.liters.toFixed(1)} L`} />
                     <InfoPill text={`${step.gravity.toFixed(3)} SG`} />
@@ -71,14 +71,14 @@ export function BrewInstructionsSection({
 
         <InstructionStep number={baseStepNumber + 1} title="Warm strike + sparge water">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="rounded-md bg-[rgb(var(--bg))] p-2">
+            <div className="rounded-md bg-[var(--bg)] p-2">
               <div className="text-xs text-gray-500 uppercase">Strike</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <InfoPill text={`${formatNumber(mashWaterL, 1)} L`} />
                 <InfoPill text={`${strikeTempC.toFixed(1)} °C`} />
               </div>
             </div>
-            <div className="rounded-md bg-[rgb(var(--bg))] p-2">
+            <div className="rounded-md bg-[var(--bg)] p-2">
               <div className="text-xs text-gray-500 uppercase">Sparge</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <InfoPill text={`${formatNumber(spargeWaterL, 1)} L`} />
@@ -120,7 +120,7 @@ export function BrewInstructionsSection({
               {recipe.fermentables.map((fermentable) => (
                 <div
                   key={fermentable.id}
-                  className="flex items-center justify-between rounded-md bg-[rgb(var(--bg))] px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-md bg-[var(--bg)] px-3 py-2 text-sm"
                 >
                   <span className="font-medium">{fermentable.name}</span>
                   <InfoPill text={`${fermentable.weightKg.toFixed(2)} kg`} />
@@ -136,7 +136,7 @@ export function BrewInstructionsSection({
           ) : (
             <div className="space-y-2">
               {recipe.mashSteps.map((step) => (
-                <div key={step.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+                <div key={step.id} className="rounded-md bg-[var(--bg)] p-2 text-sm">
                   <div className="font-medium">{step.name}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <InfoPill text={`${step.temperatureC.toFixed(1)} °C`} />
@@ -161,7 +161,7 @@ export function BrewInstructionsSection({
           ) : (
             <div className="space-y-2">
               {recipe.hops.map((hop) => (
-                <div key={hop.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+                <div key={hop.id} className="rounded-md bg-[var(--bg)] p-2 text-sm">
                   <div className="font-medium">{hop.name}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <InfoPill text={`${hop.grams.toFixed(0)} g`} />
@@ -195,7 +195,7 @@ export function BrewInstructionsSection({
               {recipe.fermentationSteps
                 .filter((step) => step.type !== 'conditioning' && step.type !== 'cold-crash')
                 .map((step) => (
-                  <div key={step.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+                  <div key={step.id} className="rounded-md bg-[var(--bg)] p-2 text-sm">
                     <div className="font-medium">{step.name}</div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <InfoPill text={`${step.temperatureC.toFixed(1)} °C`} />
@@ -216,7 +216,7 @@ export function BrewInstructionsSection({
               {recipe.fermentationSteps
                 .filter((step) => step.type === 'conditioning' || step.type === 'cold-crash')
                 .map((step) => (
-                  <div key={step.id} className="rounded-md bg-[rgb(var(--bg))] p-2 text-sm">
+                  <div key={step.id} className="rounded-md bg-[var(--bg)] p-2 text-sm">
                     <div className="font-medium">{step.name}</div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <InfoPill text={`${step.temperatureC.toFixed(1)} °C`} />

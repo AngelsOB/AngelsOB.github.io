@@ -7,7 +7,7 @@
  * target ion concentrations. Similar pattern to CustomSourceWaterModal.
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { BEER_STYLE_TARGETS, type WaterProfile } from "../../domain/services/WaterChemistryService";
 import Button from "@components/Button";
 import ModalOverlay from "./ModalOverlay";
@@ -27,11 +27,23 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (profile: WaterProfile, name: string) => void;
+  initialProfile?: WaterProfile;
+  initialName?: string;
 };
 
-export default function CustomTargetStyleModal({ isOpen, onClose, onSave }: Props) {
-  const [name, setName] = useState("");
-  const [profile, setProfile] = useState<WaterProfile>(DEFAULT_PROFILE);
+export default function CustomTargetStyleModal({ isOpen, onClose, onSave, initialProfile, initialName }: Props) {
+  const [name, setName] = useState(initialName || "");
+  const [profile, setProfile] = useState<WaterProfile>(initialProfile || DEFAULT_PROFILE);
+
+  // Reset to initial values when modal opens
+  const prevOpen = useRef(false);
+  if (isOpen && !prevOpen.current) {
+    // Transition from closed → open: reset state
+    if (initialProfile) setProfile(initialProfile);
+    else setProfile(DEFAULT_PROFILE);
+    setName(initialName || "");
+  }
+  prevOpen.current = isOpen;
 
   const handleSave = () => {
     onSave(profile, name.trim() || "Custom Target");
@@ -135,7 +147,7 @@ export default function CustomTargetStyleModal({ isOpen, onClose, onSave }: Prop
             className="text-sm p-3 rounded-lg"
             style={{
               background:
-                'color-mix(in oklch, var(--brew-accent-900) 15%, rgb(var(--brew-card-inset) / 0.35))',
+                'color-mix(in oklch, var(--brew-accent-900) 15%, color-mix(in oklch, var(--brew-card-inset) 35%, transparent))',
               border:
                 '1px solid color-mix(in oklch, var(--brew-accent-700) 15%, rgb(var(--brew-border-subtle)))',
             }}

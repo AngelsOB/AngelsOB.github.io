@@ -10,15 +10,21 @@ import type { Recipe, RecipeCalculations, Hop, Fermentable } from '../models/Rec
 import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
 import { mashScheduleService } from './MashScheduleService';
-import { inferFermentability } from '../../data/fermentablePresets';
+import { inferFermentability, inferType } from '../../data/fermentablePresets';
+
+export type AttenuationModel = 'linear' | 'enzyme_kinetics' | 'brandam_ode';
+
+export type CalcOptions = {
+  attenuationModel?: AttenuationModel;
+};
 
 export class RecipeCalculationService {
   /**
    * Calculate all recipe values
    */
-  calculate(recipe: Recipe): RecipeCalculations {
+  calculate(recipe: Recipe, options?: CalcOptions): RecipeCalculations {
     const og = this.calculateOG(recipe);
-    const fg = this.calculateFG(recipe);
+    const fg = this.calculateFG(recipe, options);
     const abv = this.calculateABV(og, fg);
     const ibu = this.calculateIBU(recipe, og);
     const srm = this.calculateSRM(recipe);
@@ -85,6 +91,9 @@ export class RecipeCalculationService {
   /**
    * Calculate Original Gravity
    * Formula: OG = 1 + (total gravity points / batch volume in gallons)
+   *
+   * Mash efficiency is applied to grains and mashable adjuncts. Sugars and
+   * extracts dissolve completely and use 100% efficiency.
    */
   calculateOG(recipe: Recipe): number {
     const { fermentables, batchVolumeL, equipment } = recipe;
@@ -94,10 +103,11 @@ export class RecipeCalculationService {
     }
 
     const batchVolumeGal = batchVolumeL * 0.264172; // liters to gallons
-    const efficiency = equipment.mashEfficiencyPercent / 100;
+    const mashEfficiency = equipment.mashEfficiencyPercent / 100;
 
     const totalGravityPoints = fermentables.reduce((sum, fermentable) => {
       const weightLbs = fermentable.weightKg * 2.20462; // kg to lbs
+      const efficiency = this.getEfficiency(fermentable, mashEfficiency);
       const points = fermentable.ppg * weightLbs * efficiency;
       return sum + points;
     }, 0);
@@ -118,12 +128,12 @@ export class RecipeCalculationService {
    *
    * FG = 1 + (nonFermentablePts + fermentablePts × (1 − effAtt)) / 1000
    */
-  calculateFG(recipe: Recipe): number {
+  calculateFG(recipe: Recipe, options?: CalcOptions): number {
     const { fermentables, batchVolumeL, equipment } = recipe;
 
     // --- 1. Split gravity points by fermentability ---
     const batchVolumeGal = batchVolumeL * 0.264172;
-    const efficiency = equipment.mashEfficiencyPercent / 100;
+    const mashEfficiency = equipment.mashEfficiencyPercent / 100;
 
     let fermentablePts = 0;
     let nonFermentablePts = 0;
@@ -131,6 +141,7 @@ export class RecipeCalculationService {
     if (fermentables.length > 0 && batchVolumeGal > 0) {
       for (const f of fermentables) {
         const weightLbs = f.weightKg * 2.20462;
+        const efficiency = this.getEfficiency(f, mashEfficiency);
         const pts = (f.ppg * weightLbs * efficiency) / batchVolumeGal;
         const ferm = this.getFermentability(f);
         fermentablePts += pts * ferm;
@@ -143,7 +154,15 @@ export class RecipeCalculationService {
     if (totalPts <= 0) return 1.0;
 
     // --- 2. Effective attenuation (yeast + process adjustments) ---
-    const effAtt = this.computeEffectiveAttenuation(recipe);
+    const model = options?.attenuationModel ?? 'linear';
+    let effAtt: number;
+    if (model === 'brandam_ode') {
+      effAtt = this.computeEffectiveAttenuationODE(recipe);
+    } else if (model === 'enzyme_kinetics') {
+      effAtt = this.computeEffectiveAttenuationEnzyme(recipe);
+    } else {
+      effAtt = this.computeEffectiveAttenuation(recipe);
+    }
 
     return 1 + (nonFermentablePts + fermentablePts * (1 - effAtt)) / 1000;
   }
@@ -158,10 +177,26 @@ export class RecipeCalculationService {
   }
 
   /**
+   * Get the extract efficiency for a fermentable.
+   *
+   * Sugars and extracts dissolve completely — they bypass the mash and should
+   * not be penalised by mash efficiency. Grains and mashable adjuncts use the
+   * system's mash efficiency.
+   */
+  private getEfficiency(f: Fermentable, mashEfficiency: number): number {
+    const type = inferType(f.name);
+    if (type === 'sugar' || type === 'extract') return 1.0;
+    return mashEfficiency;
+  }
+
+  /**
    * Compute effective attenuation from yeast base + mash adjustments.
    *
-   * Factors: mash temperature (ref 66 °C, ~1%/°C per Braukaiser) and
+   * Factors: mash temperature (ref 67 °C, ~1%/°C per Braukaiser) and
    * mash duration (ref 60 min, capped ±3%). Result clamped to [0.60, 0.95].
+   *
+   * Reference temperature of 67 °C is the midpoint of the beta-/alpha-amylase
+   * activity balance observed in Braukaiser's single-infusion mash experiments.
    *
    * Fermentation temperature, fermentation duration, and decoction bonuses
    * were removed — fermentation has a terminal gravity determined by wort
@@ -174,13 +209,14 @@ export class RecipeCalculationService {
       : 0.75;
 
     // Mash adjustments
+    const MASH_TEMP_REF_C = 67; // Braukaiser midpoint of the brewer's window
     let stepTimeTotal = 0;
     let tempAdjAcc = 0;
     for (const step of recipe.mashSteps) {
       const t = Math.max(0, step.durationMinutes || 0);
       stepTimeTotal += t;
       // Braukaiser research: ~1% attenuation change per °C (6% over 64→70°C)
-      tempAdjAcc += (66 - (step.temperatureC || 66)) * 0.01 * t;
+      tempAdjAcc += (MASH_TEMP_REF_C - (step.temperatureC || MASH_TEMP_REF_C)) * 0.01 * t;
     }
     const avgTempAdj = stepTimeTotal > 0 ? tempAdjAcc / stepTimeTotal : 0;
     const totalMashTime = stepTimeTotal > 0 ? stepTimeTotal : 60;
@@ -189,6 +225,306 @@ export class RecipeCalculationService {
     return Math.max(0.6, Math.min(0.95,
       baseAtt + avgTempAdj + mashTimeAdj,
     ));
+  }
+
+  /**
+   * Enzyme kinetics attenuation model.
+   *
+   * Models α- and β-amylase as competing enzymes with:
+   *   1. Temperature-dependent catalytic activity (Gaussian curves)
+   *   2. Arrhenius thermal inactivation (first-order, from mashing experiments)
+   *   3. Residual thermostable β-amylase fraction (fractional conversion)
+   *   4. Accumulated denaturation across mash steps
+   *
+   * The ratio of β-amylase work to total work determines the fermentable
+   * fraction of wort sugars. This raw ratio is mapped to effective
+   * attenuation through log-space damping to match the empirical ~1%/°C
+   * observed by Braukaiser in the brewing range (64-72°C), while allowing
+   * natural acceleration at extreme temperatures.
+   *
+   * Behaviour:
+   *   62–72°C  ~1%/°C    (matches Braukaiser single-infusion data)
+   *   72–80°C  ~2–5%/°C  (β-amylase denaturing rapidly)
+   *   80°C+    att → 0   (β dead, only residual trace + α producing dextrins)
+   *   < 60°C   flattens  (β dominates, diminishing returns)
+   *
+   * Sources:
+   *   - Brandam et al., "A kinetic model for the mashing process" (2003)
+   *     Arrhenius denaturation parameters from mashing experiments:
+   *     β-amylase: A=7.6e60, Ea=410.7 kJ/mol; α-amylase: A=6.9e30, Ea=224.2 kJ/mol
+   *   - De Schepper et al., J. Am. Soc. Brew. Chem. (2022)
+   *     β-amylase fractional conversion: 13% thermostable residual
+   *   - Evans et al., "Impact of Thermostability of α-Amylase, β-Amylase,
+   *     and Limit Dextrinase on Potential Wort Fermentability" (2003)
+   *     Validates: α-amylase retains ~100% activity after 1 hr at 65°C
+   *   - Braukaiser, "Effect of Mash Parameters on Fermentability" (2009)
+   *     Empirical calibration target: ~1% attenuation change per °C
+   */
+  private computeEffectiveAttenuationEnzyme(recipe: Recipe): number {
+    const baseAtt = recipe.yeasts.length > 0
+      ? recipe.yeasts[0].attenuation
+      : 0.75;
+
+    // --- Enzyme catalytic activity: Gaussian temperature optima ---
+    const betaActivity  = (T: number) => Math.exp(-0.5 * ((T - 63) / 5) ** 2);
+    const alphaActivity = (T: number) => Math.exp(-0.5 * ((T - 70) / 6) ** 2);
+
+    // --- Arrhenius thermal inactivation ---
+    // kd(T) = A × exp(-Ea / (R × T_K))   [min⁻¹]
+    // Parameters from Brandam et al. (2003), calibrated from mashing experiments.
+    const R_GAS = 8.314; // J/(mol·K)
+
+    // β-amylase: very temperature-sensitive, denatures rapidly above 65°C
+    //   Half-lives: ~38 hr at 60°C, ~2 hr at 67°C, ~33 min at 70°C, ~14 min at 72°C
+    const BETA_KD_A  = 7.6e60;   // pre-exponential factor
+    const BETA_KD_EA = 410700;   // activation energy (J/mol)
+
+    // 13% of β-amylase is a thermostable isoform that resists denaturation
+    // (De Schepper et al. 2022 — fractional conversion inactivation model)
+    const BETA_RESIDUAL = 0.13;
+
+    // α-amylase: very thermostable, essentially immortal at mashing temps
+    //   Half-lives: ~82 hr at 67°C, ~8 hr at 80°C, ~33 min at 90°C
+    //   Evans (2003): retains ~100% after 1 hr at 65°C during mashing
+    const ALPHA_KD_A  = 6.9e30;
+    const ALPHA_KD_EA = 224200;
+
+    const betaKd  = (T: number) => BETA_KD_A  * Math.exp(-BETA_KD_EA  / (R_GAS * (T + 273.15)));
+    const alphaKd = (T: number) => ALPHA_KD_A * Math.exp(-ALPHA_KD_EA / (R_GAS * (T + 273.15)));
+
+    // --- Accumulate enzyme work across mash steps ---
+    //
+    // "Work" = ∫ activity(T) × surviving_fraction(t) dt
+    //
+    // For β-amylase with residual fraction f_res:
+    //   surviving(t) = f_res + (1 - f_res) × labile_remaining × exp(-kd × t)
+    //   ∫₀ᵗ surviving(s) ds = f_res × t + labile × (1 - exp(-kd×t)) / kd
+    //
+    // Denaturation accumulates across steps: if 50% of labile β-amylase
+    // died in step 1 at 65°C, step 2 at 72°C starts with only 50%.
+
+    let betaWork = 0;
+    let alphaWork = 0;
+    let betaLabile  = 1.0; // surviving labile β fraction (relative to initial)
+    let alphaLabile = 1.0; // surviving α fraction
+
+    const steps = recipe.mashSteps.length > 0
+      ? recipe.mashSteps
+      : [{ temperatureC: 67, durationMinutes: 60 }];
+
+    for (const step of steps) {
+      const T = step.temperatureC ?? 67;
+      const t = Math.max(0, step.durationMinutes ?? 0);
+      if (t <= 0) continue;
+
+      const bRate = betaActivity(T);
+      const aRate = alphaActivity(T);
+      const bKd = betaKd(T);
+      const aKd = alphaKd(T);
+
+      // β-amylase work: residual (always active) + labile (decaying)
+      const bLabileInt = bKd * t > 1e-6
+        ? (1 - Math.exp(-bKd * t)) / bKd
+        : t; // Taylor approx when kd≈0
+      betaWork += bRate * (BETA_RESIDUAL * t + betaLabile * (1 - BETA_RESIDUAL) * bLabileInt);
+
+      // α-amylase work: no residual fraction (already extremely thermostable)
+      const aLabileInt = aKd * t > 1e-6
+        ? (1 - Math.exp(-aKd * t)) / aKd
+        : t;
+      alphaWork += aRate * alphaLabile * aLabileInt;
+
+      // Update surviving labile fractions for next step
+      betaLabile  *= Math.exp(-bKd * t);
+      alphaLabile *= Math.exp(-aKd * t);
+    }
+
+    const totalWork = betaWork + alphaWork;
+    if (totalWork <= 0) return 0;
+
+    const fermentableFraction = betaWork / totalWork;
+
+    // --- Reference: 67°C / 60 min single infusion ---
+    const refBKd = betaKd(67);
+    const refAKd = alphaKd(67);
+    const refBLabileInt = refBKd * 60 > 1e-6
+      ? (1 - Math.exp(-refBKd * 60)) / refBKd
+      : 60;
+    const refBetaWork  = betaActivity(67) * (BETA_RESIDUAL * 60 + (1 - BETA_RESIDUAL) * refBLabileInt);
+    const refALabileInt = refAKd * 60 > 1e-6
+      ? (1 - Math.exp(-refAKd * 60)) / refAKd
+      : 60;
+    const refAlphaWork = alphaActivity(67) * refALabileInt;
+    const refFraction  = refBetaWork / (refBetaWork + refAlphaWork);
+
+    // --- Log-space damping with variable sensitivity ---
+    //
+    // Maps the enzyme work ratio to effective attenuation. The raw ratio
+    // changes ~7%/°C (too steep). Log-space compression + sensitivity
+    // tuning matches the empirical ~1%/°C:
+    //
+    //   logRatio    = ln(fraction / refFraction)
+    //   sensitivity = BASE_S + ACCEL × logRatio²
+    //   scaledAtt   = baseAtt × exp(logRatio × sensitivity)
+    //
+    // BASE_S gives ~1.3%/°C at the 67°C reference. ACCEL adds a quadratic
+    // term that accelerates the curve at extreme temps where enzymes
+    // denature rapidly.
+
+    if (fermentableFraction <= 0) return 0;
+
+    const BASE_S = 0.10;   // calibrated for ~1.3%/°C at 67°C (empirical median ~2.5%/°C; conservative)
+    const ACCEL  = 0.008;  // quadratic acceleration at extremes
+
+    const logRatio    = Math.log(fermentableFraction / refFraction);
+    const sensitivity = BASE_S + ACCEL * logRatio * logRatio;
+    const scaledAtt   = baseAtt * Math.exp(logRatio * sensitivity);
+
+    return Math.max(0, Math.min(0.95, scaledAtt));
+  }
+
+  /**
+   * Full ODE kinetics attenuation model (Brandam et al. 2003).
+   *
+   * Unlike the enzyme_kinetics model which computes a work *ratio*,
+   * this model directly simulates the mash by tracking sugar species:
+   *   Starch →(α)→ Dextrins (non-fermentable)
+   *   Starch →(β)→ Fermentable sugars (maltose)
+   *   Dextrins →(β)→ Fermentable sugars
+   *
+   * Enzyme denaturation uses the same Arrhenius parameters (Brandam),
+   * and β-amylase retains 13% thermostable fraction (De Schepper 2022).
+   *
+   * The simulation is solved via semi-analytical Euler: enzyme survival
+   * is computed analytically (exact exponential decay), while sugar
+   * concentrations are updated with forward Euler at 0.5 min steps.
+   *
+   * Output: the fraction of total sugar that is fermentable (F), normalized
+   * against a 67°C/60min reference, then mapped to effective attenuation
+   * via log-space damping (same technique as enzyme_kinetics model).
+   *
+   * Advantages over enzyme_kinetics model:
+   *   - Tracks substrate depletion (enzymes compete for finite starch)
+   *   - Models the α→β pipeline (α produces dextrins that β then converts)
+   *   - More physically accurate step mash behavior
+   *
+   * Sources:
+   *   - Brandam et al., "A kinetic model for the mashing process" (2003)
+   *     Rate constants: ka=0.07 min⁻¹ (α), kb=0.02 min⁻¹ (β)
+   *   - De Schepper et al., J. Am. Soc. Brew. Chem. (2022) — 13% residual β
+   *   - Evans et al. (2003) — α-amylase thermostability validation
+   */
+  private computeEffectiveAttenuationODE(recipe: Recipe): number {
+    const baseAtt = recipe.yeasts.length > 0
+      ? recipe.yeasts[0].attenuation
+      : 0.75;
+
+    // --- Brandam catalytic rate constants (min⁻¹ at optimal temp) ---
+    const KA_REF = 0.07;  // α-amylase: starch → dextrins
+    const KB_REF = 0.02;  // β-amylase: starch/dextrins → fermentable
+
+    // Gaussian catalytic activity (same as enzyme_kinetics)
+    const betaActivity  = (T: number) => Math.exp(-0.5 * ((T - 63) / 5) ** 2);
+    const alphaActivity = (T: number) => Math.exp(-0.5 * ((T - 70) / 6) ** 2);
+
+    // Arrhenius denaturation (same parameters as enzyme_kinetics)
+    const R_GAS = 8.314;
+    const BETA_KD_A  = 7.6e60,  BETA_KD_EA = 410700, BETA_RESIDUAL = 0.13;
+    const ALPHA_KD_A = 6.9e30,  ALPHA_KD_EA = 224200;
+
+    const betaKd  = (T: number) => BETA_KD_A  * Math.exp(-BETA_KD_EA  / (R_GAS * (T + 273.15)));
+    const alphaKd = (T: number) => ALPHA_KD_A * Math.exp(-ALPHA_KD_EA / (R_GAS * (T + 273.15)));
+
+    // --- ODE solver: semi-analytical Euler ---
+    const DT = 0.5; // time step (minutes)
+
+    const simulateMash = (
+      mashSteps: Array<{ temperatureC?: number; durationMinutes?: number }>
+    ): number => {
+      let S = 1.0;  // starch (normalized, all available)
+      let D = 0;    // dextrins (non-fermentable)
+      let F = 0;    // fermentable sugars
+
+      let alphaLabile = 1.0;
+      let betaLabile  = 1.0;
+
+      for (const step of mashSteps) {
+        const T = step.temperatureC ?? 67;
+        const totalTime = Math.max(0, step.durationMinutes ?? 0);
+        if (totalTime <= 0) continue;
+
+        const aAct = alphaActivity(T);
+        const bAct = betaActivity(T);
+        const aKd  = alphaKd(T);
+        const bKd  = betaKd(T);
+
+        const nSteps = Math.max(1, Math.ceil(totalTime / DT));
+        const dt = totalTime / nSteps;
+
+        for (let i = 0; i < nSteps; i++) {
+          const t = i * dt;
+
+          // Analytical enzyme survival at time t within this step
+          const alpha = alphaLabile * Math.exp(-aKd * t);
+          const betaSurv = BETA_RESIDUAL + (1 - BETA_RESIDUAL) * betaLabile * Math.exp(-bKd * t);
+
+          // Effective catalytic rates
+          const ka = KA_REF * aAct * alpha;
+          const kb = KB_REF * bAct * betaSurv;
+
+          // Sugar species changes (Euler step)
+          // dS/dt = -(ka + kb) * S
+          // dD/dt = ka * S - kb * D
+          // dF/dt = kb * (S + D)
+          const dS = (ka + kb) * S * dt;
+          const dDfromStarch = ka * S * dt;
+          const dDtaken = kb * D * dt;
+          const dFfromStarch = kb * S * dt;
+          const dFfromDextrin = dDtaken;
+
+          S = Math.max(0, S - dS);
+          D = Math.max(0, D + dDfromStarch - dDtaken);
+          F = Math.max(0, F + dFfromStarch + dFfromDextrin);
+        }
+
+        // Carry over enzyme denaturation for next step
+        alphaLabile *= Math.exp(-aKd * totalTime);
+        betaLabile  *= Math.exp(-bKd * totalTime);
+      }
+
+      // Fermentable fraction of ALL sugar (including unconverted starch as non-fermentable)
+      // S + D + F = 1.0 by conservation, so total = 1
+      return F;
+    };
+
+    const steps = recipe.mashSteps.length > 0
+      ? recipe.mashSteps
+      : [{ temperatureC: 67, durationMinutes: 60 }];
+
+    const actualF = simulateMash(steps);
+    const refF = simulateMash([{ temperatureC: 67, durationMinutes: 60 }]);
+
+    if (refF <= 0) return 0;
+    if (actualF <= 0) return 0;
+
+    // --- Log-space damping (same technique as enzyme_kinetics model) ---
+    //
+    // The raw ODE fermentable fraction changes ~8–10%/°C — far steeper
+    // than the empirical ~1%/°C (Braukaiser). This is intrinsic to the
+    // enzyme rate constants: α produces dextrins 3.5× faster than β
+    // produces fermentable sugars, so small changes in the β/α balance
+    // cause large swings in the output ratio.
+    //
+    // Log-space damping compresses the ratio to match reality while
+    // preserving the ODE model's advantages (substrate depletion,
+    // α→β pipeline, accumulated denaturation).
+    const logRatio = Math.log(actualF / refF);
+    const BASE_S = 0.10;   // calibrated for ~1.3%/°C at 67°C (empirical median ~2.5%/°C; conservative)
+    const ACCEL  = 0.008;  // quadratic acceleration at extremes
+    const sensitivity = BASE_S + ACCEL * logRatio * logRatio;
+    const effAtt = baseAtt * Math.exp(logRatio * sensitivity);
+
+    return Math.max(0, Math.min(0.95, effAtt));
   }
 
   /**

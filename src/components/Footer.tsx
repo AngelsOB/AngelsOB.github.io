@@ -11,16 +11,32 @@ const footerSections = [
     ],
   },
   {
+    title: "Learn",
+    links: [
+      { href: "/learn/ibu", label: "IBU & Bitterness" },
+      { href: "/learn/gravity", label: "Gravity & ABV" },
+      { href: "/learn/mash-ph", label: "Mash pH" },
+      { href: "/learn", label: "All Topics" },
+    ],
+  },
+  {
     title: "Account",
     links: [
       { href: "/recipes", label: "My Recipes" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
     ],
   },
 ] as const;
 
 export default function Footer() {
   return (
-    <footer className="relative mt-12">
+    <footer data-physics="footer" className="relative mt-12">
       {/* Decorative divider — accent-tinted gradient line */}
       <div
         className="mx-auto h-px max-w-5xl"

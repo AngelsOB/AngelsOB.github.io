@@ -8,7 +8,8 @@ import {
   getDocs,
   getDocsFromCache,
   setDoc,
-  deleteDoc,
+  runTransaction,
+  increment,
   query,
   where,
   orderBy,
@@ -123,12 +124,50 @@ export class FirestoreRecipeRepository {
     await setDoc(docRef, clean);
   }
 
+  /**
+   * Save a NEW recipe and atomically increment the user's recipeCount.
+   * Uses a Firestore transaction for consistency.
+   *
+   * The caller is responsible for ensuring this is actually a new recipe
+   * (recipeStore checks `!recipes.some(r => r.id === id)` before calling).
+   * We avoid reading the recipe doc inside the transaction because Firestore
+   * security rules deny reads on non-existent recipe docs (no ownerId to match).
+   */
+  async saveNewAsync(recipe: Recipe): Promise<void> {
+    const recipeRef = doc(this.recipesRef, recipe.id);
+    const userRef = doc(db, "users", this.userId);
+    const { id: _id, ...data } = recipe;
+    const clean = JSON.parse(JSON.stringify({
+      ...data,
+      ownerId: this.userId,
+      isPublic: (data as Record<string, unknown>).isPublic ?? true,
+      updatedAt: new Date().toISOString(),
+    }));
+
+    await runTransaction(db, async (transaction) => {
+      // Read user doc to ensure it exists (required for update)
+      await transaction.get(userRef);
+      transaction.set(recipeRef, clean);
+      transaction.update(userRef, { recipeCount: increment(1) });
+    });
+  }
+
   delete(id: RecipeId): void {
     this.deleteAsync(id);
   }
 
   async deleteAsync(id: RecipeId): Promise<void> {
-    await deleteDoc(doc(this.recipesRef, id));
+    const recipeRef = doc(this.recipesRef, id);
+    const userRef = doc(db, "users", this.userId);
+
+    // We avoid reading the recipe doc inside the transaction because
+    // Firestore security rules deny reads on non-existent recipe docs
+    // (no ownerId to match). The caller ensures the recipe exists.
+    await runTransaction(db, async (transaction) => {
+      await transaction.get(userRef); // Ensure user doc exists
+      transaction.delete(recipeRef);
+      transaction.update(userRef, { recipeCount: increment(-1) });
+    });
   }
 
   deleteAll(): void {

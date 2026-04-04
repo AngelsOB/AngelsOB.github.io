@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     canonical: "./",
   },
   title: {
-    default: "BeerApp - Homebrewing Recipe Builder & Calculator",
-    template: "%s | BeerApp",
+    default: "Brewing.It - Homebrewing Recipe Builder & Calculator",
+    template: "%s | Brewing.It",
   },
   description:
     "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more. Free brewing calculator for all-grain and extract brewers.",
@@ -26,18 +26,18 @@ export const metadata: Metadata = {
     "BJCP styles",
     "craft beer",
   ],
-  authors: [{ name: "BeerApp" }],
+  authors: [{ name: "Brewing.It" }],
   openGraph: {
     type: "website",
-    url: "./",
-    title: "BeerApp - Homebrewing Recipe Builder & Calculator",
+    url: "/",
+    title: "Brewing.It - Homebrewing Recipe Builder & Calculator",
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
-    siteName: "BeerApp",
+    siteName: "Brewing.It",
   },
   twitter: {
     card: "summary_large_image",
-    title: "BeerApp - Homebrewing Recipe Builder & Calculator",
+    title: "Brewing.It - Homebrewing Recipe Builder & Calculator",
     description:
       "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more.",
   },
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "apple-mobile-web-app-title": "BeerApp",
+    "apple-mobile-web-app-title": "Brewing.It",
     "theme-color": "#F5A623",
   },
 };
@@ -69,7 +69,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Shadows+Into+Light&family=Rock+Salt&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Caveat:wght@400;500;600;700&family=Shadows+Into+Light&family=Rock+Salt&display=swap"
           rel="stylesheet"
         />
       </head>

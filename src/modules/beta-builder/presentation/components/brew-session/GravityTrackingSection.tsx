@@ -22,7 +22,7 @@ export function GravityTrackingSection({
   return (
     <SectionCard title="Gravity" description="Expected vs recorded for this session." tone="amber">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-md bg-[rgb(var(--bg))] p-3">
+        <div className="rounded-md bg-[var(--bg)] p-3">
           <div className="text-xs text-gray-500 uppercase">Original Gravity</div>
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-gray-500">Expected</span>
@@ -38,7 +38,7 @@ export function GravityTrackingSection({
             />
           </div>
         </div>
-        <div className="rounded-md bg-[rgb(var(--bg))] p-3">
+        <div className="rounded-md bg-[var(--bg)] p-3">
           <div className="text-xs text-gray-500 uppercase">Final Gravity</div>
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-gray-500">Expected</span>

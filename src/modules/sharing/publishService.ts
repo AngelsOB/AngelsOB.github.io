@@ -50,6 +50,7 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
       abv: Math.round(calc.abv * 10) / 10,
     },
     tags: recipe.tags || [],
+    labelUrl: recipe.labelUrl || null,
     hopNames,
     createdAt: recipe.createdAt,
     publishedAt: recipe.publishedAt || now,

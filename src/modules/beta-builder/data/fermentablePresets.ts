@@ -110,10 +110,13 @@ export function categorizeFermentable(preset: FermentablePreset): FermentableGro
  * Represents the fraction of extracted sugars that brewer's yeast can ferment.
  * These are category-level defaults — individual ingredients may override via
  * the `fermentability` field on FermentablePreset or Recipe.Fermentable.
+ *
+ * Crystal/Caramel malts use a color-based scale instead of a flat value — see
+ * `crystalFermentability()` below.
  */
 const CATEGORY_FERMENTABILITY: Record<FermentableGroup, number> = {
   "Base malts": 1.00,               // Pure starch — mash temp determines fermentable split
-  "Crystal/Caramel": 0.50,          // Pre-converted during kilning; ~40-50% fermentable when steeped alone
+  "Crystal/Caramel": 0.75,          // Fallback only — crystalFermentability() used when color is known
   "Roasted": 0.60,                  // Heavily modified starch, partially pre-converted
   "Toasted & specialty": 0.85,      // Lightly pre-converted, mostly mashable starch
   "Adjuncts (mashable/flaked)": 1.00,// Pure starch (oats, wheat, rice) — mash temp handles the split
@@ -121,6 +124,25 @@ const CATEGORY_FERMENTABILITY: Record<FermentableGroup, number> = {
   "Sugars": 1.00,                   // Fully fermentable (overridden for lactose/maltodextrin)
   "Lauter aids & other": 0.00,      // Rice hulls etc — no gravity contribution
 };
+
+/**
+ * Color-based fermentability for Crystal/Caramel malts.
+ *
+ * Briess maltster data: crystal malt extract is 10% (lighter) – 25% (darker)
+ * less fermentable than base malt. Validated by the Beertech mash experiment
+ * (C10 → −1% att at 15% usage, C40 → −3%, C120 → −4%).
+ *
+ * Linear interpolation from 0.90 (10°L) to 0.75 (120°L), clamped to [0.50, 0.95].
+ *
+ * Sources:
+ *   - Briess, "Caramel Malt User's Manual" — brewingwithbriess.com
+ *   - Beertech, "Crystal Malt Experiment — Attenuation Test" (2011)
+ */
+function crystalFermentability(colorLovibond: number): number {
+  // Linear interpolation: 10°L → 0.90, 120°L → 0.75
+  const f = 0.90 - ((colorLovibond - 10) * 0.15) / 110;
+  return Math.max(0.50, Math.min(0.95, f));
+}
 
 /**
  * Name patterns for known non-/partially-fermentable ingredients.
@@ -139,7 +161,8 @@ const NAME_OVERRIDES: Array<{ pattern: RegExp; fermentability: number }> = [
  * Priority:
  *  1. Explicit `preset.fermentability` if set (custom presets)
  *  2. Name-based override (lactose, maltodextrin → 0)
- *  3. Category default from CATEGORY_FERMENTABILITY
+ *  3. Color-based scale for Crystal/Caramel (Briess data)
+ *  4. Category default from CATEGORY_FERMENTABILITY
  */
 export function getFermentability(preset: FermentablePreset): number {
   // 1. Explicit override on preset
@@ -150,8 +173,13 @@ export function getFermentability(preset: FermentablePreset): number {
     if (pattern.test(preset.name)) return fermentability;
   }
 
-  // 3. Category default
+  // 3. Color-based scale for Crystal/Caramel
   const category = categorizeFermentable(preset);
+  if (category === "Crystal/Caramel") {
+    return crystalFermentability(preset.colorLovibond);
+  }
+
+  // 4. Category default
   return CATEGORY_FERMENTABILITY[category];
 }
 
@@ -173,11 +201,17 @@ export function inferFermentability(fermentable: { name: string; colorLovibond: 
     type: inferType(fermentable.name),
   };
   const category = categorizeFermentable(pseudoPreset);
+
+  // Color-based scale for Crystal/Caramel
+  if (category === "Crystal/Caramel") {
+    return crystalFermentability(fermentable.colorLovibond);
+  }
+
   return CATEGORY_FERMENTABILITY[category];
 }
 
 /** Infer the preset type from name (for recipe fermentables that don't store type) */
-function inferType(name: string): FermentablePreset["type"] {
+export function inferType(name: string): FermentablePreset["type"] {
   const n = name.toLowerCase();
   if (
     n.includes("extract") || n.includes("lme") || n.includes("dme") ||

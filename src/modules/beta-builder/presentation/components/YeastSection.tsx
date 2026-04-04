@@ -13,6 +13,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "../stores/recipeStore";
 import { usePresetStore } from "../stores/presetStore";
+import { toast } from "../../../../stores/toastStore";
 import EmptyState from "../../../../components/EmptyState";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import type { Yeast, StarterInfo } from "../../domain/models/Recipe";
@@ -78,6 +79,7 @@ export default function YeastSection() {
   // Handle saving a custom yeast preset
   const handleSaveCustomPreset = (preset: YeastPreset) => {
     saveYeastPreset(preset);
+    toast.success(`"${preset.name}" saved — select it from the list to add`);
   };
 
   // Handle starter info changes from StarterCalculator
