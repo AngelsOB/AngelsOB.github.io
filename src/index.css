@@ -3354,7 +3354,8 @@ input[type="number"],
 
   /* Section card — accent-tinted background with prominent noise & top border */
   .brew-section {
-    @apply mb-6 rounded-2xl p-6;
+    @apply mb-6 rounded-2xl p-6 relative;
+    z-index: 1;
 
     /* Section-local card colours — blend accent with SRM-tinted --bg so
        sections track the page background while keeping their accent hue.
@@ -3400,16 +3401,21 @@ input[type="number"],
         )
         border-box;
     background-size: auto, auto, auto, auto, auto;
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
-      0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-500) 6%, transparent),
-      0 6px 6px -3px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
-      0 12px 12px -6px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
-      0 24px 24px -12px color-mix(in oklch, var(--brew-accent-500) 3%, transparent);
-    transition-property: box-shadow;
-    transition-duration: 200ms;
-    transition-timing-function: ease;
+    --glow-opacity: 0.18;
+  }
+  .brew-section::before {
+    content: "";
+    position: absolute;
+    left: -120px;
+    right: -120px;
+    top: 0;
+    bottom: 0;
+    z-index: -1;
+    border-radius: 24px;
+    background: var(--brew-accent-500);
+    opacity: var(--glow-opacity);
+    filter: blur(100px);
+    pointer-events: none;
   }
   .dark .brew-section {
     /* Dark section-local card colours — blend accent with SRM-tinted --bg */
@@ -3445,31 +3451,11 @@ input[type="number"],
       0 3px 3px -1.5px color-mix(in oklch, var(--brew-accent-900) 12%, transparent),
       0 6px 6px -3px color-mix(in oklch, var(--brew-accent-900) 10%, transparent),
       0 12px 12px -6px rgba(0, 0, 0, 0.1),
-      0 24px 24px -12px rgba(0, 0, 0, 0.08),
-      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
+      0 24px 24px -12px rgba(0, 0, 0, 0.08);
+    --glow-opacity: 0.25;
     transition: box-shadow 0.3s ease;
   }
 
-  .brew-section:hover {
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-500) 12%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-500) 10%, transparent),
-      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-500) 8%, transparent),
-      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-500) 7%, transparent),
-      0 16px 16px -8px color-mix(in oklch, var(--brew-accent-500) 5%, transparent),
-      0 36px 36px -18px color-mix(in oklch, var(--brew-accent-500) 4%, transparent),
-      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
-  }
-  .dark .brew-section:hover {
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, var(--brew-accent-700) 18%, transparent),
-      0 1px 1px -0.5px color-mix(in oklch, var(--brew-accent-900) 18%, transparent),
-      0 4px 4px -2px color-mix(in oklch, var(--brew-accent-900) 16%, transparent),
-      0 8px 8px -4px color-mix(in oklch, var(--brew-accent-900) 14%, transparent),
-      0 16px 16px -8px rgba(0, 0, 0, 0.12),
-      0 36px 36px -18px rgba(0, 0, 0, 0.1),
-      0 40px 90px 30px color-mix(in oklch, var(--brew-accent-500) 12%, transparent);
-  }
 
   /* Warm inset input — translucent inside glass containers */
   .brew-input {
