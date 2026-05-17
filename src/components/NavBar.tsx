@@ -10,10 +10,10 @@ import UserMenu from "../modules/auth/components/UserMenu";
 import { useAuthStore } from "../modules/auth/authStore";
 
 const navLinks = [
-  { href: "/recipes", label: "My Recipes" },
-  { href: "/browse", label: "Browse" },
-  { href: "/calculators", label: "Calculators" },
-  { href: "/learn", label: "Learn" },
+  { href: "/betabuilder/recipes", label: "My Recipes" },
+  { href: "/betabuilder/browse", label: "Browse" },
+  { href: "/betabuilder/calculators", label: "Calculators" },
+  { href: "/betabuilder/learn", label: "Learn" },
 ] as const;
 
 function NavLinkItem({

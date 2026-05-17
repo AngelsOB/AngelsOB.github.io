@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import HydrometerCorrectionCalculator from "@/components/HydrometerCorrectionCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Hydrometer Correction Calculator",
@@ -31,7 +31,7 @@ export default function HydrometerCalcPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Hydrometer Correction"
         subtitle="Because your sample is never the right temperature"
         relatedLearn={["/learn/abv-calculator", "/learn/gravity"]}
@@ -83,7 +83,7 @@ export default function HydrometerCalcPage() {
         <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>
           <li>Kell, G.S. &ldquo;Density, Thermal Expansivity, and Compressibility of Liquid Water.&rdquo; <em>J. Chem. Eng. Data</em> 20(1), 1975.</li>
         </ul>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

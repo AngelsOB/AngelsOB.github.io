@@ -109,7 +109,7 @@ export default function Logo({ size = "default" }: { size?: "default" | "sm" }) 
       : "text-lg sm:text-xl font-semibold tracking-tight";
 
   return (
-    <Link href="/" className="group inline-flex items-center gap-1.5">
+    <Link href="/betabuilder" className="group inline-flex items-center gap-1.5">
       <span
         className="transition-transform duration-300 ease-out group-hover:scale-110 group-hover:rotate-[-12deg]"
         style={{ color: "var(--coral-500)" }}

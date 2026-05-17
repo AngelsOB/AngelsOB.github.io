@@ -1,0 +1,119 @@
+/* Hop & Skip — design tokens
+   Scoped to .hs-theme so existing pages stay untouched.
+   When HS becomes the only style, move this to :root. */
+
+.hs-theme {
+  /* Paper & ink (light) */
+  --hs-cream: #f4eedd;
+  --hs-cream-2: #fbf6ea;
+  --hs-paper: #fffbef;
+  --hs-ink: #1a1612;
+  --hs-muted: #5a4f42;
+
+  /* Ingredient accents */
+  --hs-malt: #f2c14e;
+  --hs-roast: #d4452c;
+  --hs-water: #2b6fb8;
+  --hs-hops: #4a8a3d;
+  --hs-yeast: #ee7755;
+  --hs-honey: #ffd97a;
+
+  /* Type families */
+  --hs-font-display: "Archivo Black", "Space Grotesk", system-ui, sans-serif;
+  --hs-font-body: "Space Grotesk", system-ui, sans-serif;
+  --hs-font-script: "Caveat", "Comic Sans MS", cursive;
+  --hs-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Radius */
+  --hs-radius-sm: 6px;
+  --hs-radius-md: 12px;
+  --hs-radius-lg: 14px;
+  --hs-radius-xl: 18px;
+  --hs-radius-pill: 999px;
+
+  /* Stroke */
+  --hs-stroke: 2px solid var(--hs-ink);
+  --hs-stroke-thin: 1.5px solid var(--hs-ink);
+
+  /* Hard offset shadows — never blurred */
+  --hs-shadow-1: 2px 2px 0 var(--hs-ink);
+  --hs-shadow-2: 3px 3px 0 var(--hs-ink);
+  --hs-shadow-3: 4px 4px 0 var(--hs-ink);
+  --hs-shadow-4: 6px 6px 0 var(--hs-ink);
+
+  /* Motion */
+  --hs-tilt-script: -3deg;
+  --hs-tilt-card: 0.3deg;
+  --hs-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* Apply base typography + paper bg inside the wrapper. */
+  background: var(--hs-cream);
+  color: var(--hs-ink);
+  font-family: var(--hs-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark theme tokens — auto-engaged when the classic site's `.dark` class
+   is on <html>, OR opt-in via explicit `[data-theme="dark"]` attribute.
+
+   The cream / paper / ink trio flips to dark warm browns with a cream
+   ink. Box shadows are still `Xpx Xpx 0 var(--hs-ink)` so they shift to
+   a cream color in dark mode — that's the brand: hard, pixel-bordered
+   cards in any palette. Ingredient accents (malt, hops, water, yeast,
+   roast, honey) keep the same vibrant colors. */
+.dark .hs-theme,
+.hs-theme.dark,
+.hs-theme[data-theme="dark"] {
+  --hs-cream: #14110d;
+  --hs-cream-2: #1c1814;
+  --hs-paper: #25201a;
+  --hs-ink: #f4ede0;
+  --hs-muted: #a39a8c;
+  color-scheme: dark;
+}
+
+/* Tabular numerics for every numeric in the HS surface */
+.hs-theme [data-tabular],
+.hs-theme .hs-tabular,
+.hs-theme input[type="number"] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Selection */
+.hs-theme ::selection {
+  background: color-mix(in oklch, var(--hs-malt) 70%, transparent);
+  color: var(--hs-ink);
+}
+
+/* Keyframes for tab slides + animations */
+@keyframes hs-slide-from-right {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes hs-slide-from-left {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes hs-fade-in-up {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

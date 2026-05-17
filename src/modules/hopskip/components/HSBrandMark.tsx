@@ -1,0 +1,82 @@
+import Link from "next/link";
+
+import { hsTokens } from "../tokens";
+import HSScriptNote from "./HSScriptNote";
+
+interface Props {
+  caption?: string;
+  href?: string;
+}
+
+export default function HSBrandMark({ caption, href = "/" }: Props) {
+  const ink = hsTokens.ink;
+  const mark = (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          background: hsTokens.roast,
+          borderRadius: "50%",
+          border: `2px solid ${ink}`,
+        }}
+      />
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          background: hsTokens.malt,
+          marginLeft: -10,
+          border: `2px solid ${ink}`,
+          borderRadius: 4,
+        }}
+      />
+      <div
+        style={{
+          width: 24,
+          height: 24,
+          background: hsTokens.water,
+          marginLeft: -10,
+          border: `2px solid ${ink}`,
+          clipPath: "polygon(0 0, 100% 0, 100% 100%)",
+        }}
+      />
+    </div>
+  );
+
+  const inner = (
+    <>
+      {mark}
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 22,
+          letterSpacing: "-0.02em",
+          color: hsTokens.ink,
+        }}
+      >
+        BREWING.IT
+      </span>
+      {caption ? (
+        <HSScriptNote color={hsTokens.yeast} size={20} style={{ marginLeft: 4 }}>
+          {caption}
+        </HSScriptNote>
+      ) : null}
+    </>
+  );
+
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        textDecoration: "none",
+        color: hsTokens.ink,
+      }}
+    >
+      {inner}
+    </Link>
+  );
+}

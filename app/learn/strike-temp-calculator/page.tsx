@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import StrikeTempCalculator from "@/components/StrikeTempCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Strike Water Temperature Calculator",
@@ -48,7 +48,7 @@ export default function StrikeTempCalcPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="Strike Water Temperature Calculator"
         subtitle="Hit your mash temp on the first pour"
         relatedLearn={[
@@ -92,7 +92,7 @@ export default function StrikeTempCalcPage() {
           How We Calculate It
         </h2>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Palmer Heat Balance Equation"
           expression={
             "T_{strike} = T_{mash} + \\frac{0.41}{r} \\times (T_{mash} - T_{grain})"
@@ -197,7 +197,7 @@ export default function StrikeTempCalcPage() {
           temperature — especially in winter. The recipe builder defaults to
           20°C (68°F), which is fine for grain stored indoors.
         </p>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

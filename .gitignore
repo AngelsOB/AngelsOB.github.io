@@ -26,3 +26,9 @@ dist-ssr
 
 # Binaries
 stripe
+
+# Local Claude Code config
+.claude/
+
+# TypeScript build artifacts
+tsconfig.tsbuildinfo

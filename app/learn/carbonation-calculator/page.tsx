@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import CarbonationCalculator from "@/components/CarbonationCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Carbonation Calculator: PSI for Your CO₂ Volumes",
@@ -31,7 +31,7 @@ export default function CarbonationCalcPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Carbonation Calculator"
         subtitle="The right pressure for the right fizz"
         relatedLearn={["/learn/abv-calculator", "/learn/gravity"]}
@@ -74,7 +74,7 @@ export default function CarbonationCalcPage() {
           </div>
         </div>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

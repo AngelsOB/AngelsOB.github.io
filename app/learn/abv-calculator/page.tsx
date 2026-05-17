@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import AbvCalculator from "@/components/AbvCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "ABV Calculator: Alcohol by Volume",
@@ -48,7 +48,7 @@ export default function AbvCalcPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="ABV Calculator"
         subtitle="How strong is your beer?"
         relatedLearn={["/learn/gravity", "/learn/hydrometer-calculator"]}
@@ -94,7 +94,7 @@ export default function AbvCalcPage() {
           How We Calculate It
         </h2>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="ABV Formula"
           expression={"ABV = (OG - FG) \\times 131.25"}
           description="The industry standard formula. Accurate to within 0.1% ABV for beers under 1.080 OG."
@@ -168,7 +168,7 @@ export default function AbvCalcPage() {
           are brewing.
         </p>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

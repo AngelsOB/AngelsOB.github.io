@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LearnArticle from "@/modules/learn/LearnArticle";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 import {
   EquipmentMockup,
   FermentablesMockup,
   WaterChemMockup,
   MashMockup,
   BrewDayMockup,
-} from "@/modules/learn/BuilderMockups";
+} from "@/modules/hopskip/components/HSBuilderMockups";
 
 export const metadata: Metadata = {
   title: "How To Use Brewing.It: Quick Start Guide",
@@ -115,7 +115,7 @@ export default function GettingStartedPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="How To Use Brewing.It"
         subtitle="A quick start guide to the recipe builder"
         relatedLearn={["/learn/ibu", "/learn/gravity", "/learn/mash-ph"]}
@@ -419,7 +419,7 @@ export default function GettingStartedPage() {
             : priming sugar amounts or keg PSI for your target CO₂ volumes
           </p>
         </div>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

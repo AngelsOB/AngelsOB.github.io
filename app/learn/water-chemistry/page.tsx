@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import { WaterChemMockup } from "@/modules/learn/BuilderMockups";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import { WaterChemMockup } from "@/modules/hopskip/components/HSBuilderMockups";
 
 export const metadata: Metadata = {
   title: "Water Chemistry & the Auto-Calculator",
@@ -50,7 +50,7 @@ export default function WaterChemistryPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="Water Chemistry"
         subtitle="Why your water matters, and how we handle it for you"
         relatedLearn={["/learn/mash-ph", "/learn/getting-started"]}
@@ -356,7 +356,7 @@ export default function WaterChemistryPage() {
           outside the 5.2–5.6 range, the builder recommends acid or baking
           soda adjustments.
         </p>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

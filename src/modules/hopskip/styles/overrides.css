@@ -1,0 +1,1160 @@
+/* =====================================================================
+   Hop & Skip overrides for classic .brew-* components.
+   Applied only inside .hs-theme, so classic pages remain untouched.
+
+   Hierarchy:
+     - ONE 2px ink frame per top surface (sections, modals, buttons).
+     - Inner rows/cards/inputs use FILLS not outlines.
+     - Inputs sit on the lightest fill (paper); their parent rows sit on
+       cream-2; the section sits on paper. Three tiers of contrast.
+
+   Marker classes the builder uses to switch override behaviour:
+     - .hs-section-frame   wraps a tabbed section body (no top border).
+     - .hs-loose-section   wraps a standalone section (full outlined card).
+     - .hs-bjcp / .hs-bjcp-grid  BJCP style range band.
+     - .brew-theme         marks an element whose descendants are classic
+                           components — required for some descendant rules.
+   ===================================================================== */
+
+/* ────────────── Per-section ingredient accent → CSS var ────────────── */
+
+.hs-theme .brew-section[data-accent="grain"]        { --hs-section-accent: var(--hs-malt); }
+.hs-theme .brew-section[data-accent="hops"]         { --hs-section-accent: var(--hs-hops); }
+.hs-theme .brew-section[data-accent="mash"]         { --hs-section-accent: var(--hs-roast); }
+.hs-theme .brew-section[data-accent="water"]        { --hs-section-accent: var(--hs-water); }
+.hs-theme .brew-section[data-accent="yeast"]        { --hs-section-accent: var(--hs-yeast); }
+.hs-theme .brew-section[data-accent="fermentation"] { --hs-section-accent: var(--hs-honey); }
+.hs-theme .brew-section[data-accent="equipment"]    { --hs-section-accent: var(--hs-muted); }
+.hs-theme .brew-section[data-accent="targets"]      { --hs-section-accent: var(--hs-ink); }
+
+/* Override the classic --brew-card / --brew-card-inset variables under HS
+   so anything reading them tracks our palette automatically. The classic
+   stylesheet rebinds these inside `.brew-section` (and again inside
+   `.dark .brew-section`), so we redeclare with !important to beat it on
+   the element itself. */
+.hs-theme,
+.hs-theme .brew-section,
+.dark .hs-theme,
+.dark .hs-theme .brew-section,
+.hs-theme.dark,
+.hs-theme.dark .brew-section {
+  --brew-card: var(--hs-paper) !important;
+  --brew-card-inset: var(--hs-cream-2) !important;
+}
+
+/* Belt-and-suspenders: any `--bg` references inside HS should resolve
+   to our cream so SRM-tinted page-background computations don't go dark. */
+.hs-theme,
+.dark .hs-theme,
+.hs-theme.dark {
+  --bg: var(--hs-cream) !important;
+}
+
+/* ────────────── SURFACES ────────────── */
+
+/* Standalone section frame (e.g. Advanced expander) — full outlined card. */
+.hs-theme .hs-loose-section .brew-section {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+  padding: 26px 26px 28px !important;
+  margin-bottom: 0 !important;
+  animation: none !important;
+  --glow-opacity: 0 !important;
+}
+
+/* Tabbed section — NO top border. The bar across the top is drawn by the
+   tab container's own `borderBottom: 2px ink`. Each tab has
+   `marginBottom: -2` to overlap that bar; the active tab paints its
+   slice in paper (the section's bg) to erase the line, creating the
+   binder gap so the tab "merges" into the section.
+
+   The section can't draw its own top border here because `brew-animate-in`
+   puts a `transform` on it (new stacking context) and the active tab can
+   never climb above that to cover an ink top border. So we drop the top
+   entirely and rely on the tab row's bottom border. */
+.hs-theme .hs-section-frame .brew-section {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border-left: 2px solid var(--hs-ink) !important;
+  border-right: 2px solid var(--hs-ink) !important;
+  border-bottom: 2px solid var(--hs-ink) !important;
+  border-top: none !important;
+  border-radius: 0 0 var(--hs-radius-lg) var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+  padding: 26px 26px 28px !important;
+  margin-bottom: 0 !important;
+  animation: none !important;
+  --glow-opacity: 0 !important;
+  /* The classic .brew-section sets `position: relative; z-index: 1`, putting
+     itself in a stacking context that paints OVER the tab container (which
+     also has z-index: 1). Force a lower z-index so the tab borderBottoms can
+     visually erase the line above the section in the marginBottom: -2 overlap
+     zone. The tab container itself has zIndex: 5 in JSX to dominate. */
+  z-index: 0 !important;
+  position: relative !important;
+}
+/* Belt-and-suspenders: nuke any z-index on the .hs-section-frame wrapper too. */
+.hs-theme .hs-section-frame {
+  z-index: 0 !important;
+}
+
+/* Catch-all for any other brew-section appearing in hs-theme that we
+   haven't wrapped specifically — give it the full outlined card. */
+.hs-theme .brew-section:not(.hs-section-frame .brew-section):not(.hs-loose-section .brew-section) {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+  padding: 26px 26px 28px !important;
+  animation: none !important;
+  --glow-opacity: 0 !important;
+}
+
+/* Kill the classic radial glow ::before and the dark-mode breathing
+   animation on any brew-section inside HS. */
+.hs-theme .brew-section::before,
+.hs-theme .brew-section::after {
+  display: none !important;
+  content: none !important;
+}
+.dark .hs-theme .brew-section,
+.hs-theme.dark .brew-section {
+  animation: none !important;
+}
+
+.hs-theme .brew-section-title {
+  font-family: var(--hs-font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.92 !important;
+  color: var(--hs-ink) !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  font-size: 28px !important;
+  margin-bottom: 12px !important;
+  background: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: var(--hs-ink) !important;
+}
+
+/* ────────────── INPUTS — transparent so they pick up the parent fill ────────────── */
+
+.hs-theme .brew-input,
+.hs-theme .brew-theme input[type="text"],
+.hs-theme .brew-theme input[type="number"],
+.hs-theme .brew-theme input[type="search"],
+.hs-theme .brew-theme input[type="email"],
+.hs-theme .brew-theme input[type="tel"],
+.hs-theme .brew-theme textarea {
+  background: var(--hs-paper) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: var(--hs-ink) !important;
+  font-family: var(--hs-font-body) !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  transition: border-color 120ms ease, background 120ms ease !important;
+}
+.hs-theme .brew-theme select {
+  background-color: var(--hs-paper) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  color: var(--hs-ink) !important;
+  font-family: var(--hs-font-body) !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+.hs-theme .brew-input:focus,
+.hs-theme .brew-theme input:focus,
+.hs-theme .brew-theme select:focus,
+.hs-theme .brew-theme textarea:focus {
+  outline: none !important;
+  border-color: var(--hs-ink) !important;
+  box-shadow: 0 0 0 1px var(--hs-ink) !important;
+}
+
+/* Compact inputs inside hop addition rows — keep them inline & transparent */
+.hs-theme .brew-theme .brew-row-hover input[type="number"],
+.hs-theme .brew-theme .brew-row-hover select {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  font-variant-numeric: tabular-nums !important;
+  min-width: 56px !important;
+  width: auto !important;
+}
+.hs-theme .brew-theme .brew-row-hover input[type="number"]:focus,
+.hs-theme .brew-theme .brew-row-hover select:focus {
+  background: color-mix(in oklch, var(--hs-malt) 25%, transparent) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ────────────── HOP ADDITION ROW WRAPPER ────────────── */
+
+.hs-theme .brew-theme .brew-row-hover > div[class*="rounded-lg"][style*="background"] {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  box-shadow: none !important;
+}
+.hs-theme .brew-theme .brew-row-hover [class*="border-l"],
+.hs-theme .brew-theme .brew-row-hover [class*="border-r"] {
+  border-color: color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+}
+
+/* ────────────── BUTTONS ────────────── */
+
+.hs-theme .brew-btn-primary {
+  background: var(--hs-ink) !important;
+  background-image: none !important;
+  color: var(--hs-cream) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-pill) !important;
+  padding: 9px 18px !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  box-shadow: 3px 3px 0 var(--hs-section-accent, var(--hs-roast)) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease !important;
+}
+.hs-theme .brew-btn-primary:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0 var(--hs-section-accent, var(--hs-roast)) !important;
+}
+.hs-theme .brew-btn-primary:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0 var(--hs-section-accent, var(--hs-roast)) !important;
+}
+.hs-theme .brew-btn-ghost {
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--hs-ink) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 30%, transparent) !important;
+  border-radius: var(--hs-radius-pill) !important;
+  padding: 8px 16px !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+.hs-theme .brew-btn-ghost:hover {
+  background: var(--hs-cream-2) !important;
+  border-color: var(--hs-ink) !important;
+  color: var(--hs-ink) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ────────────── TAGS, CHIPS, GAUGES, ROWS ────────────── */
+
+.hs-theme .brew-tag {
+  background: color-mix(in oklch, var(--hs-section-accent, var(--hs-malt)) 25%, var(--hs-cream-2)) !important;
+  color: var(--hs-ink) !important;
+  border: none !important;
+  border-radius: var(--hs-radius-pill) !important;
+  box-shadow: none !important;
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 10px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.hs-theme .brew-chip,
+.hs-theme .brew-chip-label {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  color: var(--hs-ink) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 25%, transparent) !important;
+  border-radius: var(--hs-radius-pill) !important;
+  box-shadow: none !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 5px 12px !important;
+}
+.hs-theme .brew-chip:hover {
+  background: var(--hs-cream) !important;
+  border-color: var(--hs-ink) !important;
+}
+.hs-theme .brew-chip-active {
+  background: var(--hs-ink) !important;
+  color: var(--hs-cream) !important;
+  border-color: var(--hs-ink) !important;
+}
+
+.hs-theme .brew-gauge {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  border: none !important;
+  border-top: 4px solid var(--hs-section-accent, var(--hs-malt)) !important;
+  border-radius: var(--hs-radius-md) !important;
+  box-shadow: none !important;
+  padding: 12px 14px !important;
+}
+.hs-theme .brew-gauge-label {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+  margin: 4px 0 !important;
+}
+.hs-theme .brew-gauge-value {
+  font-family: var(--hs-font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.92 !important;
+  color: var(--hs-ink) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.hs-theme .brew-ingredient-row {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: var(--hs-radius-sm) !important;
+  box-shadow: none !important;
+  padding: 14px 16px !important;
+  margin-bottom: 8px !important;
+}
+.hs-theme .brew-ingredient-row:hover {
+  background: var(--hs-cream) !important;
+}
+.hs-theme .brew-ingredient-row .border-b {
+  border-color: color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+}
+
+.hs-theme .brew-menu-item {
+  padding: 10px 14px !important;
+  font-family: var(--hs-font-body) !important;
+  font-size: 13px !important;
+  color: var(--hs-ink) !important;
+  background: transparent !important;
+  border: none !important;
+}
+.hs-theme .brew-menu-item:hover {
+  background: var(--hs-cream-2) !important;
+}
+
+/* Segmented toggle (FermentableSection mode picker) */
+.hs-theme .brew-segmented-toggle {
+  background: var(--hs-cream-2) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 22%, transparent) !important;
+  border-radius: var(--hs-radius-pill);
+  box-shadow: none !important;
+  padding: 2px;
+}
+.hs-theme .brew-segmented-toggle::before,
+.hs-theme .brew-segmented-toggle::after {
+  background: var(--hs-ink) !important;
+  border-radius: var(--hs-radius-pill);
+  box-shadow: none !important;
+}
+.hs-theme .brew-segmented-toggle button {
+  color: var(--hs-muted) !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase;
+  background: transparent !important;
+}
+.hs-theme .brew-segmented-toggle button.is-active {
+  color: var(--hs-cream) !important;
+}
+
+/* Fermentable inner chips */
+.hs-theme .fermentable-chip {
+  background: var(--hs-paper) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 18%, transparent) !important;
+  border-radius: var(--hs-radius-sm) !important;
+  box-shadow: none !important;
+  color: var(--hs-ink) !important;
+  font-family: var(--hs-font-mono);
+  font-size: 11px;
+}
+.hs-theme .fermentable-chip-srm {
+  border: 1px solid var(--hs-ink);
+}
+.hs-theme .fermentable-spacer {
+  background: color-mix(in oklch, var(--hs-ink) 12%, transparent);
+}
+.hs-theme .fermentable-datum {
+  color: var(--hs-ink);
+  font-family: var(--hs-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ────────────── MODALS ────────────── */
+
+.hs-theme .brew-modal {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-top: 7px solid var(--hs-malt) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-4) !important;
+}
+.hs-theme .brew-modal::before,
+.hs-theme .brew-modal::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* ────────────── FLAVOR RADAR softening ────────────── */
+
+.hs-theme .recharts-polar-grid line,
+.hs-theme .recharts-cartesian-grid line {
+  stroke: color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+}
+.hs-theme .recharts-polar-angle-axis text,
+.hs-theme .recharts-text {
+  fill: var(--hs-muted) !important;
+}
+.hs-theme .brew-theme .inline-flex.items-center.gap-2.rounded-lg[style*="brew-accent"] {
+  background: var(--hs-cream-2) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+}
+
+/* ────────────── Classic CSS variable remap inside HS ────────────── */
+
+/* Inline styles in classic components (LearnArticle, NavBar, etc.) reference
+   the classic CSS variables `--fg-strong`, `--fg-muted`, `--coral-*`, etc.
+   Remap them to HS values inside `.hs-theme` so those inline styles
+   resolve to the HS palette without touching the component code. */
+.hs-theme {
+  --fg-strong: var(--hs-ink);
+  --fg-muted: var(--hs-muted);
+  --card: var(--hs-paper);
+  --surface: var(--hs-cream-2);
+  --bg: var(--hs-cream);
+  /* Map the coral accent ramp to HS roast/malt so coral-tinted UI
+     elements (CTAs, learn-prose highlights) pick up HS tones. */
+  --coral-50: color-mix(in oklch, var(--hs-roast) 8%, var(--hs-cream));
+  --coral-100: color-mix(in oklch, var(--hs-roast) 14%, var(--hs-cream));
+  --coral-200: color-mix(in oklch, var(--hs-roast) 22%, var(--hs-cream));
+  --coral-300: color-mix(in oklch, var(--hs-roast) 35%, var(--hs-cream));
+  --coral-400: var(--hs-roast);
+  --coral-500: var(--hs-roast);
+  --coral-600: color-mix(in oklch, var(--hs-roast) 80%, var(--hs-ink));
+  --coral-700: color-mix(in oklch, var(--hs-roast) 60%, var(--hs-ink));
+  --shadow-card: var(--hs-shadow-2);
+}
+
+/* ────────────── Inline-style font remap (LearnArticle etc.) ────────────── */
+
+/* Anything in HS that hardcodes Bitter / Shadows Into Light / Rock Salt
+   as the inline font-family flips to HS display / script. */
+.hs-theme [style*="Bitter"] {
+  font-family: var(--hs-font-display) !important;
+  letter-spacing: -0.035em !important;
+}
+.hs-theme [style*="Shadows Into Light"],
+.hs-theme [style*="Rock Salt"] {
+  font-family: var(--hs-font-script) !important;
+}
+
+/* ────────────── Learn article prose styling ────────────── */
+
+.hs-theme .learn-prose {
+  font-family: var(--hs-font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--hs-ink);
+}
+.hs-theme .learn-prose p {
+  margin: 0 0 1em;
+}
+.hs-theme .learn-prose h2 {
+  font-family: var(--hs-font-display) !important;
+  font-size: clamp(22px, 2.6vw, 30px) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1 !important;
+  margin: 32px 0 12px !important;
+  color: var(--hs-ink) !important;
+}
+.hs-theme .learn-prose h3 {
+  font-family: var(--hs-font-display) !important;
+  font-size: 18px !important;
+  letter-spacing: -0.03em !important;
+  margin: 24px 0 8px !important;
+  color: var(--hs-ink) !important;
+}
+.hs-theme .learn-prose a {
+  color: var(--hs-roast);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.hs-theme .learn-prose a:hover {
+  color: var(--hs-ink);
+}
+.hs-theme .learn-prose ul,
+.hs-theme .learn-prose ol {
+  margin: 0 0 1em;
+  padding-left: 24px;
+}
+.hs-theme .learn-prose li {
+  margin: 0.25em 0;
+}
+.hs-theme .learn-prose code {
+  font-family: var(--hs-font-mono) !important;
+  background: var(--hs-cream-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+.hs-theme .learn-prose pre {
+  font-family: var(--hs-font-mono) !important;
+  background: var(--hs-cream-2);
+  padding: 14px 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 14%, transparent);
+}
+.hs-theme .learn-prose blockquote {
+  margin: 1em 0;
+  padding: 12px 18px;
+  border-left: 4px solid var(--hs-malt);
+  background: var(--hs-cream-2);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--hs-muted);
+}
+.hs-theme .learn-prose table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-family: var(--hs-font-body);
+}
+.hs-theme .learn-prose th,
+.hs-theme .learn-prose td {
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 20%, transparent);
+  padding: 8px 12px;
+  text-align: left;
+}
+.hs-theme .learn-prose th {
+  background: var(--hs-cream-2);
+  font-family: var(--hs-font-body);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+}
+
+/* btn-neon (CTA in LearnArticle) → HS ink pill button */
+.hs-theme .btn-neon {
+  background: var(--hs-ink) !important;
+  color: var(--hs-cream) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: 999px !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  box-shadow: var(--hs-shadow-2) !important;
+  text-decoration: none !important;
+}
+.hs-theme .btn-neon:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+}
+
+/* KaTeX math rendering — keep readable in HS */
+.hs-theme .katex {
+  font-size: 1.05em;
+  color: var(--hs-ink);
+}
+
+/* ────────────── LearnArticle structure ────────────── */
+
+/* Article wrapper — give it some breathing room but no card border so the
+   page reads as a long-form essay on cream paper, not a stack of cards.
+   The CTA + related articles below DO become HS cards (rules below). */
+.hs-theme article.brew-animate-in {
+  max-width: 768px;
+  animation: none !important;
+}
+
+/* Hero heading — HS display font + tighter scale */
+.hs-theme article > header h1 {
+  font-family: var(--hs-font-display) !important;
+  font-size: clamp(36px, 4.6vw, 64px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.95 !important;
+  color: var(--hs-ink) !important;
+}
+
+/* Subtitle — Caveat script in roast */
+.hs-theme article > header p {
+  font-family: var(--hs-font-script) !important;
+  color: var(--hs-roast) !important;
+  font-size: 22px !important;
+  line-height: 1.2 !important;
+  margin-top: 8px !important;
+  letter-spacing: 0 !important;
+  transform: rotate(-2deg);
+  display: inline-block;
+}
+
+/* Hide the thin coral gradient divider under the header — replace
+   with a HS accent rule. */
+.hs-theme article > header > div:last-of-type {
+  height: 2px !important;
+  width: 56px !important;
+  background: var(--hs-ink) !important;
+  margin-top: 18px !important;
+}
+
+/* GrainGradient canvases inside HS articles — kill the texture, it
+   clashes with HS's flat surfaces. The grain canvas is the first
+   absolute-positioned child of CTA / FormulaCallout cards. */
+.hs-theme article canvas,
+.hs-theme .learn-prose canvas {
+  display: none !important;
+}
+
+/* CTA card at the bottom of every article — HS card surface */
+.hs-theme article > div.mt-12 > div.rounded-2xl {
+  background: var(--hs-paper) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+  overflow: hidden;
+  padding: 28px 24px !important;
+}
+.hs-theme article > div.mt-12 {
+  border-top: 2px solid color-mix(in oklch, var(--hs-ink) 14%, transparent) !important;
+  padding-top: 32px !important;
+  margin-top: 48px !important;
+}
+.hs-theme article > div.mt-12 > div.rounded-2xl p {
+  font-family: var(--hs-font-script) !important;
+  color: var(--hs-muted) !important;
+  font-size: 18px !important;
+}
+
+/* Related articles section — HS card grid */
+.hs-theme article > div.mt-10 h3 {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+}
+.hs-theme article > div.mt-10 a.group {
+  background: var(--hs-paper) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-2) !important;
+  padding: 16px 18px !important;
+  backdrop-filter: none !important;
+}
+.hs-theme article > div.mt-10 a.group:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+}
+.hs-theme article > div.mt-10 a.group span:first-of-type {
+  font-family: var(--hs-font-display) !important;
+  font-size: 16px !important;
+  letter-spacing: -0.02em !important;
+  color: var(--hs-ink) !important;
+}
+.hs-theme article > div.mt-10 a.group span:last-of-type {
+  font-family: var(--hs-font-body) !important;
+  font-size: 12px !important;
+  color: var(--hs-muted) !important;
+  line-height: 1.5 !important;
+}
+
+/* ────────────── FormulaCallout in articles ────────────── */
+
+.hs-theme figure.rounded-2xl {
+  background: var(--hs-cream-2) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 18%, transparent) !important;
+  border-radius: var(--hs-radius-md) !important;
+  box-shadow: none !important;
+  padding: 20px 22px !important;
+  margin: 28px 0 !important;
+  overflow: hidden;
+}
+.hs-theme figure.rounded-2xl > figcaption {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+  margin-bottom: 12px !important;
+}
+
+/* MathBlock — center the equation, scale gently */
+.hs-theme .learn-prose > div[class*="overflow-x-auto"] {
+  background: var(--hs-cream-2);
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 14%, transparent);
+  border-radius: var(--hs-radius-md);
+  padding: 16px 18px;
+  margin: 18px 0 !important;
+}
+
+/* ────────────── Inline callout divs inside articles ────────────── */
+
+/* All article inline cards / callouts / mockup wrappers — flatten to HS
+   surfaces regardless of which class combo or inline gradient they use. */
+.hs-theme article div[class*="rounded-xl"],
+.hs-theme article div[class*="rounded-2xl"],
+.hs-theme article div[class*="rounded-3xl"],
+.hs-theme article div[class*="rounded-lg"],
+.hs-theme .learn-prose div[class*="rounded"] {
+  background-image: none !important;
+}
+
+/* Outer mockup card wrappers (large, `rounded-2xl`, with shadow) → HS card */
+.hs-theme article > div[class*="rounded-2xl"][class*="overflow-hidden"],
+.hs-theme .learn-prose > div[class*="rounded-2xl"][class*="overflow-hidden"],
+.hs-theme .learn-prose div[class*="rounded-2xl"][class*="overflow-hidden"] {
+  background: var(--hs-paper) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+}
+
+/* Smaller callout cards (rounded-xl) — flat cream-2 with hairline ink */
+.hs-theme .learn-prose div.rounded-xl,
+.hs-theme article div.rounded-xl:not([class*="overflow-hidden"]),
+.hs-theme article div.grain.rounded-xl,
+.hs-theme article div.grain.rounded-2xl {
+  background: var(--hs-cream-2) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 14%, transparent) !important;
+  box-shadow: none !important;
+}
+
+/* Any inline-styled div with a linear-gradient background inside an article
+   (mockup card headers, hue-tinted callouts) — kill the gradient, fall back
+   to cream-2. The header-strip pattern (used by HopAdditionPreview,
+   BuilderMockups headers) keeps a thin ink underline. */
+.hs-theme article div[style*="linear-gradient"],
+.hs-theme .learn-prose div[style*="linear-gradient"],
+.hs-theme article span[style*="linear-gradient"] {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  color: var(--hs-ink) !important;
+}
+/* Mockup card header bars (px-5 py-3) — slightly stronger surface contrast */
+.hs-theme article div[class*="rounded-2xl"][class*="overflow-hidden"] > div:first-child,
+.hs-theme .learn-prose div[class*="rounded-2xl"][class*="overflow-hidden"] > div:first-child {
+  background: var(--hs-cream-2) !important;
+  border-bottom: 1.5px solid color-mix(in oklch, var(--hs-ink) 14%, transparent) !important;
+}
+
+/* Hop type pill / addition-type chip inside mockup rows — HS chip */
+.hs-theme article div[class*="rounded-2xl"] span[class*="rounded-full"] {
+  background: color-mix(in oklch, var(--hs-hops) 18%, var(--hs-cream-2)) !important;
+  color: var(--hs-ink) !important;
+  font-family: var(--hs-font-body) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 14%, transparent) !important;
+}
+
+/* Inner rows in mockup cards (the hop addition rows etc) — HS row style */
+.hs-theme article div[class*="rounded-2xl"] div[class*="rounded-lg"] {
+  background: var(--hs-cream-2) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 10%, transparent) !important;
+}
+
+/* Mockup card captions (`Shadows Into Light` cursive) — HS script */
+.hs-theme article div[class*="rounded-2xl"] > div:last-child[style*="Shadows"],
+.hs-theme article div[class*="rounded-2xl"] > div:last-child[class*="text-center"] {
+  background: var(--hs-cream-2) !important;
+  border-top: 1.5px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  color: var(--hs-muted) !important;
+  font-family: var(--hs-font-script) !important;
+  font-size: 16px !important;
+}
+
+/* Kill ::before / ::after on every inline article card */
+.hs-theme article div[class*="rounded"]::before,
+.hs-theme article div[class*="rounded"]::after,
+.hs-theme .learn-prose div[class*="rounded"]::before,
+.hs-theme .learn-prose div[class*="rounded"]::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Article tables — HS table look */
+.hs-theme article table,
+.hs-theme .learn-prose table {
+  border-collapse: collapse !important;
+  margin: 18px 0 !important;
+  font-family: var(--hs-font-body) !important;
+  width: 100% !important;
+  background: var(--hs-paper) !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-md) !important;
+  overflow: hidden;
+  box-shadow: var(--hs-shadow-2) !important;
+}
+.hs-theme article thead {
+  background: var(--hs-cream-2) !important;
+  border-bottom: 2px solid var(--hs-ink) !important;
+}
+.hs-theme article th {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+  padding: 10px 12px !important;
+  text-align: left !important;
+}
+.hs-theme article td {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid color-mix(in oklch, var(--hs-ink) 10%, transparent) !important;
+  font-family: var(--hs-font-body) !important;
+  color: var(--hs-ink) !important;
+}
+.hs-theme article tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Inline h3 / h4 inside callouts often use inline Bitter — the [style*="Bitter"]
+   rule above flips font-family. Also bump size/color to HS. */
+.hs-theme .learn-prose div.rounded-xl h3,
+.hs-theme .learn-prose div.rounded-2xl h3 {
+  font-family: var(--hs-font-display) !important;
+  font-size: 16px !important;
+  letter-spacing: -0.025em !important;
+  color: var(--hs-ink) !important;
+  margin: 0 0 8px !important;
+}
+
+/* Article body links — coral remap already handles color, this also adds
+   the underline + offset styling that the HS prose has. */
+.hs-theme article a[href]:not(.brew-btn-primary):not(.btn-neon) {
+  color: var(--hs-roast);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+.hs-theme article a[href]:hover {
+  color: var(--hs-ink);
+}
+
+/* Classic AbvCalculator / BoilOffCalculator / etc. components embedded in
+   articles — their outer wrapper uses .brew-section or similar. Force HS
+   card surface so they read as a card on the page. */
+.hs-theme .learn-prose .brew-section,
+.hs-theme .learn-prose .brew-card,
+.hs-theme .learn-prose [class*="rounded-3xl"] {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+  padding: 22px !important;
+  --glow-opacity: 0 !important;
+  animation: none !important;
+}
+
+/* ────────────── TYPOGRAPHY inside classic components ────────────── */
+
+/* Set HS body font on the whole classic theme container so every
+   descendant span/p/label/button inherits it (unless it has its own
+   font-family rule). */
+.hs-theme .brew-theme {
+  background: transparent !important;
+  color: var(--hs-ink) !important;
+  font-family: var(--hs-font-body) !important;
+}
+.hs-theme .brew-theme,
+.hs-theme .brew-theme * {
+  /* Tailwind utility `font-handwritten` -> classic Shadows Into Light.
+     We want anything that explicitly opts into handwritten to use HS
+     script (Caveat). Catch-all rule below; element-specific rules below
+     can opt out. */
+}
+.hs-theme .brew-theme p,
+.hs-theme .brew-theme span,
+.hs-theme .brew-theme label,
+.hs-theme .brew-theme li,
+.hs-theme .brew-theme button,
+.hs-theme .brew-theme div {
+  font-family: inherit;
+}
+.hs-theme .brew-theme h1,
+.hs-theme .brew-theme h2,
+.hs-theme .brew-theme h3,
+.hs-theme .brew-theme h4 {
+  font-family: var(--hs-font-display) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.95 !important;
+  color: var(--hs-ink) !important;
+}
+
+/* Anything in the classic theme that uses the handwritten font family
+   (via `font-handwritten` Tailwind utility or explicit CSS var) should
+   render in HS script (Caveat). */
+.hs-theme .brew-theme [class*="font-handwritten"],
+.hs-theme .brew-theme [style*="--font-handwritten"],
+.hs-theme .brew-theme [style*="Shadows Into Light"],
+.hs-theme .brew-theme [style*="Rock Salt"] {
+  font-family: var(--hs-font-script) !important;
+}
+
+/* Numbers / monospace contexts inside classic sections — IBM Plex Mono */
+.hs-theme .brew-theme [class*="font-mono"],
+.hs-theme .brew-theme code,
+.hs-theme .brew-theme kbd {
+  font-family: var(--hs-font-mono) !important;
+}
+
+.hs-theme .brew-theme .tabular-nums {
+  font-variant-numeric: tabular-nums !important;
+}
+.hs-theme .brew-theme .text-muted {
+  color: var(--hs-muted) !important;
+}
+.hs-theme .brew-theme .text-strong,
+.hs-theme .brew-theme [class*="text-strong"] {
+  color: var(--hs-ink) !important;
+}
+
+/* Soften any remaining stray borders inside sections */
+.hs-theme .brew-section .rounded-lg.border:not([style*="brew-accent"]),
+.hs-theme .brew-section .rounded-xl.border,
+.hs-theme .brew-section .rounded-md.border {
+  border-color: color-mix(in oklch, var(--hs-ink) 10%, transparent) !important;
+}
+
+/* ────────────── BJCP STYLE STRIP PANEL ────────────── */
+
+.hs-theme .style-strip-panel {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.hs-theme .hs-bjcp-grid .style-strip-stack {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 14px 32px !important;
+}
+.hs-theme .style-strip {
+  gap: 4px !important;
+}
+.hs-theme .style-strip-header {
+  font-size: 11px !important;
+}
+.hs-theme .style-strip-label {
+  font-family: var(--hs-font-body) !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+}
+.hs-theme .style-strip-value {
+  font-family: var(--hs-font-mono) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--hs-ink) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.hs-theme .style-strip-value.is-out {
+  color: var(--hs-roast) !important;
+}
+.hs-theme .style-strip-track-wrap {
+  margin-top: 2px !important;
+}
+.hs-theme .style-strip-track {
+  height: 8px !important;
+  background: var(--hs-cream) !important;
+  border: 1.5px solid color-mix(in oklch, var(--hs-ink) 20%, transparent) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+.hs-theme .style-strip-range:not(.is-srm) {
+  background: var(--hs-hops) !important;
+  opacity: 0.4 !important;
+  border-radius: 999px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  box-shadow: none !important;
+}
+.hs-theme .style-strip-range.is-srm {
+  opacity: 1 !important;
+  border-radius: 999px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  box-shadow: none !important;
+}
+.hs-theme .style-strip-needle {
+  width: 3px !important;
+  height: 14px !important;
+  background: var(--hs-ink) !important;
+  border-radius: 1px !important;
+  box-shadow: none !important;
+}
+.hs-theme .style-strip-needle.is-out {
+  background: var(--hs-roast) !important;
+}
+.hs-theme .style-strip-tick {
+  font-family: var(--hs-font-mono) !important;
+  font-size: 9px !important;
+  color: var(--hs-muted) !important;
+}
+.hs-theme .hs-bjcp-grid {
+  padding: 0 8px;
+}
+.hs-theme .hs-bjcp-grid .style-strip {
+  min-width: 0;
+  padding-right: 6px;
+}
+
+/* ────────────── WATER & YEAST inline-styled inner panels ────────────── */
+
+.hs-theme .brew-theme .rounded-lg[style*="brew-accent-900"],
+.hs-theme .brew-theme .rounded-lg[style*="brew-accent-800"],
+.hs-theme .brew-theme .rounded-xl[style*="brew-accent-900"],
+.hs-theme .brew-theme .rounded-md[style*="brew-accent-900"],
+.hs-theme [style*="--brew-accent-900"] {
+  background: var(--hs-cream-2) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  box-shadow: none !important;
+  color: var(--hs-ink) !important;
+}
+
+/* ────────────── HOP FLAVOR RADAR wrapper ────────────── */
+
+.hs-theme .brew-theme [class*="rounded"][style*="backdrop-filter"],
+.hs-theme .brew-theme .rounded-xl[style*="brew-card-inset"] {
+  background: var(--hs-cream-2) !important;
+  border: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+.hs-theme [style*="backdrop-filter"],
+.hs-theme [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+
+/* ────────────── EQUIPMENT EXPANDER ────────────── */
+
+.hs-theme .equip-hero-grid {
+  display: none !important;
+}
+.hs-theme details.equip-advanced > summary {
+  display: none !important;
+}
+.hs-theme details.equip-advanced {
+  display: block !important;
+}
+.hs-theme details.equip-advanced::before {
+  content: "Advanced settings";
+  display: block;
+  font-family: var(--hs-font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+  margin-bottom: 12px;
+}
+.hs-theme .equip-group {
+  background: var(--hs-cream-2) !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: var(--hs-radius-md) !important;
+  padding: 14px 16px !important;
+  margin-bottom: 12px !important;
+  box-shadow: none !important;
+}
+.hs-theme .equip-group-label {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+  display: block;
+  margin-bottom: 8px;
+}
+.hs-theme .equip-detail-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+  gap: 10px !important;
+}
+.hs-theme .equip-datum-label {
+  font-family: var(--hs-font-body) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--hs-muted) !important;
+}
+.hs-theme .brew-section[data-accent="equipment"] > div:first-of-type {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
+}
+
+/* ────────────── TAB CONTENT SLIDE ────────────── */
+
+.hs-theme .hs-tab-slide {
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation-fill-mode: backwards;
+}
+.hs-theme .hs-tab-slide-right { animation-name: hs-slide-from-right; }
+.hs-theme .hs-tab-slide-left  { animation-name: hs-slide-from-left; }
+
+.hs-theme .hs-section-frame .brew-section.brew-animate-in,
+.hs-theme .hs-section-frame .brew-animate-in {
+  animation: none !important;
+}
+
+/* Recipe cards (classic) when reused in HS */
+.hs-theme .brew-recipe-card {
+  background: var(--hs-paper) !important;
+  background-image: none !important;
+  border: 2px solid var(--hs-ink) !important;
+  border-radius: var(--hs-radius-lg) !important;
+  box-shadow: var(--hs-shadow-3) !important;
+}
+
+/* ────────────── HS helpers ────────────── */
+
+.hs-theme .hs-script { font-family: var(--hs-font-script); font-weight: 500; }
+.hs-theme .hs-display { font-family: var(--hs-font-display); letter-spacing: -0.035em; line-height: 0.92; }
+.hs-theme .hs-mono { font-family: var(--hs-font-mono); }
+.hs-theme .hs-tabular { font-variant-numeric: tabular-nums lining-nums; }
+.hs-theme .hs-no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hs-theme .hs-no-scrollbar::-webkit-scrollbar { display: none; }

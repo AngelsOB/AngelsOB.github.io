@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Gravity & ABV: How Your Beer's Strength Is Built",
@@ -118,7 +118,7 @@ export default function GravityPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="Gravity & ABV"
         subtitle="How your grain bill becomes alcohol"
         relatedLearn={["/learn/mash-temperature", "/learn/abv-calculator"]}
@@ -149,7 +149,7 @@ export default function GravityPage() {
           pound in 1 gallon gives a gravity of 1.037.
         </p>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Original Gravity"
           expression={"OG = 1 + \\frac{\\sum (PPG_i \\times W_i \\times \\eta_i)}{V \\times 1000}"}
           description="PPG = extract potential, W = weight (lbs), η = efficiency (100% for sugars/extracts, mash efficiency for grains), V = batch volume (gal)."
@@ -219,7 +219,7 @@ export default function GravityPage() {
           ABV
         </h2>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="ABV Formula"
           expression={"ABV = (OG - FG) \\times 131.25"}
           description="The industry standard approximation. Accurate to within 0.1% for beers under 1.080 OG."
@@ -235,7 +235,7 @@ export default function GravityPage() {
           page.
         </p>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

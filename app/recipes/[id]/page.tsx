@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
-import BetaBuilderPage from "../../../src/modules/beta-builder/presentation/components/BetaBuilderPage";
+import HopSkipBuilder from "@/modules/hopskip/components/HopSkipBuilder";
 
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+export const dynamic = "force-dynamic";
 
-export default function RecipePage() {
-  return <BetaBuilderPage />;
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { id } = await params;
+  return <HopSkipBuilder recipeId={id} />;
 }
