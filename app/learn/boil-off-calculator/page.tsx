@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import BoilOffCalculator from "@/components/BoilOffCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Boil-Off Calculator: Pre-Boil to Post-Boil Volume",
@@ -32,7 +32,7 @@ export default function BoilOffCalcPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Boil-Off Calculator"
         subtitle="How much volume you'll lose, and when to stop boiling"
         relatedLearn={["/learn/dilution-calculator", "/learn/gravity"]}
@@ -50,7 +50,7 @@ export default function BoilOffCalcPage() {
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It
         </h2>
-        <FormulaCallout
+        <HSFormulaCallout
           title="Post-Boil Volume"
           expression={"V_{post} = \\frac{V_{pre} \\times G_{pre}}{G_{target}}"}
           description="Same conservation principle as dilution, in reverse. Water leaves, sugar stays, gravity concentrates."
@@ -61,7 +61,7 @@ export default function BoilOffCalcPage() {
           boil-off rates are 3–5 L/hr depending on your kettle and burner.
         </p>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

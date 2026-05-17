@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Mash pH: The Proton Deficit Model",
@@ -124,7 +124,7 @@ export default function MashPhPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Mash pH"
         subtitle="Predicting and adjusting your mash from grain and water chemistry"
         relatedLearn={["/learn/mash-temperature", "/learn/gravity"]}
@@ -150,7 +150,7 @@ export default function MashPhPage() {
           equilibrium point.
         </p>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Proton Balance"
           expression={"f(pH) = \\text{Alk}_{water} + \\sum \\text{Deficit}_{grain_i} - \\text{Acid}_{added} = 0"}
           description="The solver finds the pH where total proton contributions sum to zero."
@@ -217,7 +217,7 @@ export default function MashPhPage() {
           Kai Troester&apos;s work at braukaiser.com. Kolbach&apos;s calcium and
           magnesium factors come from mid-20th century German brewing research.
         </p>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

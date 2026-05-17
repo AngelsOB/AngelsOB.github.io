@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Mash Temperature & Enzyme Kinetics",
@@ -112,7 +112,7 @@ export default function MashTemperaturePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Mash Temperature"
         subtitle="The biggest lever on your beer's body and finish"
         relatedLearn={["/learn/gravity", "/learn/mash-ph"]}
@@ -233,7 +233,7 @@ export default function MashTemperaturePage() {
           thermostable enzyme fractions. The Braukaiser mash temperature studies
           at braukaiser.com were also a key reference.
         </p>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

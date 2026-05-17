@@ -103,10 +103,10 @@ export default function Home() {
           />
 
           <div className="brew-animate-in brew-stagger-4 mt-8 flex items-center gap-3">
-            <Link href="/recipes" className="brew-btn-primary !rounded-xl !px-5 !py-2.5">
+            <Link href="/betabuilder/recipes" className="brew-btn-primary !rounded-xl !px-5 !py-2.5">
               Start a Recipe
             </Link>
-            <Link href="/calculators" className="brew-btn-ghost !rounded-xl !px-5 !py-2.5">
+            <Link href="/betabuilder/calculators" className="brew-btn-ghost !rounded-xl !px-5 !py-2.5">
               Open Calculators
             </Link>
           </div>
@@ -117,7 +117,7 @@ export default function Home() {
       <div className="px-4 pb-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-5xl space-y-6">
           {/* Recipe Builder */}
-          <Link href="/recipes" className="group block">
+          <Link href="/betabuilder/recipes" className="group block">
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="grain"
@@ -195,7 +195,7 @@ export default function Home() {
           </Link>
 
           {/* Calculators */}
-          <Link href="/calculators" className="group block">
+          <Link href="/betabuilder/calculators" className="group block">
             <div
               className="brew-section !mb-0 transition-all duration-200 group-hover:!shadow-[var(--shadow-card-hover)]"
               data-accent="mash"
@@ -281,7 +281,7 @@ export default function Home() {
                     </h2>
                   </div>
                   <Link
-                    href="/learn"
+                    href="/betabuilder/learn"
                     className="shrink-0 pb-0.5 text-xs font-semibold uppercase tracking-widest transition-colors"
                     style={{ color: "var(--coral-500)" }}
                   >

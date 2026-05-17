@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Yeast Starters: Cell Counts & Growth Models",
@@ -46,7 +46,7 @@ export default function YeastStartersPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Yeast Starters"
         subtitle="Hitting the right pitch rate, and the science of growing yeast"
         relatedLearn={["/learn/gravity", "/learn/mash-temperature"]}
@@ -69,7 +69,7 @@ export default function YeastStartersPage() {
           Pitching Rate
         </h2>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Required Cells"
           expression={"\\text{cells (B)} = \\text{rate} \\times V_L \\times \\degree P"}
           description="Rate = 0.75 M cells/mL/°P for ales, 1.0–1.5 for lagers. V = batch volume in liters. °P = degrees Plato from OG."
@@ -146,7 +146,7 @@ export default function YeastStartersPage() {
           <li>White, C. &amp; Zainasheff, J. <em>Yeast</em>. Brewers Publications, 2010.</li>
           <li>Troester, K. &ldquo;Yeast Starter.&rdquo; braukaiser.com.</li>
         </ul>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

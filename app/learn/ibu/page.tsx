@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Understanding IBU: How Bitterness Is Calculated",
@@ -164,7 +164,7 @@ export default function IbuPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="IBU & Bitterness"
         subtitle="What it means, how it works, and what makes our approach different"
         relatedLearn={["/learn/hop-flavor", "/learn/gravity"]}
@@ -202,7 +202,7 @@ export default function IbuPage() {
           extraction, and how long the hops are in contact with hot wort.
         </p>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Tinseth IBU"
           expression={"IBU = \\frac{W \\times \\alpha \\times U \\times 75}{V}"}
           description="W = hop weight (oz), α = alpha acid %, U = utilization factor, V = batch volume (gal)."
@@ -214,7 +214,7 @@ export default function IbuPage() {
           with diminishing returns past about 60 minutes.
         </p>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Utilization"
           expression={"U = \\underbrace{1.65 \\times 0.000125^{\\,(G - 1)}}_{\\text{gravity}} \\times \\underbrace{\\frac{1 - e^{-0.04t}}{4.15}}_{\\text{time}}"}
         />
@@ -416,7 +416,7 @@ export default function IbuPage() {
           pellet processing dissolve into beer without heat, contributing
           measurable bitterness.
         </p>
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

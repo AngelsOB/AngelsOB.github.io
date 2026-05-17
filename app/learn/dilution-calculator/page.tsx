@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import DilutionCalculator from "@/components/DilutionCalculator";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Dilution Calculator: Hit Your Target Gravity",
@@ -32,7 +32,7 @@ export default function DilutionCalcPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <LearnArticle
+      <HSLearnArticle
         title="Dilution Calculator"
         subtitle="How much water to add when your gravity is too high"
         relatedLearn={["/learn/boil-off-calculator", "/learn/gravity"]}
@@ -50,7 +50,7 @@ export default function DilutionCalcPage() {
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It
         </h2>
-        <FormulaCallout
+        <HSFormulaCallout
           title="Gravity Points Conservation"
           expression={"V_{total} = \\frac{V_{current} \\times G_{current}}{G_{target}}"}
           description="Sugar doesn&apos;t disappear when you add water. The total gravity points stay constant. Water to add = total volume − current volume."
@@ -62,7 +62,7 @@ export default function DilutionCalcPage() {
           approximation.
         </p>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }

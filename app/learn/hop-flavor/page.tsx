@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import LearnArticle from "@/modules/learn/LearnArticle";
-import FormulaCallout from "@/modules/learn/FormulaCallout";
+import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 import HopRadarDemo from "@/modules/learn/HopRadarDemo";
 
 export const metadata: Metadata = {
@@ -52,7 +52,7 @@ export default function HopFlavorPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <LearnArticle
+      <HSLearnArticle
         title="Hop Flavor Radar"
         subtitle="What your hops actually taste like, beyond the IBU number"
         relatedLearn={["/learn/ibu", "/learn/gravity"]}
@@ -175,7 +175,7 @@ export default function HopFlavorPage() {
           </div>
         </div>
 
-        <FormulaCallout
+        <HSFormulaCallout
           title="Intensity Curve"
           expression={"\\text{magnitude} = 5 \\times \\left(1 - e^{-0.7 \\times w_{total}}\\right)"}
           description="The overall intensity approaches a ceiling of 5 as total hop weight increases. Diminishing returns, just like in real life."
@@ -219,7 +219,7 @@ export default function HopFlavorPage() {
           signal for comparing hop bills and understanding how additions affect flavor.
         </p>
 
-      </LearnArticle>
+      </HSLearnArticle>
     </>
   );
 }
