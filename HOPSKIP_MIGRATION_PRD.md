@@ -133,7 +133,7 @@ Make it unambiguous that classic is dead-code-on-life-support.
 
 # Phase 1 — Missing HS-native pages (full feature parity)
 
-**Effort: 3–4 focused sessions.** Phase 1.1 is done (✅); 1.2–1.6 remain.
+**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections). 1.3–1.6 remain.
 
 HS is currently missing entire pages that classic has. After Phase 1, every URL classic offers has an HS-native equivalent. The classic side stays accessible at `/betabuilder/*` as the side-by-side reference; the HS routes are now actually HS.
 
@@ -154,21 +154,30 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 - **Acceptance:** browse community recipes, search/sort/filter, fork to library, enter compare mode.
 - **Effort:** L (search + filter + compare mode + action menu = lots of stateful UI).
 
-## 1.2 — HSPublicRecipeView
+## 1.2 — HSPublicRecipeView (shared-mode HopSkipBuilder)
 
-- **Current source:** [src/modules/sharing/PublicRecipeView.tsx](src/modules/sharing/PublicRecipeView.tsx) + [PublicRecipeClient.tsx](src/modules/sharing/PublicRecipeClient.tsx) — currently just renders the full BetaBuilderPage in read-only mode.
-- **Route:** `/r/[slug]` — currently a re-export.
-- **What it does:** read-only recipe display.
-- **HS plan:** Rebuild as a dedicated read-only viewer (NOT the editing builder in disguise). Layout:
-  - HS hero — recipe name (display H1) + style + owner name + ratings.
-  - Live-numbers strip — read-only HS stat cards.
-  - Ingredient lists — fermentables / hops / yeast / other as HSCards.
-  - Mash + fermentation timelines as HS timeline (read-only step rows).
-  - Notes section.
-  - Footer actions: "Fork to my recipes" (HS pill, hops accent) and "Open in builder" (only if recipe is owned by the viewer).
-- **Data dependencies:** `getPublicRecipe` (existing server fetch), `recipeCalculationService`, `srmToRgb`, `buildRecipeJsonLd` (for SEO).
-- **Acceptance:** view recipe data, fork creates a copy, ratings + owner render, SEO meta + OG image still work.
-- **Effort:** L.
+**Status:** Chrome shipped. ✅ Inner read-only-rendering blocked on Phase 2. See the [Phase 1.2 retrospective](#phase-12-retrospective--lessons-for-subsequent-slices) below.
+
+**Decision change vs. original plan:** the original spec called for a dedicated read-only viewer ("NOT the editing builder in disguise"). In execution we pivoted to **the viewer IS the builder, frozen** — visual continuity for brewers ("the recipe I view should look like the recipe I edit"). Implementation: extended `HopSkipBuilder` with shared-recipe props mirroring `BetaBuilderPage`'s API (`sharedRecipe`, `sharedOwnerName`, `sharedOwnerId`, `sharedRatingAvg`, `sharedRatingCount`).
+
+- **Current source (replaced):** [src/modules/sharing/PublicRecipeView.tsx](src/modules/sharing/PublicRecipeView.tsx) + [PublicRecipeClient.tsx](src/modules/sharing/PublicRecipeClient.tsx) — were rendering `BetaBuilderPage` in read-only mode under HS chrome. Now `@deprecated` and unused except by quarantined `/betabuilder/r/[slug]`.
+- **Route:** `/r/[slug]` — server component fetching `getPublicRecipe` directly into the HS shell; betabuilder re-export dropped.
+- **New HS components** (`src/modules/hopskip/components/public/`):
+  - `useForkRecipe.ts` — fork transaction hook with tier-gate. Extracted from classic `ForkButton`. **Reusable: HSBrowseCard's inline `handleFork` duplicates this; consolidate as a follow-up.**
+  - `HSForkButton.tsx` — thin renderer over the hook; renders sign-in CTA when unauth.
+  - `HSRatingStars.tsx` — interactive ink-stroked polygon stars (reuses the visual from HSBrowseCard) with the click + hover + optimistic-aggregate state machine from classic `RatingStars`. Reuses `submitRating` / `getUserRating` from `ratingService.ts` unchanged.
+  - `HSPublicRecipeShell.tsx` — minimal client wrapper that maps server-component props to `HopSkipBuilder` shared-mode props (keeps `app/r/[slug]/page.tsx` server-only).
+- **HopSkipBuilder shared-mode changes** (additive; non-breaking for the live builder at `/recipes/[id]`):
+  - Recipe load: `setCurrentRecipe(sharedRecipe)` instead of `loadRecipe(recipeId)` when shared.
+  - Sub-header: replaces Save / Open-in-classic with Fork + (if `viewer.uid === ownerId`) Open-in-builder + Back-to-browse. Hides the saved-status text.
+  - Title band: swaps the recipe-name `<input>` for a static `<h1>`; changes the kicker from "recipe draft —" → "shared recipe —" (`hsTokens.water`).
+  - Meta pills (`ClickableMetaPill`, `NumericMetaPill`): new `readOnly` prop renders display-only variants. Style-modal trigger suppressed.
+  - New attribution + ratings band between title and live-numbers strip: owner (link to `/u/{ownerId}`) + parent-fork attribution (link to `/r/{parentRecipeShareSlug}` if present) + `HSRatingStars`.
+  - Live-numbers kicker: "updates as you type ✦" → "set when published ✦".
+  - Section frame: applies `.brew-read-only` class to disable mouse interactions on classic section inputs.
+- **Data dependencies:** `getPublicRecipe`, `buildRecipeJsonLd`, `submitRating`, `getUserRating`, fork txn — all reused unchanged. SEO/OG/JSON-LD preserved verbatim.
+- **What's NOT yet "frozen":** `.brew-read-only` only sets `pointer-events: none` on inputs — keyboard focus + typing still works once a field is tabbed into. Inputs are still semantically writable. **Fully read-only rendering requires each classic section to be replaced by an HS-native display-only equivalent** (Phase 2). For now, the chrome around the recipe is HS-native and read-only; the cells inside the tabs remain editable until each section migrates. Accepted as transitional — see retrospective.
+- **Effort:** M (chrome only — turned out smaller than the original "L dedicated viewer" estimate because we reuse HopSkipBuilder's chrome).
 
 ## 1.3 — HSCompareRecipesPage
 
@@ -419,6 +428,8 @@ Throughout the migration:
 - [src/modules/beta-builder/presentation/stores/recipeStore.ts](src/modules/beta-builder/presentation/stores/recipeStore.ts) — unchanged, reused by every HS component
 - [src/modules/beta-builder/presentation/hooks/useRecipeCalculations.ts](src/modules/beta-builder/presentation/hooks/useRecipeCalculations.ts) — unchanged
 - [src/modules/beta-builder/domain/services/RecipeCalculationService.ts](src/modules/beta-builder/domain/services/RecipeCalculationService.ts) — unchanged
+- [src/modules/beta-builder/domain/repositories/FirestoreRecipeRepository.ts](src/modules/beta-builder/domain/repositories/FirestoreRecipeRepository.ts) — Phase 1.2 hardening: doc-id-wins on read; rule applies to any future Firestore-backed model
+- [src/modules/beta-builder/domain/repositories/FirestoreBrewSessionRepository.ts](src/modules/beta-builder/domain/repositories/FirestoreBrewSessionRepository.ts) — same hardening, applied prophylactically
 - [src/calculators/](src/calculators/) — pure calc functions, unchanged
 - [src/utils/bjcpSpecs.ts](src/utils/bjcpSpecs.ts) — unchanged
 - [app/ClientShell.tsx](app/ClientShell.tsx) — touched in Phase 0 (drop `/r/` `/browse` `/u/` from `isClassic`), possibly simplified in Phase 5
@@ -504,6 +515,63 @@ HSBrowseCard's 5-star rating: 22px polygons with three cycled point variants for
 ### Browser-preview verification was blocked the whole session — work around with curl + admin SDK.
 
 The user's pre-existing `next dev` held `.next/dev/lock`, so `preview_start` failed. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `curl /browse` / `curl /` / `curl /recipes` returning 200 with the expected HS markers in the SSR output. Worth flagging early if the same situation recurs — the user can stop their server, or accept that visual verification rests with them.
+
+---
+
+## Phase 1.2 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 1.2. Read before starting 1.3 and beyond.
+
+### Pivot mid-plan: the public viewer IS the HS builder, frozen — not a dedicated read-only layout.
+
+The original PRD called for "a dedicated read-only viewer (NOT the editing builder in disguise)" — a bespoke single-column layout with hero + ingredient HSCards + timelines. After writing that plan the user pushed back: visual continuity matters more than architectural separation. A brewer looking at someone else's recipe should see the same shapes they see when editing their own. We extended `HopSkipBuilder` with shared-recipe props (mirroring `BetaBuilderPage`'s `shared*` API) and applied a read-only wrapper to the section frame instead. **Apply to 1.5 (BrewSessionPage) and 1.6 (VersionHistoryPage):** if the natural read-only experience is "the builder, frozen", default to that pattern rather than building a separate viewer layout.
+
+### `.brew-read-only` is mouse-only — it does NOT prevent keyboard editing of classic inputs.
+
+The class hides action buttons + sets `pointer-events: none` on inputs/selects/textareas. That stops click-to-focus, but tab-focused inputs remain semantically writable and accept keystrokes. Mobile keyboards may still appear. **Implication:** Phase 1.2 ships HS chrome + shared-mode affordances around the recipe; the cells inside the tabs are still editable until each classic section is replaced by an HS-native display-only equivalent in Phase 2. Accepted as transitional. **Don't try to bandaid this** — strengthening `.brew-read-only` with `disabled` attributes via DOM mutation or per-section read-only props is wasted work; Phase 2's HS-native sections render display-only JSX (no inputs at all), which is the proper fix.
+
+### Three new shared HS public primitives landed — reuse them.
+
+- **[useForkRecipe](src/modules/hopskip/components/public/useForkRecipe.ts)** — fork transaction with tier-gate, atomic Firestore write + recipeCount increment, best-effort forkCount increment, toast + redirect. Returns `{ fork, isForking, isSignedIn, needsSignIn }`. **The classic `ForkButton` and `HSBrowseCard`'s inline `handleFork` both duplicate this logic.** HSBrowseCard's inline version is missing the tier-gate (real bug — free-tier users at the recipe limit can still trigger a fork attempt from the browse card). Consolidate as a small follow-up.
+- **[HSForkButton](src/modules/hopskip/components/public/HSForkButton.tsx)** — drop-in CTA over `useForkRecipe`. `solid` hops accent when authed; `ghost` sign-in CTA otherwise. Use in 1.4 HSUserProfile recipe cards if a "fork" action is wanted there too.
+- **[HSRatingStars](src/modules/hopskip/components/public/HSRatingStars.tsx)** — interactive 22px ink-stroked polygon star input. Reuses the polygon variants + rotations + gradient pattern from `HSBrowseCard` (display-only) + the state machine (userRating, hoveredStar, justRated, isSubmitting, optimistic aggregate update) from classic `RatingStars`. If a third surface needs stars (1.4 HSUserProfile, or anywhere else), promote the polygon glyph to a small shared `HSStarRow` primitive at that point. Two consumers is still inline-copy territory.
+
+### Server fetch + client-component shell is the right split for `/r/`, `/u/`, `/recipes/[id]/versions/...`.
+
+`app/r/[slug]/page.tsx` is a server component that calls `getPublicRecipe` (server-only, admin SDK) and renders both the `<script type="application/ld+json">` and the JSX-server-side <Metadata>. It passes the recipe data to a thin `"use client"` shell (`HSPublicRecipeShell`) which renders the HopSkipBuilder. Keeps SEO + JSON-LD + OG metadata in the server component (where they belong) and isolates client-state concerns in the shell. Repeat for 1.4 `/u/[userId]`, 1.5 `/recipes/sessions/[sessionId]`, 1.6 `/recipes/[id]/versions/[versionNumber]`.
+
+### Server-rendered "Loading recipe…" flash is unavoidable with the Zustand-in-useEffect pattern.
+
+`HopSkipBuilder` initializes the recipe in a `useEffect` (`setCurrentRecipe(sharedRecipe)`), so the SSR'd HTML always shows the "Loading recipe…" branch — the actual builder UI hydrates on the client. The classic `/betabuilder/r/[slug]` has the same SSR behavior, so it's not a regression, but it does mean: (a) SEO content from the recipe body isn't in SSR HTML (only JSON-LD/OG metadata is, which IS server-rendered), (b) `curl` checks for `brew-read-only` or section markup don't work — they live in the hydrated DOM. Mitigation if it ever matters: refactor to pass the recipe through props rather than the Zustand store, but that's a much bigger surgery touching `/recipes/[id]` too. Out of scope until Phase 5 deletion or a dedicated perf pass.
+
+### Make new props on `HopSkipBuilder` strictly additive — non-breaking for `/recipes/[id]`.
+
+Five new optional props (`sharedRecipe`, `sharedOwnerName`, `sharedOwnerId`, `sharedRatingAvg`, `sharedRatingCount`) plus an `isShared = Boolean(sharedRecipe)` derived flag. Every shared-mode branch in HopSkipBuilder is gated on `isShared`, so the live builder at `/recipes/[id]` behavior is unchanged. Same pattern for 1.5/1.6 if they reuse HopSkipBuilder (e.g. brew session might pass `sessionRecipeSnapshot` props alongside shared props).
+
+### `ClickableMetaPill` / `NumericMetaPill` gained a `readOnly` prop in this slice.
+
+They live inside HopSkipBuilder as inline primitives, not exported. Phase 2 might want to promote them — but only if a second consumer arises. For now they're hidden implementation details of the builder chrome.
+
+### `overrides.css` shrunk by zero lines — exactly as predicted.
+
+The `.brew-read-only` class is in `src/index.css`, not overrides.css. Every `.brew-*` rule in overrides.css still serves the live builder at `/recipes/[id]`. They become deletable when each classic section is replaced (Phase 2). Don't chase it in 1.2 retrospect.
+
+### Visual side-by-side verification rests with the user (again).
+
+Same situation as Phase 1.1: pre-existing `next dev` held `.next/dev/lock`, so `preview_start` failed. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, `curl /r/<slug>` returning 200 with HS chrome + JSON-LD markers, and parsing the JSON-LD to confirm structure. Browser verification (the read-only flash + click-through interactions) handed back to the user. If this happens a third time, consider documenting "stop your dev server before each phase" in the per-phase choreography.
+
+### Latent fork-id bug surfaced during 1.2 testing — fixed with a doc-id-wins hardening across all Firestore reads.
+
+User reported a React duplicate-key warning on `/recipes` after forking the same seed recipe twice; root cause was a bug shared between classic `ForkButton` (and the new `useForkRecipe` and the inline fork in `HSBrowseCard`) where the source recipe's `id` field wasn't stripped from the destructured payload. Every fork wrote a fresh-uid doc but the doc's data contained the seed's stored `id`. On read, `FirestoreRecipeRepository`'s mapper used `{ id: d.id, ...d.data() }` — spread-later-wins, so the stored `id` overrode the doc id. Result: multiple Firestore docs presented as a single in-memory recipe.
+
+Two fixes landed together:
+
+1. **Strip `id` in every fork destructure.** Applied to [useForkRecipe.ts](src/modules/hopskip/components/public/useForkRecipe.ts), [ForkButton.tsx](src/modules/sharing/ForkButton.tsx), [HSBrowseCard.tsx](src/modules/hopskip/components/public/HSBrowseCard.tsx).
+2. **Flip the read-mapper precedence so `doc.id` wins over any stored `id` field** — applied to all 5 read sites in [FirestoreRecipeRepository.ts](src/modules/beta-builder/domain/repositories/FirestoreRecipeRepository.ts) and all 3 in [FirestoreBrewSessionRepository.ts](src/modules/beta-builder/domain/repositories/FirestoreBrewSessionRepository.ts). Pattern: `{ ...snap.data(), id: snap.id }` instead of `{ id: snap.id, ...snap.data() }`. Zero network/cache impact — pure JavaScript object-merge ordering.
+
+**Rule for future phases (1.5/1.6 + Phase 2 writes):** when writing to Firestore via `setDoc(doc(ref, freshId), data)`, ensure `data` does NOT contain an `id` field (`saveAsync`/`saveNewAsync` already strip it via destructure; transactional writes need the same care). When reading via `{ ...snap.data(), id: snap.id }`, the doc id always wins, defending against latent legacy data. Repeat for any new Firestore-backed model (equipment profiles, ratings, public index, sessions, version snapshots).
+
+Existing user-data side effect: any forks the user already had with mismatched stored `id`s now resolve to their correct doc ids in memory, so saves go to the right doc and duplicate-key warnings clear. The downside (any `parentRecipeId` reference captured under the old data-wins semantics points to a stale id) is real but small: the `parentRecipeShareSlug` field handles the user-facing "see the original" link, and stale `parentRecipeId` reverse-lookups silently fail with no UX impact.
 
 ---
 

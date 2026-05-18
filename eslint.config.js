@@ -76,6 +76,16 @@ export default tseslint.config([
             message:
               'Classic UI. Use HSBrowsePage / HSBrowseCard from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.1.',
           },
+          {
+            group: [
+              '**/modules/sharing/PublicRecipeClient',
+              '**/modules/sharing/PublicRecipeView',
+              '**/modules/sharing/ForkButton',
+              '**/modules/sharing/RatingStars',
+            ],
+            message:
+              'Classic UI. Use HSPublicRecipeShell / HSForkButton / HSRatingStars from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.2.',
+          },
         ],
       }],
     },

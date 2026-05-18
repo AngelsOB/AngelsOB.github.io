@@ -20,7 +20,12 @@ import BrewDayChecklistSection from "@/modules/beta-builder/presentation/compone
 import { EquipmentSection } from "@/modules/beta-builder/presentation/components/EquipmentSection";
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
 import StyleRangeComparison from "@/modules/beta-builder/presentation/components/StyleRangeComparison";
+import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import { useAuthStore } from "@/modules/auth/authStore";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
+import HSButton from "./HSButton";
+import HSForkButton from "./public/HSForkButton";
+import HSRatingStars from "./public/HSRatingStars";
 
 const display: CSSProperties = {
   fontFamily: hsTokens.display,
@@ -66,14 +71,31 @@ const TABS: TabDef[] = [
 
 interface Props {
   recipeId?: string;
+  /** When set, the builder renders in read-only shared-recipe mode. */
+  sharedRecipe?: Recipe;
+  sharedOwnerName?: string;
+  sharedOwnerId?: string;
+  sharedRatingAvg?: number;
+  sharedRatingCount?: number;
 }
 
-export default function HopSkipBuilder({ recipeId }: Props) {
+export default function HopSkipBuilder({
+  recipeId,
+  sharedRecipe,
+  sharedOwnerName,
+  sharedOwnerId,
+  sharedRatingAvg,
+  sharedRatingCount,
+}: Props) {
+  const isShared = Boolean(sharedRecipe);
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const loadRecipe = useRecipeStore((s) => s.loadRecipe);
   const createNewRecipe = useRecipeStore((s) => s.createNewRecipe);
+  const setCurrentRecipe = useRecipeStore((s) => s.setCurrentRecipe);
   const updateRecipe = useRecipeStore((s) => s.updateRecipe);
   const saveCurrentRecipe = useRecipeStore((s) => s.saveCurrentRecipe);
+  const viewerUid = useAuthStore((s) => s.user?.uid);
+  const isOwnedByViewer = Boolean(viewerUid && sharedOwnerId && viewerUid === sharedOwnerId);
 
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
   const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
@@ -99,9 +121,10 @@ export default function HopSkipBuilder({ recipeId }: Props) {
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    if (recipeId) loadRecipe(recipeId);
+    if (sharedRecipe) setCurrentRecipe(sharedRecipe);
+    else if (recipeId) loadRecipe(recipeId);
     else createNewRecipe();
-  }, [recipeId, loadRecipe, createNewRecipe]);
+  }, [recipeId, sharedRecipe, loadRecipe, createNewRecipe, setCurrentRecipe]);
 
   const handleSave = useCallback(() => {
     saveCurrentRecipe();
@@ -152,7 +175,7 @@ export default function HopSkipBuilder({ recipeId }: Props) {
         }}
       >
         <Link
-          href="/recipes"
+          href={isShared ? "/browse" : "/recipes"}
           style={{
             background: "transparent",
             color: hsTokens.muted,
@@ -166,54 +189,73 @@ export default function HopSkipBuilder({ recipeId }: Props) {
             fontFamily: hsTokens.body,
           }}
         >
-          ← Back to recipes
+          ← {isShared ? "Back to browse" : "Back to recipes"}
         </Link>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <span
-            style={{
-              fontSize: 12,
-              color: savedRecently ? hsTokens.hops : hsTokens.muted,
-              transition: "color 0.2s",
-              fontFamily: hsTokens.body,
-            }}
-          >
-            {savedRecently ? "✓ Saved!" : "Edits not saved"}
-          </span>
-          <Link
-            href={recipeId ? `/betabuilder/recipes/${recipeId}` : "/betabuilder/recipes/new"}
-            style={{
-              background: hsTokens.paper,
-              color: hsTokens.ink,
-              border: `2px solid ${hsTokens.ink}`,
-              padding: "8px 14px",
-              fontSize: 13,
-              fontWeight: 700,
-              borderRadius: 999,
-              boxShadow: hsTokens.sh1,
-              fontFamily: hsTokens.body,
-              textDecoration: "none",
-            }}
-          >
-            Open in classic ↗
-          </Link>
-          <button
-            type="button"
-            onClick={handleSave}
-            style={{
-              background: hsTokens.hops,
-              color: hsTokens.cream,
-              border: `2px solid ${hsTokens.ink}`,
-              padding: "8px 14px",
-              fontSize: 13,
-              fontWeight: 700,
-              borderRadius: 999,
-              boxShadow: hsTokens.sh2,
-              cursor: "pointer",
-              fontFamily: hsTokens.body,
-            }}
-          >
-            Save recipe →
-          </button>
+          {isShared ? (
+            <>
+              {isOwnedByViewer && currentRecipe ? (
+                <HSButton variant="ghost" size="sm" href={`/recipes/${currentRecipe.id}`}>
+                  Open in builder ↗
+                </HSButton>
+              ) : null}
+              {currentRecipe ? (
+                <HSForkButton
+                  recipeId={currentRecipe.id}
+                  recipeName={currentRecipe.name}
+                  size="sm"
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: savedRecently ? hsTokens.hops : hsTokens.muted,
+                  transition: "color 0.2s",
+                  fontFamily: hsTokens.body,
+                }}
+              >
+                {savedRecently ? "✓ Saved!" : "Edits not saved"}
+              </span>
+              <Link
+                href={recipeId ? `/betabuilder/recipes/${recipeId}` : "/betabuilder/recipes/new"}
+                style={{
+                  background: hsTokens.paper,
+                  color: hsTokens.ink,
+                  border: `2px solid ${hsTokens.ink}`,
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  borderRadius: 999,
+                  boxShadow: hsTokens.sh1,
+                  fontFamily: hsTokens.body,
+                  textDecoration: "none",
+                }}
+              >
+                Open in classic ↗
+              </Link>
+              <button
+                type="button"
+                onClick={handleSave}
+                style={{
+                  background: hsTokens.hops,
+                  color: hsTokens.cream,
+                  border: `2px solid ${hsTokens.ink}`,
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  borderRadius: 999,
+                  boxShadow: hsTokens.sh2,
+                  cursor: "pointer",
+                  fontFamily: hsTokens.body,
+                }}
+              >
+                Save recipe →
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -224,29 +266,48 @@ export default function HopSkipBuilder({ recipeId }: Props) {
           borderBottom: `2px solid ${hsTokens.ink}`,
         }}
       >
-        <HSScriptNote color={hsTokens.yeast} size={28}>
-          recipe draft —
+        <HSScriptNote
+          color={isShared ? hsTokens.water : hsTokens.yeast}
+          size={28}
+        >
+          {isShared ? "shared recipe —" : "recipe draft —"}
         </HSScriptNote>
         <div style={{ marginTop: 6 }}>
-          <input
-            type="text"
-            value={currentRecipe.name ?? ""}
-            onChange={(e) => updateRecipe({ name: e.target.value })}
-            aria-label="Recipe name"
-            placeholder="Untitled recipe"
-            style={{
-              ...display,
-              fontSize: 72,
-              border: "none",
-              background: "transparent",
-              fontFamily: hsTokens.display,
-              color: hsTokens.ink,
-              outline: "none",
-              padding: 0,
-              width: "100%",
-              minWidth: 0,
-            }}
-          />
+          {isShared ? (
+            <h1
+              style={{
+                ...display,
+                fontSize: 72,
+                fontFamily: hsTokens.display,
+                color: hsTokens.ink,
+                margin: 0,
+                width: "100%",
+                minWidth: 0,
+              }}
+            >
+              {currentRecipe.name || "Untitled recipe"}
+            </h1>
+          ) : (
+            <input
+              type="text"
+              value={currentRecipe.name ?? ""}
+              onChange={(e) => updateRecipe({ name: e.target.value })}
+              aria-label="Recipe name"
+              placeholder="Untitled recipe"
+              style={{
+                ...display,
+                fontSize: 72,
+                border: "none",
+                background: "transparent",
+                fontFamily: hsTokens.display,
+                color: hsTokens.ink,
+                outline: "none",
+                padding: 0,
+                width: "100%",
+                minWidth: 0,
+              }}
+            />
+          )}
         </div>
         <div
           style={{
@@ -259,9 +320,10 @@ export default function HopSkipBuilder({ recipeId }: Props) {
         >
           <ClickableMetaPill
             label="STYLE"
-            value={currentRecipe.style ?? "Add style…"}
+            value={currentRecipe.style ?? (isShared ? "—" : "Add style…")}
             color={hsTokens.malt}
-            onClick={() => setIsStyleModalOpen(true)}
+            onClick={isShared ? undefined : () => setIsStyleModalOpen(true)}
+            readOnly={isShared}
           />
           <NumericMetaPill
             label="BATCH"
@@ -272,6 +334,7 @@ export default function HopSkipBuilder({ recipeId }: Props) {
             min={1}
             max={500}
             onChange={(v) => updateRecipe({ batchVolumeL: v })}
+            readOnly={isShared}
           />
           <NumericMetaPill
             label="BOIL"
@@ -286,6 +349,7 @@ export default function HopSkipBuilder({ recipeId }: Props) {
                 equipment: { ...currentRecipe.equipment, boilTimeMin: v },
               })
             }
+            readOnly={isShared}
           />
           <NumericMetaPill
             label="EFF"
@@ -300,6 +364,7 @@ export default function HopSkipBuilder({ recipeId }: Props) {
                 equipment: { ...currentRecipe.equipment, mashEfficiencyPercent: v },
               })
             }
+            readOnly={isShared}
           />
           <button
             type="button"
@@ -366,6 +431,81 @@ export default function HopSkipBuilder({ recipeId }: Props) {
           ) : null}
         </div>
       </section>
+
+      {/* ── Shared-recipe attribution + ratings band ── */}
+      {isShared ? (
+        <div
+          style={{
+            padding: `12px ${BAND_PADDING_X}`,
+            background: hsTokens.cream2,
+            borderBottom: `2px solid ${hsTokens.ink}`,
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+              flexWrap: "wrap",
+              fontFamily: hsTokens.body,
+              fontSize: 13,
+              color: hsTokens.muted,
+            }}
+          >
+            <HSScriptNote color={hsTokens.water} size={18} rotate={-3}>
+              by —
+            </HSScriptNote>
+            {sharedOwnerName ? (
+              sharedOwnerId ? (
+                <Link
+                  href={`/u/${sharedOwnerId}`}
+                  style={{ color: hsTokens.ink, textDecoration: "underline", fontWeight: 600 }}
+                >
+                  {sharedOwnerName}
+                </Link>
+              ) : (
+                <span style={{ color: hsTokens.ink, fontWeight: 600 }}>{sharedOwnerName}</span>
+              )
+            ) : null}
+            {currentRecipe?.parentRecipeName ? (
+              <span>
+                · forked from{" "}
+                {currentRecipe.parentRecipeShareSlug ? (
+                  <Link
+                    href={`/r/${currentRecipe.parentRecipeShareSlug}`}
+                    style={{
+                      color: hsTokens.ink,
+                      textDecoration: "underline",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {currentRecipe.parentRecipeName}
+                  </Link>
+                ) : (
+                  <span style={{ color: hsTokens.ink, fontWeight: 600 }}>
+                    {currentRecipe.parentRecipeName}
+                  </span>
+                )}
+                {currentRecipe.parentRecipeOwnerName ? (
+                  <> by {currentRecipe.parentRecipeOwnerName}</>
+                ) : null}
+              </span>
+            ) : null}
+          </div>
+          {currentRecipe ? (
+            <HSRatingStars
+              recipeId={currentRecipe.id}
+              ratingAvg={sharedRatingAvg}
+              ratingCount={sharedRatingCount}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       {/* ── Advanced expander band ── */}
       <div
@@ -465,7 +605,7 @@ export default function HopSkipBuilder({ recipeId }: Props) {
           >
             <HSEyebrow>Live numbers</HSEyebrow>
             <HSScriptNote color={hsTokens.yeast} size={18} rotate={-2}>
-              updates as you type ✦
+              {isShared ? "set when published ✦" : "updates as you type ✦"}
             </HSScriptNote>
           </div>
           <div
@@ -639,7 +779,9 @@ export default function HopSkipBuilder({ recipeId }: Props) {
 
         <div
           key={activeTab}
-          className={`hs-section-frame brew-theme hs-tab-slide hs-tab-slide-${tabDirection}`}
+          className={`hs-section-frame brew-theme hs-tab-slide hs-tab-slide-${tabDirection}${
+            isShared ? " brew-read-only" : ""
+          }`}
           style={{ position: "relative" }}
         >
           {activeTab === "fermentables" ? <FermentableSection /> : null}
@@ -670,12 +812,37 @@ function ClickableMetaPill({
   value,
   color,
   onClick,
+  readOnly,
 }: {
   label: string;
   value: string;
   color: string;
-  onClick: () => void;
+  onClick?: () => void;
+  readOnly?: boolean;
 }) {
+  if (readOnly) {
+    return (
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          background: hsTokens.paper,
+          border: `2px solid ${hsTokens.ink}`,
+          boxShadow: hsTokens.sh1,
+          borderRadius: 999,
+          padding: "6px 14px 6px 10px",
+          fontFamily: hsTokens.body,
+          color: hsTokens.ink,
+          cursor: "default",
+        }}
+      >
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        <HSEyebrow>{label}</HSEyebrow>
+        <span style={{ fontSize: 12, fontWeight: 600 }}>{value}</span>
+      </div>
+    );
+  }
   return (
     <button
       type="button"
@@ -712,6 +879,7 @@ interface NumericMetaPillProps {
   min?: number;
   max?: number;
   onChange: (n: number) => void;
+  readOnly?: boolean;
 }
 
 function NumericMetaPill({
@@ -723,6 +891,7 @@ function NumericMetaPill({
   min,
   max,
   onChange,
+  readOnly,
 }: NumericMetaPillProps) {
   return (
     <div
@@ -739,31 +908,47 @@ function NumericMetaPill({
     >
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
       <HSEyebrow>{label}</HSEyebrow>
-      <input
-        type="number"
-        value={value}
-        step={step}
-        min={min}
-        max={max}
-        inputMode="decimal"
-        aria-label={label}
-        onChange={(e) => {
-          const v = Number(e.target.value);
-          if (!Number.isNaN(v)) onChange(v);
-        }}
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          border: "none",
-          background: "transparent",
-          fontFamily: hsTokens.body,
-          color: hsTokens.ink,
-          outline: "none",
-          padding: 0,
-          width: 56,
-          fontVariantNumeric: "tabular-nums",
-        }}
-      />
+      {readOnly ? (
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            fontFamily: hsTokens.body,
+            color: hsTokens.ink,
+            fontVariantNumeric: "tabular-nums",
+            minWidth: 28,
+            textAlign: "right",
+          }}
+        >
+          {value}
+        </span>
+      ) : (
+        <input
+          type="number"
+          value={value}
+          step={step}
+          min={min}
+          max={max}
+          inputMode="decimal"
+          aria-label={label}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (!Number.isNaN(v)) onChange(v);
+          }}
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            border: "none",
+            background: "transparent",
+            fontFamily: hsTokens.body,
+            color: hsTokens.ink,
+            outline: "none",
+            padding: 0,
+            width: 56,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        />
+      )}
       <span style={{ fontSize: 11, color: hsTokens.muted }}>{unit}</span>
     </div>
   );

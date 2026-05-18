@@ -118,6 +118,7 @@ export default function HSBrowseCard({
       const now = new Date().toISOString();
       const newId = uid();
       const {
+        id: _sourceId,
         isPublic: _isPublic,
         shareSlug: _shareSlug,
         publishedAt: _publishedAt,

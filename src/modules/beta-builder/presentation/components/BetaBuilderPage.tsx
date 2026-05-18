@@ -30,7 +30,9 @@ import SectionSidebar from "./SectionSidebar";
 import { SECTIONS, getScribbleLines } from "./sidebarData";
 import AnimatedValue from "./AnimatedValue";
 import ShareModal from "../../../sharing/ShareModal";
+// eslint-disable-next-line no-restricted-imports
 import ForkButton from "../../../sharing/ForkButton";
+// eslint-disable-next-line no-restricted-imports
 import RatingStars from "../../../sharing/RatingStars";
 import { useAuthStore } from "../../../auth/authStore";
 import { useUserTier } from "../../../auth/useUserTier";
