@@ -6,6 +6,7 @@ import { useEffect, useMemo } from "react";
 
 import { hsTokens } from "../tokens";
 import HSCard from "./HSCard";
+import HSCardLift from "./HSCardLift";
 import HSEyebrow from "./HSEyebrow";
 import HSScriptNote from "./HSScriptNote";
 import HSSectionHeader from "./HSSectionHeader";
@@ -625,10 +626,11 @@ export default function HopSkipHomeContent() {
               const srm = calc.srm ?? 0;
               const srmColor = srmToRgb(srm);
               return (
-                <Link
+                <HSCardLift
                   key={recipe.id}
                   href={`/recipes/${recipe.id}`}
-                  style={{ textDecoration: "none", color: hsTokens.ink }}
+                  ariaLabel={recipe.name || "Untitled recipe"}
+                  ctaColor={hsTokens.hops}
                 >
                   <HSCard
                     shadow={3}
@@ -686,11 +688,6 @@ export default function HopSkipHomeContent() {
                           ))}
                         </div>
                       ) : null}
-                      <div style={{ marginTop: 10 }}>
-                        <HSScriptNote color={hsTokens.hops} size={16}>
-                          tap to open
-                        </HSScriptNote>
-                      </div>
 
                       <div
                         style={{
@@ -753,7 +750,7 @@ export default function HopSkipHomeContent() {
                       </div>
                     </div>
                   </HSCard>
-                </Link>
+                </HSCardLift>
               );
             })}
           </div>

@@ -19,6 +19,7 @@ type SortOption = 'newest' | 'popular' | 'top-rated';
 
 const MAX_COMPARE = 8;
 
+/** @deprecated Classic UI. Replaced by HSBrowsePage — see HOPSKIP_MIGRATION_PRD.md §1.1. */
 export default function BrowseRecipesPage() {
   const router = useRouter();
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);

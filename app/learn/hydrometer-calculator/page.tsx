@@ -47,7 +47,7 @@ export default function HydrometerCalcPage() {
 
         <div className="my-8"><HydrometerCorrectionCalculator /></div>
 
-        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -65,7 +65,7 @@ export default function HydrometerCalcPage() {
             border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
           }}
         >
-          <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+          <h3 className="text-base font-bold mb-2">
             When does it matter?
           </h3>
           <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -77,7 +77,7 @@ export default function HydrometerCalcPage() {
           </p>
         </div>
 
-        <h2 id="sources" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="sources" className="text-xl font-bold mt-10 mb-4">
           Sources
         </h2>
         <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>

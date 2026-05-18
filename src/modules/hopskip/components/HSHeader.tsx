@@ -124,7 +124,7 @@ export default function HSHeader() {
             gap: 4,
           }}
         >
-          Classic <span aria-hidden>↺</span>
+          Classic (legacy) <span aria-hidden>↺</span>
         </Link>
       </nav>
       <style>{`

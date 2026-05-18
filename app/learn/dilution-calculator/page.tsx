@@ -47,7 +47,7 @@ export default function DilutionCalcPage() {
 
         <div className="my-8"><DilutionCalculator /></div>
 
-        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It
         </h2>
         <HSFormulaCallout

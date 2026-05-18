@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/browse is the quarantined reference; intentional import
 import BrowseRecipesPage from "@/modules/sharing/BrowseRecipesPage";
 import { SEED_RECIPES, SEED_SLUG_MAP } from "@/data/seed-recipes";
 

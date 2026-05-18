@@ -65,7 +65,7 @@ export default function YeastStartersPage() {
           for multi-step starters when a single step isn&apos;t enough.
         </p>
 
-        <h2 id="pitching-rate" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="pitching-rate" className="text-xl font-bold mt-10 mb-4">
           Pitching Rate
         </h2>
 
@@ -75,7 +75,7 @@ export default function YeastStartersPage() {
           description="Rate = 0.75 M cells/mL/°P for ales, 1.0–1.5 for lagers. V = batch volume in liters. °P = degrees Plato from OG."
         />
 
-        <h2 id="viability" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="viability" className="text-xl font-bold mt-10 mb-4">
           Viability
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -85,7 +85,7 @@ export default function YeastStartersPage() {
           manufacture date.
         </p>
 
-        <h2 id="growth-models" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="growth-models" className="text-xl font-bold mt-10 mb-4">
           Two Growth Models
         </h2>
 
@@ -97,7 +97,7 @@ export default function YeastStartersPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               White Model <span className="text-xs font-normal ml-1" style={{ color: "var(--fg-muted)" }}>polynomial growth</span>
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -116,7 +116,7 @@ export default function YeastStartersPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Braukaiser Model <span className="text-xs font-normal ml-1" style={{ color: "var(--fg-muted)" }}>linear growth</span>
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -128,7 +128,7 @@ export default function YeastStartersPage() {
           </div>
         </div>
 
-        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4">
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">
@@ -139,7 +139,7 @@ export default function YeastStartersPage() {
           Package cell counts come from manufacturer spec sheets.
         </p>
 
-        <h2 id="sources" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="sources" className="text-xl font-bold mt-10 mb-4">
           Sources
         </h2>
         <ul className="text-sm space-y-1.5 list-disc pl-5" style={{ color: "var(--fg-muted)" }}>

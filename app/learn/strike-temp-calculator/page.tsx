@@ -87,7 +87,6 @@ export default function StrikeTempCalcPage() {
         <h2
           id="how-we-calculate-it"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           How We Calculate It
         </h2>
@@ -136,7 +135,6 @@ export default function StrikeTempCalcPage() {
         <h2
           id="mash-thickness"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Mash Thickness
         </h2>
@@ -160,7 +158,6 @@ export default function StrikeTempCalcPage() {
         >
           <h3
             className="text-base font-bold mb-3"
-            style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
           >
             Typical Mash Thicknesses
           </h3>
@@ -185,7 +182,6 @@ export default function StrikeTempCalcPage() {
         <h2
           id="grain-temperature"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Grain Temperature
         </h2>

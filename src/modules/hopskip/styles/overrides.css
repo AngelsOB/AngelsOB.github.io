@@ -459,14 +459,13 @@
 
 /* ────────────── Inline-style font remap (LearnArticle etc.) ────────────── */
 
-/* Anything in HS that hardcodes Bitter / Shadows Into Light / Rock Salt
-   as the inline font-family flips to HS display / script. */
+/* Anything in HS that hardcodes Bitter / Shadows Into Light as the inline
+   font-family flips to HS display / script. */
 .hs-theme [style*="Bitter"] {
   font-family: var(--hs-font-display) !important;
   letter-spacing: -0.035em !important;
 }
-.hs-theme [style*="Shadows Into Light"],
-.hs-theme [style*="Rock Salt"] {
+.hs-theme [style*="Shadows Into Light"] {
   font-family: var(--hs-font-script) !important;
 }
 
@@ -1136,15 +1135,6 @@
 .hs-theme .hs-section-frame .brew-section.brew-animate-in,
 .hs-theme .hs-section-frame .brew-animate-in {
   animation: none !important;
-}
-
-/* Recipe cards (classic) when reused in HS */
-.hs-theme .brew-recipe-card {
-  background: var(--hs-paper) !important;
-  background-image: none !important;
-  border: 2px solid var(--hs-ink) !important;
-  border-radius: var(--hs-radius-lg) !important;
-  box-shadow: var(--hs-shadow-3) !important;
 }
 
 /* ────────────── HS helpers ────────────── */

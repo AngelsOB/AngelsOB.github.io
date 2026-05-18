@@ -117,3 +117,15 @@
     opacity: 1;
   }
 }
+
+
+/* ──────────── Interactive card lift (HSCardLift, HSBrowseCard) ──────────── */
+.hs-lift-card { transition: transform 180ms ease; }
+.hs-lift-inner { transition: box-shadow 180ms ease, transform 180ms ease; }
+@media (hover: hover) {
+  .hs-lift-card:hover { transform: translate(-2px, -3px) scale(1.02); }
+  .hs-lift-card:hover .hs-lift-inner {
+    transform: rotate(0deg) !important;
+    box-shadow: 7px 7px 0 var(--hs-ink) !important;
+  }
+}

@@ -132,7 +132,7 @@ export default function MashTemperaturePage() {
 
         <ModelComparisonPreview />
 
-        <h2 id="the-two-enzymes" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="the-two-enzymes" className="text-xl font-bold mt-10 mb-4">
           The Two Enzymes
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -143,7 +143,7 @@ export default function MashTemperaturePage() {
           wort&apos;s sugar composition.
         </p>
 
-        <h2 id="three-models" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="three-models" className="text-xl font-bold mt-10 mb-4">
           Three Models
         </h2>
 
@@ -155,7 +155,7 @@ export default function MashTemperaturePage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Linear <span className="text-xs font-normal ml-1" style={{ color: "var(--fg-muted)" }}>default</span>
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -175,7 +175,7 @@ export default function MashTemperaturePage() {
             }}
           >
             <div className="flex items-baseline gap-2 mb-2">
-              <h3 className="text-base font-bold" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+              <h3 className="text-base font-bold">
                 Enzyme Kinetics
               </h3>
               <span
@@ -203,7 +203,7 @@ export default function MashTemperaturePage() {
             }}
           >
             <div className="flex items-baseline gap-2 mb-2">
-              <h3 className="text-base font-bold" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+              <h3 className="text-base font-bold">
                 ODE Kinetics
               </h3>
               <span
@@ -224,7 +224,7 @@ export default function MashTemperaturePage() {
           </div>
         </div>
 
-        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4">
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">

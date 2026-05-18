@@ -13,6 +13,8 @@ import {
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+// HSUserProfile (Phase 1.4) will replace this with HSBrowseCard. Relative import keeps the
+// no-restricted-imports rule from firing inside the sharing module itself.
 import { BrowseCard, type BrowseRecipe } from './BrowseCard';
 
 export default function UserProfileClient({ userId }: { userId: string }) {

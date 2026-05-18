@@ -190,7 +190,6 @@ export default function IbuPage() {
         <h2
           id="how-we-calculate-it"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           How We Calculate It
         </h2>
@@ -223,7 +222,6 @@ export default function IbuPage() {
         <h2
           id="beyond-the-boil"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Beyond the Boil
         </h2>
@@ -247,7 +245,6 @@ export default function IbuPage() {
             <div className="flex items-baseline gap-2 mb-2">
               <h3
                 className="text-base font-bold"
-                style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
               >
                 Whirlpool &amp; Hop Stand
               </h3>
@@ -275,7 +272,6 @@ export default function IbuPage() {
             <div className="flex items-baseline gap-2 mb-2">
               <h3
                 className="text-base font-bold"
-                style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
               >
                 Dry Hops
               </h3>
@@ -313,7 +309,6 @@ export default function IbuPage() {
             <div className="flex items-baseline gap-2 mb-2">
               <h3
                 className="text-base font-bold"
-                style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
               >
                 First Wort Hops
               </h3>
@@ -340,7 +335,6 @@ export default function IbuPage() {
             <div className="flex items-baseline gap-2 mb-2">
               <h3
                 className="text-base font-bold"
-                style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
               >
                 Mash Hops
               </h3>
@@ -358,7 +352,6 @@ export default function IbuPage() {
         <h2
           id="worked-example"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Worked Example
         </h2>
@@ -406,7 +399,6 @@ export default function IbuPage() {
         <h2
           id="the-research"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Where This Comes From
         </h2>

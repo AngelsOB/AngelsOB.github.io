@@ -118,7 +118,6 @@ export default function HopFlavorPage() {
         <h2
           id="how-we-calculate-it"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           How We Calculate It
         </h2>
@@ -141,7 +140,6 @@ export default function HopFlavorPage() {
           >
             <h3
               className="text-base font-bold mb-2"
-              style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
             >
               Aroma Retention by Addition Type
             </h3>
@@ -162,7 +160,6 @@ export default function HopFlavorPage() {
           >
             <h3
               className="text-base font-bold mb-2"
-              style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
             >
               The Perceptual Ceiling
             </h3>
@@ -184,7 +181,6 @@ export default function HopFlavorPage() {
         <h2
           id="what-its-good-for"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           What It&apos;s Good For
         </h2>
@@ -206,7 +202,6 @@ export default function HopFlavorPage() {
         <h2
           id="where-this-comes-from"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Where This Comes From
         </h2>

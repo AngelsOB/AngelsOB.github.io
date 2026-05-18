@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { hsTokens } from "../tokens";
 import HSCard from "./HSCard";
+import HSCardLift from "./HSCardLift";
 import HSSectionHeader from "./HSSectionHeader";
-import HSScriptNote from "./HSScriptNote";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 
 export interface CommunityRecipeCard {
@@ -75,11 +75,7 @@ export default function HopSkipCommunitySection({ recipes }: Props) {
           const tilt = tilts[idx % tilts.length];
           const srmColor = srmToRgb(recipe.stats.srm);
           return (
-            <Link
-              key={recipe.shareSlug}
-              href={`/r/${recipe.shareSlug}`}
-              style={{ textDecoration: "none", color: hsTokens.ink }}
-            >
+            <HSCardLift key={recipe.shareSlug} href={`/r/${recipe.shareSlug}`} ariaLabel={recipe.name}>
               <HSCard shadow={3} tilt={tilt} padding={0} style={{ overflow: "hidden" }}>
                 <div style={{ height: 14, background: srmColor }} aria-hidden />
                 <div style={{ padding: "16px 18px 18px" }}>
@@ -230,14 +226,9 @@ export default function HopSkipCommunitySection({ recipes }: Props) {
                     ))}
                   </div>
 
-                  <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
-                    <HSScriptNote color={hsTokens.water} size={16}>
-                      open →
-                    </HSScriptNote>
-                  </div>
                 </div>
               </HSCard>
-            </Link>
+            </HSCardLift>
           );
         })}
       </div>

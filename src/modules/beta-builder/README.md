@@ -1,3 +1,16 @@
+# DEPRECATED CLASSIC UI (presentation layer only)
+
+The `presentation/components/` UI in this folder is quarantined classic UI during the HopSkip migration. Do not modify those components; do not import them from outside `app/betabuilder/`. HS-native replacements ship section-by-section in Phase 2 under `src/modules/hopskip/components/builder/`.
+
+**Reused by HS (NOT deprecated):**
+- `domain/**` — models, services, repositories
+- `presentation/stores/recipeStore.ts` and other Zustand stores
+- `presentation/hooks/useRecipeCalculations.ts` and other hooks
+
+See [/HOPSKIP_MIGRATION_PRD.md](/HOPSKIP_MIGRATION_PRD.md) for the migration plan. The architecture guide below is preserved for historical context — it accurately describes the data + calculation layer that HS continues to reuse.
+
+---
+
 # Beta Builder - Clean Architecture Implementation
 
 ## Overview
