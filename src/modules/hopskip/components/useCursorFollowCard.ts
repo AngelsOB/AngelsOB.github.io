@@ -6,10 +6,11 @@ interface Options {
   disabled?: boolean;
   rotationFactor?: number;
   restDelayMs?: number;
+  tiltMaxDeg?: number;
 }
 
 export function useCursorFollowCard(opts: Options = {}) {
-  const { disabled = false, rotationFactor = 0.8, restDelayMs = 120 } = opts;
+  const { disabled = false, rotationFactor = 0.8, restDelayMs = 120, tiltMaxDeg = 4 } = opts;
   const wrapperRef = useRef<HTMLElement | null>(null);
   const ctaRef = useRef<HTMLDivElement | null>(null);
   const lastClientXRef = useRef<number | null>(null);
@@ -33,6 +34,12 @@ export function useCursorFollowCard(opts: Options = {}) {
     const rect = wrap.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    // Normalize cursor position to [-0.5, 0.5]. The near-cursor edge
+    // recedes (tilts away from the viewer) — like pressing the corner down.
+    const nx = rect.width > 0 ? x / rect.width - 0.5 : 0;
+    const ny = rect.height > 0 ? y / rect.height - 0.5 : 0;
+    wrap.style.setProperty("--hs-tilt-x", `${nx * tiltMaxDeg}deg`);
+    wrap.style.setProperty("--hs-tilt-y", `${-ny * tiltMaxDeg}deg`);
     const last = lastClientXRef.current;
     const dx = last !== null ? e.clientX - last : 0;
     lastClientXRef.current = e.clientX;
@@ -47,6 +54,10 @@ export function useCursorFollowCard(opts: Options = {}) {
 
   function onMouseLeave() {
     if (ctaRef.current) ctaRef.current.style.opacity = "0";
+    if (wrapperRef.current) {
+      wrapperRef.current.style.setProperty("--hs-tilt-x", "0deg");
+      wrapperRef.current.style.setProperty("--hs-tilt-y", "0deg");
+    }
     lastClientXRef.current = null;
     if (restTimerRef.current !== null) {
       window.clearTimeout(restTimerRef.current);
