@@ -119,13 +119,37 @@
 }
 
 
-/* ──────────── Interactive card lift (HSCardLift, HSBrowseCard) ──────────── */
+/* ──────────── Interactive card lift (HSCardLift, HSBrowseCard) ────────────
+   The offset shadow lives on .hs-lift-card::before (a non-rotating sibling
+   behind the card) instead of on the inner HSCard, so the shadow stays flat
+   while the card surface tilts in 3D. */
 .hs-lift-card { transition: transform 180ms ease; }
-.hs-lift-inner { transition: box-shadow 180ms ease, transform 180ms ease; }
+.hs-lift-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--hs-ink);
+  border-radius: 14px;
+  transform: translate(4px, 4px);
+  transition: transform 180ms ease;
+  z-index: 0;
+  pointer-events: none;
+}
+.hs-lift-inner {
+  position: relative;
+  z-index: 1;
+  box-shadow: none !important;
+  transition: transform 120ms ease-out;
+  transform-style: preserve-3d;
+}
 @media (hover: hover) {
   .hs-lift-card:hover { transform: translate(-2px, -3px) scale(1.02); }
+  .hs-lift-card:hover::before {
+    transform: translate(7px, 7px) perspective(900px)
+      rotateX(calc(var(--hs-tilt-y, 0deg) * 0.6))
+      rotateY(calc(var(--hs-tilt-x, 0deg) * 0.6));
+  }
   .hs-lift-card:hover .hs-lift-inner {
-    transform: rotate(0deg) !important;
-    box-shadow: 7px 7px 0 var(--hs-ink) !important;
+    transform: perspective(900px) rotateX(var(--hs-tilt-y, 0deg)) rotateY(var(--hs-tilt-x, 0deg)) !important;
   }
 }
