@@ -17,6 +17,7 @@ import { db } from '@/config/firebase';
 // no-restricted-imports rule from firing inside the sharing module itself.
 import { BrowseCard, type BrowseRecipe } from './BrowseCard';
 
+/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §1.4. */
 export default function UserProfileClient({ userId }: { userId: string }) {
   const [recipes, setRecipes] = useState<BrowseRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
