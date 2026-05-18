@@ -44,7 +44,7 @@ export class FirestoreRecipeRepository {
       orderBy("updatedAt", "desc"),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe);
+    return snapshot.docs.map((d) => ({ ...d.data(), id: d.id }) as Recipe);
   }
 
   /**
@@ -65,7 +65,7 @@ export class FirestoreRecipeRepository {
       const cachedSnapshot = await getDocsFromCache(q);
       if (!cachedSnapshot.empty) {
         onCacheHit(
-          cachedSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe),
+          cachedSnapshot.docs.map((d) => ({ ...d.data(), id: d.id }) as Recipe),
         );
       }
     } catch {
@@ -74,7 +74,7 @@ export class FirestoreRecipeRepository {
 
     // Step 2: Always fetch fresh from network
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Recipe);
+    return snapshot.docs.map((d) => ({ ...d.data(), id: d.id }) as Recipe);
   }
 
   /**
@@ -85,7 +85,7 @@ export class FirestoreRecipeRepository {
     try {
       const docRef = doc(this.recipesRef, id);
       const snap = await getDocFromCache(docRef);
-      if (snap.exists()) return { id: snap.id, ...snap.data() } as Recipe;
+      if (snap.exists()) return { ...snap.data(), id: snap.id } as Recipe;
     } catch {
       // Cache miss
     }
@@ -102,7 +102,7 @@ export class FirestoreRecipeRepository {
     const docRef = doc(this.recipesRef, id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    return { id: snap.id, ...snap.data() } as Recipe;
+    return { ...snap.data(), id: snap.id } as Recipe;
   }
 
   save(recipe: Recipe): void {

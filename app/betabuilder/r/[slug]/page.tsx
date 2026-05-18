@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPublicRecipe, buildRecipeJsonLd } from '@/modules/sharing/getPublicRecipe'
+// eslint-disable-next-line no-restricted-imports
 import PublicRecipeClient from '@/modules/sharing/PublicRecipeClient'
 
 interface PageProps {

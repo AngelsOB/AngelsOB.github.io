@@ -1,43 +1,50 @@
 'use client';
 
 import { useState } from 'react';
-import { uid } from "@/utils/uid";
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc, increment, runTransaction } from 'firebase/firestore';
-import { db, auth } from '@/config/firebase';
-import Button from '../../components/Button';
-import { useAuthStore, deriveUserState } from '../auth/authStore';
-import { canCreateRecipe, RECIPE_LIMIT } from '../auth/tierAccess';
-import { toast } from '../../stores/toastStore';
-import type { Recipe } from '../beta-builder/domain/models/Recipe';
 
-interface ForkButtonProps {
+import { uid } from '@/utils/uid';
+import { db, auth } from '@/config/firebase';
+import { useAuthStore, deriveUserState } from '@/modules/auth/authStore';
+import { canCreateRecipe, RECIPE_LIMIT } from '@/modules/auth/tierAccess';
+import { toast } from '@/stores/toastStore';
+import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
+
+interface UseForkRecipeOptions {
   recipeId: string;
   recipeName: string;
 }
 
-/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §1.2. */
-export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
+interface UseForkRecipeResult {
+  fork: () => Promise<void>;
+  isForking: boolean;
+  isSignedIn: boolean;
+  needsSignIn: () => Promise<void>;
+}
+
+export function useForkRecipe({ recipeId, recipeName }: UseForkRecipeOptions): UseForkRecipeResult {
   const user = useAuthStore((s) => s.user);
   const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const router = useRouter();
   const [isForking, setIsForking] = useState(false);
 
-  async function handleFork() {
+  async function fork() {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
 
-    // Check recipe limit before forking
     const { recipeCount, subscriptionStatus, subscriptionCurrentPeriodEnd } = useAuthStore.getState();
     const userState = deriveUserState(currentUser, subscriptionStatus, subscriptionCurrentPeriodEnd);
     if (!canCreateRecipe(userState, recipeCount)) {
-      toast.error(`You've reached the ${RECIPE_LIMIT}-recipe limit. Upgrade to Premium for unlimited recipes.`, { duration: 6000 });
+      toast.error(
+        `You've reached the ${RECIPE_LIMIT}-recipe limit. Upgrade to Premium for unlimited recipes.`,
+        { duration: 6000 },
+      );
       return;
     }
 
     setIsForking(true);
     try {
-      // Read the public recipe
       const recipeSnap = await getDoc(doc(db, 'recipes', recipeId));
       if (!recipeSnap.exists()) throw new Error('Recipe not found');
 
@@ -46,7 +53,6 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
 
       const originalRecipe = { id: recipeId, ...recipeData } as Recipe & { ownerId?: string };
 
-      // Get owner name and share slug from publicRecipeIndex
       let parentOwnerName = 'Anonymous Brewer';
       let parentShareSlug: string | undefined;
       try {
@@ -56,13 +62,13 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
           parentOwnerName = indexData.ownerName || parentOwnerName;
           parentShareSlug = indexData.shareSlug;
         }
-      } catch { /* fallback */ }
+      } catch {
+        /* fallback */
+      }
 
-      // Create forked recipe
       const now = new Date().toISOString();
       const newId = uid();
 
-      // Strip sharing fields and rebuild
       const {
         id: _sourceId,
         isPublic: _isPublic,
@@ -72,22 +78,23 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
         ...recipeFields
       } = recipeData;
 
-      const forkedData = JSON.parse(JSON.stringify({
-        ...recipeFields,
-        ownerId: currentUser.uid,
-        name: `${originalRecipe.name} (Fork)`,
-        isPublic: false,
-        currentVersion: 1,
-        parentRecipeId: recipeId,
-        parentVersionNumber: originalRecipe.currentVersion || 1,
-        parentRecipeName: originalRecipe.name,
-        parentRecipeOwnerName: parentOwnerName,
-        parentRecipeShareSlug: parentShareSlug,
-        createdAt: now,
-        updatedAt: now,
-      }));
+      const forkedData = JSON.parse(
+        JSON.stringify({
+          ...recipeFields,
+          ownerId: currentUser.uid,
+          name: `${originalRecipe.name} (Fork)`,
+          isPublic: false,
+          currentVersion: 1,
+          parentRecipeId: recipeId,
+          parentVersionNumber: originalRecipe.currentVersion || 1,
+          parentRecipeName: originalRecipe.name,
+          parentRecipeOwnerName: parentOwnerName,
+          parentRecipeShareSlug: parentShareSlug,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      );
 
-      // Save the fork + increment recipeCount atomically
       await runTransaction(db, async (transaction) => {
         const recipeRef = doc(db, 'recipes', newId);
         const userRef = doc(db, 'users', currentUser.uid);
@@ -96,12 +103,13 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
       });
       useAuthStore.getState().adjustRecipeCount(1);
 
-      // Best-effort: increment fork count on public index
       try {
         await updateDoc(doc(db, 'publicRecipeIndex', recipeId), {
           forkCount: increment(1),
         });
-      } catch { /* may fail if rules don't allow — that's ok */ }
+      } catch {
+        /* may fail if rules don't allow — that's ok */
+      }
 
       toast.success(`Forked "${recipeName}" to your recipes`);
       router.push(`/recipes/${newId}`);
@@ -112,17 +120,18 @@ export default function ForkButton({ recipeId, recipeName }: ForkButtonProps) {
     }
   }
 
-  if (!user) {
-    return (
-      <Button variant="outline" size="sm" onClick={signInWithGoogle}>
-        Sign in to save this recipe
-      </Button>
-    );
+  async function needsSignIn() {
+    try {
+      await signInWithGoogle();
+    } catch {
+      /* user cancelled */
+    }
   }
 
-  return (
-    <Button variant="neon" size="sm" onClick={handleFork} loading={isForking}>
-      Fork to My Recipes
-    </Button>
-  );
+  return {
+    fork,
+    isForking,
+    isSignedIn: Boolean(user),
+    needsSignIn,
+  };
 }

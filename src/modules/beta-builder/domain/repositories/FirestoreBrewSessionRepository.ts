@@ -34,7 +34,7 @@ export class FirestoreBrewSessionRepository {
       orderBy("createdAt", "desc"),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as BrewSession);
+    return snapshot.docs.map((d) => ({ ...d.data(), id: d.id }) as BrewSession);
   }
 
   loadById(_id: SessionId): BrewSession | null {
@@ -45,7 +45,7 @@ export class FirestoreBrewSessionRepository {
     const docRef = doc(this.sessionsRef, id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    return { id: snap.id, ...snap.data() } as BrewSession;
+    return { ...snap.data(), id: snap.id } as BrewSession;
   }
 
   loadByRecipeId(_recipeId: string): BrewSession[] {
@@ -60,7 +60,7 @@ export class FirestoreBrewSessionRepository {
       orderBy("createdAt", "desc"),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as BrewSession);
+    return snapshot.docs.map((d) => ({ ...d.data(), id: d.id }) as BrewSession);
   }
 
   save(session: BrewSession): void {

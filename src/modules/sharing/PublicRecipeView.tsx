@@ -52,6 +52,7 @@ function formatHopTime(h: Hop): string {
   return h.timeMinutes != null ? `${fmt(h.timeMinutes, 0)} min` : '–';
 }
 
+/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §1.2. */
 export default function PublicRecipeView({ recipe, calculations: calc, ownerName }: PublicRecipeViewProps) {
   const srmColor = srmToRgb(calc.srm);
   const totalGrainKg = recipe.fermentables.reduce((s, f) => s + f.weightKg, 0);

@@ -17,6 +17,8 @@ interface PublicRecipeClientProps {
  *
  * When recipe data is provided by the server component, renders immediately.
  * The `slug` prop is kept for URL context (e.g. share links).
+ *
+ * @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §1.2.
  */
 export default function PublicRecipeClient({
   recipe,
