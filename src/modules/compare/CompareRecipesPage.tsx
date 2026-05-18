@@ -16,6 +16,7 @@ import MeanRecipeSummary from './sections/MeanRecipeSummary';
 
 const calc = new RecipeCalculationService();
 
+/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §1.3. */
 export default function CompareRecipesPage() {
   const searchParams = useSearchParams();
   const idsParam = searchParams.get('ids') || '';

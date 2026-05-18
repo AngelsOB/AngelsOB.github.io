@@ -86,6 +86,20 @@ export default tseslint.config([
             message:
               'Classic UI. Use HSPublicRecipeShell / HSForkButton / HSRatingStars from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.2.',
           },
+          {
+            group: [
+              '**/modules/sharing/UserProfileClient',
+            ],
+            message:
+              'Classic UI. Use HSUserProfile from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.4.',
+          },
+          {
+            group: [
+              '**/modules/compare/CompareRecipesPage',
+            ],
+            message:
+              'Classic UI. Use HSCompareRecipesPage from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.3.',
+          },
         ],
       }],
     },

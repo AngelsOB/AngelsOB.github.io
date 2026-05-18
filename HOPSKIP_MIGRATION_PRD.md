@@ -54,7 +54,7 @@ src/modules/hopskip/
 │   ├── builder/         ← NEW (Phase 2 — one folder per section)
 │   ├── modals/          ← NEW (HSModal + bespoke modals as they're built per-section)
 │   ├── calculators/     ← NEW (Phase 3 — extracted calculator widgets)
-│   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 shipped); PublicViewer, Compare, UserProfile to follow
+│   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 ✅); HSPublicRecipeShell/HSForkButton/HSRatingStars/useForkRecipe (1.2 ✅); HSCompareRecipesPage (1.3 ✅); HSUserProfile (1.4 ✅); BrewSession/VersionHistory to follow
 └── styles/
     ├── tokens.css       (stays forever)
     └── overrides.css    (shrinks as native components replace classic; eventually can be deleted)
@@ -133,7 +133,7 @@ Make it unambiguous that classic is dead-code-on-life-support.
 
 # Phase 1 — Missing HS-native pages (full feature parity)
 
-**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections). 1.3–1.6 remain.
+**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections). Phase 1.3 ✅ (mean-recipe + a few detail sub-views deferred). Phase 1.4 ✅. 1.5, 1.6 remain.
 
 HS is currently missing entire pages that classic has. After Phase 1, every URL classic offers has an HS-native equivalent. The classic side stays accessible at `/betabuilder/*` as the side-by-side reference; the HS routes are now actually HS.
 
@@ -181,19 +181,40 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 
 ## 1.3 — HSCompareRecipesPage
 
-- **Current source:** [src/modules/compare/CompareRecipesPage.tsx](src/modules/compare/CompareRecipesPage.tsx).
-- **Route:** `/browse/compare` — currently a re-export.
-- **What it does:** side-by-side comparison of 2–4 recipes.
-- **HS plan:** HS column-grid layout. Each column is a recipe with its key stats + ingredient diff highlights. Stat comparison bars in HS style.
-- **Effort:** M.
+**Status:** Done. ✅ See the [Phase 1.3 retrospective](#phase-13-retrospective--lessons-for-subsequent-slices) below.
+
+- **Current source (replaced):** [src/modules/compare/CompareRecipesPage.tsx](src/modules/compare/CompareRecipesPage.tsx) — now `@deprecated` and unreferenced from any HS-active code (only the quarantined `/betabuilder/browse/compare` mirror imports it, with an inline `eslint-disable no-restricted-imports`).
+- **Route:** `/browse/compare?ids=…` — now a server component that parses the comma-separated IDs query param, resolves seed recipes via `findSeedRecipe()` and Firestore recipes via `adminDb.getAll(...)`, and hands `initialRecipes: Recipe[]` to `HSCompareRecipesPage`. Inline server fetch (no `/api/compare` round-trip).
+- **New HS components** (`src/modules/hopskip/components/public/`):
+  - `HSCompareRecipesPage.tsx` — client component (`RecipeCalculationService.calculate` runs in `useMemo`). Five inline sub-blocks:
+    - **VitalsBlock** — HSCard (malt accent) with table: rows=recipes, cols=ABV/OG/FG/IBU/SRM/Cal. SRM color chip per cell. Average row (malt-tinted). BJCP guideline row (water-tinted) when ≥1 recipe has a code that maps to `getBjcpStyleSpec()`.
+    - **GrainBlock** — HSCard (hops accent). Stacked horizontal bars per recipe + average bar + legend. Uses existing `GRAIN_CATEGORY_COLORS` and `GRAIN_CATEGORY_ORDER` from `compareUtils.ts`. **Each segment hovers a cursor-following tooltip** (`position: fixed`, z-index 100 to escape `HSCard`'s `overflow: hidden`) with the category name in Caveat cursive (matching the `HSCardLift` "open →" CTA), the segment's percentage + total kg, and a per-grain list (name + weight + pct). First-show snaps to cursor with transition temporarily disabled — no shoot-in from viewport origin.
+    - **HopBlock** — HSCard (hops accent). Table: rows=hop names (union of all recipes), cols=recipes, plus Total + Rate (g/L) summary rows.
+    - **MashBlock** — HSCard (roast accent). Table: rows=step indices, cols=recipes. Weighted-avg row + overall-avg row. Section auto-hides when no recipes have mash steps.
+    - **WaterBlock** — HSCard (water accent). Table: rows=ions (Ca/Mg/Na/Cl/SO4/HCO3), cols=recipes + Avg. Cl:SO₄ ratio row. Section auto-hides when no recipes have water data.
+  - Hero band identical to HSBrowsePage / HSUserProfile pattern (HSScriptNote kicker "side by side —" in water-blue + display-font H1 "Compare recipes." + body-font line "Comparing N recipes — vitals, grains, hops, mash, water side-by-side." + back-to-browse link).
+  - Empty state when `items.length < 2`: small HSCard ("Pick at least two." + back-to-browse link).
+- **Reused unchanged:** `compareUtils.ts` (all helpers: `getGrainBreakdown`, `getHopSummary`, `getWeightedMashTemp`, `getEffectiveWaterProfile`, `averageWaterProfiles`, `GRAIN_CATEGORY_COLORS/ORDER`, `avg`, `normalizeGrainName`), `RecipeCalculationService`, `srmToRgb`, `bjcpSpecs`. `/api/compare/route.ts` left untouched (still works; HS uses server-prefetch instead).
+- **Deferred from v1** (not regressions vs. classic — bracket-noted to revisit as 1.3.x follow-ups):
+  - Per-category normalized grain detail tables (the inline table showing each grain row with `count/total` indicator). HS surfaces the equivalent grain-level data via the **stacked-bar hover tooltip** (specific grain names + weights + percentages per segment); the always-visible cross-recipe table is deferred.
+  - Hop addition-types grid (per-recipe `<HopAdditionRow>` panels).
+  - Hop flavor radar (currently still uses `HopFlavorRadar` from classic — wires into Phase 2.8 when the entire Hop section migrates).
+  - Water salt-additions detail table (gypsum/CaCl₂/Epsom/NaCl/NaHCO₃ rows).
+  - MeanRecipeSummary block (vitals grid + grain bar + common hops + avg hop rate + avg mash temp + avg water).
+- **Data dependencies:** Admin SDK `adminDb.getAll()` of full `recipes` docs (not `publicRecipeIndex` — Compare needs ingredient detail). Strips `ownerId` (privacy, matching classic API) and stored `id` (per Phase 1.2 fork-id-wins rule). Filters to `isPublic` only.
+- **Effort:** M — single focused session as estimated.
 
 ## 1.4 — HSUserProfile
 
-- **Current source:** [src/modules/sharing/UserProfileClient.tsx](src/modules/sharing/UserProfileClient.tsx).
-- **Route:** `/u/[userId]`.
-- **What it does:** public user profile — username, brew count, list of published recipes.
-- **HS plan:** HS hero (display username + brew count) + grid of `HSBrowseCard` (reused from Phase 1.1). Small composition; the cards are already done.
-- **Effort:** S.
+**Status:** Done. ✅ See the [Phase 1.4 retrospective](#phase-14-retrospective--lessons-for-subsequent-slices) below.
+
+- **Current source (replaced):** [src/modules/sharing/UserProfileClient.tsx](src/modules/sharing/UserProfileClient.tsx) — now `@deprecated` and unreferenced from any HS-active code.
+- **Route:** `/u/[userId]` — now a server component that admin-SDK-prefetches `publicRecipeIndex` filtered by ownerId and hands `initialRecipes` + pre-resolved `ownerName`/`recipeCount`/`topStyles` to `HSUserProfile`. Per-profile `generateMetadata` (title = ownerName, description = "{n} public brewing recipes by {ownerName}…").
+- **New HS components** (`src/modules/hopskip/components/public/`):
+  - `HSUserProfile.tsx` — hero band (`HSScriptNote` "brewer —" kicker in water-blue + display-font H1 ownerName + body-font secondary line "{n} public recipes · {topStyles}") + `HSBrowseCard` grid (1/2/3 cols at sm/md/lg, cycled tilts identical to HSBrowsePage) + empty-state `HSCard` ("no public brews yet —" / "Nothing shared." / "When {ownerName} publishes a recipe it shows up here.").
+- **Reused unchanged:** `HSBrowseCard` (Phase 1.1) — works as-is in profile context; no `omitOwner` prop introduced (the inline ownerName→`/u/{ownerId}` self-link on each card is mildly redundant, accepted as transitional). Server page hidden `<nav aria-label="Recipes by {ownerName}">` of `<Link>` per recipe mirrors HSBrowsePage's SEO pattern.
+- **Data dependencies:** `publicRecipeIndex` admin SDK read (server-side only — no client cache-first refresh). Mapper copied verbatim from [app/browse/page.tsx](app/browse/page.tsx).
+- **Effort:** S — single focused session as estimated.
 
 ## 1.5 — HSBrewSessionPage
 
@@ -572,6 +593,103 @@ Two fixes landed together:
 **Rule for future phases (1.5/1.6 + Phase 2 writes):** when writing to Firestore via `setDoc(doc(ref, freshId), data)`, ensure `data` does NOT contain an `id` field (`saveAsync`/`saveNewAsync` already strip it via destructure; transactional writes need the same care). When reading via `{ ...snap.data(), id: snap.id }`, the doc id always wins, defending against latent legacy data. Repeat for any new Firestore-backed model (equipment profiles, ratings, public index, sessions, version snapshots).
 
 Existing user-data side effect: any forks the user already had with mismatched stored `id`s now resolve to their correct doc ids in memory, so saves go to the right doc and duplicate-key warnings clear. The downside (any `parentRecipeId` reference captured under the old data-wins semantics points to a stale id) is real but small: the `parentRecipeShareSlug` field handles the user-facing "see the original" link, and stale `parentRecipeId` reverse-lookups silently fail with no UX impact.
+
+---
+
+## Phase 1.4 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 1.4. Read before starting 1.3, 1.5, and 1.6.
+
+### Server-prefetch + thin client component is now the standard pattern for public read-only routes — copy it verbatim.
+
+Phase 1.1's `app/browse/page.tsx` pattern ported to `/u/[userId]` cleanly: dynamic import of admin SDK, `BrowseRecipe` mapper copied as-is (just swap `orderBy('publishedAt', 'desc').get()` for the where-clause variant). The two-method pattern (server page does fetch + metadata + SEO hidden nav; client component owns interactivity) is now mechanical. Repeat for 1.5 `/recipes/sessions/[sessionId]` and 1.6 `/recipes/[id]/versions/[versionNumber]` — both are read-only public-ish views that benefit from the same shape.
+
+### Compute derived values server-side to eliminate header fallback flash.
+
+Classic `UserProfileClient` showed "Brewer" briefly before resolving to the real owner name (recipe data loaded after first paint). By computing `ownerName`, `recipeCount`, and `topStyles` in the server page and passing them as props, the SSR'd HTML already has the correct values; no hydration swap on the heading. Apply to 1.5 (brew-session header — recipe name + date should come from the server) and 1.6 (version-history header — version number + change note should come from the server).
+
+### Metadata title gotcha: root layout already auto-appends "| Brewing.It" — set the bare phrase.
+
+Initial attempt `title: \`${ownerName} on Brewing.It\`` rendered as `Lucas on Brewing.It | Brewing.It` because the root layout's `title.template` wraps every page title. Fixed to `title: ownerName` → `Lucas | Brewing.It`. **Rule:** in `generateMetadata` for any new page, the `title` field should be the bare unbranded phrase. The `openGraph.title` and `twitter.title` fields are NOT wrapped by the template, so those keep an explicit `| Brewing.It`. Repeat for 1.5/1.6 metadata.
+
+### `overrides.css` shrunk by zero lines (predicted).
+
+The classic profile was wrapped in `.brew-theme` with `.brew-section` + `.brew-section-title` rules that still serve the live builder. Nothing in overrides.css targeted profile-specific structure. Don't chase a Phase 1.4 shrink — the pattern is "overrides.css shrinks per-replacement only where the replacement removes the last consumer of a rule". Profile didn't qualify.
+
+### `HSBrowseCard` reused as-is — no profile-context-specific prop introduced.
+
+The card's inline ownerName→`/u/{ownerId}` self-link is mildly redundant on the user's own profile page (links to the same page) but functions correctly and saves us a new prop. Promoting an `omitOwner` (or similar) prop is premature until a third consumer surfaces with the same need. Phase 1.5/1.6 are unlikely to use HSBrowseCard, so this is dormant.
+
+### Admin-SDK fetch called twice per request (once in `generateMetadata`, once in the page) — consistent with `/r/[slug]` convention; don't optimize as a one-off.
+
+`UserProfilePage` and `generateMetadata` each call `loadProfile(userId)` independently. Two Firestore queries per request, not deduped by React `cache()`. This matches `app/r/[slug]/page.tsx`'s `getPublicRecipe(slug)` pattern. If 1.5/1.6 want to eliminate the duplication, wrap the loader in `cache()` from `react` at the loader site — but do it as a separate project-wide refactor across all three (`/r/[slug]`, `/u/[userId]`, future routes), not as a one-off in any single slice.
+
+### Browser-preview verification was blocked the third time — the dev-server-lock pattern is permanent.
+
+Same situation as Phase 1.1 + 1.2: pre-existing `next dev` holds `.next/dev/lock`, so `preview_start` fails. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `curl /u/<real-userId>` + `curl /u/<invalid-userId>` returning 200 with the expected HS markers (HSScriptNote kicker, display-font H1, recipe-count line, empty-state HSCard, hidden SEO `<nav>`). Browser visual verification handed back to the user. **Promote this expectation to per-phase choreography:** the verification harness for any future server-page slice is `tsc + lint + build + curl-greps` (which is enough for SSR markup contract) plus user-side visual.
+
+### Plan-file naming irrelevance.
+
+The plan file lived at `/Users/lucascg/.claude/plans/i-want-to-continue-proud-lollipop.md` — auto-generated slug bears no relation to "Phase 1.4". Worth knowing that plan-mode files are session-scoped, not slice-scoped: if a future slice needs to revisit prior plan decisions, the canonical reference is THIS PRD (now updated), not the plan file.
+
+---
+
+## Phase 1.3 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 1.3. Read before starting 1.5, 1.6, and any later compare follow-up.
+
+### The classic compare module is ~1,400 LOC across 8 files — a 1:1 port is the wrong scope.
+
+`CompareRecipesPage.tsx` is 144 LOC but it composes six section components (`VitalsComparison`, `GrainComparison`, `HopComparison`, `MashComparison`, `WaterComparison`, `MeanRecipeSummary`) and a 389-line `compareUtils.ts`. Total is ~1,400 LOC. Reproducing every nested table and per-category detail breakdown in one session would balloon scope past M effort. **What worked:** keep the v1 to the five core sections (Vitals + Grain bars + Hop table + Mash table + Water ions) and bracket-note the deferrals (detail tables, addition-types grid, flavor radar, mean recipe) as 1.3.x follow-ups. The user can decide whether any are worth a separate slice.
+
+### Reuse the pure utility layer (`compareUtils.ts`) verbatim — it's already framework-agnostic.
+
+`compareUtils.ts` declares "No React/browser dependencies — safe for both client and server" at the top, and lives up to it: `getGrainBreakdown`, `getHopSummary`, `getWeightedMashTemp`, `getEffectiveWaterProfile`, `averageWaterProfiles`, `avg`, `normalizeGrainName`, `GRAIN_CATEGORY_COLORS`, `GRAIN_CATEGORY_ORDER` all imported into the HS component with zero changes. Same rule applies to `RecipeCalculationService` (already used as a pure class) and `bjcpSpecs` / `srmToRgb`. **Repeat for 1.5 and 1.6**: only the JSX is new; any pure data-layer code in the classic module can be imported into the HS slice as-is. Don't waste cycles rewriting helpers that don't have React in them.
+
+### Server-prefetch pattern continues to scale — even for query-param-driven routes.
+
+Phase 1.1/1.4 used path-param routes (`/browse`, `/u/[userId]`). Phase 1.3 is the first query-param-driven server fetch (`?ids=…`). Works identically — `searchParams: Promise<{ ids?: string }>` resolved with `await`, parsed inline, fed to admin SDK. Inline fetch logic (~25 LOC mirrored from `/api/compare/route.ts`) is cleaner than calling the API route via internal `fetch()`. **Lesson:** for server components consuming admin-SDK data, always inline the fetch over calling your own `/api/*` routes — the route still serves external callers, and the server page skips the HTTP round-trip.
+
+### When migrating a route that has a `/betabuilder/*` mirror, the mirror needs an `eslint-disable-next-line` for the classic import.
+
+The first lint pass blocked `app/betabuilder/browse/compare/page.tsx` from importing `CompareRecipesPage`. Fixed by adding `// eslint-disable-next-line no-restricted-imports` with a comment explaining the quarantine. Phase 1.5 and 1.6 will hit this for `/betabuilder/recipes/sessions/[sessionId]` and `/betabuilder/recipes/[id]/versions/[versionNumber]` — pre-empt by adding the suppression in the same commit as the lint-rule extension.
+
+### `RecipeCalculationService.calculate` is pure but expensive — wrap in `useMemo` keyed on `initialRecipes`.
+
+Each `.calculate(recipe)` does the full grain/hop/water/IBU math. With up to 8 recipes in compare mode, that's 8 calc passes per render. `const items = useMemo(() => initialRecipes.map(r => ({recipe: r, calcs: calc.calculate(r)})), [initialRecipes])` keeps it to one pass per param change. Classic does the same; preserve the pattern. The calc service instance itself is module-scoped (`const calc = new RecipeCalculationService()`) so it's only constructed once.
+
+### Inline sub-block functions in a single file beat a folder-of-sections for a slice of this size.
+
+Classic compare splits sections into `sections/VitalsComparison.tsx`, `sections/GrainComparison.tsx`, etc. — six files. For HS v1, all five sub-blocks live as named functions in the same `HSCompareRecipesPage.tsx` file (~580 LOC). Trade-off: one big file vs. six small ones. **One big file wins here** because (a) the sub-blocks share styling tokens declared at the top (`cellHeadStyle`, `cellBodyStyle`, `cellAvgStyle`, `sectionEyebrowStyle`, `sectionTitleStyle`), (b) the v1 sub-blocks are 50–150 LOC each — small enough to read inline, (c) no other consumer needs them. If a sub-block grows past ~250 LOC or gets a second consumer, promote then. Don't over-decompose preemptively.
+
+### `overrides.css` shrunk by zero lines (predicted).
+
+Phase 0.3 retrospective + Phase 1.1/1.2/1.4 retrospectives all warned: `overrides.css` shrinks per-replacement only when the replacement removes the *last consumer* of a rule. The classic Compare page used `.brew-theme`, `.section-soft`, `.brew-section-title` — all rules that still serve the live builder and other classic surfaces. Nothing compare-specific in overrides.css to delete. Expect the same for 1.5 + 1.6.
+
+### Visual side-by-side rests with the user (fourth time in a row).
+
+Same situation: dev-server lock blocks `preview_start`. Verified via `npx tsc --noEmit` (clean), `npm run lint` (zero new issues — 71→71 problems, same baseline 3 errors all pre-existing in classic files), `npm run build` (clean), and `curl /browse/compare?ids=…` smoke checks for: empty state (no ids), 2-recipe (American IPA + Irish Stout) with all section headings present, 3-recipe variant, 1-recipe (empty state), and BJCP/Average/Total/Rate/Weighted avg/Overall avg summary rows. Per the 1.4 retrospective: `tsc + lint + build + curl-greps` is now the canonical Phase 1 verification harness; visual rests with the user.
+
+### The classic API route at `/api/compare` stays — don't delete it.
+
+The HS server page inlines the fetch logic, but the `/api/compare/route.ts` endpoint is still reachable. Don't delete it: it's still used by the quarantined `/betabuilder/browse/compare` route (which renders the classic `CompareRecipesPage` that client-fetches it), and an external caller could conceivably hit it for raw JSON. **Rule:** when a slice replaces a client-fetch consumer of an internal API, leave the API route alive until Phase 5 deletion. Same will apply for any future client-fetch endpoints (`/api/fork`, `/api/publish`, etc.) — they're not coupled to the HS migration.
+
+### Cursor-follow tooltips must use `position: fixed` (not `position: absolute`) when their host is inside an `overflow: hidden` ancestor.
+
+The grain-bar hover tooltip initially used `position: absolute` relative to a `position: relative` row wrapper. Inside an `HSCard` (which has `overflow: hidden` to clip the accent strip's rounded corners), the tooltip clipped at the card boundary. Fix: switch the tooltip to `position: fixed` with `top: 0; left: 0` and feed `e.clientX` / `e.clientY` directly to the transform. Viewport-coord positioning escapes every ancestor's `overflow: hidden` (provided no ancestor has `transform`/`filter`/`will-change` that establishes a containing block for fixed descendants — `HSCard` only sets `transform` when `tilt` is non-zero, so it's safe by default). **Repeat for any future HS hover tooltip inside an `HSCard`:** default to `position: fixed`. Phase 2.x sections that need on-canvas tooltips (hop flavor radar callouts, water ion bars) will hit the same constraint.
+
+### First-show flicker: snap to cursor with transition disabled, then re-enable.
+
+A `position: fixed` tooltip parked at `top: 0; left: 0` will animate its transform FROM the viewport origin TO the cursor on the first mouseMove unless you suppress the transition for that one frame. Pattern:
+```ts
+if (isFirstMove) {
+  t.style.transition = "none";
+  applyTransform(e.clientX, e.clientY, 0);
+  void t.offsetHeight; // force reflow so the no-transition snap commits
+  t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
+}
+```
+The `void t.offsetHeight` is the load-bearing line — it flushes the layout so the next style change uses the new (snapped) transform as the transition origin. Without it, the browser collapses both style changes into one transition starting from origin. `lastClientXRef.current === null` is the first-move sentinel; `onMouseLeave` resets it so re-entry also snaps cleanly. The classic `useCursorFollowCard` doesn't need this because its CTA is `position: absolute` inside the lift wrapper — the prior position is *near* the cursor by virtue of being inside the card.
 
 ---
 

@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
+// Quarantined classic route — see HOPSKIP_MIGRATION_PRD.md §1.3 + Phase 5 deletion.
+// eslint-disable-next-line no-restricted-imports
 import CompareRecipesPage from '@/modules/compare/CompareRecipesPage';
 
 export const metadata: Metadata = {
