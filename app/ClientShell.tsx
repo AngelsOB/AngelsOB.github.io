@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import NavBar from "../src/components/NavBar";
@@ -17,17 +18,12 @@ export default function ClientShell({
 }) {
   useSrmTheme();
   const pathname = usePathname() ?? "";
-  // /betabuilder/* are the explicit classic routes. /r/* (public recipe
-  // viewer), /browse (community), and /u/* (user profile) wrap the classic
-  // viewer components which depend on classic chrome — treat them as
-  // classic for now until HS-native equivalents are built.
+  // Only the explicit /betabuilder/* tree renders classic chrome.
+  // /r/, /browse, /u/ now get HS chrome; their inner content may still be
+  // classic until Phase 1 of the HopSkip migration ships HS replacements.
   const isClassic =
     pathname === "/betabuilder" ||
-    pathname.startsWith("/betabuilder/") ||
-    pathname.startsWith("/r/") ||
-    pathname === "/browse" ||
-    pathname.startsWith("/browse/") ||
-    pathname.startsWith("/u/");
+    pathname.startsWith("/betabuilder/");
 
   if (isClassic) {
     // Classic /betabuilder/* routes — keep the original NavBar + Footer chrome.
@@ -40,6 +36,21 @@ export default function ClientShell({
           >
             Skip to main content
           </a>
+          <div
+            style={{
+              background: "var(--hs-ink, #1a1a1a)",
+              color: "var(--hs-cream, #f5e9d5)",
+              padding: 8,
+              textAlign: "center",
+              fontSize: 12,
+            }}
+          >
+            You&rsquo;re viewing the classic UI. The new UI is at{" "}
+            <Link href="/" style={{ textDecoration: "underline", color: "inherit" }}>
+              brewing.it/
+            </Link>
+            .
+          </div>
           <NavBar />
           <main
             id="main-content"

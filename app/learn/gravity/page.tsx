@@ -140,7 +140,7 @@ export default function GravityPage() {
 
         <GravityPipelinePreview />
 
-        <h2 id="original-gravity" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="original-gravity" className="text-xl font-bold mt-10 mb-4">
           Original Gravity
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -162,7 +162,7 @@ export default function GravityPage() {
           is the industry standard approach.
         </p>
 
-        <h2 id="final-gravity" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="final-gravity" className="text-xl font-bold mt-10 mb-4">
           Final Gravity
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -180,7 +180,7 @@ export default function GravityPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Per-ingredient fermentability
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -199,7 +199,7 @@ export default function GravityPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Mash temperature effect
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -215,7 +215,7 @@ export default function GravityPage() {
           </div>
         </div>
 
-        <h2 id="abv" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="abv" className="text-xl font-bold mt-10 mb-4">
           ABV
         </h2>
 

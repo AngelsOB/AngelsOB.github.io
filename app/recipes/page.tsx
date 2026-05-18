@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
 import HSCard from "@/modules/hopskip/components/HSCard";
+import HSCardLift from "@/modules/hopskip/components/HSCardLift";
 import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import HSButton from "@/modules/hopskip/components/HSButton";
@@ -229,9 +229,10 @@ export default function HopSkipRecipes() {
               const srm = calc.srm ?? 0;
               return (
                 <div key={r.id} style={{ position: "relative" }}>
-                  <Link
+                  <HSCardLift
                     href={`/recipes/${r.id}`}
-                    style={{ textDecoration: "none", color: hsTokens.ink, display: "block" }}
+                    ariaLabel={r.name || "Untitled recipe"}
+                    ctaColor={hsTokens.hops}
                   >
                     <HSCard shadow={3} tilt={tilt} padding={0} style={{ overflow: "hidden" }}>
                       <div style={{ height: 18, background: srmToRgb(srm) }} aria-hidden />
@@ -350,13 +351,10 @@ export default function HopSkipRecipes() {
                           <span style={{ fontFamily: hsTokens.mono, fontVariantNumeric: "tabular-nums" }}>
                             {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : "—"}
                           </span>
-                          <HSScriptNote color={hsTokens.hops} size={16}>
-                            open →
-                          </HSScriptNote>
                         </div>
                       </div>
                     </HSCard>
-                  </Link>
+                  </HSCardLift>
 
                   <button
                     type="button"

@@ -43,6 +43,7 @@ export type BrowseRecipe = {
   labelUrl?: string;
 };
 
+/** @deprecated Classic UI. Replaced by HSBrowseCard — see HOPSKIP_MIGRATION_PRD.md §1.1. */
 export function BrowseCard({
   recipe,
   isNavigating,

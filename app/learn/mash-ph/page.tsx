@@ -139,7 +139,7 @@ export default function MashPhPage() {
 
         <PhGaugePreview />
 
-        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It
         </h2>
         <p className="text-sm leading-relaxed mb-4">
@@ -164,7 +164,7 @@ export default function MashPhPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Every grain has a pH fingerprint
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -183,7 +183,7 @@ export default function MashPhPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Your water fights back
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -196,7 +196,7 @@ export default function MashPhPage() {
           </div>
         </div>
 
-        <h2 id="accuracy" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="accuracy" className="text-xl font-bold mt-10 mb-4">
           How Accurate Is It?
         </h2>
         <p className="text-sm leading-relaxed">
@@ -207,7 +207,7 @@ export default function MashPhPage() {
           is fresh.
         </p>
 
-        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
+        <h2 id="where-this-comes-from" className="text-xl font-bold mt-10 mb-4">
           Where This Comes From
         </h2>
         <p className="text-sm leading-relaxed">

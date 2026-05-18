@@ -133,7 +133,6 @@ export default function GettingStartedPage() {
         <h2
           id="set-up-your-system"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Set Up Your System First
         </h2>
@@ -174,7 +173,6 @@ export default function GettingStartedPage() {
           </span>
           <h3
             className="text-base font-bold mb-2"
-            style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
           >
             Batch size = finished beer
           </h3>
@@ -207,7 +205,6 @@ export default function GettingStartedPage() {
         <h2
           id="building-a-recipe"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Building a Recipe
         </h2>
@@ -287,7 +284,6 @@ export default function GettingStartedPage() {
         <h2
           id="on-brew-day"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           On Brew Day
         </h2>
@@ -315,7 +311,6 @@ export default function GettingStartedPage() {
         >
           <h3
             className="text-base font-bold mb-2"
-            style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
           >
             Measure → adjust → learn your system
           </h3>
@@ -358,7 +353,6 @@ export default function GettingStartedPage() {
         <h2
           id="what-we-calculate"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           What We Calculate
         </h2>

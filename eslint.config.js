@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { globalIgnores } from 'eslint/config'
 
 export default tseslint.config([
-  globalIgnores(['.next', 'dist', '.vite', 'node_modules']),
+  globalIgnores(['.next', 'dist', '.vite', 'node_modules', '.claude/worktrees']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -61,6 +61,23 @@ export default tseslint.config([
 
       // Disallow console statements (allow console.error in catch blocks for error logging)
       'no-console': ['warn', { allow: ['error'] }],
+
+      // Block deprecated classic UI imports — extended per HOPSKIP_MIGRATION_PRD.md as each
+      // section migrates. Phase 1.1: classic browse page + card are replaced by HS-native.
+      // Files exempted with inline `// eslint-disable-next-line no-restricted-imports` are
+      // transitional and tracked in the PRD's per-phase choreography.
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: [
+              '**/modules/sharing/BrowseRecipesPage',
+              '**/modules/sharing/BrowseCard',
+            ],
+            message:
+              'Classic UI. Use HSBrowsePage / HSBrowseCard from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.1.',
+          },
+        ],
+      }],
     },
   },
 ])

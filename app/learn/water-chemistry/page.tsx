@@ -70,7 +70,6 @@ export default function WaterChemistryPage() {
         <h2
           id="how-it-works"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           How It Works
         </h2>
@@ -88,7 +87,6 @@ export default function WaterChemistryPage() {
         <h2
           id="auto-calculator"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           The Auto-Calculator
         </h2>
@@ -109,7 +107,7 @@ export default function WaterChemistryPage() {
             }}
           >
             <div className="flex items-baseline gap-2 mb-2">
-              <h3 className="text-base font-bold" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+              <h3 className="text-base font-bold">
                 Bounded least squares
               </h3>
               <span
@@ -141,7 +139,7 @@ export default function WaterChemistryPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Smart rounding
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -160,7 +158,7 @@ export default function WaterChemistryPage() {
               border: "1px solid color-mix(in oklch, var(--fg-strong) 8%, transparent)",
             }}
           >
-            <h3 className="text-base font-bold mb-2" style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}>
+            <h3 className="text-base font-bold mb-2">
               Mash &amp; sparge splits
             </h3>
             <p className="text-sm leading-relaxed" style={{ color: "var(--fg-muted)" }}>
@@ -175,7 +173,6 @@ export default function WaterChemistryPage() {
         <h2
           id="what-ions-do"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           What the Ions Actually Do
         </h2>
@@ -224,7 +221,6 @@ export default function WaterChemistryPage() {
         <h2
           id="chloride-sulfate-ratio"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           The Cl:SO₄ Ratio
         </h2>
@@ -282,7 +278,6 @@ export default function WaterChemistryPage() {
         <h2
           id="the-five-salts"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           The Five Brewing Salts
         </h2>
@@ -338,7 +333,6 @@ export default function WaterChemistryPage() {
         <h2
           id="connection-to-ph"
           className="text-xl font-bold mt-10 mb-4"
-          style={{ fontFamily: "'Bitter', serif" }}
         >
           Connection to Mash pH
         </h2>
