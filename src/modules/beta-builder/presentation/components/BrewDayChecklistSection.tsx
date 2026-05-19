@@ -19,6 +19,7 @@ const cToF = (c: number) => Math.round(c * 9 / 5 + 32);
 /** Liters → US gallons */
 const lToGal = (l: number) => (l * 0.264172).toFixed(2);
 
+/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md §2.5. */
 export default function BrewDayNumbersSection({ recipe, calculations }: Props) {
   const hasData = calculations && (calculations.og > 1 || calculations.strikeTempC != null);
   const hasGravity = calculations && calculations.og > 1.0;

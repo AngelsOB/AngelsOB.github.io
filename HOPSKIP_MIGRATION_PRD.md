@@ -133,7 +133,7 @@ Make it unambiguous that classic is dead-code-on-life-support.
 
 # Phase 1 — Missing HS-native pages (full feature parity)
 
-**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections). Phase 1.3 ✅ (mean-recipe + a few detail sub-views deferred). Phase 1.4 ✅. 1.5, 1.6 remain.
+**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections). Phase 1.3 ✅ (mean-recipe + a few detail sub-views deferred). Phase 1.4 ✅. **Phase 1.5 deferred — subsumed into Phase 2.5 + a follow-up Brew Mode slice (see 1.5 block).** 1.6 remains.
 
 HS is currently missing entire pages that classic has. After Phase 1, every URL classic offers has an HS-native equivalent. The classic side stays accessible at `/betabuilder/*` as the side-by-side reference; the HS routes are now actually HS.
 
@@ -218,15 +218,19 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 
 ## 1.5 — HSBrewSessionPage
 
-- **Current source:** [src/modules/beta-builder/presentation/components/BrewSessionPage.tsx](src/modules/beta-builder/presentation/components/BrewSessionPage.tsx).
-- **Route:** `/recipes/sessions/[sessionId]` (new) — classic has it at `/betabuilder/recipes/sessions/[sessionId]`.
-- **What it does:** brew-day session log — gravity readings, temperature checkpoints, timestamps, notes, deviations from the recipe plan.
-- **HS plan:**
-  - `HSBrewSessionPage.tsx` — header (recipe name + session date) + per-checkpoint cards (HSCard with eyebrow + display reading + Caveat note for "actual vs target").
-  - Reuse `useBrewSessionStore` from existing classic.
-- **Data dependencies:** `useBrewSessionStore` (already exists), recipe by id from `useRecipeStore`.
-- **Acceptance:** open a brew session, log a checkpoint, view past checkpoints, mark session complete.
-- **Effort:** M.
+**Status:** Deferred — subsumed into [Phase 2.5 (Brew sheet)](#25--brew-sheet) + a follow-up Brew Mode slice.
+
+**Decision change vs. original plan:** Original 1.5 spec was a dedicated HS-native session page at `/recipes/sessions/[sessionId]`. While planning the slice, the user reframed: the brew sheet section inside the recipe builder should evolve into a proper brew sheet (all targets in one place, designed for tablet use on brew day), and "Brew mode" inside that section will subsume the standalone session page. So:
+
+- Phase 2.5 ships first as a comprehensive display-only HS brew sheet (full target surface — see updated 2.5 block).
+- A follow-up **Brew Mode** slice adds an "actuals" overlay on the brew sheet, wired to `useBrewSessionStore`. When that lands, `/recipes/sessions/[sessionId]` becomes a *redirect* to `/recipes/[recipeId]?tab=brewsheet&session=[id]` (per-recipe-page deep-link), so existing entry points from `RecipeListPage` and `RecipeSessionsBar` keep working without a separate page.
+
+**Original sources kept for reference until Brew Mode ships:**
+
+- [src/modules/beta-builder/presentation/components/BrewSessionPage.tsx](src/modules/beta-builder/presentation/components/BrewSessionPage.tsx) — quarantined classic.
+- `useBrewSessionStore`, `FirestoreBrewSessionRepository`, `BrewSessionCalculationService` — reused unchanged by the follow-up slice.
+
+The Brew Mode follow-up does NOT block any other Phase 1 / Phase 2 slice — it can ship after 1.6 + Phase 2 if that's the natural order.
 
 ## 1.6 — HSVersionHistoryPage + HSVersionHistoryModal
 
@@ -299,9 +303,29 @@ Order (simpler → harder). Each section's classic source files are listed under
 
 ## 2.5 — Brew sheet
 
-- **Classic sources:** [BrewDayChecklistSection.tsx](src/modules/beta-builder/presentation/components/BrewDayChecklistSection.tsx).
-- **HS plan:** Each phase (Mash → Sparge → Boil → Whirlpool → Pitch) as an `HSCard` with eyebrow + display number + body-text instruction. Checkboxes in HS style (square + ink check). No modals.
-- **Effort:** M.
+**Status:** Done. ✅ Now the comprehensive HS brew-day surface — subsumes the original 1.5 scope as a display-only foundation; "Brew Mode" follow-up adds editable actuals. See the [Phase 2.5 retrospective](#phase-25-retrospective--lessons-for-subsequent-slices) below.
+
+**Decision change vs. original plan:** Original 2.5 was "each phase as an HSCard with checkboxes" — a small per-phase checklist. While planning the slice that became this one, the user reframed it as a **true comprehensive brew sheet**: every calculated target shown in its appropriate place, organized in brew-day chronology, optimized for reading on a tablet during brew day. This becomes the foundation for Brew Mode (the follow-up that wires `useBrewSessionStore` actuals into the same surface).
+
+- **Classic sources (replaced):** [BrewDayChecklistSection.tsx](src/modules/beta-builder/presentation/components/BrewDayChecklistSection.tsx) — now `@deprecated` and only used by the quarantined classic builder at `/betabuilder/recipes/[id]` (BetaBuilderPage still imports it directly, exempted from the eslint rule via legacy presence rather than a new disable comment because BetaBuilderPage was already classic).
+- **New HS component:** [src/modules/hopskip/components/builder/HSBrewSheetSection.tsx](src/modules/hopskip/components/builder/HSBrewSheetSection.tsx) — single client file, ~900 LOC. Designed after the first iteration was rejected as "too dense, all over the place" — pivoted to a tabular **spreadsheet-style brew sheet** modeled after the references the user provided (Brewers Friend PDF + brewery production sheet images). Structure:
+  - **TitleBlock** — display H1 "Brew sheet." + script-note kicker + tagline + **Print button** in the action row (the eventual "Brew" toggle will live next to it).
+  - **Top strip** — three side-by-side `MiniTable`s in an auto-fit grid: **Brew Data** (recipe name, style, brew date blank, brew #, brewer, batch volume), **Targets** (OG / FG / ABV with actual cells, IBU / SRM / Mash pH), **Yeast** (strain, lab, attenuation, pitch temp + actual, pitch date + actual, count + actual). Each row: label cell (cream-2 bg, uppercase eyebrow) + value cell (cream bg for blank/actual cells).
+  - **01 Mash** (roast accent) — table `[Step | Temp | Duration | Actual Temp | Time Hit]` per `recipe.mashSteps`. Followed by an optional Chemistry table (`[Chemistry | Add | Actual]`) listing salts (Gypsum / CaCl₂ / Epsom / NaCl / Baking Soda) and lactic-acid/baking-soda pH adjustments.
+  - **02 Water** (water accent) — table `[Stage | Volume L | US gal | Target Temp | Actual Vol | Actual Temp]` with rows for Mash / Sparge / Total. Sparge target temp hardcoded to 76 °C.
+  - **03 Boil** (hops accent) — first table `[Measurement | Target | Actual]` covering Pre-boil volume / Pre-boil gravity / Boil time / Boil-off / OG target. Below it, hop schedule table `[Stage / Time | Variety | Grams | AA % | Actual]` with hop-group header rows (cream-2 bg, accent-dot prefix) for "During boil", "After flameout (whirlpool)", "Dry hop (during fermentation)" — boil hops sorted descending by time, dry hops by start day. Total hop weight row at the bottom.
+  - **04 Cool & Transfer** (honey accent) — table `[Measurement | Target | Actual]` for Post-boil hot, Post-boil cooled (with shrinkage % hint), Pitch temp, Into fermenter (= batch target).
+  - **05 Fermentation** (yeast accent) — table `[Step | Type | Temp | Duration | Actual Temp | Actual Days]` per `recipe.fermentationSteps`. Type column shows a colored pill (yeast/honey/malt/water/roast per step type). FG target row at the bottom with apparent-attenuation hint.
+  - **06 Gravity Log** (malt accent) — 10 blank rows with columns `[Date | SG | pH | Temp °C | Notes]` — every cell is an empty actual cell, ready to write on paper or fill in when Brew Mode wires it. This subsection has no schedule data; it's purely paper-ready space.
+  - **Print footer** (`hs-print-only` visibility) — small Caveat note at the bottom of the printed page: "— generated from {recipe.name} · {totalGrainKg} kg grain · {totalHopG} g hops".
+  - **Shared sub-primitives:** `ScheduleSection` (the bordered frame with accent strip + title + script note), `MiniTable`, `Table` / `THead` / `Td` / `ActualTd`, `HopGroupHeader`, `HopRow`, `FermentRow`, `SaltRow`, `EmptyRow`, `IconButton`, `PrinterIcon` (inline SVG), `PrintStyles` (injected `<style>` block).
+- **Print/PDF:** The section header includes a Print button that calls `window.print()`. A colocated `<style>` injection installs `@media print` rules using the `visibility: hidden / visible` pattern (NOT `display: none` — that breaks layout). On paper: A4 portrait, 10mm margins, interactive UI hidden (`.hs-print-hide`), paper-only footer visible (`.hs-print-only`), tables shrunk to 9pt, sections set `break-inside: avoid` to stay together. No PDF library needed — the browser's native "Save as PDF" handles export.
+- **Reused unchanged:** `RecipeCalculations` from `useRecipeCalculations`, `srmToRgb` from `srmColorUtils`, `HSScriptNote` + `hsTokens` from HS. Other HS primitives intentionally NOT used in this section: the design is tabular, not card-grid, so `HSCard` / `HSStatCard` / `HSEyebrow` were rejected after the first pass — they imposed too much padding + chrome for the brew-sheet aesthetic.
+- **Actuals visible as blank cells (revised from first plan):** every `ActualTd` is a blank `<td>` with cream background + ink border — paper-ready for writing, non-interactive in v1. Follow-up Brew Mode slice converts these to controlled inputs wired to `useBrewSessionStore.updateActuals()`. Layout doesn't change between v1 and Brew Mode — only the `<td>` content does.
+- **What's NOT in v1 (deferred):** editable actuals (Brew Mode follow-up); per-checkpoint checkboxes (dropped); phase staging accordion (dropped); starter calculator (Phase 2.6); per-salt mash/sparge split (currently shows totals — split belongs in Phase 2.7 Water section).
+- **Data dependencies:** All read-only from `RecipeCalculations` + `recipe.*` — no new store wiring, no new repositories, no new services.
+- **Acceptance:** open recipe at `/recipes/<id>`, switch to **Brew sheet** tab, see the spreadsheet-style layout with top strip + 6 numbered sections + gravity log; every classic number is present; blank actual cells visible. Click Print → browser print dialog opens with a paper-ready layout (interactive UI hidden, A4 portrait). Side-by-side check vs. `/betabuilder/recipes/<id>` for data parity.
+- **Effort:** M+ (single focused session, but with one design pivot mid-session after the first card-grid layout was rejected; the tabular rewrite + print support is the shipped version).
 
 ## 2.6 — Yeast
 
@@ -690,6 +714,52 @@ if (isFirstMove) {
 }
 ```
 The `void t.offsetHeight` is the load-bearing line — it flushes the layout so the next style change uses the new (snapped) transform as the transition origin. Without it, the browser collapses both style changes into one transition starting from origin. `lastClientXRef.current === null` is the first-move sentinel; `onMouseLeave` resets it so re-entry also snaps cleanly. The classic `useCursorFollowCard` doesn't need this because its CTA is `position: absolute` inside the lift wrapper — the prior position is *near* the cursor by virtue of being inside the card.
+
+---
+
+## Phase 2.5 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 2.5 (and the 1.5 reframe). Read before starting Brew Mode (the follow-up) and Phase 2.1+.
+
+### Phase 2 doesn't have to ship in PRD order — and the first slice can be picked for "this codebase's current state", not abstract simplicity.
+
+PRD originally recommended 2.1 (Fermentables) as the first Phase 2 slice because it lands the HSModal primitive. We shipped 2.5 first instead because (a) the user's mental model put brew sheet ahead of brew session integration, (b) BrewDayChecklistSection was already mounted in HopSkipBuilder, making the swap a 2-line change, and (c) 2.5 has no modals, so HSModal lands whenever 2.1 finally ships — sequencing is uncoupled. **Rule for future picks:** the "simpler → harder" order in the PRD is a default, not a constraint. If the user has a domain-driven reason to reorder, follow it; the technical sequencing usually permits it.
+
+### "Subsume a Phase 1 slice into a Phase 2 slice" is a legitimate move when the original Phase 1 surface duplicates state already living in the builder.
+
+Phase 1.5 was originally a standalone HSBrewSessionPage at `/recipes/sessions/[sessionId]`. We replaced it with: "brew sheet section in the builder + a follow-up Brew Mode toggle that loads the session into that same surface." Net effect: one screen instead of two, no context switch for the brewer, and the brew session URL becomes a deep-link redirect rather than its own page. **Rule:** when planning a Phase 1 slice, check if the data could naturally live inside the builder via a mode toggle rather than its own page. If yes, consider moving it to a Phase 2 slice and replacing the Phase 1 URL with a redirect at follow-up time.
+
+### "Designed for actuals" became "actuals visible as blank cells" after the first design pass — paper-ready beats hidden.
+
+**First-pass design:** stacked HSCard + HSStatCard grids, six visually-distinct blocks, no actual cells visible (user's earlier "actuals hidden in v1" answer). **User feedback after seeing the first build:** *"far too complex and visually dense"* + shared two reference brew-sheet PDFs/images. The references were spreadsheet-style: tight bordered tables, clear column headers, **actuals as blank cells side-by-side with targets** — paper-ready for brew day. Pivoted to:
+
+- Replace HSStatCard grids with real `<table>` elements (border-collapse, ink borders, alternating cream backgrounds for header rows).
+- Show actuals as visible blank `<td>` cells (cream-bg, paper-ready); in v1 they're non-interactive placeholders; in Brew Mode they'll wire to `useBrewSessionStore.updateActuals()` as input fields. This contradicts the earlier "hide actuals in v1" answer but matches the references the user provided — when a user gives a concrete visual reference that contradicts a prior answer, the reference wins.
+- Added a section-level Gravity Log table with 10 blank rows for paper writing — brewers expect this on a printed brew sheet.
+
+**Print/PDF support:** added a `<style>` injection with `@media print { body * { visibility: hidden } .hs-print-area, .hs-print-area * { visibility: visible } ... }` + a Print button in the section header that calls `window.print()`. Browser's native print-to-PDF flow handles export — no jsPDF dependency. Print stylesheet hides interactive UI (`.hs-print-hide` class on the action row), forces A4 portrait + 10mm margins, shrinks fonts to 9pt, and tells `.hs-print-block` containers `break-inside: avoid` to keep sections together on a page. The `.hs-print-only` class wraps a small "generated from {recipe.name}" footer that appears on paper but not on screen.
+
+**Rule for any HS surface that needs to print:** use the `visibility: hidden` pattern (NOT `display: none` on body children — that breaks layout context). Mark the print-only target with a class like `.hs-print-area`, hide interactive controls with `.hs-print-hide`, and reveal paper-only content with `.hs-print-only`. Inject the rules via a colocated `<style dangerouslySetInnerHTML>` so the print behavior travels with the component and doesn't pollute global CSS.
+
+### The classic BrewDayChecklistSection had no `.brew-*` style overrides that survived the swap — `overrides.css` shrunk by zero lines (as predicted by all prior phase retros).
+
+Classic used inline `style={{ background: 'color-mix(...)' }}` + Tailwind grid utilities + `.brew-section` / `.brew-section-title` / `.brew-link` classes. The HS section sits inside the same `.hs-section-frame brew-theme` wrapper but renders its own JSX with HS inline styles, so the `.brew-*` rules don't fire on its output. The wrapper styles still serve the live classic builder at `/betabuilder/recipes/[id]`. As before, overrides.css will only shrink when a replacement removes the *last consumer* of a rule — and `.brew-section`/`-title` have many consumers across all classic builder sections. Don't chase it.
+
+### BetaBuilderPage still imports the classic section directly — no `eslint-disable` needed *yet*, because the import lives in a file that's already entirely classic.
+
+Phase 1.3 added per-mirror `// eslint-disable-next-line no-restricted-imports` comments to `app/betabuilder/browse/compare/page.tsx`. For 2.5, the equivalent is BetaBuilderPage's import of BrewDayChecklistSection. We chose NOT to add the disable comment because BetaBuilderPage is the *root* of the quarantined classic builder — every section it renders is currently classic, and adding 8+ disable comments per Phase 2 slice is noise. **Rule:** classic-aggregator files (BetaBuilderPage, classic AccordionSection wrappers, classic NavBar, etc.) can stay un-decorated until their last classic import is replaced; at that point, either the file disappears (Phase 5 deletion) or it gets a single file-level eslint disable rather than line-by-line. Track which classic aggregators still hold quarantined imports as Phase 2 progresses.
+
+### Inline sub-block functions in one ~900 LOC file beats split files — same pattern as Phase 1.3 Compare.
+
+`HSBrewSheetSection.tsx` defines `TitleBlock`, `MiniTable` (the top strip "Brew Data" / "Targets" / "Yeast" cards), `ScheduleSection` (the bordered frame each table sits in), `Table` / `THead` / `Td` / `ActualTd` (table primitives), `HopGroupHeader`, `HopRow`, `FermentRow`, `SaltRow`, `EmptyRow`, `PrinterIcon`, `IconButton`, `PrintStyles` — all in one file. Trade-off: one ~900 LOC file vs. ~12 small files. **One big file wins because** (a) the table primitives are deeply local to this surface (column widths, actual-cell behavior, ink-border treatment), (b) each sub-block is 20–80 LOC — small enough to read inline, (c) no other consumer needs them. Same rule as 1.3: promote only when a sub-block grows past ~250 LOC *or* gets a second consumer. The `ActualTd` primitive is a future Brew Mode hook point — when wiring inputs, it becomes a controlled input wrapper rather than an empty `<td>`.
+
+### Recipe model gotchas: `recipe.mashSteps`, `recipe.fermentationSteps`, `recipe.yeasts` (plural array, not `yeast`), `recipe.hops[*]` uses `grams` + `alphaAcid` + `timeMinutes` (not `amountG` + `aaPct` + `timeMin`).
+
+When porting classic components or writing fresh consumers of the Recipe type, the field names are not what the casual reader assumes — always grep the type definition before writing. Saved this discovery as a one-time check.
+
+### Browser visual verification rests with the user (predicted — fifth slice in a row).
+
+Pre-existing `next dev` typically holds `.next/dev/lock`, so `preview_start` may fail. The canonical Phase 1+2 verification harness remains `tsc + lint + build + (curl-greps for SSR routes)`. For builder-tab swaps (like this slice), there's no new SSR route — the swap is purely client-side inside the recipe builder, so `curl /recipes/<id>` only confirms the route compiles, not that the brewsheet tab renders the new component. User verifies in their existing dev server.
 
 ---
 
