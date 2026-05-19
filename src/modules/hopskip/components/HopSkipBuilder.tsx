@@ -16,7 +16,7 @@ import MashScheduleSection from "@/modules/beta-builder/presentation/components/
 import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
 import YeastSection from "@/modules/beta-builder/presentation/components/YeastSection";
 import FermentationSection from "@/modules/beta-builder/presentation/components/FermentationSection";
-import BrewDayChecklistSection from "@/modules/beta-builder/presentation/components/BrewDayChecklistSection";
+import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import { EquipmentSection } from "@/modules/beta-builder/presentation/components/EquipmentSection";
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
 import StyleRangeComparison from "@/modules/beta-builder/presentation/components/StyleRangeComparison";
@@ -791,7 +791,7 @@ export default function HopSkipBuilder({
           {activeTab === "yeast" ? <YeastSection /> : null}
           {activeTab === "fermentation" ? <FermentationSection /> : null}
           {activeTab === "brewsheet" && calc ? (
-            <BrewDayChecklistSection recipe={currentRecipe} calculations={calc} />
+            <HSBrewSheetSection recipe={currentRecipe} calculations={calc} />
           ) : null}
         </div>
       </section>

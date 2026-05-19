@@ -100,6 +100,13 @@ export default tseslint.config([
             message:
               'Classic UI. Use HSCompareRecipesPage from @/modules/hopskip/components/public/ instead. See HOPSKIP_MIGRATION_PRD.md §1.3.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/BrewDayChecklistSection',
+            ],
+            message:
+              'Classic UI. Use HSBrewSheetSection from @/modules/hopskip/components/builder/ instead. See HOPSKIP_MIGRATION_PRD.md §2.5.',
+          },
         ],
       }],
     },
