@@ -1,11 +1,20 @@
 import { create } from "zustand";
 import {
   signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/config/firebase";
 import type { UserState } from "./tierAccess";
+
+const POPUP_FALLBACK_CODES = new Set([
+  "auth/popup-blocked",
+  "auth/popup-closed-by-user",
+  "auth/cancelled-popup-request",
+  "auth/operation-not-supported-in-this-environment",
+  "auth/web-storage-unsupported",
+]);
 
 export type SubscriptionStatus = 'none' | 'active' | 'past_due' | 'canceled';
 
@@ -97,10 +106,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithGoogle: async () => {
-    // signInWithPopup works on both desktop and mobile.
-    // signInWithRedirect is broken on most mobile browsers due to
-    // third-party cookie restrictions (silently fails).
-    await signInWithPopup(auth, googleProvider);
+    // Try popup first (best UX on desktop). On mobile, popups are often
+    // blocked or close on backgrounding — fall back to redirect in those
+    // cases. Firebase processes the redirect result on next load and
+    // onAuthStateChanged fires automatically, so no extra wiring needed.
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      const code = (err as { code?: string } | null)?.code;
+      if (code && POPUP_FALLBACK_CODES.has(code)) {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+      throw err;
+    }
   },
 
   signOut: async () => {

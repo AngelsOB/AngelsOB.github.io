@@ -39,6 +39,7 @@ type BrewSessionStore = {
   updateSession: (updates: Partial<BrewSession>) => void;
   updateBrewDayRecipe: (updates: Partial<Recipe>) => void;
   updateActuals: (actuals: Partial<SessionActuals>) => void;
+  updateAddedFlags: (flags: Record<string, boolean>) => void;
   updateStatus: (status: SessionStatus) => void;
   saveCurrentSession: () => void;
   deleteSession: (id: SessionId) => void;
@@ -178,6 +179,22 @@ export const useBrewSessionStore = create<BrewSessionStore>((set, get) => ({
       ...current,
       actuals: updatedActuals,
       calculated,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentSession: updated });
+  },
+
+  // Update boil-addition "added" flags (HS Brew Mode — Phase 2.5b)
+  updateAddedFlags: (flags: Record<string, boolean>) => {
+    const current = get().currentSession;
+    if (!current) return;
+
+    const updated = {
+      ...current,
+      addedFlags: {
+        ...(current.addedFlags ?? {}),
+        ...flags,
+      },
       updatedAt: new Date().toISOString(),
     };
     set({ currentSession: updated });

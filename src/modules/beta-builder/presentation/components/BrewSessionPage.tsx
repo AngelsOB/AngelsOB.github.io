@@ -28,6 +28,7 @@ import {
   BrewedVersionModal,
 } from './brew-session';
 
+/** @deprecated Classic UI. HS-native equivalent lives at `/recipes/[id]?tab=brewsheet&session=<id>` via HopSkipBuilder + HSBrewSheetSection's Brew Mode. See HOPSKIP_MIGRATION_PRD.md Phase 2.5b. */
 export default function BrewSessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const router = useRouter();

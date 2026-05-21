@@ -6,6 +6,7 @@ import { useMemo } from "react";
 
 import { hsTokens } from "../tokens";
 import HSBrandMark from "./HSBrandMark";
+import HSAuthButton from "./HSAuthButton";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 
 interface NavLink {
@@ -70,6 +71,15 @@ export default function HSHeader() {
     >
       <HSBrandMark caption={caption} />
 
+      <div
+        className="hs-header-right"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
       <nav
         className="hs-no-scrollbar"
         aria-label="Primary"
@@ -127,6 +137,8 @@ export default function HSHeader() {
           Classic (legacy) <span aria-hidden>↺</span>
         </Link>
       </nav>
+        <HSAuthButton />
+      </div>
       <style>{`
         @media (max-width: 720px) {
           .hs-header {
@@ -134,8 +146,12 @@ export default function HSHeader() {
             align-items: stretch;
             padding: 14px 20px;
           }
-          .hs-header > nav {
+          .hs-header-right {
             width: 100%;
+            justify-content: space-between;
+          }
+          .hs-header-right > nav {
+            flex: 1;
             justify-content: flex-start;
             overflow-x: auto;
           }

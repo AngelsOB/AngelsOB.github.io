@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import { hsTokens } from "../tokens";
@@ -10,6 +11,7 @@ import HSScriptNote from "./HSScriptNote";
 
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
+import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
 import FermentableSection from "@/modules/beta-builder/presentation/components/FermentableSection";
 import HopSection from "@/modules/beta-builder/presentation/components/HopSection";
 import MashScheduleSection from "@/modules/beta-builder/presentation/components/MashScheduleSection";
@@ -21,6 +23,10 @@ import { EquipmentSection } from "@/modules/beta-builder/presentation/components
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
 import StyleRangeComparison from "@/modules/beta-builder/presentation/components/StyleRangeComparison";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type {
+  SessionActuals,
+  SessionStatus,
+} from "@/modules/beta-builder/domain/models/BrewSession";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
 import HSButton from "./HSButton";
@@ -97,7 +103,31 @@ export default function HopSkipBuilder({
   const viewerUid = useAuthStore((s) => s.user?.uid);
   const isOwnedByViewer = Boolean(viewerUid && sharedOwnerId && viewerUid === sharedOwnerId);
 
-  const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
+  // Brew Mode wiring (Phase 2.5b)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get("tab") ?? null;
+  const sessionParam = searchParams?.get("session") ?? null;
+
+  const currentSession = useBrewSessionStore((s) => s.currentSession);
+  const allSessions = useBrewSessionStore((s) => s.sessions);
+  const loadSessionForBrew = useBrewSessionStore((s) => s.loadSession);
+  const loadSessionsByRecipeId = useBrewSessionStore(
+    (s) => s.loadSessionsByRecipeId
+  );
+  const createSession = useBrewSessionStore((s) => s.createSession);
+  const updateActuals = useBrewSessionStore((s) => s.updateActuals);
+  const updateAddedFlags = useBrewSessionStore((s) => s.updateAddedFlags);
+  const updateStatus = useBrewSessionStore((s) => s.updateStatus);
+  const saveCurrentSession = useBrewSessionStore((s) => s.saveCurrentSession);
+
+  const isBrewMode = Boolean(sessionParam && currentSession?.id === sessionParam);
+
+  const initialActiveTab: TabKey =
+    tabParam && TABS.some((t) => t.k === tabParam)
+      ? (tabParam as TabKey)
+      : "fermentables";
+  const [activeTab, setActiveTab] = useState<TabKey>(initialActiveTab);
   const [tabDirection, setTabDirection] = useState<"left" | "right">("right");
   const [savedRecently, setSavedRecently] = useState(false);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
@@ -132,6 +162,150 @@ export default function HopSkipBuilder({
     const t = setTimeout(() => setSavedRecently(false), 2000);
     return () => clearTimeout(t);
   }, [saveCurrentRecipe]);
+
+  // ─── Brew Mode plumbing (Phase 2.5b) ───
+  // Load a session when ?session=<id> is present in the URL
+  useEffect(() => {
+    if (!sessionParam) return;
+    if (currentSession?.id === sessionParam) return;
+    loadSessionForBrew(sessionParam);
+  }, [sessionParam, currentSession?.id, loadSessionForBrew]);
+
+  // Preload all sessions for this recipe once the brew sheet tab is active,
+  // so the Brew button picker has data ready.
+  const sessionsPrefetchedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeTab !== "brewsheet") return;
+    if (!currentRecipe || isShared) return;
+    if (sessionsPrefetchedRef.current === currentRecipe.id) return;
+    sessionsPrefetchedRef.current = currentRecipe.id;
+    loadSessionsByRecipeId(currentRecipe.id);
+  }, [activeTab, currentRecipe, isShared, loadSessionsByRecipeId]);
+
+  const priorSessionsForRecipe = useMemo(() => {
+    if (!currentRecipe) return [];
+    return allSessions
+      .filter((s) => s.recipeId === currentRecipe.id)
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+  }, [allSessions, currentRecipe]);
+
+  // Auto-save: 400ms debounce + flush on unload (mirrors classic BrewSessionPage)
+  const saveTimerRef = useRef<number | null>(null);
+  const hasPendingSaveRef = useRef(false);
+  const queueSave = useCallback(() => {
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    hasPendingSaveRef.current = true;
+    saveTimerRef.current = window.setTimeout(() => {
+      saveCurrentSession();
+      hasPendingSaveRef.current = false;
+    }, 400);
+  }, [saveCurrentSession]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (!hasPendingSaveRef.current) return;
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      saveCurrentSession();
+      hasPendingSaveRef.current = false;
+    };
+    const handler = () => flush();
+    window.addEventListener("beforeunload", handler);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+      flush();
+    };
+  }, [saveCurrentSession]);
+
+  const handleActualsChange = useCallback(
+    (partial: Partial<SessionActuals>) => {
+      updateActuals(partial);
+      queueSave();
+    },
+    [updateActuals, queueSave]
+  );
+
+  const handleAddedChange = useCallback(
+    (id: string, checked: boolean) => {
+      updateAddedFlags({ [id]: checked });
+      queueSave();
+    },
+    [updateAddedFlags, queueSave]
+  );
+
+  const handleIngredientActualChange = useCallback(
+    (id: string, amount: number | undefined) => {
+      const existing = currentSession?.actuals.ingredientActualAmounts ?? {};
+      let next: Record<string, number>;
+      if (amount === undefined) {
+        next = { ...existing };
+        delete next[id];
+      } else {
+        next = { ...existing, [id]: amount };
+      }
+      updateActuals({ ingredientActualAmounts: next });
+      queueSave();
+    },
+    [currentSession, updateActuals, queueSave]
+  );
+
+  const handleStatusChange = useCallback(
+    (status: SessionStatus) => {
+      updateStatus(status);
+      queueSave();
+    },
+    [updateStatus, queueSave]
+  );
+
+  const startNewSession = useCallback(() => {
+    if (!currentRecipe) return;
+    const session = createSession(currentRecipe);
+    saveCurrentSession();
+    router.replace(
+      `/recipes/${currentRecipe.id}?tab=brewsheet&session=${session.id}`
+    );
+  }, [currentRecipe, createSession, saveCurrentSession, router]);
+
+  const resumeSession = useCallback(
+    (id: string) => {
+      if (!currentRecipe) return;
+      router.replace(
+        `/recipes/${currentRecipe.id}?tab=brewsheet&session=${id}`
+      );
+    },
+    [currentRecipe, router]
+  );
+
+  const exitBrewMode = useCallback(() => {
+    if (!currentRecipe) return;
+    if (hasPendingSaveRef.current) {
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      saveCurrentSession();
+      hasPendingSaveRef.current = false;
+    }
+    router.replace(`/recipes/${currentRecipe.id}?tab=brewsheet`);
+  }, [currentRecipe, router, saveCurrentSession]);
+
+  const handleToggleBrewMode = useCallback(() => {
+    if (isBrewMode) {
+      exitBrewMode();
+      return;
+    }
+    // Entering Brew Mode — if no prior sessions, create new immediately;
+    // otherwise the SessionPicker handles the choice (rendered by HSBrewSheetSection).
+    if (priorSessionsForRecipe.length === 0) {
+      startNewSession();
+    }
+    // else: caller (HSBrewSheetSection) opens the picker; no-op here.
+  }, [isBrewMode, priorSessionsForRecipe.length, exitBrewMode, startNewSession]);
 
   if (!currentRecipe) {
     return (
@@ -791,7 +965,25 @@ export default function HopSkipBuilder({
           {activeTab === "yeast" ? <YeastSection /> : null}
           {activeTab === "fermentation" ? <FermentationSection /> : null}
           {activeTab === "brewsheet" && calc ? (
-            <HSBrewSheetSection recipe={currentRecipe} calculations={calc} />
+            <HSBrewSheetSection
+              recipe={currentRecipe}
+              calculations={calc}
+              isBrewMode={isBrewMode}
+              sessionId={isBrewMode ? currentSession?.id : undefined}
+              sessionStatus={isBrewMode ? currentSession?.status : undefined}
+              actuals={isBrewMode ? currentSession?.actuals : undefined}
+              addedFlags={isBrewMode ? currentSession?.addedFlags : undefined}
+              onActualsChange={isBrewMode ? handleActualsChange : undefined}
+              onAddedChange={isBrewMode ? handleAddedChange : undefined}
+              onIngredientActualChange={
+                isBrewMode ? handleIngredientActualChange : undefined
+              }
+              onStatusChange={isBrewMode ? handleStatusChange : undefined}
+              onToggleBrewMode={isShared ? undefined : handleToggleBrewMode}
+              priorSessions={priorSessionsForRecipe}
+              onResumeSession={resumeSession}
+              onCreateNewSession={startNewSession}
+            />
           ) : null}
         </div>
       </section>
