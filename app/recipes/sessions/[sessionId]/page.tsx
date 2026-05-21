@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import BrewSessionPage from "../../../../src/modules/beta-builder/presentation/components/BrewSessionPage";
+import SessionRedirectClient from "./SessionRedirectClient";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function SessionPage() {
-  return <BrewSessionPage />;
+interface PageProps {
+  params: Promise<{ sessionId: string }>;
+}
+
+export default async function SessionPage({ params }: PageProps) {
+  const { sessionId } = await params;
+  return <SessionRedirectClient sessionId={sessionId} />;
 }
