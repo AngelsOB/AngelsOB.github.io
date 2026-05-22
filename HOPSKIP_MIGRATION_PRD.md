@@ -41,6 +41,7 @@ The decision:
 4. **Vertical slices.** Each migration unit includes its section/page shell + its specific modals + its specific sub-components. No "shared primitives first" sequencing — primitives like `HSModal` fall out naturally from the first vertical that needs them.
 5. **Mechanical swap-in.** Each new HS component matches the classic counterpart's prop API (or a deliberate subset) so the import-swap is a one-line change.
 6. **Classic stays quarantined.** While a phase is in flight (or forever), the matching classic surface stays accessible at `/betabuilder/*` for side-by-side comparison.
+7. **Naming convention: `OLD_` prefix on classic, no prefix on new.** When a section migrates, the classic file + function is renamed with an `OLD_` prefix (e.g., `OLD_FermentableSection`) and the new HS section drops its `HS` prefix (e.g., `HSFermentableSection` → `FermentableSection`). The active component is the canonical name; the deprecated one literally shouts "OLD" at the top of every grep and IDE search. **Design-system primitives keep their `HS` prefix** (`HSCard`, `HSButton`, `HSModal`, `HSPill`, `HSEyebrow`, etc.) — they're part of the design system, not a feature surface. **Feature components drop the prefix** (`FermentableSection`, future `MashSection` / `HopSection` / `WaterSection`, plus their bespoke modals like `FermentablePresetModal`). The `@deprecated` JSDoc tag is no longer needed once a file's name carries the `OLD_` prefix — the rename + folder location + eslint rule are three layers of signal. See [Phase 2.1's renames](#21--fermentables-first-slice-lands-hsmodal) for the canonical example.
 
 ## Target folder layout
 
@@ -51,8 +52,8 @@ src/modules/hopskip/
 │   ├── HSActionMenu.tsx, HSCardLift.tsx, useCursorFollowCard.ts (NEW — landed in Phase 1.1, reused by 1.2/1.4/2.x)
 │   ├── HSLearnArticle.tsx, HSLearnNav.tsx, HSFormulaCallout.tsx, HSBuilderMockups.tsx (already exist)
 │   ├── HopSkipBuilder.tsx, HopSkipHomeContent.tsx, etc. (already exist)
-│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅, ~2500 LOC). 2.1/2.2/2.3/2.4/2.5b/2.6/2.7/2.8 to follow.
-│   ├── modals/          ← NEW (HSModal + bespoke modals as they're built per-section — folder doesn't exist yet, lands in 2.1)
+│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); FermentableSection (2.1 ✅, no HS prefix per naming convention). 2.2/2.3/2.4/2.6/2.7/2.8 to follow.
+│   ├── modals/          ← HSModal primitive (keeps HS prefix) + FermentablePresetModal + CustomFermentableModal (2.1 ✅). Future per-section modals land here without HS prefix.
 │   ├── calculators/     ← NEW (Phase 3 — extracted calculator widgets — folder doesn't exist yet)
 │   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 ✅); HSPublicRecipeShell/HSForkButton/HSRatingStars/useForkRecipe (1.2 ✅); HSCompareRecipesPage (1.3 ✅); HSUserProfile (1.4 ✅). BrewSession deferred to 2.5b; VersionHistory ⏳ NOT STARTED (1.6).
 └── styles/
@@ -252,27 +253,48 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 
 # Phase 2 — Section-by-section HS-native rewrites
 
-**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅**. 2.1, 2.2, 2.3, 2.4, 2.6, 2.7, 2.8 ⏳ NOT STARTED.
+**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅**. 2.2, 2.3, 2.4, 2.6, 2.7, 2.8 ⏳ NOT STARTED.
 
 Each section is one vertical slice including its own modals and sub-components. After each ships, the corresponding classic source files become unimported from anywhere outside `/betabuilder/*` and can be left quarantined.
 
 Order (simpler → harder). Each section's classic source files are listed under it; all of them get an HS-native equivalent in `src/modules/hopskip/components/builder/`. **Phase 2 was started out-of-order with 2.5a because the user reframed the brew sheet as the substrate for absorbing Phase 1.5 (brew session) functionality. The remaining sections will likely still follow the original sequence.**
 
-## 2.1 — Fermentables (recommended first slice)
+## 2.1 — Fermentables (first slice; lands HSModal)
 
-- **Classic sources:**
-  - [FermentableSection.tsx](src/modules/beta-builder/presentation/components/FermentableSection.tsx) — section shell + grain list
-  - [FermentablePresetModal.tsx](src/modules/beta-builder/presentation/components/FermentablePresetModal.tsx) — preset grain picker
-  - [CustomFermentableModal.tsx](src/modules/beta-builder/presentation/components/CustomFermentableModal.tsx) — "add custom grain" form
-- **HS plan:**
-  - `HSFermentableSection.tsx` — section shell with `HSSectionHeader` "Fermentables", segmented amount/percent toggle (HS pill style), target ABV input (HS number field with malt accent side-strip), "+ Add fermentable" button, grain rows (cream-2 `HSCard` with name + SRM color chip + Lovibond/EBC pills + weight/percent inputs + delete button).
-  - `HSFermentablePresetModal.tsx` — uses `HSModal` (built here for the first time, lives in `modals/`). Search input + filter chips + grain rows (cream-2 with SRM color chip + name + Lovibond + supplier).
-  - `HSCustomFermentableModal.tsx` — HSModal + form (name, SRM, Lovibond, max %, supplier dropdown). Falls out naturally.
-  - `HSModal` shared primitive (`modals/HSModal.tsx`) — paper bg, 2px ink border, 7px malt-yellow top stripe (use `border-top: 7px solid malt`, NOT `::before`, per HOPSKIP_PRD §10 stacking-context gotcha), `sh4` offset shadow, focus trap, ESC to close, click-backdrop closes, click-inside doesn't.
-- **Data dependencies:** `useRecipeStore` → `addFermentable`, `updateFermentable`, `removeFermentable`, `fermentables`. `srmToRgb` for color chips. `bjcpSpecs` for target ABV range hints. Existing grain preset database.
-- **Acceptance:** add/edit/remove fermentables, toggle amount vs percent, target ABV input drives auto-scaling, open preset modal + custom modal, OG on live-numbers updates.
-- **Effort:** M (the section itself) plus the two modals + HSModal primitive (S each, ≈M total). One focused session.
-- **Why first:** simpler than Hops (no flavor radar, no variety browser), still has the full section + 2 modals pattern, classic source is well-bounded, proves the whole vertical-slice approach including the HSModal primitive.
+**Status:** Done. ✅ See the [Phase 2.1 retrospective](#phase-21-retrospective--lessons-for-subsequent-slices) below.
+
+- **Classic sources (renamed + quarantined):**
+  - [OLD_FermentableSection.tsx](src/modules/beta-builder/presentation/components/OLD_FermentableSection.tsx) — was `FermentableSection.tsx`; renamed under the [OLD_ convention](#naming-convention-old_-prefix-on-classic-no-prefix-on-new). Eslint-blocked outside `/betabuilder/`.
+  - [OLD_FermentablePresetModal.tsx](src/modules/beta-builder/presentation/components/OLD_FermentablePresetModal.tsx) — was `FermentablePresetModal.tsx`. The live classic picker was actually the generic `PresetPickerModal<FermentablePreset>`; this `OLD_` file was unused even by classic.
+  - [OLD_CustomFermentableModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomFermentableModal.tsx) — was `CustomFermentableModal.tsx`.
+- **New HS components** (no `HS` prefix per the [naming convention](#naming-convention-old_-prefix-on-classic-no-prefix-on-new) — section components are the canonical version of their feature; `HS` prefix stays on design-system primitives like `HSCard`/`HSButton`/`HSModal`):
+  - [HSModal.tsx](src/modules/hopskip/components/modals/HSModal.tsx) — shared primitive (paper bg, 2px ink border, 7px malt top stripe via `border-top` not `::before`, sh4 shadow, focus trap, ESC/backdrop close, body scroll lock, click-origin scale-in animation). Exports `HSModalHeader` / `HSModalBody` / `HSModalFooter` sub-components for consistent inner chrome. **Keeps `HS` prefix — design-system primitive.**
+  - [FermentableSection.tsx](src/modules/hopskip/components/builder/FermentableSection.tsx) — section title + 2-col grid (ledger left, bill stack + brewer's notes sidebar right). See the design iteration block below for the full structural breakdown.
+  - [FermentablePresetModal.tsx](src/modules/hopskip/components/modals/FermentablePresetModal.tsx) — HSModal + cream-2 pill search field + filter toggle + advanced filters (Type / Color / Origin chips, OR within categories, AND across) + sticky group headers + preset rows on hover-tinted bare buttons (SRM dot + name + flag + °L/PPG).
+  - [CustomFermentableModal.tsx](src/modules/hopskip/components/modals/CustomFermentableModal.tsx) — HSModal + inline `FieldText` / `FieldNumber` / `FieldSelect` primitives (cream-2 input bg, ink border, sh1, uppercase eyebrow label + Caveat script hint line). Type dropdown auto-sets sensible fermentability default per type.
+- **Reused unchanged:** `useRecipeStore.addFermentable/updateFermentable/removeFermentable`; `usePresetStore.fermentablePresetsGrouped/loadFermentablePresets/saveFermentablePreset`; `fermentableCalculationService.calculatePercentsFromWeights / calculateWeightsFromPercentsAndABV / calculateTotalPercent`; `getFermentability` from the preset data layer; `srmToRgb`, `getCountryFlag`, `BREWING_ORIGINS`. No new store actions, no new repos, no new services.
+- **What's NOT in v1 (deferred):**
+  - **Animated number transitions on input** — classic uses `AnimatedNumberInput` (a custom input that smooths the value display); HS uses a plain `<input type="number">` with Caveat-font value. The animation is cosmetic and adds a custom-component dependency for marginal gain; revisit only if the value-change feedback feels jarring.
+  - **`ScalableText` for long fermentable names** — classic shrinks the font when the name doesn't fit; HS truncates with ellipsis. Truncation is simpler and read tests well at common widths; revisit if real-world recipes have names that need both lines + scaling.
+  - **Hover-reveal action buttons** — classic hides the swap/remove buttons until row hover; HS shows them always. The always-visible state is more discoverable, especially on touch; the cost is +56px of horizontal real estate per row (worth it).
+- **Data dependencies:** All read-write via existing recipe + preset stores. No new server endpoints.
+- **Acceptance:** ✅ add fermentable → row appears with SRM chip + name + chips + weight input → live numbers tick (OG/SRM/CAL); swap fermentable via swap icon → picker opens in "swap" mode → selecting preserves weight; remove fermentable → row disappears; switch to %, enter target ABV → weights auto-scale; open custom modal → save → toast confirms; ESC / backdrop / × button close modals; no console errors; no new lint findings (lint dropped 78 → 75 across the slice).
+- **Effort:** M+ (single focused session) — exactly as estimated. ~1,250 LOC across 4 files.
+
+### Design iteration shipped (post-initial-2.1 sessions)
+
+After the initial ship, the user iterated heavily against a Claude Design handoff bundle. The Fermentables section ended up structurally different from the initial 2.1 — what landed is the substrate the rest of Phase 2 should evolve from. Captured here so the retrospective lessons below have context.
+
+- **Outer section frame restored to brewsheet pattern.** Paper bg + 2px ink border + `0 0 14px 14px` (squared top corners that seat flush against the active tab) + sh3 shadow + 24px padding. The initial 2.1 leaned on the `.hs-section-frame` override CSS; the redesign owns the frame inline so the section is self-contained.
+- **Section header rewritten as a slim title block.** Just script kicker ("your grain bill —") + display heading ("Fermentables.") + 2px malt-yellow rule under it. No mode toggle, no Target ABV pill, no Add button in the header anymore — all controls moved down to the ledger header row, "closer to the actual malt list since it is where they will actually be used" (user quote).
+- **Bill Stack** — new visualization. Card with cream-2 bg, ink border, sh3 shadow, 64px-tall colored segmented bar with per-grain SRM color, % overlay on the dominant segment only (`pct >= 25` shows %, `pct >= 30` adds a short name), monospace weight legend below at each segment's left edge. Cursor-following hover tooltip (model: compare page's `BarRow`) shows grain name + category + share% + weight + °L/PPG/EBC. Lives in the right sidebar above the brewer's notes.
+- **Ledger header row** — eyebrow "THE GRAIN LEDGER" + flex-spacer hairline + "{n} entries" script note + (Target ABV pill in % mode) + Amount/% segmented toggle + "+ Add fermentable" button. Sits between the title and the table.
+- **Ledger table** — paper-bordered card with grid columns `62px | minmax(0, 1.7fr) | 140px | 86px | 32px`. Per-row: 42px SRM swatch with `°L` inside (white text above L>30) + PPG caption below; grain name (click-to-swap, hover-underline) + flag + category pill (Base malt / Crystal / Specialty / Roasted / Adjunct / Sugar, derived from Lovibond + name heuristic); editable Weight/% cell with Caveat 30px handwritten value + dotted-underline cue + hover stepper ▲▼; read-only computed Share/kg cell; ghost × remove button that fades in on row hover. Total row: `~EBC | "Total grain bill" | display-font kg | 100% | (empty)`. Mode toggle swaps which column is editable vs. computed; THead reorders labels accordingly.
+- **Brewer's Notes** — sidebar card with subtle honey-tinted background (`color-mix(in srgb, var(--hs-cream-2) 86%, var(--hs-honey))`). Click-to-edit notes field (Caveat 19px, ESC cancels, Cmd/Ctrl+Enter commits, blur commits). Tag chip row below (click to edit; space-separated input, normalizes `#tag` strips). Wired to existing `recipe.notes` + `recipe.tags`.
+- **2-col grid via `grid-template-areas`.** Desktop: `"lhead ." / "ltable aside"` — row 1 is ledger-header + empty, row 2 is ledger-table + sidebar (aside packed via flex with gap:16). The sidebar's TOP aligns with the ledger TABLE's top, not the header buttons. Mobile (≤900px): `display: contents` on the aside so bill + notes can flow individually into `"bill" / "lhead" / "ltable" / "notes"` — bill hoists to top (chart leads), notes anchors at bottom.
+- **Mobile-only dashed "+ Add another fermentable" row.** Saves the brewer from scrolling up to the ledger header to add another grain. SVG `stroke-dasharray='12 8'` background-image (CSS native `border-style: dashed` doesn't allow dash-length control) + gentle cream-2 tinted bg. Always-visible on touch; hidden on desktop because the header button is right there.
+- **Color indicator bar in live numbers** (HopSkipBuilder change — only live-numbers touch). Replaces the SRM small card with a wide gradient bar below the 6 remaining stat cards (OG/FG/ABV/IBU/pH/Cal). Gradient generated programmatically from `srmToRgb()` sampled at every integer SRM 1→40, so the gradient color at any X position exactly matches `srmToRgb(srm)` at that position. Pin marker uses `srmToRgb(srm)` as its fill (previews the actual beer color) + 2px ink border + 1.5px cream outer ring for visibility. Style-range hollow rings at the BJCP min/max SRM endpoints when a style is set. Script-font color adjective on the right (`straw ✦` → ... → `deep red ✦` → `brown ✦` → `black ✦`).
+- **Per-section grouping** that came out of this: the section is now `[title]` → `[2-col grid containing main + sidebar]` → `[modals]`, where the sidebar pattern (bill + notes packed) is reusable for any Phase 2 section that wants a "visualizer + notes" rail.
 
 ## 2.2 — Mash
 
@@ -411,6 +433,21 @@ Order (simpler → harder). Each section's classic source files are listed under
 
 **Effort:** M+ (single focused session) — most of the structural work is reusing existing primitives + adding props; the main risk is the session-create-or-load flow and getting the URL routing right.
 
+### Polish iteration shipped (post-initial-2.5b session)
+
+A follow-up session reworked the Brew Mode UX based on user feedback. Captured here so the retrospective lessons below have context.
+
+- **Inline click-to-edit cells.** `CellInput` / `CellTextInput` swapped from always-visible chrome to "invisible until clicked". Default state: nothing rendered (blank cream cell); click → input appears, type a value, blur/Enter commits → input disappears, value displays in HS script (Caveat handwriting) font. Esc cancels. Inputs use `position: absolute; inset: 0` to fill the full cell area, so clicking anywhere in the cell triggers edit mode (parent cells got `position: relative`).
+- **`AddedCell` + `AddedActualPopover`.** Replaces the prior simple checkbox `AddedCheckTd` / `CellCheck` / `AddedCheckDivCell`. Click a grain / hop / water-salt / mash-addition "Added" cell → popover opens with two affordances: ① "Use planned amount" (sets added=true, no actual amount recorded — shows ✓ checkmark) ② "Different amount: ___ unit" + Save (sets added=true with the entered actual amount — shows the amount in script font). Popover position is `fixed` near the trigger's `getBoundingClientRect`, ESC / click-outside / Cancel closes, auto-focuses the number input on open. Actual amounts persist to `ingredientActualAmounts` and are surfaced to downstream calcs.
+- **Recompute from ingredient actuals (`applyIngredientActualsToRecipe`).** Helper substitutes fermentable weights, hop grams, and salt amounts (summed from `salt:mash:<key>` + `salt:sparge:<key>` actuals) into a recipe clone, then `recipeCalculationService.calculate()` runs against the substituted recipe. Yields parallel `actualsCalculations` (OG/FG/ABV/IBU/SRM/preBoilVolumeL/preBoilGravity/estimatedMashPh/mashPhAdjustment). Salt actuals propagate into `estimatedMashPh` because `MashPhCalculationService` reads `recipe.waterChemistry.saltAdditions`.
+- **Scratched-and-penned-in revisions (`RevisedValue`).** When `actualsCalculations` differs from `calculations`, the planned value renders with a roast-red strikethrough (`textDecorationColor: hsTokens.roast`, 2px solid, 0.7 opacity on the planned text) and the revised value drops below in water-blue HS script font. Two display modes: `compact` (asterisk marker only, parent renders a single corner note) and non-compact (inline `*due to X` annotation in roast-red script). Applied to: Targets table (OG/FG/ABV/IBU/SRM/Mash pH rows), Fermentation FG target row, Water Final Profile summary row, Boil Pre-boil/Post-boil volume + gravity cells.
+- **Per-section revision annotation placement.** Each section places its `*due to X changes` note differently based on what fits the surface: **Targets** top-right in card header (auto-collected from any row with `revisionReason`); **Boil** top-right of the Pre-boil / Post-boil `<th>` cells in `BoilNumbersMatrix` (via new `preBoilFlag` / `postBoilFlag` slots); **Water** inline beside the Final Profile revised mineral string (stacked + non-compact mode); **Fermentation** inline beside the FG target revised value. Section decorative taglines ("rolling boil ✦", "patience pays ✦", etc.) all removed from ScheduleSection headers to give the revision annotation a clear top-right slot.
+- **Mash pH target = post-adjustment value when adjustments planned.** Display logic: if `mashPhAdjustment.lacticAcid88Ml > 0 || mashPhAdjustment.bakingSodaG > 0` → show `targetPh` (post-adjustment) with "after adjustments" hint; else show raw `estimatedMashPh`. Salt actuals now flow through `applyIngredientActualsToRecipe` so `actualsCalculations.estimatedMashPh` reflects them and a strikethrough revision renders when the value moves.
+- **OG predictor uses the revised target.** When grain actuals shift the realistic OG ceiling (e.g. 1.055 → 1.052), the predictor compares predicted post-boil OG against the revised value, not the original. The tooltip surfaces `(target 1.052 revised from 1.055 after grain changes)` so the brewer sees what changed. This was a real bug — a 1.047 pre-boil reading was incorrectly flagged as "4 points low" against the original 1.055 when it was actually on-target for the revised 1.052.
+- **`PostBoilOgTip` — hop-aware boil-longer caveat.** Replaces the pre-boil predictor once `postBoilVolumeHotL` + `originalGravity` are entered. Detects "late additions" (any boil hop with `timeMinutes < 30` OR whirlpool hop) and varies the boil-longer option: **bittering-only recipes** → straight suggestion ("bittering hops already utilized, extra boil just concentrates"); **late additions present** → caveats with hop-filter escape hatch ("late hops will over-extract — use a hop filter / bag to remove them first, then boil"). Capped at 30 min extra (impractical beyond). Honey-accented script note distinguishes from the water-blue pre-boil predictor.
+- **`BrewTipFlag` hover-flag pattern.** The verbose `predicted OG ✦` and `post-boil reading ✦` cards collapsed into small severity flags: hand-drawn warning triangle (`WarningTriangleGlyph` — ink-stroked triangle with `!`) for caution, `CheckGlyph` for success. Inline-flex, script-font label (15pt), in the severity color (roast / hops). No border, no fill, no pulse. Hover (or keyboard focus on the underlying `<button>`) reveals a cursor-following tooltip — `position: fixed; z-index: 100`, first-mouseEnter snaps to cursor with transition disabled (mirrors the compare-page `BarRow` pattern). Flags live in the `BoilNumbersMatrix` `<th>` cells, right-aligned via `flex; justifyContent: space-between` so "Pre-boil" sits left and the flag sits right of the same header.
+- **Tooltip content rewritten conversationally.** Replaced dense mono-font lines like `Pre-boil 27.2 L @ 1.047 → post-boil 25.1 L @ 1.051 (target 1.052…)` with sentence prose: *"A 60-min boil will land at 25.1 L @ 1.051, ~4 points below target 1.052…"*. Fix options reworded as imperatives (*"Add ~257 g DME at flameout — cleanest fix"*).
+
 - **Classic sources:**
   - [YeastSection.tsx](src/modules/beta-builder/presentation/components/YeastSection.tsx)
   - [StarterCalculator.tsx](src/modules/beta-builder/presentation/components/StarterCalculator.tsx)
@@ -449,13 +486,13 @@ Order (simpler → harder). Each section's classic source files are listed under
 **Migration choreography for each Phase 2 section (per slice):**
 
 1. **Read the classic source** to understand props, store interactions, validation rules, and edge cases (empty states, modal triggers, tier gates).
-2. **Write the HS-native components** (section + modals + sub-components) in the matching folder under `src/modules/hopskip/components/builder/` and `modals/`.
+2. **Write the HS-native components** (section + modals + sub-components) in the matching folder under `src/modules/hopskip/components/builder/` and `modals/`. **Name them with no `HS` prefix** (`FermentableSection`, `MashSection`, etc. — per the [naming convention](#architecture--principles)).
 3. **Swap the import** in [HopSkipBuilder.tsx](src/modules/hopskip/components/HopSkipBuilder.tsx) — one line change for the section, and update modal triggers accordingly.
 4. **Run `npx tsc --noEmit`** to check the contract.
 5. **Visual parity check:** open the HS recipe at `/recipes/[id]` AND the classic version at `/betabuilder/recipes/[id]` in two browser tabs. Edit a recipe in HS, then open in classic — confirm the data is the same. Edit in classic, then HS — confirm both see the change (they share the same store + repos).
 6. **Delete the matching rules** from [overrides.css](src/modules/hopskip/styles/overrides.css) (the entries targeting the classic class names being replaced).
-7. **Add JSDoc `@deprecated` tags** to the classic files just replaced (deferred from Phase 0.4b — see that section). Tag format: `/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md. */` above the default export.
-8. **Extend the ESLint `no-restricted-imports` rule** in [eslint.config.js](eslint.config.js) to block the classic files just replaced (deferred from Phase 0.4e). Add the `/eslint.config.js` rule if it doesn't exist yet, otherwise append paths. Verify lint stays clean by confirming no surviving HS code still imports those paths.
+7. **Rename classic files to `OLD_` prefix** (file + function + any local interface types — e.g., `FermentableSection.tsx` → `OLD_FermentableSection.tsx`, `function FermentableSection()` → `function OLD_FermentableSection()`). Update internal imports + the few classic-aggregator importers (BetaBuilderPage, BrewedVersionModal, etc.) — the importer change is a global find-replace of `<ClassicName` → `<OLD_ClassicName` plus the import line. Drop any `@deprecated` JSDoc — the `OLD_` prefix is now the signal. Use `git mv` so history is preserved.
+8. **Extend the ESLint `no-restricted-imports` rule** in [eslint.config.js](eslint.config.js) — append entries for the renamed classic paths (`**/modules/beta-builder/presentation/components/OLD_FermentableSection` etc.) with a clear `message:` pointing at the new HS path. Verify lint stays clean by confirming no surviving HS code still imports the OLD_ paths.
 9. **Commit** that section's vertical slice.
 
 The same choreography applies to Phase 1 sub-slices (replace HSBrowsePage / HSPublicRecipeView / HSCompareRecipesPage / HSUserProfile / HSBrewSessionPage / HSVersionHistoryPage, delete matching override rules, tag the replaced classic files, extend the lint rule). Phase 3 (calculators) and Phase 4 (learn articles) follow the same pattern — at smaller granularity.
@@ -892,7 +929,7 @@ Wiring `actuals` + `onActualsChange` + `addedFlags` + `onAddedChange` into HSBre
 
 ### Data model expansion: keep the existing 15 fields, add structured maps for per-step / per-row scopes.
 
-`SessionActuals` gained `mashStepActuals: Record<id, {…}>`, `fermentationStepActuals: Record<id, {…}>`, `mashAdditionActuals: Record<id, {…}>`, and `gravityLog: Array<…>`. Keyed by step/ingredient id (stable across renames + reorders, unlike index). `addedFlags` lives one level up on `BrewSession` since it's a workflow flag rather than a measurement. Firestore handled the additive expansion transparently because the repository already strips `undefined` and applies doc-id-wins. **Rule for future model expansions:** keep new fields optional + use id-keyed maps (not arrays) when the underlying recipe steps have stable ids.
+`SessionActuals` gained `mashStepActuals: Record<id, {…}>`, `fermentationStepActuals: Record<id, {…}>`, `mashAdditionActuals: Record<id, {…}>`, `gravityLog: Array<…>`, and (in the polish iteration) `ingredientActualAmounts: Record<string, number>` — a single flat map keyed by ingredient id (fermentable / hop / `salt:mash:<key>` / `salt:sparge:<key>` / mash-addition id). Keyed by step/ingredient id (stable across renames + reorders, unlike index). `addedFlags` lives one level up on `BrewSession` since it's a workflow flag rather than a measurement. Firestore handled the additive expansion transparently because the repository already strips `undefined` and applies doc-id-wins. **Rule for future model expansions:** keep new fields optional + use id-keyed maps (not arrays) when the underlying recipe steps have stable ids; prefer a single flat map with namespaced ids (e.g. `salt:mash:gypsum_g`) over nested structures when consumers fan in from many surfaces.
 
 ### Calculator inlining — boilOff + dilution + abv compose into "mid-brew tips" naturally.
 
@@ -928,18 +965,184 @@ The slice added ~700 LOC across HSBrewSheetSection + 200 LOC in HopSkipBuilder +
 - **Strike-temp adjustment tip** — defers (same).
 - **Quarantining the standalone classic page** — stays as the side-by-side reference per the quarantine-not-delete principle. `@deprecated`-tagged + eslint-blocked outside `/betabuilder/`, but `/betabuilder/recipes/sessions/[sessionId]` still mounts it with an inline `// eslint-disable-next-line no-restricted-imports`.
 
+### Polish iteration retrospective — UX lessons from the follow-up session
+
+Captured after the polish work (inline edit cells, AddedCell modal, RevisedValue, BrewTipFlag, hop-aware tips). Read before any Phase 2 slice that wires editable surfaces with revisions.
+
+### Scratched-and-penned-in is the right metaphor for "this changed".
+
+When ingredient actuals shift planned targets, the user's mental model is "I crossed it out and wrote in the new number". The `RevisedValue` component runs with this directly: roast-red strikethrough through the planned value (textDecorationColor matches the "pen ink"), water-blue HS script font for the revised value. The colors split deliberately: red marks the correction (struck-out + footnote asterisk + "*due to X" annotation all in roast), blue is the new content (the revised value). The pattern reads as **one pen-pass with red ink correcting the printed numbers and blue ink writing in the new ones**. Don't unify to a single color — the two-color split carries semantic load.
+
+### Per-surface annotation placement: ship-by-feedback, not by spec.
+
+The "*due to X changes" annotation went through four placements in iteration: bottom-of-card → top-right header → inline-beside-value → per-section variant (top-right for Targets/Boil, inline for Water/Fermentation). The final per-surface rule worked because each surface has different content density — a 5-row Targets table benefits from a corner footer (dedupes when multiple rows share a reason); a single-row Water profile reads better with an inline annotation right after the value. **Rule:** for revision/change-callout patterns, expect multiple iterations on placement; design the component so the annotation slot is decoupled from its position (props for both inline and corner-footer modes).
+
+### Modal popover beats inline checkbox once "added" might come with a measured amount.
+
+The original `AddedCheckTd` was a simple toggle. When the brewer wanted to record an actual amount that differed from plan, a click-to-toggle UI couldn't capture it. The new `AddedActualPopover` exposes two affordances side-by-side ("use planned" button + "different amount" input + Save) so the brewer can choose without leaving the cell. Auto-focusing the number input lets power users just-type-and-Enter; the "use planned" button is the fast path for matching-the-recipe brewers. **Rule:** any "did you do this?" cell that has an associated amount should default to the popover, not the toggle. The toggle only makes sense for binary did/didn't with no quantity.
+
+### Cursor-following hover flags > inline tip cards for situational guidance.
+
+The pre-boil / post-boil OG cards (200+px tall, full-width, sitting under the boil matrix) were verbose and didn't read like brewing advice — they read like compiler warnings. Collapsing into small severity flags (`BrewTipFlag` with hand-drawn warning triangle + script-font label, 15pt, no border, no fill) with the full content as a cursor-following tooltip cut visual weight by 90% while preserving the depth on demand. The cursor-follow pattern from the compare page's `BarRow` (position: fixed; z-index 100; first-move snap to cursor with transition disabled) ports verbatim — promote to a primitive when a third consumer arises. **Rule for future tips:** lead with the small indicator + hover reveal; reserve full-card real estate for content the brewer needs to read every time (not contextual warnings).
+
+### Brewing reasoning beats generic warning text.
+
+The first version of "boil longer" said *"hops are already added — extra boil changes hop character"* uniformly. Real brewing nuance: bittering hops at 60+ min are fully utilized (their alpha acids have plateaued) — extra boil doesn't change them. The risk is specifically with **late additions**: any boil hop at <30 min OR whirlpool hops sitting in hot wort. The polished `PostBoilOgTip` filters `recipe.hops` for these and varies the message — bittering-only recipes get straightforward "extra boil just concentrates"; recipes with late additions get the hop-filter escape hatch. **Rule for brewing advice tooltips:** read the recipe's actual additions before warning. Generic caveats erode trust; recipe-aware caveats earn it.
+
+### Click-to-edit cells: position: absolute + parent position: relative is the cleanest fill pattern inside a `<td>`.
+
+Trying to make the click target span an entire `<td>` from inside the cell content area led to a dead-zone problem (cell padding wasn't clickable). The solution: `position: absolute; inset: 0; width/height: 100%` on the button/input + `position: relative` on the cell. Click anywhere in the cell hits the button. Works inside `<table>` layouts in modern browsers (Chrome/Safari/Firefox tested). When in edit mode, the input replaces the button at the same fill — no layout shift. **Rule for fill-the-cell interactive children inside tables:** parent gets `position: relative`, child gets `position: absolute; inset: 0`.
+
+### Unified `ingredientActualAmounts: Record<string, number>` simplified the salt + mash-addition wiring.
+
+Originally I considered nested per-category maps (grainActuals, hopActuals, saltActuals.mash, saltActuals.sparge, etc.). The flat map with namespaced ids (`fermentable.id`, `hop.id`, `salt:mash:gypsum_g`, `salt:sparge:cacl2_g`, `salt:mash:lacticAcid`, mash-addition id) collapsed to one Record and one `onIngredientActualChange(id, amount)` callback. The AddedCell component takes a `plannedAmount` + `unit` + `id` and the unified storage doesn't care what category it is. **Rule for cross-cutting data captured from many surfaces:** prefer one flat keyed map with namespaced ids over nested category structures. Easier to thread, easier to read back, easier to extend.
+
+### Section taglines ("rolling boil ✦", "patience pays ✦") add visual noise without informational value.
+
+These scriptNotes lived in each ScheduleSection header from 2.5a as decorative flavor. When the polish iteration introduced revision annotations in the same header slot, the taglines competed for attention without earning their space. Removed from all sections. The `scriptNote` prop on ScheduleSection stays in the signature in case a section ever needs it back, but no current section passes it. **Rule:** before adding decorative text in a content slot, check whether functional content (annotations, statuses, action buttons) might want that slot. Functional content wins.
+
+### Pre-boil predictor's target shifts with grain actuals — easy bug, real impact.
+
+The OG predictor was comparing predicted post-boil OG against `calculations.og` (the original recipe target). When the brewer entered actual grain weights that lowered the recipe's realistic OG (e.g. used 4.8 kg base malt instead of 5.0 kg planned), the predictor still complained about being 4 points below the *original* target — even though the brewer was on-target for what they were actually brewing. Fixed: target is now `actualsCalculations?.og ?? calculations.og`. The tooltip surfaces `(target 1.052 revised from 1.055 after grain changes)` so the brewer sees the shift. **Rule:** any "compare actual to target" surface in Brew Mode must use the actuals-revised target when ingredient actuals are present. The original is for reference only.
+
+---
+
+## Phase 2.1 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 2.1 (Fermentables + HSModal). Read before any Phase 2 slice that needs a modal or a section with editable rows.
+
+### HSModal landed exactly as spec'd — `border-top: 7px solid <accent>` on the dialog itself, not `::before`.
+
+The stacking-context gotcha called out in HOPSKIP_PRD §10 is real: a `::before` accent stripe inside an element that establishes a stacking context (transform, filter, will-change) sits BEHIND descendant text in some browsers. Putting the accent on `border-top` of the dialog wrapper avoids the gotcha entirely — no pseudo-element, no z-index dance, no stacking-context surprise. The two-line CSS reads as "a thicker top border" and renders correctly everywhere. **Rule for any future HS modal/card variant that wants an accent stripe at the top:** use a colored top border, not a pseudo-element.
+
+### `HSModal` exposes `HSModalHeader` / `HSModalBody` / `HSModalFooter` as sub-components.
+
+The header has its own padding + cream background + ink bottom border; the body has flex-grow + scroll + paper bg; the footer has cream-2 + ink top border. Each modal that uses HSModal composes these three (or skips any of them). The header takes `title`, `kicker`, `onClose`, `titleId`, `rightSlot`; the footer has `align="between" | "end" | "start"`. The split makes the per-modal authoring extremely terse — both `HSFermentablePresetModal` and `HSCustomFermentableModal` end up at ~250-400 LOC instead of duplicating chrome boilerplate. **Rule:** when a primitive has multiple sub-regions with distinct styling (header/body/footer), export the sub-pieces as named exports alongside the default. Consumers wire what they need.
+
+### `data-autofocus` attribute + `requestAnimationFrame` is the right autofocus pattern — `autoFocus` prop is a lint warning trap.
+
+`jsx-a11y/no-autofocus` warns on every `<input autoFocus>`. HSModal already runs an effect on open that finds `[data-autofocus]` and focuses it via `requestAnimationFrame` — so the `autoFocus` prop is redundant when the input is inside a modal. **Rule for any modal-internal input that should focus on open:** add `data-autofocus="" ` (or any string) as a marker, drop the `autoFocus` prop. Lint stays clean and the focus still lands correctly. The pattern is documented inline in HSModal's focus-management effect.
+
+### Click-origin scale-in animation reuses the classic `ModalOverlay` pattern (CSS vars + transform).
+
+HSModal captures the last `pointerdown` coordinates globally, computes `dx/dy` from viewport center on open, and feeds them into `--hs-modal-dx` / `--hs-modal-dy` CSS variables. The keyframe `from` uses `translate(var(--hs-modal-dx), var(--hs-modal-dy)) scale(0.85)` so the modal appears to grow from the click point. The classic `ModalOverlay` does the same with `--modal-dx/dy`; HSModal uses its own variable names to avoid collision but the technique is identical. **Rule for cross-cutting animations** (modal opens, drawer slides, toast appearances): the global `pointerdown` listener is set up once on mount; multiple consumers can read the same coords without contention. If a future HS popover needs the same growth-from-click effect, lift the listener + variable scheme into a tiny `useClickOrigin()` hook rather than re-implementing it.
+
+### Don't replace `PresetPickerModal<T>` with `HSPresetPickerModal<T>` — write per-section modals instead.
+
+The classic `PresetPickerModal` is a generic component parameterized by `T` with `renderItem` / `renderFilters` / `groups` props. It looks tempting to port to HS as a generic, but: (a) the search + filter + group display has tight per-section variations (hops want flavor radars in the filter row, water wants ion sliders, yeast wants viability hints) that bloat the generic surface, (b) `T` parameterization in shared React primitives is a pain point for prop inference at consumer sites, (c) HSModal + HSModalHeader/Body/Footer give you the chrome for free, so the per-section modal is mostly "search box + filter chips + list rendering" — which is exactly the part that varies. **Rule:** for Phase 2.2+ (Hops/Yeast/Water preset pickers), write a bespoke `HSHopPresetModal` / `HSYeastPresetModal` / etc. that uses HSModal directly. Don't port the generic.
+
+### Caveat script font on input values is the right "handwritten brew sheet" feel — but only on display, not while editing.
+
+The fermentable row's weight/% input uses `fontFamily: hsTokens.script` (Caveat). The classic uses a generic input font. The script font reads as "you scribbled this in" and matches the rest of HS's handwritten-feel notes. It DOES make double-digit precision values (2.50, 12.5) slightly less precise to read mid-edit — but the trade-off works because the input is small (64px) and the user knows what they typed. **Rule:** Caveat is appropriate for editable values that read as personal annotations (your grain weight, your hop grams). Stick with display/body fonts for system-computed numbers (totals, calculated percentages, OG/FG/ABV in the live numbers strip).
+
+### `position: relative` parent + filling input pattern was overkill for non-cell inputs — keep the simpler 2-line label here.
+
+The brewsheet's click-to-edit cells use `position: absolute; inset: 0` on the input + `position: relative` on the parent `<td>` to make the entire cell clickable. For section-level inputs that live inside a row card (not a `<td>`), the simpler pattern is just `<label>` wrapping `<span eyebrow>` + `<input>` with normal flow layout. Lower complexity, no positioning, label clicks still focus the input via standard `htmlFor`. **Rule:** keep the `position: absolute` fill pattern reserved for table cells where the cell needs to be the click target. For card rows, normal `<label htmlFor>` is enough.
+
+### Empty state: dashed border + script kicker + body line + primary CTA reads as "design intent", not "loading".
+
+The first cut had a plain HSCard for the empty state; it looked too much like a "no data yet" placeholder. Switched to dashed ink border + cream-2 bg + "empty bill —" script kicker + a one-sentence brewing-context line + the primary "Add your first fermentable" button. Reads as a friendly intro, not a system message. **Rule for HS empty states:** dashed border distinguishes intentional empty from "this should be filled" required-state styling; a script kicker grounds it in the HS visual language; one explanatory sentence + one CTA is the minimum.
+
+### Quarantine took 3 minutes — the eslint pattern + `@deprecated` tags pattern is mechanical now.
+
+The Phase 2.5 + 1.x retrospectives established a clear choreography: `@deprecated` JSDoc on the default export of each replaced classic file + a new entry in the `no-restricted-imports` group with a `**/modules/.../ClassicName` pattern + a clear migration message. For 2.1 this took 3 file edits + 1 eslint config edit. The relative-path imports inside `beta-builder/` (`./FermentableSection`) don't match the glob — which is correct: classic-aggregator files (BetaBuilderPage, BrewedVersionModal) are part of the quarantined ecosystem and shouldn't be forced to add eslint-disable per slice. The rule guards against NEW non-classic code re-importing the deprecated paths. **Rule:** keep using the `**/modules/<area>/<File>` glob, not absolute paths; it threads the needle of "stop new use" without "spam disables in old quarantined files".
+
+### Lint went DOWN by 3, not up — fixing autoFocus on the way in is essentially free.
+
+Pre-slice baseline: 78 problems. Post-slice: 75 problems (4 errors, 71 warnings). The 3-problem drop came from removing autoFocus in favor of `data-autofocus`. Net effect: the slice added ~1,250 LOC of HS-native code, 0 new lint issues, AND incidentally cleared 3 prior warnings. The exact same pattern applies to every future Phase 2 modal slice. **Rule:** when porting a classic modal that uses `autoFocus`, swap to `data-autofocus` during the port — saves a follow-up lint pass.
+
+### Visual verification worked this time (preview server started cleanly).
+
+Phase 1.1/1.2/1.3/1.4 retrospectives all reported `preview_start` failing on the dev-lock. This slice ran `preview_start` against the harness-managed launch config and it worked: opened `/recipes/new`, switched to Fermentables tab, opened the picker, selected "1886 Malt House - NY Pale Malt", saw the row + chips + live-number tick (OG 1.011, SRM 2.1, CAL 35) in a single screenshot. **Update to the verification harness rule:** the canonical Phase 1+2 verification is now `tsc + lint + build + preview_screenshot of the key surface`. The "dev-server-lock makes preview unavailable" claim from earlier phases was tied to a user-pre-started server; with launch.json managing the lifecycle, preview is reliable.
+
+### Design-iteration retrospective — lessons from the post-2.1 polish sessions
+
+Captured after iterating on the initial 2.1 against (a) screenshot feedback and (b) a Claude Design handoff bundle the user attached partway through. Read before any Phase 2 slice that has a sidebar, an editable cell, or a chart-style visualization.
+
+### Claude Design handoff bundles are gzipped tarballs — fetch, unpack, then READ THE CHATS.
+
+The `https://api.anthropic.com/v1/design/h/...` URL returns a `application/gzip` archive (`brewing-it/README.md` + `chats/chat[12].md` + `project/...jsx`). The README's first instruction is "Read the chat transcripts first" — and that's exactly right. The chat captures what the user kept/dropped during iteration, which is the actual spec. The JSX files are the output; the chats are the intent. **Rule for any future Claude Design handoff:** fetch via `WebFetch`, extract via `gunzip + tar -xf`, read README → chats → variations folder in that order. Delegating to an agent for a focused summary (with explicit "tell me what the user wants for the FERMENTABLES section, not the whole bundle") cuts the read down to ~600 words of actual signal.
+
+### Brewsheet-pattern outer frame is the right anchor for any section, not just brew sheet.
+
+The initial 2.1 used the inherited `.hs-section-frame` override CSS to get the squared-top-corners + ink border + sh3 shadow. The redesign owns the frame inline (paper bg, 2px ink L/R/B border, `0 0 14px 14px` radius, sh3 shadow, 24px padding). This is the same pattern HSBrewSheetSection's `pageStyle` uses — and it works for any section that lives inside the tab-content slot. Self-contained framing means the section can move (or be quarantined) without depending on a wrapper class. **Rule for Phase 2.2+ sections:** own the section frame inline, copy the brewsheet's `pageStyle` shape verbatim. Stop relying on the `.hs-section-frame` cascade.
+
+### A separate "bill stack" visualization above the editor is the right pattern for visual-leading sections.
+
+Fermentables → Bill Stack (colored % bar with SRM-derived segments). Hops will want a similar "addition timeline" (additions across the boil timeline, colored by hop type or alpha %). Mash will want a temperature/time chart. Water will want an ion-comparison bar. Each section's "what does my recipe LOOK like at a glance" deserves a dedicated chart card in the sidebar, separate from the editable list below. **Rule:** when a section has data that's hard to read row-by-row but tells a story as a chart, give it its own chart card above (mobile) or beside (desktop) the editor. Reuse the cursor-following tooltip pattern (`position: fixed; z-index: 100`; first-move snap with `void offsetHeight` reflow trick) for any chart hover details.
+
+### Programmatic gradient from `srmToRgb()` beats a hardcoded gradient — and the marker should USE the same color function.
+
+The first cut of the SRM color bar used a hardcoded `linear-gradient(to right, #f8e8a8 0%, ...)` with hand-picked stops. That's two sources of truth (gradient stops + position math) that have to agree. The fix: sample `srmToRgb(s)` at every integer SRM 1→40, build the gradient stops from those, and use the SAME function for the pin's fill. Now any X position on the bar = `srmToRgb(srm)` for the corresponding SRM, AND the pin previews the actual beer color. **Rule for any "value plotted on a color scale" surface (gravity, IBU intensity, mash pH zone):** generate the gradient from the same function that computes the marker color. Don't hand-pick stops.
+
+### Bill stack visual feedback: the visualizer should be SMALL and live in the sidebar.
+
+The initial bill stack was 96px tall and lived in the main column. User feedback: "too vertically tall; should be 2/3 the size. Maybe it should actually go in the sidebar above the brewers notes section so that the left is just the grain bill." Two specific moves: shrunk to 64px and moved to the sidebar above the notes. The lesson is generalizable — **the editor (where the user clicks) belongs in the main column at full width; charts/notes/context belong in the sidebar.** When in doubt, ship the chart small and to the side, not big and at the top.
+
+### `grid-template-areas` with `display: contents` is the right pattern for sidebars that reflow on mobile.
+
+Desktop wants: ledger header on top-left, ledger table below it, sidebar (bill + notes packed) on the right aligned with the ledger table. Mobile wants: bill at top, ledger header, ledger table, notes at the bottom — bill and notes split apart so notes anchors below. The trick: use `grid-template-areas` on the parent + a `<aside>` wrapper containing bill + notes (so on desktop they're packed via flex). On mobile, `display: contents` on the aside makes the wrapper "disappear" so its children participate directly in the parent grid — letting bill claim a top slot and notes claim a bottom slot. **Rule for any sidebar that contains multiple cards:** wrap in `<aside>` with `display: flex; gap: N` on desktop; flip to `display: contents` at the mobile breakpoint + give each child its own grid-area. Cleanest way to get desktop-packed + mobile-split without duplicating JSX.
+
+### Top-of-sidebar alignment: ledger header in row 1 + sidebar in row 2 (not spanning).
+
+The first cut had the sidebar in row 1, aligned with the ledger header's top (so the bill stack sat next to the Amount/% buttons). User feedback: "I want the top of the sections to align instead of the sidebar aligning with the buttons." Fix: split the main column into two grid slots (`lhead` + `ltable`) and put the sidebar in row 2 only, alongside `ltable`. Now the sidebar's TOP = the ledger TABLE's TOP, which is where the eye expects "section content" to begin. **Rule:** when a left column has a header strip followed by the main content, sidebars should align with the main content, not the header. Use `grid-template-areas` to split.
+
+### Hex-alpha appended to a CSS var (`var(--hs-ink)66`) is broken in React inline styles — use color-mix or solid colors.
+
+Several places in the codebase use `${hsTokens.ink}66` to get a translucent ink. When React converts that to inline style (`border: 1.5px dashed var(--hs-ink)66`), browsers either invalidate the whole declaration (border doesn't render at all) or drop the alpha bytes (renders as solid `--hs-ink`). Both modes were observed. **Rule for inline-style alpha:** use `color-mix(in srgb, ${hsTokens.ink} 40%, transparent)` (modern, ergonomic, works with CSS vars) or pick a solid color from the palette that's already at the desired tone (e.g., `hsTokens.muted` for "subtle dashed"). Don't append hex alpha to a `var()`. The broken pattern still exists at lines that I haven't migrated — flag for cleanup as a separate sweep.
+
+### CSS `border-style: dashed` doesn't let you control dash length — use an SVG background-image for chunky dashes.
+
+The dashed "+ Add another fermentable" button needed longer dashes with bigger gaps than the browser's default. CSS gives you `dashed` and that's it; no `border-dash-array`. Workaround: render the dashed outline as an inline SVG data URL background-image with `<rect stroke-dasharray='12 8'/>` and 100% width/height + `preserveAspectRatio='none'`. The SVG scales with the button and rounds the corners (via `rx`/`ry`). **Rule for any HS surface that wants visibly chunky dashes:** SVG background-image. Promote `dashedBorderBg(color, {dash, gap, strokeWidth, radius})` to a shared util if a third consumer arises.
+
+### Mobile parity for hover-only affordances: always-visible variant + bare chrome.
+
+Desktop's hover stepper ▲▼ doesn't fire on touch — there's no hover. The mobile-mode fix: `@media (max-width: 640px) { .hs-ferm-steppers { opacity: 1 !important; pointer-events: auto !important; background: transparent; border: none; box-shadow: none; ... } }` — keep the steppers visible, drop the chrome so they don't look like buttons sticking out. Same idea applies to the per-row remove icon (always 1.0 opacity on mobile, no fade-in). **Rule for any hover-revealed affordance:** use a width-based media query (not `(hover: none)` which is unreliable in headless browsers) to make the affordance always-visible on mobile, AND strip the visual chrome so it reads as part of the row, not a "button". Add a parallel mobile-only "add another" CTA at the bottom of long lists so the user doesn't have to scroll up to the header button.
+
+### Brewer's Notes color: `color-mix(cream-2, honey)` is the right "yellowed beige" — but dial the mix LOW.
+
+First attempt at "yellowed beige" used 28% honey. User: "a bit dark? Can we go more subtle." Second attempt: 14% honey. The card now reads as a distinct surface without becoming an accent block. **Rule for tinted card backgrounds in HS:** mix the base surface (cream/cream-2/paper) with the accent at 10-20%, not higher. If the tint looks heavy, the mix is too strong. Use `color-mix(in srgb, var(--base) NN%, var(--accent))` so dark-mode adapts proportionally.
+
+### Bill stack background: cream-2 reads as "summary surface" — paper reads as "hero card".
+
+Initial bill stack used `paper` bg (like the ledger table). User: "Can the grain bill % visualizer get the slightly grey background color? (The color we use on row hover I guess)." Switching to `cream-2` made the bill stack read as a quieter "context" card instead of a hero. **Rule:** the most prominent card on a surface gets `paper`; secondary/context cards get `cream-2`. Tertiary/notes cards get a tinted variant. Three tiers of card weight, like the three tiers of input/row/section background documented in `overrides.css`.
+
+### Hover tooltip on chart segments — the `BarRow` pattern ports verbatim.
+
+The compare page's `BarRow` cursor-follow tooltip (position: fixed; z-index 100; first-move snap with `void offsetHeight` reflow; mouse-move applies rotation based on velocity; settle timeout straightens it) ported straight into the Bill Stack with zero changes. This is the second consumer; **the third instance should promote the pattern to a shared `useCursorFollowTooltip()` hook or `<HSCursorTooltip>` primitive.** Until then, inline-copy is fine.
+
+### Reorganize controls "closer to where they're used" — header should be just identity.
+
+User feedback: "Amount/% toggle and add fermentable button should just go closer to the actual malt list since it is where they will actually be used." Moved out of the section header (kicker + title only) and into a dedicated "ledger header row" (eyebrow + entries count + controls + add button). The section header becomes a quiet identity strip; the controls live with the data they affect. **Rule:** if a control mutates the data in a sub-area, render the control adjacent to that sub-area, not in the section-wide header. Section headers are for identity/context, not interaction.
+
+### Click-to-edit cells with Caveat display + dotted-underline cue + hover stepper is the cell pattern.
+
+The mockup uses `border-bottom: 1.5px dotted ink55` on the displayed value as the "click me" cue, solidifies on hover. HS adopted this. Pair with the brewsheet's CellInput button + input-on-edit + Esc-cancel + Enter-commit + ▲▼ hover stepper. The Caveat handwritten font on the displayed value reads as "your number" — matches the rest of HS's hand-written annotations. **Rule for editable numeric cells in HS:** Caveat 30px value + 11px mono unit + dotted underline cue at rest; cream cell + malt outline + Caveat input on click; absolute-positioned ▲▼ steppers fading in on hover. Pre-built; use `CellInput` from `HSBrewSheetSection` or this file's local `EditableCell`.
+
+### Live-numbers SRM card removed in favor of the color bar — keep the other 6.
+
+User explicitly said "remove the SRM live number card now that we have the SRM bar" — the SRM number is now in the bar's right caption ("14.5 SRM / 29 EBC"). The other 6 stat cards (OG/FG/ABV/IBU/pH/Cal) stayed. The grid template went `repeat(7, 1fr)` → `repeat(6, 1fr)` with the mobile breakpoints scaled proportionally. **Rule for live-numbers changes triggered by a section visualizer:** if the visualizer surfaces a stat, the stat card is redundant — drop the card, don't double-show. Keep all OTHER stats untouched per the user's "don't lose any of the live numbers" guidance from this slice.
+
+### Synthetic mouse events don't trigger React's `onMouseEnter` reliably — verify hover behavior with real cursor or by inspecting CSS rules.
+
+The bill-stack hover tooltip + the row-hover bg pattern both rely on React `onMouseEnter` (or the CSS `:hover` pseudo). `preview_eval` dispatched `dispatchEvent(new MouseEvent('mouseover'))` does NOT reliably fire React's synthetic mouseenter — checked opacity stayed 0 even after dispatch. Verification approach: inspect the CSS rule via `document.styleSheets` to confirm it's registered, then trust the pattern (especially when copying from a known-working pattern like `BarRow`). Real cursor verification is the user's job. **Rule for hover-driven UI testing:** don't try to programmatically simulate hover; verify the CSS rule + computed style at hover state via DevTools instead.
+
+### Naming convention shifted mid-slice: `OLD_` prefix on classic, drop `HS` prefix from new sections.
+
+After the initial 2.1 shipped with `@deprecated` JSDoc + `HSFermentableSection` naming, the user reframed: rename classic to `OLD_FermentableSection` and drop the `HS` prefix from the new one so it's just `FermentableSection`. The argument: the `OLD_` prefix screams at the top of every grep/IDE search, the folder location (`beta-builder/` vs `hopskip/`) is the structural marker, and the eslint rule does the enforcement — `@deprecated` is redundant. Section components are the canonical version of their feature, so they shouldn't carry a design-system prefix; design-system primitives (`HSCard`, `HSButton`, `HSModal`, `HSPill`, `HSEyebrow`) keep `HS` because they ARE part of the design system. This applies going forward to every section migration. **Rule:** when a section migrates, `git mv` the classic file to `OLD_<Name>.tsx`, rename its default export + interface types with the same prefix, drop the `@deprecated` JSDoc, and rename the matching HS file to just `<Name>.tsx` with `<Name>` as the default export. Update eslint paths to point at `**/.../OLD_<Name>`. Choreography step 7 was rewritten to capture this. The `OLD_` prefix doesn't violate any naming-convention lint rule we have (verified post-rename: 75-problem baseline stayed at 75).
+
 ---
 
 ## Total effort estimate
 
 - **Phase 0** (free wins + quarantine labeling): ✅ Done — ≈ 1 focused session
 - **Phase 1** (6 missing pages: Browse, Public viewer, Compare, User profile, Brew session, Version history): **partially done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · 1.6 NOT STARTED · remaining: 1 focused session for 1.6
-- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 / 2.2 / 2.3 / 2.4 / 2.6 / 2.7 / 2.8 NOT STARTED · remaining: 6–7 focused sessions
+- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 / 2.3 / 2.4 / 2.6 / 2.7 / 2.8 NOT STARTED · remaining: 5–6 focused sessions
 - **Phase 3** (6 calculator widgets extracted from existing inline implementations): NOT STARTED — 1 focused session
 - **Phase 4** (14 learn article body rewrites): NOT STARTED — 3–4 focused sessions
 - **Phase 5** (optional deferred deletion): NOT STARTED — ~1 focused session, whenever
 
-**Roughly 10–14 focused sessions remaining** (excluding deferred deletion). With 2.5b shipped, HS is feature-complete vs. classic for the brew-day flow. Next-priority slice: **2.1 Fermentables** (lands the HSModal primitive that 2.2+ will reuse) or **1.6 Version History** (closes Phase 1).
+**Roughly 9–13 focused sessions remaining** (excluding deferred deletion). With 2.1 shipped, HSModal is now the established modal primitive — 2.2+ slices that need modals reuse it directly. Next-priority slice: **2.2 Mash** (smallest classic surface; same pattern as 2.1 but with a single mash-step modal), **2.3 Fermentation** (smallest of all; identical pattern to 2.2 with honey accent), or **1.6 Version History** (closes Phase 1).
 
 ---
 

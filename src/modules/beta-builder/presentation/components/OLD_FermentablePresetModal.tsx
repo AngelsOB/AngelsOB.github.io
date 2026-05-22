@@ -13,10 +13,10 @@
 import { useState, useMemo } from "react";
 import type { FermentablePreset } from "../../domain/models/Presets";
 import ModalOverlay from "./ModalOverlay";
-import CustomFermentableModal from "./CustomFermentableModal";
+import OLD_CustomFermentableModal from "./OLD_CustomFermentableModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 
-interface FermentablePresetModalProps {
+interface OLD_FermentablePresetModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (preset: FermentablePreset) => void;
@@ -25,14 +25,16 @@ interface FermentablePresetModalProps {
   onSaveCustomPreset: (preset: FermentablePreset) => void;
 }
 
-export default function FermentablePresetModal({
+// Classic UI — quarantined. Active version:
+// src/modules/hopskip/components/modals/FermentablePresetModal.tsx
+export default function OLD_FermentablePresetModal({
   isOpen,
   onClose,
   onSelect,
   presetsGrouped,
   isLoading = false,
   onSaveCustomPreset,
-}: FermentablePresetModalProps) {
+}: OLD_FermentablePresetModalProps) {
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -305,7 +307,7 @@ export default function FermentablePresetModal({
       </ModalOverlay>
 
       {/* Custom Fermentable Modal */}
-      <CustomFermentableModal
+      <OLD_CustomFermentableModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={onSaveCustomPreset}

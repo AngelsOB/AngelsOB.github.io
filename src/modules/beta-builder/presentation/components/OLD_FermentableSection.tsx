@@ -20,14 +20,19 @@ import { fermentableCalculationService } from "../../domain/services/Fermentable
 import type { Fermentable } from "../../domain/models/Recipe";
 import type { FermentablePreset } from "../../domain/models/Presets";
 import { getFermentability } from "../../data/fermentablePresets";
-import CustomFermentableModal from "./CustomFermentableModal";
+import OLD_CustomFermentableModal from "./OLD_CustomFermentableModal";
 import PresetPickerModal from "./PresetPickerModal";
 import { getCountryFlag, BREWING_ORIGINS } from "../../../../utils/flags";
 import { srmToRgb } from "../../utils/srmColorUtils";
 import ScalableText from "../../../../components/ScalableText";
 import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
-export default function FermentableSection() {
+// Classic UI — quarantined. The active fermentable section is
+// src/modules/hopskip/components/builder/FermentableSection.tsx. The
+// `OLD_` prefix is the canonical "this is the deprecated version"
+// marker; new code should never import from this file (enforced by
+// the no-restricted-imports rule in eslint.config.mjs).
+export default function OLD_FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
     useRecipeStore();
   const {
@@ -545,7 +550,7 @@ export default function FermentableSection() {
       />
 
       {/* Custom Fermentable Modal */}
-      <CustomFermentableModal
+      <OLD_CustomFermentableModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomPreset}

@@ -114,6 +114,15 @@ export default tseslint.config([
             message:
               'Classic UI. Use HSBrewSheetSection in Brew Mode via HopSkipBuilder at /recipes/[id]?tab=brewsheet&session=<id>. See HOPSKIP_MIGRATION_PRD.md §2.5b.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_FermentableSection',
+              '**/modules/beta-builder/presentation/components/OLD_FermentablePresetModal',
+              '**/modules/beta-builder/presentation/components/OLD_CustomFermentableModal',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use FermentableSection from @/modules/hopskip/components/builder/ (with FermentablePresetModal / CustomFermentableModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.1.',
+          },
         ],
       }],
     },

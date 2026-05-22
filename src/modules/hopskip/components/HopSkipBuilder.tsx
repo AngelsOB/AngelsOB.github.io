@@ -12,7 +12,7 @@ import HSScriptNote from "./HSScriptNote";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
 import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
-import FermentableSection from "@/modules/beta-builder/presentation/components/FermentableSection";
+import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
 import HopSection from "@/modules/beta-builder/presentation/components/HopSection";
 import MashScheduleSection from "@/modules/beta-builder/presentation/components/MashScheduleSection";
 import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
@@ -29,6 +29,7 @@ import type {
 } from "@/modules/beta-builder/domain/models/BrewSession";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
+import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import HSButton from "./HSButton";
 import HSForkButton from "./public/HSForkButton";
 import HSRatingStars from "./public/HSRatingStars";
@@ -786,7 +787,7 @@ export default function HopSkipBuilder({
             className="hs-livestats"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(7, 1fr)",
+              gridTemplateColumns: "repeat(6, 1fr)",
               gap: 12,
             }}
           >
@@ -794,16 +795,19 @@ export default function HopSkipBuilder({
             <StatCard k="FG" v={calc.fg.toFixed(3)} c={hsTokens.malt} range={rangeStr(bjcpSpec?.fg, 3)} />
             <StatCard k="ABV" v={calc.abv.toFixed(1)} u="%" c={hsTokens.roast} range={rangeStr(bjcpSpec?.abv, 1, "%")} />
             <StatCard k="IBU" v={Math.round(calc.ibu).toString()} c={hsTokens.hops} range={rangeStr(bjcpSpec?.ibu, 0)} />
-            <StatCard k="SRM" v={calc.srm.toFixed(1)} c={hsTokens.honey} range={rangeStr(bjcpSpec?.srm, 0)} />
             <StatCard k="pH" v={calc.estimatedMashPh?.toFixed(2) ?? "—"} c={hsTokens.water} range="5.2–5.6" />
             <StatCard k="Cal" v={Math.round(calc.calories ?? 0).toString()} u="/12oz" c={hsTokens.muted} range="—" />
           </div>
+          <ColorIndicatorBar
+            srm={calc.srm}
+            styleSrmRange={bjcpSpec?.srm}
+          />
           <style>{`
             @media (max-width: 900px) {
-              .hs-livestats { grid-template-columns: repeat(4, 1fr) !important; }
+              .hs-livestats { grid-template-columns: repeat(3, 1fr) !important; }
             }
             @media (max-width: 640px) {
-              .hs-livestats { grid-template-columns: repeat(3, 1fr) !important; }
+              .hs-livestats { grid-template-columns: repeat(2, 1fr) !important; }
             }
           `}</style>
         </section>
@@ -1142,6 +1146,168 @@ function NumericMetaPill({
         />
       )}
       <span style={{ fontSize: 11, color: hsTokens.muted }}>{unit}</span>
+    </div>
+  );
+}
+
+// ─── Color indicator bar (rich SRM visualization) ────────────────
+// Sits below the live-numbers stat card grid. Long horizontal SRM
+// gradient, a vertical ink marker at the current SRM, optional hollow
+// markers for the BJCP style range endpoints, and a script-font color
+// adjective on the right.
+
+function srmAdjective(srm: number): string {
+  if (srm < 2) return "straw ✦";
+  if (srm < 4) return "pale gold ✦";
+  if (srm < 7) return "gold ✦";
+  if (srm < 10) return "amber ✦";
+  if (srm < 15) return "deep amber ✦";
+  if (srm < 20) return "copper ✦";
+  if (srm < 28) return "deep red ✦";
+  if (srm < 36) return "brown ✦";
+  return "black ✦";
+}
+
+/**
+ * Build the SRM gradient programmatically by sampling srmToRgb at 1-SRM
+ * intervals so the color at any X position matches what srmToRgb(srm)
+ * returns for that SRM. This guarantees the indicator pin's color
+ * (which uses srmToRgb(srm) directly) visually aligns with the gradient
+ * underneath it.
+ */
+const SRM_BAR_MAX = 40;
+const SRM_GRADIENT = (() => {
+  const stops: string[] = [];
+  for (let s = 1; s <= SRM_BAR_MAX; s += 1) {
+    const pct = ((s - 1) / (SRM_BAR_MAX - 1)) * 100;
+    stops.push(`${srmToRgb(s)} ${pct.toFixed(2)}%`);
+  }
+  return `linear-gradient(to right, ${stops.join(", ")})`;
+})();
+
+function ColorIndicatorBar({
+  srm,
+  styleSrmRange,
+}: {
+  srm: number;
+  styleSrmRange?: [number, number];
+}) {
+  const styleMin = styleSrmRange ? styleSrmRange[0] : undefined;
+  const styleMax = styleSrmRange ? styleSrmRange[1] : undefined;
+  // The gradient is sampled from SRM 1 → 40, so the percentage for an SRM
+  // value uses the same 1-based denominator. This is what keeps the pin's
+  // color match the underlying gradient color at its position.
+  const pct = (n: number) => {
+    const clamped = Math.max(1, Math.min(SRM_BAR_MAX, n));
+    return `${((clamped - 1) / (SRM_BAR_MAX - 1)) * 100}%`;
+  };
+  const ebc = Math.round(srm * 1.97);
+  const pinColor = srmToRgb(Math.max(1, Math.min(SRM_BAR_MAX, srm)));
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        background: hsTokens.paper,
+        border: `2px solid ${hsTokens.ink}`,
+        borderRadius: 12,
+        boxShadow: hsTokens.sh2,
+        padding: "10px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+      }}
+    >
+      <HSEyebrow>Color</HSEyebrow>
+      <div
+        style={{
+          position: "relative",
+          flex: 1,
+          height: 20,
+          borderRadius: 4,
+          border: `1.5px solid ${hsTokens.ink}`,
+          background: SRM_GRADIENT,
+        }}
+      >
+        {/* Style-range endpoint markers (hollow rings) */}
+        {styleMin !== undefined && styleMax !== undefined ? (
+          <>
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: -5,
+                left: `calc(${pct(styleMin)} - 5px)`,
+                width: 10,
+                height: 10,
+                borderRadius: 999,
+                background: hsTokens.paper,
+                border: `1.5px solid ${hsTokens.ink}`,
+                boxSizing: "border-box",
+              }}
+            />
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: -5,
+                left: `calc(${pct(styleMax)} - 5px)`,
+                width: 10,
+                height: 10,
+                borderRadius: 999,
+                background: hsTokens.paper,
+                border: `1.5px solid ${hsTokens.ink}`,
+                boxSizing: "border-box",
+              }}
+            />
+          </>
+        ) : null}
+        {/* Current SRM marker — fill is the actual beer color (srmToRgb)
+            so the pin previews what the finished beer looks like. The
+            2px ink border keeps it visible against both light and dark
+            gradient regions. */}
+        <span
+          aria-hidden
+          title={`${srm.toFixed(1)} SRM · ${pinColor}`}
+          style={{
+            position: "absolute",
+            left: `calc(${pct(srm)} - 7px)`,
+            top: -6,
+            width: 14,
+            height: 32,
+            background: pinColor,
+            borderRadius: 3,
+            border: `2px solid ${hsTokens.ink}`,
+            boxShadow: `0 0 0 1.5px ${hsTokens.cream}`,
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 6,
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 20,
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: "-0.02em",
+            color: hsTokens.ink,
+          }}
+        >
+          {srm.toFixed(1)}
+        </span>
+        <span style={{ fontFamily: hsTokens.mono, fontSize: 11, color: hsTokens.muted }}>
+          SRM / {ebc} EBC
+        </span>
+      </div>
+      <HSScriptNote color={hsTokens.roast} size={18} rotate={-3}>
+        {srmAdjective(srm)}
+      </HSScriptNote>
     </div>
   );
 }

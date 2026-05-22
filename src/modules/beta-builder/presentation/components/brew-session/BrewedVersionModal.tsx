@@ -1,5 +1,5 @@
 import type { Recipe, RecipeCalculations } from '../../../domain/models/Recipe';
-import FermentableSection from '../FermentableSection';
+import OLD_FermentableSection from '../OLD_FermentableSection';
 import HopSection from '../HopSection';
 import YeastSection from '../YeastSection';
 import WaterSection from '../WaterSection';
@@ -58,7 +58,7 @@ export function BrewedVersionModal({
           {recipe ? (
             <>
               <EquipmentSection />
-              <FermentableSection />
+              <OLD_FermentableSection />
               <HopSection />
               <YeastSection />
               <WaterSection calculations={calculations} recipe={recipe} />
