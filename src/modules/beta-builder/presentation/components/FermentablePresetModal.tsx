@@ -25,6 +25,7 @@ interface FermentablePresetModalProps {
   onSaveCustomPreset: (preset: FermentablePreset) => void;
 }
 
+/** @deprecated Classic UI. Migrated to HS — see HOPSKIP_MIGRATION_PRD.md §2.1. Use HSFermentablePresetModal. */
 export default function FermentablePresetModal({
   isOpen,
   onClose,

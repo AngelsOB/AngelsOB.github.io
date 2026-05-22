@@ -984,7 +984,6 @@ export default function HSBrewSheetSection({
           preBoilVolumeL={calculations.preBoilVolumeL}
           preBoilGravity={calculations.preBoilGravity}
           boilTimeMin={recipe.equipment.boilTimeMin}
-          boilOffRateLPerHour={recipe.equipment.boilOffRateLPerHour}
           boilOff={boilOff}
           postBoilHotL={postBoilHotL}
           og={calculations.og}
@@ -5020,7 +5019,6 @@ function BoilNumbersMatrix({
   preBoilVolumeL,
   preBoilGravity,
   boilTimeMin,
-  boilOffRateLPerHour,
   boilOff,
   postBoilHotL,
   og,
@@ -5032,7 +5030,6 @@ function BoilNumbersMatrix({
   preBoilVolumeL: number;
   preBoilGravity: number;
   boilTimeMin: number;
-  boilOffRateLPerHour: number;
   boilOff: number;
   postBoilHotL: number;
   og: number;
@@ -5074,266 +5071,152 @@ function BoilNumbersMatrix({
       ? actualsCalculations.og.toFixed(3)
       : null;
 
+  const preBoilMetrics: BoilMetric[] = [
+    {
+      label: "Volume",
+      target: `${preBoilVolumeL.toFixed(1)} L · ${lToGal(preBoilVolumeL)} gal`,
+      revised: revisedVolumeLeft ?? undefined,
+      actual: brewMode ? (
+        <CellInput
+          value={brewMode.actuals.preBoilVolumeL}
+          onCommit={(v) => brewMode.onActualsChange({ preBoilVolumeL: v })}
+          step={0.1}
+          format={(v) => v.toFixed(1)}
+          suffix=" L"
+        />
+      ) : undefined,
+    },
+    {
+      label: "Gravity",
+      target: preBoilGravity.toFixed(3),
+      revised: revisedGravityLeft ?? undefined,
+      actual: brewMode ? (
+        <CellInput
+          value={brewMode.actuals.preBoilGravity}
+          onCommit={(v) => brewMode.onActualsChange({ preBoilGravity: v })}
+          step={0.001}
+          format={(v) => v.toFixed(3)}
+        />
+      ) : undefined,
+    },
+  ];
+
+  const postBoilMetrics: BoilMetric[] = [
+    {
+      label: "Volume (hot)",
+      target: `${postBoilHotL.toFixed(1)} L · ${lToGal(postBoilHotL)} gal`,
+      revised: revisedVolumeRight ?? undefined,
+      actual: brewMode ? (
+        <CellInput
+          value={brewMode.actuals.postBoilVolumeHotL}
+          onCommit={(v) => brewMode.onActualsChange({ postBoilVolumeHotL: v })}
+          step={0.1}
+          format={(v) => v.toFixed(1)}
+          suffix=" L"
+        />
+      ) : undefined,
+    },
+    {
+      label: "Gravity (OG)",
+      target: <strong>{og.toFixed(3)}</strong>,
+      revised: revisedGravityRight ? <strong>{revisedGravityRight}</strong> : undefined,
+      actual: brewMode ? (
+        <CellInput
+          value={brewMode.actuals.originalGravity}
+          onCommit={(v) => brewMode.onActualsChange({ originalGravity: v })}
+          step={0.001}
+          format={(v) => v.toFixed(3)}
+        />
+      ) : undefined,
+    },
+  ];
+
+  const boilTimeMetric: BoilMetric = {
+    label: "Boil time",
+    target: `${boilTimeMin} min`,
+    actual: brewMode ? (
+      <CellInput
+        value={brewMode.actuals.boilTimeMin}
+        onCommit={(v) => brewMode.onActualsChange({ boilTimeMin: v })}
+        step={1}
+        format={(v) => v.toFixed(0)}
+        suffix=" min"
+      />
+    ) : undefined,
+  };
+
   return (
-    <table
-      className="hs-boil-numbers"
-      style={{
-        width: "100%",
-        borderCollapse: "collapse",
-        fontFamily: hsTokens.body,
-        fontSize: 13,
-        tableLayout: "auto",
-      }}
-    >
-      <thead>
-        <tr>
-          <th
-            colSpan={3}
-            style={{
-              ...matrixHeadGroupStyle,
-              textAlign: "left",
-              background: hsTokens.cream2,
-            }}
-          >
-            <span
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 10,
-                flexWrap: "wrap",
-              }}
-            >
-              <span>Pre-boil</span>
-              {preBoilFlag}
-            </span>
-          </th>
-          <th
-            colSpan={3}
-            style={{
-              ...matrixHeadGroupStyle,
-              borderLeft: `1.5px solid ${hsTokens.ink}`,
-              textAlign: "left",
-              background: hsTokens.cream2,
-            }}
-          >
-            <span
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 10,
-                flexWrap: "wrap",
-              }}
-            >
-              <span>Post-boil</span>
-              {postBoilFlag}
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <BoilPairRow
-          leftLabel="Volume"
-          leftTarget={`${preBoilVolumeL.toFixed(1)} L · ${lToGal(preBoilVolumeL)} gal`}
-          leftRevisedTarget={revisedVolumeLeft ?? undefined}
-          rightLabel="Volume (hot)"
-          rightTarget={`${postBoilHotL.toFixed(1)} L · ${lToGal(postBoilHotL)} gal`}
-          rightRevisedTarget={revisedVolumeRight ?? undefined}
-          leftActualNode={
-            brewMode ? (
-              <CellInput
-                value={brewMode.actuals.preBoilVolumeL}
-                onCommit={(v) => brewMode.onActualsChange({ preBoilVolumeL: v })}
-                step={0.1}
-                format={(v) => v.toFixed(1)}
-                suffix=" L"
-              />
-            ) : undefined
-          }
-          rightActualNode={
-            brewMode ? (
-              <CellInput
-                value={brewMode.actuals.postBoilVolumeHotL}
-                onCommit={(v) =>
-                  brewMode.onActualsChange({ postBoilVolumeHotL: v })
-                }
-                step={0.1}
-                format={(v) => v.toFixed(1)}
-                suffix=" L"
-              />
-            ) : undefined
-          }
+    <div className="hs-boil-numbers">
+      <div className="hs-boil-phase-grid">
+        <BoilPhaseBox
+          title="Pre-boil"
+          flag={preBoilFlag}
+          metrics={preBoilMetrics}
         />
-        <BoilPairRow
-          leftLabel="Gravity"
-          leftTarget={preBoilGravity.toFixed(3)}
-          leftRevisedTarget={revisedGravityLeft ?? undefined}
-          rightLabel="Gravity (OG)"
-          rightTarget={<strong>{og.toFixed(3)}</strong>}
-          rightRevisedTarget={
-            revisedGravityRight ? <strong>{revisedGravityRight}</strong> : undefined
-          }
-          leftActualNode={
-            brewMode ? (
-              <CellInput
-                value={brewMode.actuals.preBoilGravity}
-                onCommit={(v) => brewMode.onActualsChange({ preBoilGravity: v })}
-                step={0.001}
-                format={(v) => v.toFixed(3)}
-              />
-            ) : undefined
-          }
-          rightActualNode={
-            brewMode ? (
-              <CellInput
-                value={brewMode.actuals.originalGravity}
-                onCommit={(v) => brewMode.onActualsChange({ originalGravity: v })}
-                step={0.001}
-                format={(v) => v.toFixed(3)}
-              />
-            ) : undefined
-          }
+        <BoilPhaseBox
+          title="Post-boil"
+          flag={postBoilFlag}
+          metrics={postBoilMetrics}
         />
-        <BoilPairRow
-          leftLabel="Boil time"
-          leftTarget={`${boilTimeMin} min`}
-          rightLabel="Boil-off"
-          rightHint={`${boilOffRateLPerHour} L/hr`}
-          rightTarget={`${boilOff.toFixed(1)} L`}
-          leftActualNode={
-            brewMode ? (
-              <CellInput
-                value={brewMode.actuals.boilTimeMin}
-                onCommit={(v) => brewMode.onActualsChange({ boilTimeMin: v })}
-                step={1}
-                format={(v) => v.toFixed(0)}
-                suffix=" min"
-              />
-            ) : undefined
-          }
-        />
-      </tbody>
-    </table>
+      </div>
+      <BoilPhaseBox
+        title="Boil time"
+        metrics={[boilTimeMetric]}
+        compact
+      />
+    </div>
   );
 }
 
-function BoilPairRow({
-  leftLabel,
-  leftHint,
-  leftTarget,
-  leftRevisedTarget,
-  rightLabel,
-  rightHint,
-  rightTarget,
-  rightRevisedTarget,
-  leftActualNode,
-  rightActualNode,
+interface BoilMetric {
+  label: string;
+  target: ReactNode;
+  revised?: ReactNode;
+  actual?: ReactNode;
+}
+
+function BoilPhaseBox({
+  title,
+  flag,
+  metrics,
+  compact,
 }: {
-  leftLabel: string;
-  leftHint?: string;
-  leftTarget: ReactNode;
-  /** Revised value to render when grain actuals shift this number (Brew Mode). */
-  leftRevisedTarget?: ReactNode;
-  rightLabel: string;
-  rightHint?: string;
-  rightTarget: ReactNode;
-  rightRevisedTarget?: ReactNode;
-  leftActualNode?: ReactNode;
-  rightActualNode?: ReactNode;
+  title: string;
+  flag?: ReactNode;
+  metrics: BoilMetric[];
+  /** When true, single-row phase (e.g. Boil time) — render inline rather than as a card. */
+  compact?: boolean;
 }) {
   return (
-    <tr className="hs-boil-row">
-      <td className="hs-boil-title" data-side="left" style={boilLabelCellStyle}>
-        <span style={{ fontWeight: 600 }}>{leftLabel}</span>
-        {leftHint ? <span style={hintStyle}>{leftHint}</span> : null}
-      </td>
-      <td
-        className="hs-boil-target"
-        data-side="left"
-        data-label="Target"
-        style={boilTargetCellStyle}
-      >
-        {leftRevisedTarget ? (
-          <RevisedValue planned={leftTarget} revised={leftRevisedTarget} compact />
-        ) : (
-          leftTarget
-        )}
-      </td>
-      <td
-        className="hs-boil-actual"
-        data-side="left"
-        data-label="Actual"
-        style={boilActualCellStyle}
-      >
-        {leftActualNode ?? " "}
-      </td>
-      <td
-        className="hs-boil-title"
-        data-side="right"
-        style={{ ...boilLabelCellStyle, borderLeft: `1.5px solid ${hsTokens.ink}` }}
-      >
-        <span style={{ fontWeight: 600 }}>{rightLabel}</span>
-        {rightHint ? <span style={hintStyle}>{rightHint}</span> : null}
-      </td>
-      <td
-        className="hs-boil-target"
-        data-side="right"
-        data-label="Target"
-        style={boilTargetCellStyle}
-      >
-        {rightRevisedTarget ? (
-          <RevisedValue planned={rightTarget} revised={rightRevisedTarget} compact />
-        ) : (
-          rightTarget
-        )}
-      </td>
-      <td
-        className="hs-boil-actual"
-        data-side="right"
-        data-label="Actual"
-        style={boilActualCellStyle}
-      >
-        {rightActualNode ?? " "}
-      </td>
-    </tr>
+    <section
+      className={compact ? "hs-boil-phase hs-boil-phase-compact" : "hs-boil-phase"}
+    >
+      <header className="hs-boil-phase-header">
+        <span className="hs-boil-phase-title">{title}</span>
+        {flag ? <span className="hs-boil-phase-flag">{flag}</span> : null}
+        <span className="hs-boil-phase-header-tags">
+          <span className="hs-boil-phase-header-target">target</span>
+          <span className="hs-boil-phase-header-actual">actual</span>
+        </span>
+      </header>
+      <ul className="hs-boil-phase-metrics">
+        {metrics.map((m, i) => (
+          <li key={i} className="hs-boil-metric">
+            <span className="hs-boil-metric-label">{m.label}</span>
+            <span className="hs-boil-metric-target">
+              {m.revised ? (
+                <RevisedValue planned={m.target} revised={m.revised} compact />
+              ) : (
+                m.target
+              )}
+            </span>
+            <span className="hs-boil-metric-actual">{m.actual ?? null}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
-
-const boilLabelCellStyle: CSSProperties = {
-  padding: "8px 10px",
-  borderBottom: `1px solid ${hsTokens.ink}`,
-  fontFamily: hsTokens.body,
-  fontSize: 12,
-  color: hsTokens.ink,
-  verticalAlign: "middle",
-  lineHeight: 1.3,
-};
-
-const boilTargetCellStyle: CSSProperties = {
-  padding: "8px 10px",
-  borderBottom: `1px solid ${hsTokens.ink}`,
-  borderLeft: `1px solid ${hsTokens.ink}`,
-  fontFamily: hsTokens.mono,
-  fontSize: 12,
-  color: hsTokens.ink,
-  fontVariantNumeric: "tabular-nums",
-  textAlign: "center",
-  verticalAlign: "middle",
-  background: hsTokens.paper,
-  width: 160,
-};
-
-const boilActualCellStyle: CSSProperties = {
-  position: "relative",
-  padding: "8px 10px",
-  borderBottom: `1px solid ${hsTokens.ink}`,
-  borderLeft: `1px solid ${hsTokens.ink}`,
-  background: hsTokens.cream,
-  width: 120,
-  minHeight: 28,
-  height: 28,
-};
 
 function BoilAdditionsTable({
   boilHops,
@@ -5944,6 +5827,121 @@ function PrintStyles() {
             box-sizing: border-box;
           }
 
+          /* Boil numbers section: phase-grouped cards (Pre-boil / Post-boil
+             side-by-side on desktop, stacked on mobile). Boil time is its
+             own compact row below. */
+          .hs-print-area .hs-boil-numbers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .hs-print-area .hs-boil-phase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+          }
+          .hs-print-area .hs-boil-phase {
+            border: 1.5px solid color-mix(in oklch, currentColor 75%, transparent);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--hs-paper);
+          }
+          .hs-print-area .hs-boil-phase-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: baseline;
+            padding: 10px 12px 4px;
+            background: color-mix(in oklch, currentColor 4%, transparent);
+            border-bottom: 1px solid color-mix(in oklch, currentColor 35%, transparent);
+            gap: 8px;
+          }
+          .hs-print-area .hs-boil-phase-title {
+            font-family: var(--hs-display);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--hs-ink);
+          }
+          .hs-print-area .hs-boil-phase-flag {
+            grid-column: 2;
+            grid-row: 1;
+            justify-self: end;
+          }
+          .hs-print-area .hs-boil-phase-header-tags {
+            grid-column: 1 / -1;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 96px;
+            font-family: var(--hs-body);
+            font-size: 7.5px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: color-mix(in oklch, currentColor 45%, transparent);
+            padding-top: 4px;
+          }
+          .hs-print-area .hs-boil-phase-header-target {
+            text-align: right;
+            padding-right: 12px;
+          }
+          .hs-print-area .hs-boil-phase-header-actual {
+            text-align: center;
+            border-left: 1px solid color-mix(in oklch, currentColor 20%, transparent);
+            box-sizing: border-box;
+          }
+          .hs-print-area .hs-boil-phase-metrics {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+          }
+          .hs-print-area .hs-boil-metric {
+            display: grid;
+            grid-template-columns: minmax(72px, auto) 1fr 96px;
+            align-items: stretch;
+            border-top: 1px dotted color-mix(in oklch, currentColor 25%, transparent);
+            min-height: 38px;
+          }
+          .hs-print-area .hs-boil-metric:first-child {
+            border-top: none;
+          }
+          .hs-print-area .hs-boil-metric-label {
+            padding: 8px 12px;
+            font-family: var(--hs-body);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: color-mix(in oklch, currentColor 55%, transparent);
+            display: flex;
+            align-items: center;
+          }
+          .hs-print-area .hs-boil-metric-target {
+            padding: 8px 12px;
+            font-family: var(--hs-mono);
+            font-size: 13px;
+            color: var(--hs-ink);
+            font-variant-numeric: tabular-nums;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            text-align: right;
+          }
+          .hs-print-area .hs-boil-metric-actual {
+            position: relative;
+            background: color-mix(in oklch, currentColor 4%, transparent);
+            border-left: 1px solid color-mix(in oklch, currentColor 35%, transparent);
+            min-height: 38px;
+          }
+          /* Compact phase (Boil time): single-row, no card grid */
+          .hs-print-area .hs-boil-phase-compact .hs-boil-phase-header-tags {
+            display: none;
+          }
+          .hs-print-area .hs-boil-phase-compact .hs-boil-phase-header {
+            border-bottom: 1px solid color-mix(in oklch, currentColor 35%, transparent);
+            padding-bottom: 8px;
+          }
+
           /* Mobile pass — smaller fonts + tighter padding on narrow viewports.
              Wide tables (Water matrix, Boil 6-col, schedules) scroll
              horizontally via the ScheduleSection's overflow-x: auto wrapper. */
@@ -6473,121 +6471,29 @@ function PrintStyles() {
               font-size: 12px !important;
             }
 
-            /* Boil numbers matrix → card-per-row on mobile. Each card groups
-               a pre-boil metric and its post-boil counterpart. Within each
-               half: title spans full width, then target and actual SHARE A
-               ROW (target left, actual right) — mirrors the Water matrix
-               layout for visual consistency. */
-            .hs-print-area .hs-boil-numbers,
-            .hs-print-area .hs-boil-numbers tbody {
-              display: block !important;
-              width: 100% !important;
+            /* Boil numbers: stack pre/post-boil phase cards vertically on
+               mobile (they sit side-by-side on desktop via the grid above).
+               Tighten the metric row's column widths so the target value
+               (e.g. "22.4 L · 5.92 gal") fits without wrapping. */
+            .hs-print-area .hs-boil-phase-grid {
+              grid-template-columns: 1fr !important;
+              gap: 10px !important;
             }
-            .hs-print-area .hs-boil-numbers thead {
-              display: none !important;
+            .hs-print-area .hs-boil-metric {
+              grid-template-columns: minmax(0, max-content) 1fr 84px !important;
             }
-            .hs-print-area .hs-boil-numbers .hs-boil-row {
-              display: grid !important;
-              grid-template-columns: 1fr 96px !important;
-              grid-template-areas:
-                "title-l title-l"
-                "tgt-l   act-l"
-                "title-r title-r"
-                "tgt-r   act-r" !important;
-              border: 1.5px solid color-mix(in oklch, currentColor 75%, transparent) !important;
-              border-radius: 8px !important;
-              margin-bottom: 8px !important;
-              overflow: hidden !important;
+            .hs-print-area .hs-boil-metric-label {
+              padding: 6px 10px !important;
+              font-size: 10px !important;
+              line-height: 1.15 !important;
             }
-            .hs-print-area .hs-boil-numbers .hs-boil-row > td {
-              border-left: none !important;
-              height: auto !important;
-              min-height: 0 !important;
-              width: auto !important;
+            .hs-print-area .hs-boil-metric-target {
+              padding: 6px 10px !important;
+              font-size: 12px !important;
+              white-space: nowrap !important;
             }
-            .hs-print-area .hs-boil-numbers .hs-boil-title[data-side="left"] {
-              grid-area: title-l !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-target[data-side="left"] {
-              grid-area: tgt-l !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-actual[data-side="left"] {
-              grid-area: act-l !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-title[data-side="right"] {
-              grid-area: title-r !important;
-              border-top: 1px solid color-mix(in oklch, currentColor 35%, transparent) !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-target[data-side="right"] {
-              grid-area: tgt-r !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-actual[data-side="right"] {
-              grid-area: act-r !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-title {
-              padding: 8px 12px !important;
-              background: color-mix(in oklch, currentColor 4%, transparent) !important;
-              border-bottom: 1px solid color-mix(in oklch, currentColor 35%, transparent) !important;
-              font-family: inherit !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-target {
-              padding: 8px 12px !important;
-              border-bottom: 1px dotted color-mix(in oklch, currentColor 25%, transparent) !important;
-              text-align: right !important;
-              display: flex;
-              align-items: center;
-              justify-content: flex-end !important;
-              min-height: 40px;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-title {
-              position: relative;
-              padding-bottom: 14px !important;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-title::before {
-              content: "target";
-              position: absolute;
-              left: 0;
-              right: 96px;
-              bottom: 1px;
-              font-family: inherit;
-              font-size: 7.5px;
-              font-weight: 700;
-              letter-spacing: 0.16em;
-              text-transform: uppercase;
-              color: color-mix(in oklch, currentColor 45%, transparent);
-              text-align: right;
-              padding-right: 12px;
-              pointer-events: none;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-title::after {
-              content: "actual";
-              position: absolute;
-              right: 0;
-              width: 96px;
-              bottom: 1px;
-              font-family: inherit;
-              font-size: 7.5px;
-              font-weight: 700;
-              letter-spacing: 0.16em;
-              text-transform: uppercase;
-              color: color-mix(in oklch, currentColor 45%, transparent);
-              text-align: right;
-              padding-right: 12px;
-              pointer-events: none;
-              border-left: 1px solid color-mix(in oklch, currentColor 20%, transparent);
-              box-sizing: border-box;
-            }
-            .hs-print-area .hs-boil-numbers .hs-boil-actual {
-              position: relative;
-              border-left: 1px solid color-mix(in oklch, currentColor 35%, transparent) !important;
-              border-bottom: 1px dotted color-mix(in oklch, currentColor 25%, transparent) !important;
-              background: color-mix(in oklch, currentColor 4%, transparent) !important;
-              min-height: 40px;
-            }
-            /* The last row of the card drops its bottom border. */
-            .hs-print-area .hs-boil-numbers .hs-boil-row > .hs-boil-target[data-side="right"],
-            .hs-print-area .hs-boil-numbers .hs-boil-row > .hs-boil-actual[data-side="right"] {
-              border-bottom: none !important;
+            .hs-print-area .hs-boil-phase-header-tags {
+              grid-template-columns: 1fr 84px !important;
             }
           }
           @keyframes hsBrewPulse {

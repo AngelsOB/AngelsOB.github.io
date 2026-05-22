@@ -27,6 +27,7 @@ import { srmToRgb } from "../../utils/srmColorUtils";
 import ScalableText from "../../../../components/ScalableText";
 import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
+/** @deprecated Classic UI. Migrated to HS — see HOPSKIP_MIGRATION_PRD.md §2.1. Use HSFermentableSection. */
 export default function FermentableSection() {
   const { currentRecipe, addFermentable, updateFermentable, removeFermentable } =
     useRecipeStore();
