@@ -19,18 +19,19 @@ import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
 import ModalOverlay from "./ModalOverlay";
 
-interface CustomFermentableModalProps {
+interface OLD_CustomFermentableModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (preset: FermentablePreset) => void;
 }
 
-/** @deprecated Classic UI. Migrated to HS — see HOPSKIP_MIGRATION_PRD.md §2.1. Use HSCustomFermentableModal. */
-export default function CustomFermentableModal({
+// Classic UI — quarantined. Active version:
+// src/modules/hopskip/components/modals/CustomFermentableModal.tsx
+export default function OLD_CustomFermentableModal({
   isOpen,
   onClose,
   onSave,
-}: CustomFermentableModalProps) {
+}: OLD_CustomFermentableModalProps) {
   const [name, setName] = useState("");
   const [potentialGu, setPotentialGu] = useState(37);
   const [colorLovibond, setColorLovibond] = useState(2);

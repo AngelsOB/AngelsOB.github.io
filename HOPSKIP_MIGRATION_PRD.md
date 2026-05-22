@@ -41,6 +41,7 @@ The decision:
 4. **Vertical slices.** Each migration unit includes its section/page shell + its specific modals + its specific sub-components. No "shared primitives first" sequencing — primitives like `HSModal` fall out naturally from the first vertical that needs them.
 5. **Mechanical swap-in.** Each new HS component matches the classic counterpart's prop API (or a deliberate subset) so the import-swap is a one-line change.
 6. **Classic stays quarantined.** While a phase is in flight (or forever), the matching classic surface stays accessible at `/betabuilder/*` for side-by-side comparison.
+7. **Naming convention: `OLD_` prefix on classic, no prefix on new.** When a section migrates, the classic file + function is renamed with an `OLD_` prefix (e.g., `OLD_FermentableSection`) and the new HS section drops its `HS` prefix (e.g., `HSFermentableSection` → `FermentableSection`). The active component is the canonical name; the deprecated one literally shouts "OLD" at the top of every grep and IDE search. **Design-system primitives keep their `HS` prefix** (`HSCard`, `HSButton`, `HSModal`, `HSPill`, `HSEyebrow`, etc.) — they're part of the design system, not a feature surface. **Feature components drop the prefix** (`FermentableSection`, future `MashSection` / `HopSection` / `WaterSection`, plus their bespoke modals like `FermentablePresetModal`). The `@deprecated` JSDoc tag is no longer needed once a file's name carries the `OLD_` prefix — the rename + folder location + eslint rule are three layers of signal. See [Phase 2.1's renames](#21--fermentables-first-slice-lands-hsmodal) for the canonical example.
 
 ## Target folder layout
 
@@ -51,8 +52,8 @@ src/modules/hopskip/
 │   ├── HSActionMenu.tsx, HSCardLift.tsx, useCursorFollowCard.ts (NEW — landed in Phase 1.1, reused by 1.2/1.4/2.x)
 │   ├── HSLearnArticle.tsx, HSLearnNav.tsx, HSFormulaCallout.tsx, HSBuilderMockups.tsx (already exist)
 │   ├── HopSkipBuilder.tsx, HopSkipHomeContent.tsx, etc. (already exist)
-│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); HSFermentableSection (2.1 ✅). 2.2/2.3/2.4/2.6/2.7/2.8 to follow.
-│   ├── modals/          ← HSModal primitive + HSFermentablePresetModal + HSCustomFermentableModal (2.1 ✅). Future per-section modals land here.
+│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); FermentableSection (2.1 ✅, no HS prefix per naming convention). 2.2/2.3/2.4/2.6/2.7/2.8 to follow.
+│   ├── modals/          ← HSModal primitive (keeps HS prefix) + FermentablePresetModal + CustomFermentableModal (2.1 ✅). Future per-section modals land here without HS prefix.
 │   ├── calculators/     ← NEW (Phase 3 — extracted calculator widgets — folder doesn't exist yet)
 │   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 ✅); HSPublicRecipeShell/HSForkButton/HSRatingStars/useForkRecipe (1.2 ✅); HSCompareRecipesPage (1.3 ✅); HSUserProfile (1.4 ✅). BrewSession deferred to 2.5b; VersionHistory ⏳ NOT STARTED (1.6).
 └── styles/
@@ -262,15 +263,15 @@ Order (simpler → harder). Each section's classic source files are listed under
 
 **Status:** Done. ✅ See the [Phase 2.1 retrospective](#phase-21-retrospective--lessons-for-subsequent-slices) below.
 
-- **Classic sources (replaced):**
-  - [FermentableSection.tsx](src/modules/beta-builder/presentation/components/FermentableSection.tsx) — `@deprecated` and eslint-blocked outside `/betabuilder/`
-  - [FermentablePresetModal.tsx](src/modules/beta-builder/presentation/components/FermentablePresetModal.tsx) — `@deprecated`; the live picker was actually the generic `PresetPickerModal<FermentablePreset>` (unused by HS code)
-  - [CustomFermentableModal.tsx](src/modules/beta-builder/presentation/components/CustomFermentableModal.tsx) — `@deprecated`
-- **New HS components:**
-  - [HSModal.tsx](src/modules/hopskip/components/modals/HSModal.tsx) — shared primitive (paper bg, 2px ink border, 7px malt top stripe via `border-top` not `::before`, sh4 shadow, focus trap, ESC/backdrop close, body scroll lock, click-origin scale-in animation). Exports `HSModalHeader` / `HSModalBody` / `HSModalFooter` sub-components for consistent inner chrome.
-  - [HSFermentableSection.tsx](src/modules/hopskip/components/builder/HSFermentableSection.tsx) — header (script-note "your grain bill —" + display-font "Fermentables." + Amount/% segmented toggle + Target ABV pill (percent mode) + + Add fermentable button); grain rows on cream-2 cards (SRM color dot via `HSIngredientDot` + name + origin flag + °L/PPG chips + Weight/% input in Caveat script + stepper + computed value in mono + swap/remove icon buttons); total grain row with display-font value; dashed-border empty state.
-  - [HSFermentablePresetModal.tsx](src/modules/hopskip/components/modals/HSFermentablePresetModal.tsx) — HSModal + cream-2 pill search field + filter toggle + advanced filters (Type / Color / Origin chips, OR within categories, AND across) + sticky group headers + preset rows on hover-tinted bare buttons (SRM dot + name + flag + °L/PPG).
-  - [HSCustomFermentableModal.tsx](src/modules/hopskip/components/modals/HSCustomFermentableModal.tsx) — HSModal + inline `FieldText` / `FieldNumber` / `FieldSelect` primitives (cream-2 input bg, ink border, sh1, uppercase eyebrow label + Caveat script hint line). Type dropdown auto-sets sensible fermentability default per type.
+- **Classic sources (renamed + quarantined):**
+  - [OLD_FermentableSection.tsx](src/modules/beta-builder/presentation/components/OLD_FermentableSection.tsx) — was `FermentableSection.tsx`; renamed under the [OLD_ convention](#naming-convention-old_-prefix-on-classic-no-prefix-on-new). Eslint-blocked outside `/betabuilder/`.
+  - [OLD_FermentablePresetModal.tsx](src/modules/beta-builder/presentation/components/OLD_FermentablePresetModal.tsx) — was `FermentablePresetModal.tsx`. The live classic picker was actually the generic `PresetPickerModal<FermentablePreset>`; this `OLD_` file was unused even by classic.
+  - [OLD_CustomFermentableModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomFermentableModal.tsx) — was `CustomFermentableModal.tsx`.
+- **New HS components** (no `HS` prefix per the [naming convention](#naming-convention-old_-prefix-on-classic-no-prefix-on-new) — section components are the canonical version of their feature; `HS` prefix stays on design-system primitives like `HSCard`/`HSButton`/`HSModal`):
+  - [HSModal.tsx](src/modules/hopskip/components/modals/HSModal.tsx) — shared primitive (paper bg, 2px ink border, 7px malt top stripe via `border-top` not `::before`, sh4 shadow, focus trap, ESC/backdrop close, body scroll lock, click-origin scale-in animation). Exports `HSModalHeader` / `HSModalBody` / `HSModalFooter` sub-components for consistent inner chrome. **Keeps `HS` prefix — design-system primitive.**
+  - [FermentableSection.tsx](src/modules/hopskip/components/builder/FermentableSection.tsx) — section title + 2-col grid (ledger left, bill stack + brewer's notes sidebar right). See the design iteration block below for the full structural breakdown.
+  - [FermentablePresetModal.tsx](src/modules/hopskip/components/modals/FermentablePresetModal.tsx) — HSModal + cream-2 pill search field + filter toggle + advanced filters (Type / Color / Origin chips, OR within categories, AND across) + sticky group headers + preset rows on hover-tinted bare buttons (SRM dot + name + flag + °L/PPG).
+  - [CustomFermentableModal.tsx](src/modules/hopskip/components/modals/CustomFermentableModal.tsx) — HSModal + inline `FieldText` / `FieldNumber` / `FieldSelect` primitives (cream-2 input bg, ink border, sh1, uppercase eyebrow label + Caveat script hint line). Type dropdown auto-sets sensible fermentability default per type.
 - **Reused unchanged:** `useRecipeStore.addFermentable/updateFermentable/removeFermentable`; `usePresetStore.fermentablePresetsGrouped/loadFermentablePresets/saveFermentablePreset`; `fermentableCalculationService.calculatePercentsFromWeights / calculateWeightsFromPercentsAndABV / calculateTotalPercent`; `getFermentability` from the preset data layer; `srmToRgb`, `getCountryFlag`, `BREWING_ORIGINS`. No new store actions, no new repos, no new services.
 - **What's NOT in v1 (deferred):**
   - **Animated number transitions on input** — classic uses `AnimatedNumberInput` (a custom input that smooths the value display); HS uses a plain `<input type="number">` with Caveat-font value. The animation is cosmetic and adds a custom-component dependency for marginal gain; revisit only if the value-change feedback feels jarring.
@@ -485,13 +486,13 @@ A follow-up session reworked the Brew Mode UX based on user feedback. Captured h
 **Migration choreography for each Phase 2 section (per slice):**
 
 1. **Read the classic source** to understand props, store interactions, validation rules, and edge cases (empty states, modal triggers, tier gates).
-2. **Write the HS-native components** (section + modals + sub-components) in the matching folder under `src/modules/hopskip/components/builder/` and `modals/`.
+2. **Write the HS-native components** (section + modals + sub-components) in the matching folder under `src/modules/hopskip/components/builder/` and `modals/`. **Name them with no `HS` prefix** (`FermentableSection`, `MashSection`, etc. — per the [naming convention](#architecture--principles)).
 3. **Swap the import** in [HopSkipBuilder.tsx](src/modules/hopskip/components/HopSkipBuilder.tsx) — one line change for the section, and update modal triggers accordingly.
 4. **Run `npx tsc --noEmit`** to check the contract.
 5. **Visual parity check:** open the HS recipe at `/recipes/[id]` AND the classic version at `/betabuilder/recipes/[id]` in two browser tabs. Edit a recipe in HS, then open in classic — confirm the data is the same. Edit in classic, then HS — confirm both see the change (they share the same store + repos).
 6. **Delete the matching rules** from [overrides.css](src/modules/hopskip/styles/overrides.css) (the entries targeting the classic class names being replaced).
-7. **Add JSDoc `@deprecated` tags** to the classic files just replaced (deferred from Phase 0.4b — see that section). Tag format: `/** @deprecated Classic UI. Migrating to HS — see HOPSKIP_MIGRATION_PRD.md. */` above the default export.
-8. **Extend the ESLint `no-restricted-imports` rule** in [eslint.config.js](eslint.config.js) to block the classic files just replaced (deferred from Phase 0.4e). Add the `/eslint.config.js` rule if it doesn't exist yet, otherwise append paths. Verify lint stays clean by confirming no surviving HS code still imports those paths.
+7. **Rename classic files to `OLD_` prefix** (file + function + any local interface types — e.g., `FermentableSection.tsx` → `OLD_FermentableSection.tsx`, `function FermentableSection()` → `function OLD_FermentableSection()`). Update internal imports + the few classic-aggregator importers (BetaBuilderPage, BrewedVersionModal, etc.) — the importer change is a global find-replace of `<ClassicName` → `<OLD_ClassicName` plus the import line. Drop any `@deprecated` JSDoc — the `OLD_` prefix is now the signal. Use `git mv` so history is preserved.
+8. **Extend the ESLint `no-restricted-imports` rule** in [eslint.config.js](eslint.config.js) — append entries for the renamed classic paths (`**/modules/beta-builder/presentation/components/OLD_FermentableSection` etc.) with a clear `message:` pointing at the new HS path. Verify lint stays clean by confirming no surviving HS code still imports the OLD_ paths.
 9. **Commit** that section's vertical slice.
 
 The same choreography applies to Phase 1 sub-slices (replace HSBrowsePage / HSPublicRecipeView / HSCompareRecipesPage / HSUserProfile / HSBrewSessionPage / HSVersionHistoryPage, delete matching override rules, tag the replaced classic files, extend the lint rule). Phase 3 (calculators) and Phase 4 (learn articles) follow the same pattern — at smaller granularity.
@@ -1125,6 +1126,10 @@ User explicitly said "remove the SRM live number card now that we have the SRM b
 ### Synthetic mouse events don't trigger React's `onMouseEnter` reliably — verify hover behavior with real cursor or by inspecting CSS rules.
 
 The bill-stack hover tooltip + the row-hover bg pattern both rely on React `onMouseEnter` (or the CSS `:hover` pseudo). `preview_eval` dispatched `dispatchEvent(new MouseEvent('mouseover'))` does NOT reliably fire React's synthetic mouseenter — checked opacity stayed 0 even after dispatch. Verification approach: inspect the CSS rule via `document.styleSheets` to confirm it's registered, then trust the pattern (especially when copying from a known-working pattern like `BarRow`). Real cursor verification is the user's job. **Rule for hover-driven UI testing:** don't try to programmatically simulate hover; verify the CSS rule + computed style at hover state via DevTools instead.
+
+### Naming convention shifted mid-slice: `OLD_` prefix on classic, drop `HS` prefix from new sections.
+
+After the initial 2.1 shipped with `@deprecated` JSDoc + `HSFermentableSection` naming, the user reframed: rename classic to `OLD_FermentableSection` and drop the `HS` prefix from the new one so it's just `FermentableSection`. The argument: the `OLD_` prefix screams at the top of every grep/IDE search, the folder location (`beta-builder/` vs `hopskip/`) is the structural marker, and the eslint rule does the enforcement — `@deprecated` is redundant. Section components are the canonical version of their feature, so they shouldn't carry a design-system prefix; design-system primitives (`HSCard`, `HSButton`, `HSModal`, `HSPill`, `HSEyebrow`) keep `HS` because they ARE part of the design system. This applies going forward to every section migration. **Rule:** when a section migrates, `git mv` the classic file to `OLD_<Name>.tsx`, rename its default export + interface types with the same prefix, drop the `@deprecated` JSDoc, and rename the matching HS file to just `<Name>.tsx` with `<Name>` as the default export. Update eslint paths to point at `**/.../OLD_<Name>`. Choreography step 7 was rewritten to capture this. The `OLD_` prefix doesn't violate any naming-convention lint rule we have (verified post-rename: 75-problem baseline stayed at 75).
 
 ---
 

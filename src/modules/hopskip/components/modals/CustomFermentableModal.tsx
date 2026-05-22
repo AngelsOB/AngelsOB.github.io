@@ -23,7 +23,7 @@ const TYPE_DEFAULTS: Record<FermentablePreset["type"], number> = {
   sugar: 100,
 };
 
-export default function HSCustomFermentableModal({ isOpen, onClose, onSave }: Props) {
+export default function CustomFermentableModal({ isOpen, onClose, onSave }: Props) {
   const [name, setName] = useState("");
   const [potentialGu, setPotentialGu] = useState(37);
   const [colorLovibond, setColorLovibond] = useState(2);

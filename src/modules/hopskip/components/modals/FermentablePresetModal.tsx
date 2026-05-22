@@ -58,7 +58,7 @@ function categorizeType(p: FermentablePreset): TypeFilter {
   return p.type as TypeFilter;
 }
 
-export default function HSFermentablePresetModal({
+export default function FermentablePresetModal({
   isOpen,
   editing,
   onClose,

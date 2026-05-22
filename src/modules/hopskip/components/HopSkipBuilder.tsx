@@ -12,7 +12,7 @@ import HSScriptNote from "./HSScriptNote";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
 import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
-import HSFermentableSection from "@/modules/hopskip/components/builder/HSFermentableSection";
+import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
 import HopSection from "@/modules/beta-builder/presentation/components/HopSection";
 import MashScheduleSection from "@/modules/beta-builder/presentation/components/MashScheduleSection";
 import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
@@ -962,7 +962,7 @@ export default function HopSkipBuilder({
           }`}
           style={{ position: "relative" }}
         >
-          {activeTab === "fermentables" ? <HSFermentableSection /> : null}
+          {activeTab === "fermentables" ? <FermentableSection /> : null}
           {activeTab === "hops" ? <HopSection /> : null}
           {activeTab === "mash" ? <MashScheduleSection /> : null}
           {activeTab === "water" && calc ? <WaterSection recipe={currentRecipe} calculations={calc} /> : null}

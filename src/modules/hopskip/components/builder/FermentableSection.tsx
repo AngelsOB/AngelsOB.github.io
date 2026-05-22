@@ -6,8 +6,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { hsTokens } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
-import HSFermentablePresetModal from "../modals/HSFermentablePresetModal";
-import HSCustomFermentableModal from "../modals/HSCustomFermentableModal";
+import FermentablePresetModal from "../modals/FermentablePresetModal";
+import CustomFermentableModal from "../modals/CustomFermentableModal";
 
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
@@ -61,7 +61,7 @@ function categorize(f: Fermentable): GrainCategory {
   return "Roasted";
 }
 
-export default function HSFermentableSection() {
+export default function FermentableSection() {
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const addFermentable = useRecipeStore((s) => s.addFermentable);
   const updateFermentable = useRecipeStore((s) => s.updateFermentable);
@@ -250,7 +250,7 @@ export default function HSFermentableSection() {
         </div>
       )}
 
-      <HSFermentablePresetModal
+      <FermentablePresetModal
         isOpen={isPickerOpen}
         editing={Boolean(editingId)}
         onClose={() => {
@@ -263,7 +263,7 @@ export default function HSFermentableSection() {
         isLoading={presetsLoading}
       />
 
-      <HSCustomFermentableModal
+      <CustomFermentableModal
         isOpen={isCustomOpen}
         onClose={() => setIsCustomOpen(false)}
         onSave={handleSaveCustomPreset}

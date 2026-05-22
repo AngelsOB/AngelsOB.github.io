@@ -116,12 +116,12 @@ export default tseslint.config([
           },
           {
             group: [
-              '**/modules/beta-builder/presentation/components/FermentableSection',
-              '**/modules/beta-builder/presentation/components/FermentablePresetModal',
-              '**/modules/beta-builder/presentation/components/CustomFermentableModal',
+              '**/modules/beta-builder/presentation/components/OLD_FermentableSection',
+              '**/modules/beta-builder/presentation/components/OLD_FermentablePresetModal',
+              '**/modules/beta-builder/presentation/components/OLD_CustomFermentableModal',
             ],
             message:
-              'Classic UI. Use HSFermentableSection from @/modules/hopskip/components/builder/ (with HSFermentablePresetModal / HSCustomFermentableModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.1.',
+              'Classic UI (OLD_ prefix marker). Use FermentableSection from @/modules/hopskip/components/builder/ (with FermentablePresetModal / CustomFermentableModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.1.',
           },
         ],
       }],
