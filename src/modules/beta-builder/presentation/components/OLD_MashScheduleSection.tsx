@@ -15,7 +15,7 @@ import { useRecipeStore } from "../stores/recipeStore";
 import { mashScheduleService } from "../../domain/services/MashScheduleService";
 import EmptyState from "../../../../components/EmptyState";
 import ScalableText from "../../../../components/ScalableText";
-import MashStepModal from "./MashStepModal";
+import OLD_MashStepModal from "./OLD_MashStepModal";
 import type { MashStep } from "../../domain/models/Recipe";
 import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
 import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
@@ -108,7 +108,7 @@ function MashStepRow({ step, index, onUpdate, onEdit, onRemove }: {
   );
 }
 
-export default function MashScheduleSection() {
+export default function OLD_MashScheduleSection() {
   const {
     currentRecipe,
     addMashStep,
@@ -224,7 +224,7 @@ export default function MashScheduleSection() {
       )}
 
       {/* Mash Step Modal */}
-      <MashStepModal
+      <OLD_MashStepModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveStep}

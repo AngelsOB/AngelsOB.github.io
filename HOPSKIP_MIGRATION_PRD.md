@@ -52,8 +52,8 @@ src/modules/hopskip/
 │   ├── HSActionMenu.tsx, HSCardLift.tsx, useCursorFollowCard.ts (NEW — landed in Phase 1.1, reused by 1.2/1.4/2.x)
 │   ├── HSLearnArticle.tsx, HSLearnNav.tsx, HSFormulaCallout.tsx, HSBuilderMockups.tsx (already exist)
 │   ├── HopSkipBuilder.tsx, HopSkipHomeContent.tsx, etc. (already exist)
-│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); FermentableSection (2.1 ✅, no HS prefix per naming convention). 2.2/2.3/2.4/2.6/2.7/2.8 to follow.
-│   ├── modals/          ← HSModal primitive (keeps HS prefix) + FermentablePresetModal + CustomFermentableModal (2.1 ✅). Future per-section modals land here without HS prefix.
+│   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); FermentableSection (2.1 ✅); MashSection (2.2 ✅). 2.3/2.4/2.6/2.7/2.8 to follow.
+│   ├── modals/          ← HSModal primitive (keeps HS prefix) + FermentablePresetModal + CustomFermentableModal (2.1 ✅) + MashStepModal (2.2 ✅). Future per-section modals land here without HS prefix.
 │   ├── calculators/     ← NEW (Phase 3 — extracted calculator widgets — folder doesn't exist yet)
 │   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 ✅); HSPublicRecipeShell/HSForkButton/HSRatingStars/useForkRecipe (1.2 ✅); HSCompareRecipesPage (1.3 ✅); HSUserProfile (1.4 ✅). BrewSession deferred to 2.5b; VersionHistory ⏳ NOT STARTED (1.6).
 └── styles/
@@ -253,7 +253,7 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 
 # Phase 2 — Section-by-section HS-native rewrites
 
-**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅**. 2.2, 2.3, 2.4, 2.6, 2.7, 2.8 ⏳ NOT STARTED.
+**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅** + **2.2 (Mash) ✅**. 2.3, 2.4, 2.6, 2.7, 2.8 ⏳ NOT STARTED.
 
 Each section is one vertical slice including its own modals and sub-components. After each ships, the corresponding classic source files become unimported from anywhere outside `/betabuilder/*` and can be left quarantined.
 
@@ -298,12 +298,24 @@ After the initial ship, the user iterated heavily against a Claude Design handof
 
 ## 2.2 — Mash
 
-- **Classic sources:**
-  - [MashScheduleSection.tsx](src/modules/beta-builder/presentation/components/MashScheduleSection.tsx)
-  - [MashStepModal.tsx](src/modules/beta-builder/presentation/components/MashStepModal.tsx)
-- **HS plan:** Section shell with roast accent + "+ Add step" button. Each step is an `HSCard` with step type label (HSEyebrow), display-font temperature, body-font duration, drag handle. Mash pH summary at the bottom (HSCard with estimated pH + adjustment chip). HSMashStepModal for add/edit (type pill selector + temperature + duration + ramp options).
-- **Data dependencies:** `useRecipeStore` mash step actions, `useRecipeCalculations` for `estimatedMashPh` + `mashPhAdjustment`.
-- **Effort:** M.
+**Status:** Done. ✅ See the [Phase 2.2 retrospective](#phase-22-retrospective--lessons-for-subsequent-slices) below.
+
+- **Classic sources (renamed + quarantined):**
+  - [OLD_MashScheduleSection.tsx](src/modules/beta-builder/presentation/components/OLD_MashScheduleSection.tsx) — was `MashScheduleSection.tsx`. Eslint-blocked outside `/betabuilder/`.
+  - [OLD_MashStepModal.tsx](src/modules/beta-builder/presentation/components/OLD_MashStepModal.tsx) — was `MashStepModal.tsx`. Now only imported by `OLD_MashScheduleSection`.
+- **New HS components** (no `HS` prefix per the [naming convention](#architecture--principles)):
+  - [MashSection.tsx](src/modules/hopskip/components/builder/MashSection.tsx) — section title (roast accent rule) + 2-col grid (ledger left, sidebar right with a compact MashReadout on top + BrewersNotesCard below). Empty state with 3 generator cards (Single Infusion / Step Mash / Decoction) + custom-step button. Ledger header row with `HSActionMenu`-driven "Generate ▾" dropdown + roast-accented "+ Add step" button. Ledger table per-row grid `[# badge | step name + band caption | temp editable | time editable | actions]`. Steps badge uses a color derived from `temperatureColor(tempC)` — acid (cool straw) → protein (honey) → beta (deeper honey) → alpha (malt) → mash out (roast).
+  - [MashStepModal.tsx](src/modules/hopskip/components/modals/MashStepModal.tsx) — HSModal (md size, roast accent) with FieldText (step name) + 2-col FieldNumber (temp + duration) + FieldNumber (decoction volume, optional) + 6-up preset grid (Acid / Protein / Beta / Sacch / Alpha / Mash Out — each with name, °C × min, and a Caveat-script tagline like "soften the husk" / "lock the enzymes"). Validates via `mashScheduleService.validateMashStep`.
+- **Sidebar shape:** `[MashReadout] + [BrewersNotesCard]`. MashReadout is a chrome-less 3-row card — Strike / Mash / Sparge — final height ~109px (no header row, no script sublines). BrewersNotesCard mirrors fermentables (same `recipe.notes` / `recipe.tags` source of truth — edits sync between surfaces, which is desired), accented in roast.
+- **Reused unchanged:** `useRecipeStore.addMashStep/updateMashStep/removeMashStep/reorderMashSteps/updateRecipe`; `mashScheduleService.generateDefaultSingleInfusion / generateStepMash / generateDecoction / validateMashStep`; `useRecipeCalculations` for `strikeTempC` + `mashWaterL` + `spargeWaterL`. No new store actions, no new repos, no new services.
+- **What's NOT in v1 (deferred):**
+  - **Mash profile chart.** An earlier v1 had a stepped temp-vs-time visualization in the sidebar. Dropped after user feedback ("Not sure we need this... the readout is fine"). The ledger row + colored badge already convey the schedule shape; the chart was redundant decoration. If a brewer ever asks for a brew-day visual of the schedule, the brew sheet section already prints it as a table.
+  - **Mash pH + adjustments in the readout.** Dropped same time as the chart — pH lives on the Water tab where the brewer is already configuring source profile + salt additions; surfacing it on Mash too created cross-tab noise.
+  - **Drag reorder.** Header buttons (▲ / ▼) reorder via `reorderMashSteps`. Drag-and-drop sortable was in the original PRD plan but the keyboard-and-mouse buttons are accessible, mobile-friendly, and ship-day cheap; HTML5 drag-and-drop on table rows has known issues on touch. Add later only if brewers ask for it.
+  - **Animated number transitions on input** — same deferral as 2.1. The Caveat script-font commit feedback is the visual cue.
+- **Data dependencies:** All read-write via existing recipe store + calc hook. No new server endpoints.
+- **Acceptance:** ✅ open recipe → switch to Mash tab → empty state renders 3 generator cards + custom-step button; click "Step Mash" → 4 rows appear (Protein 52°C 15 min · Beta 63°C 30 min · Alpha 70°C 15 min · Mash Out 76°C 10 min); readout shows Strike temp + Mash water + Sparge water with helpful hints ("into the tun" / "rinse the grain" or "needs grain" / "set batch + equipment" when empty); brewer's notes card renders with placeholder + edit-toggle + tags row; click on a temp value → input swaps in with Caveat font, type new value, Enter commits, live numbers tick; click "+ Add step" → modal opens with empty name + temp 67 + time 60 + decoction 0 + 6 preset chips; click a preset → fields populate, click Save → row appears; ▲/▼ buttons reorder rows; × removes (disabled when only one step); Generate ▾ dropdown replaces schedule with confirm; ESC/backdrop/× close modal; no console errors; lint baseline holds (75 → 75).
+- **Effort:** M (single focused session + sidebar rework iteration) — as estimated. ~1,300 LOC across MashSection + MashStepModal.
 
 ## 2.3 — Fermentation
 
@@ -676,10 +688,6 @@ The export-gate flow in HSBrowseCard opens the classic UpgradeModal directly. Ac
 
 HSBrowseCard's 5-star rating: 22px polygons with three cycled point variants for asymmetry + `[-4°, 2°, -1°, 3°, -2°]` per-star rotation + thicker (1.7px) ink stroke with `linejoin/linecap: round` + honey fill. Pairs with a Caveat-font rating number (`hsTokens.script`). If future surfaces (1.4 HSUserProfile, 2.x BrewSession highlight numbers) want a similar hand-drawn feel, follow this pattern or promote it to a small `HSStarRating` primitive.
 
-### Browser-preview verification was blocked the whole session — work around with curl + admin SDK.
-
-The user's pre-existing `next dev` held `.next/dev/lock`, so `preview_start` failed. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `curl /browse` / `curl /` / `curl /recipes` returning 200 with the expected HS markers in the SSR output. Worth flagging early if the same situation recurs — the user can stop their server, or accept that visual verification rests with them.
-
 ---
 
 ## Phase 1.2 retrospective — lessons for subsequent slices
@@ -716,14 +724,6 @@ Five new optional props (`sharedRecipe`, `sharedOwnerName`, `sharedOwnerId`, `sh
 
 They live inside HopSkipBuilder as inline primitives, not exported. Phase 2 might want to promote them — but only if a second consumer arises. For now they're hidden implementation details of the builder chrome.
 
-### `overrides.css` shrunk by zero lines — exactly as predicted.
-
-The `.brew-read-only` class is in `src/index.css`, not overrides.css. Every `.brew-*` rule in overrides.css still serves the live builder at `/recipes/[id]`. They become deletable when each classic section is replaced (Phase 2). Don't chase it in 1.2 retrospect.
-
-### Visual side-by-side verification rests with the user (again).
-
-Same situation as Phase 1.1: pre-existing `next dev` held `.next/dev/lock`, so `preview_start` failed. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, `curl /r/<slug>` returning 200 with HS chrome + JSON-LD markers, and parsing the JSON-LD to confirm structure. Browser verification (the read-only flash + click-through interactions) handed back to the user. If this happens a third time, consider documenting "stop your dev server before each phase" in the per-phase choreography.
-
 ### Latent fork-id bug surfaced during 1.2 testing — fixed with a doc-id-wins hardening across all Firestore reads.
 
 User reported a React duplicate-key warning on `/recipes` after forking the same seed recipe twice; root cause was a bug shared between classic `ForkButton` (and the new `useForkRecipe` and the inline fork in `HSBrowseCard`) where the source recipe's `id` field wasn't stripped from the destructured payload. Every fork wrote a fresh-uid doc but the doc's data contained the seed's stored `id`. On read, `FirestoreRecipeRepository`'s mapper used `{ id: d.id, ...d.data() }` — spread-later-wins, so the stored `id` overrode the doc id. Result: multiple Firestore docs presented as a single in-memory recipe.
@@ -755,10 +755,6 @@ Classic `UserProfileClient` showed "Brewer" briefly before resolving to the real
 
 Initial attempt `title: \`${ownerName} on Brewing.It\`` rendered as `Lucas on Brewing.It | Brewing.It` because the root layout's `title.template` wraps every page title. Fixed to `title: ownerName` → `Lucas | Brewing.It`. **Rule:** in `generateMetadata` for any new page, the `title` field should be the bare unbranded phrase. The `openGraph.title` and `twitter.title` fields are NOT wrapped by the template, so those keep an explicit `| Brewing.It`. Repeat for 1.5/1.6 metadata.
 
-### `overrides.css` shrunk by zero lines (predicted).
-
-The classic profile was wrapped in `.brew-theme` with `.brew-section` + `.brew-section-title` rules that still serve the live builder. Nothing in overrides.css targeted profile-specific structure. Don't chase a Phase 1.4 shrink — the pattern is "overrides.css shrinks per-replacement only where the replacement removes the last consumer of a rule". Profile didn't qualify.
-
 ### `HSBrowseCard` reused as-is — no profile-context-specific prop introduced.
 
 The card's inline ownerName→`/u/{ownerId}` self-link is mildly redundant on the user's own profile page (links to the same page) but functions correctly and saves us a new prop. Promoting an `omitOwner` (or similar) prop is premature until a third consumer surfaces with the same need. Phase 1.5/1.6 are unlikely to use HSBrowseCard, so this is dormant.
@@ -766,10 +762,6 @@ The card's inline ownerName→`/u/{ownerId}` self-link is mildly redundant on th
 ### Admin-SDK fetch called twice per request (once in `generateMetadata`, once in the page) — consistent with `/r/[slug]` convention; don't optimize as a one-off.
 
 `UserProfilePage` and `generateMetadata` each call `loadProfile(userId)` independently. Two Firestore queries per request, not deduped by React `cache()`. This matches `app/r/[slug]/page.tsx`'s `getPublicRecipe(slug)` pattern. If 1.5/1.6 want to eliminate the duplication, wrap the loader in `cache()` from `react` at the loader site — but do it as a separate project-wide refactor across all three (`/r/[slug]`, `/u/[userId]`, future routes), not as a one-off in any single slice.
-
-### Browser-preview verification was blocked the third time — the dev-server-lock pattern is permanent.
-
-Same situation as Phase 1.1 + 1.2: pre-existing `next dev` holds `.next/dev/lock`, so `preview_start` fails. Verified via `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `curl /u/<real-userId>` + `curl /u/<invalid-userId>` returning 200 with the expected HS markers (HSScriptNote kicker, display-font H1, recipe-count line, empty-state HSCard, hidden SEO `<nav>`). Browser visual verification handed back to the user. **Promote this expectation to per-phase choreography:** the verification harness for any future server-page slice is `tsc + lint + build + curl-greps` (which is enough for SSR markup contract) plus user-side visual.
 
 ### Plan-file naming irrelevance.
 
@@ -804,14 +796,6 @@ Each `.calculate(recipe)` does the full grain/hop/water/IBU math. With up to 8 r
 ### Inline sub-block functions in a single file beat a folder-of-sections for a slice of this size.
 
 Classic compare splits sections into `sections/VitalsComparison.tsx`, `sections/GrainComparison.tsx`, etc. — six files. For HS v1, all five sub-blocks live as named functions in the same `HSCompareRecipesPage.tsx` file (~580 LOC). Trade-off: one big file vs. six small ones. **One big file wins here** because (a) the sub-blocks share styling tokens declared at the top (`cellHeadStyle`, `cellBodyStyle`, `cellAvgStyle`, `sectionEyebrowStyle`, `sectionTitleStyle`), (b) the v1 sub-blocks are 50–150 LOC each — small enough to read inline, (c) no other consumer needs them. If a sub-block grows past ~250 LOC or gets a second consumer, promote then. Don't over-decompose preemptively.
-
-### `overrides.css` shrunk by zero lines (predicted).
-
-Phase 0.3 retrospective + Phase 1.1/1.2/1.4 retrospectives all warned: `overrides.css` shrinks per-replacement only when the replacement removes the *last consumer* of a rule. The classic Compare page used `.brew-theme`, `.section-soft`, `.brew-section-title` — all rules that still serve the live builder and other classic surfaces. Nothing compare-specific in overrides.css to delete. Expect the same for 1.5 + 1.6.
-
-### Visual side-by-side rests with the user (fourth time in a row).
-
-Same situation: dev-server lock blocks `preview_start`. Verified via `npx tsc --noEmit` (clean), `npm run lint` (zero new issues — 71→71 problems, same baseline 3 errors all pre-existing in classic files), `npm run build` (clean), and `curl /browse/compare?ids=…` smoke checks for: empty state (no ids), 2-recipe (American IPA + Irish Stout) with all section headings present, 3-recipe variant, 1-recipe (empty state), and BJCP/Average/Total/Rate/Weighted avg/Overall avg summary rows. Per the 1.4 retrospective: `tsc + lint + build + curl-greps` is now the canonical Phase 1 verification harness; visual rests with the user.
 
 ### The classic API route at `/api/compare` stays — don't delete it.
 
@@ -894,10 +878,6 @@ The `:has()` pseudo-class (Chrome 105+, Safari 15.4+, Firefox 121+) matches ance
 5. For MiniTable-style cards: tag label cells with `.hs-mini-label-cell` and value cells with `.hs-mini-value-cell` so print can shrink labels and wrap values independently.
 6. Use `display: none` on the actual `.hs-print-hide` and the `display: block` reveal for `.hs-print-only` (paper-only annotations like the generated-from footer).
 7. Test with `window.print()` → "Save as PDF" before signing off. Visual differences from screen are common.
-
-### The classic BrewDayChecklistSection had no `.brew-*` style overrides that survived the swap — `overrides.css` shrunk by zero lines (as predicted by all prior phase retros).
-
-Classic used inline `style={{ background: 'color-mix(...)' }}` + Tailwind grid utilities + `.brew-section` / `.brew-section-title` / `.brew-link` classes. The HS section sits inside the same `.hs-section-frame brew-theme` wrapper but renders its own JSX with HS inline styles, so the `.brew-*` rules don't fire on its output. The wrapper styles still serve the live classic builder at `/betabuilder/recipes/[id]`. As before, overrides.css will only shrink when a replacement removes the *last consumer* of a rule — and `.brew-section`/`-title` have many consumers across all classic builder sections. Don't chase it.
 
 ### BetaBuilderPage still imports the classic section directly — no `eslint-disable` needed *yet*, because the import lives in a file that's already entirely classic.
 
@@ -1133,28 +1113,77 @@ After the initial 2.1 shipped with `@deprecated` JSDoc + `HSFermentableSection` 
 
 ---
 
+## Phase 2.2 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 2.2 (Mash + MashStepModal). Read before 2.3 / 2.4 / 2.6 / 2.7 / 2.8.
+
+### The 2.1 substrate is locked in — 2.2 was a near-mechanical clone with section-specific data + chart.
+
+The whole slice (MashSection + MashStepModal, ~1,300 LOC) was written by following the 2.1 substrate verbatim: outer `sectionFrameStyle` (paper + 2px ink + `0 0 14px 14px` + sh3), `SectionTitle` (kicker + display H2 + accent rule), 2-col grid with `grid-template-areas` + `display: contents` mobile reflow, `LedgerHeaderRow` with eyebrow + hairline + entries-count + Add button, ledger table with per-row grid columns, `EditableCell` + `HoverSteppers` + `StepperBtn` cloned with section-specific accent (roast instead of malt), `MobileAddRow` with the SVG dashed-border helper, `MashSectionStyles` mirroring `FermentableSectionStyles`. **Rule:** for 2.3 / 2.6 / 2.8 (per-list sections), clone these primitives into the new file rather than promoting them to shared modules. The per-section variations (accent color, column widths, badge content, hover text) are local enough that inline copies beat a shared abstraction. Promote only when a third consumer needs the exact same shape with no per-section variation — and even then prefer copying a thin function rather than building a generic.
+
+### Per-section sidebar = `[small readout] + [brewer's notes]` for most sections. Skip the chart when the ledger already tells the story.
+
+The first cut of MashSection shipped with a `MashProfile` stepped chart (temp-vs-time bars) + a 4-row `MashReadout` (strike / water / pH / total time). User feedback after seeing it: "Not sure we need this Mash profile section. I think the readout is fine. Maybe it should just have mash/sparge amounts and strike temp. Otherwise should just be the readout and the brewers notes there." Two lessons: (1) **a per-step ledger with colored badges already conveys the schedule's shape** — a chart on top adds visual weight without adding information; (2) **the readout should answer "what amounts do I need on brew day," not "what's happening inside the mash."** Dropped the chart, simplified the readout to 3 rows (Strike temp / Mash water / Sparge water), and added the BrewersNotesCard.
+
+**Rendering `recipe.notes` in multiple surfaces is fine** — edits sync, the brewer sees their notes from whichever tab they're on, no friction. Notes are session-context, not section-specific data; show them everywhere they're useful.
+
+**Rule for upcoming sections:** default sidebar shape is `[compact readout (3-4 rows of brew-day numbers)] + [brewer's notes]`. Add a chart only if the ledger genuinely can't convey the shape (Hops' addition timeline + flavor radar, Water's ion comparison bars). When in doubt ship v1 with just readout + notes; add visualization if asked. The notes card should adopt the section's accent color on edit-mode borders (roast for Mash, malt for Fermentables) so it visually belongs to its section.
+
+### `HSActionMenu` slotted right into the ledger header as the Generate dropdown.
+
+Phase 1.1 introduced `HSActionMenu` for browse-card overflow menus; 2.2 uses it for the "Generate ▾" trigger. The `trigger` ReactNode + `items` array shape compose cleanly inside the header row — no styling friction, no per-consumer copy. **Rule:** for any section that needs a small choice menu (Generate / Export / Bulk action / etc.), reach for `HSActionMenu` first. Don't reinvent a dropdown in JSX inline.
+
+### Iteration cost: a sidebar chart can be cleanly removed in 5 minutes when feedback says drop it.
+
+The mash profile chart was a ~120 LOC component (DOM-based stepped bars + cursor-following tooltip with `position: fixed; z-index: 100` + `void offsetHeight` first-move snap). When user feedback came in to drop it, the removal was: delete the component, drop the `<MashProfile>` call site, remove `grid-template-areas: "profile"` from the mobile reflow, swap the desktop sidebar children. tsc + lint clean on the first pass. **Rule:** keep sidebar visualizations as standalone components (one function, one CSS class) so they can be deleted as a unit when feedback turns. Don't tangle chart state into the section's main render — the chart should be a pure prop-driven component. (Even though this one got dropped, the DOM-rects-not-SVG pattern is good: if a future section's chart is just per-element rectangles on one axis, build it in DOM — no axis libs, simpler tooltip wiring. SVG only when the chart needs continuous curves.)
+
+### The mash badge color function (`temperatureColor`) doubles as visual semantics + chart legend.
+
+One function maps temp → color: acid < 48°C (cool straw), protein 48–60 (honey), beta 60–66 (deeper honey), alpha 66–72 (malt), mash out 72+ (roast). The same function colors the row's step badge AND the chart segment, so the user sees "row badge is honey-yellow → chart bar at that temp is honey-yellow." Free semantic linkage. **Rule:** when a section has discrete categorical bands derived from a continuous value, write one `categoryColor(value)` helper and use it everywhere — badges, chart segments, tooltip kickers, legend chips. The visual consistency carries the meaning for free.
+
+### `mashScheduleService` + `useRecipeCalculations` + `recipeStore` reused exactly — zero domain changes.
+
+The only TypeScript imports added were `MashStep` (type), `mashScheduleService` (validate + generators), `useRecipeStore` (actions), `useRecipeCalculations` (strike temp + mash water + pH). No new store actions, no new domain methods, no new pure helpers. This is the goal of the substrate — the HS-native section is a pure presentation rewrite. **Rule for Phase 2.x scoping:** if a slice needs new domain logic, that's a sign the scope is wrong. Either find a way to fit it into the existing calculation service, or stop and add the domain method first as its own commit before the section migration. Don't bundle "new math" with "new JSX" — they're different review surfaces.
+
+### `git mv` + 6-line edit pattern for quarantine is now mechanical.
+
+The whole quarantine took ~4 minutes: `git mv MashScheduleSection.tsx → OLD_MashScheduleSection.tsx`, `git mv MashStepModal.tsx → OLD_MashStepModal.tsx`, rename `function` + `default export` + sibling JSX usage (`<MashStepModal` → `<OLD_MashStepModal`) + interface type (`MashStepModalProps` → `OLD_MashStepModalProps`), update the 2 classic-aggregator imports (`BetaBuilderPage.tsx` + `brew-session/BrewedVersionModal.tsx`), append an eslint `no-restricted-imports` block. Tsc + lint both clean on the first pass. **Rule:** the 2.1 retrospective's 3-minute quarantine claim is real — the pattern is rote enough that future slices should budget ~5 min, no more. If you find yourself spending 20+ minutes on quarantine, you missed a non-classic consumer; grep `grep -rn "<ClassicName" src app` BEFORE renaming so you know the full call sites up front.
+
+### Modal preset chips: 6-up grid with `auto-fit minmax(180px, 1fr)` works for all rest counts.
+
+Classic had a `grid-cols-2` 5-up button grid. The HS version is `auto-fit minmax(180px, 1fr)` — on desktop this lays out 3 cols × 2 rows (the modal is `size="lg"` = 720px wide); on narrow screens it collapses to 2 then 1 cols. Each chip stacks (display-name + mono °C × min + Caveat-script tagline) in a small card with `cream2` bg + `sh1` shadow that hover-promotes to `paper` + `sh2`. The tagline ("soften the husk" / "lock the enzymes") is the HS handwriting cue that earns its place — without it the chips read like a database, with it they read like a guided menu. **Rule for any preset/picker grid in HS:** the data row is "name + numbers"; the script-font tagline is what makes it feel like a recommendation. Spend the 30 seconds to write one per option.
+
+### The `confirm()` browser-native prompt for "replace schedule" stays — don't HSify it yet.
+
+Classic uses `confirm()` for the generator-button "this replaces your current schedule" check. HS could replace with a custom HSConfirmModal but that's a new primitive for one consumer. Kept the native dialog for v1. If a second consumer needs the same shape (e.g., "this resets all hop additions"), promote then. **Rule:** native browser dialogs are an acceptable transitional state when the alternative is building a new design-system primitive for a single use case. Track them as TODOs but don't block on them.
+
+### Lead with `preview_eval` DOM assertions over `preview_screenshot`.
+
+The page has a bottom-docked nav that competes for viewport space, so screenshots are awkward — eval-based text + structure checks (row count, label/value assertions, computed-style reads) are faster to write, faster to read, and easier to compare across runs. Screenshots stay valuable for layout regressions you can't assert programmatically.
+
+### Stale Turbopack `console_logs` buffer is a known noise source — ignore it after a confirmed reload.
+
+`preview_console_logs` returned 102 entries referencing `HSFermentableSection` (a name that doesn't appear anywhere in my edits). Those are stale buffer entries from earlier turbopack hot-reload errors that the API still surfaces. Confirmed harmless via `window.location.reload()` + re-snapshotting the page, which showed the section rendering correctly. **Rule:** if `preview_console_logs` shows errors that don't match the current source code, assume buffer staleness. Use `console.clear()` before the user-facing check to flush, or just verify behavior via DOM assertions instead of trusting the log buffer.
+
+### Polish iteration shipped (post-initial-2.2 sessions)
+
+Cross-cutting lessons surfaced by a few rounds of user feedback. Apply to 2.3+:
+
+- **`HSActionMenu` trigger hardcodes `width: 28, height: 28`.** Fine for icon-only buttons; crushes text-bearing ones (a "GENERATE ▾" pill rendered as a tiny round button overlapping the Add Step). Override with `width/height: "auto"` in `triggerStyle`. Promote a `triggerSize="pill"|"icon"` prop on the primitive if a third consumer hits this.
+- **Surface tone hierarchy — three discrete levels.** Header bands = `var(--hs-cream)` (#f4eedd, slightly darker). Sidebar context cards (readout, bill stack, visualizer) = `color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))` (~#f7f2e3 midpoint — quieter than the header band, still warmer than paper). Honey-tinted notes card from 2.1 = third tier. Pick by role, not by feel. Applied retroactively to Fermentables (LedgerHead → cream, BillStack → color-mix midpoint).
+- **Centering ledger column headers over their values takes four moves.** (1) `display: block` on the Eyebrow `<span>` (textAlign + padding-right don't apply to inline spans). (2) header `textAlign: center`. (3) data-cell wrapper `justifyContent: center`. (4) `paddingRight: 28` on the header when the data cell is an EditableCell (the button reserves 28px of right padding for hover steppers; without compensation the header floats 28px right of where the visible value ends). Skip any one and header/value visibly drift apart. Applied to Mash + Fermentables ledgers.
+- **Mobile `grid-template-areas` needs distinct names per child.** Two cells both assigned `grid-area: vals` stacked into one cell ("68" + "60" rendered as "6800"). Fix: `"temp temp time"` with `justify-self: start/end` to pin them to opposite ends of the row. **Rule:** never reuse a grid area name on two children unless overlap is the intent.
+- **Readout card converged on a tight 3-row layout.** After a few iterations: dropped the "MASH READOUT · live ✦" header row, dropped per-row script sublines, kept one optional inline sub-hint next to the label (e.g. Strike's "for 52°C"), value font display-17 (was display-22). Card went ~220px → ~109px. **Rule for sidebar readouts:** if the labels are self-evident and the card has ≤4 rows, the eyebrow heading is decoration — cut it. Aim for the card to be shorter than the data table it accompanies; it's context, not content.
+
+---
+
 ## Total effort estimate
 
 - **Phase 0** (free wins + quarantine labeling): ✅ Done — ≈ 1 focused session
 - **Phase 1** (6 missing pages: Browse, Public viewer, Compare, User profile, Brew session, Version history): **partially done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · 1.6 NOT STARTED · remaining: 1 focused session for 1.6
-- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 / 2.3 / 2.4 / 2.6 / 2.7 / 2.8 NOT STARTED · remaining: 5–6 focused sessions
+- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 / 2.4 / 2.6 / 2.7 / 2.8 NOT STARTED · remaining: 4–5 focused sessions
 - **Phase 3** (6 calculator widgets extracted from existing inline implementations): NOT STARTED — 1 focused session
 - **Phase 4** (14 learn article body rewrites): NOT STARTED — 3–4 focused sessions
 - **Phase 5** (optional deferred deletion): NOT STARTED — ~1 focused session, whenever
 
-**Roughly 9–13 focused sessions remaining** (excluding deferred deletion). With 2.1 shipped, HSModal is now the established modal primitive — 2.2+ slices that need modals reuse it directly. Next-priority slice: **2.2 Mash** (smallest classic surface; same pattern as 2.1 but with a single mash-step modal), **2.3 Fermentation** (smallest of all; identical pattern to 2.2 with honey accent), or **1.6 Version History** (closes Phase 1).
-
----
-
-## Honest caveat — this PRD's audience
-
-This is a **solid scaffold for someone with codebase context** (you, or a dev who can read the existing HS code in `src/modules/hopskip/` to fill in patterns). It is **not** self-sufficient for a cold dev. To make it self-sufficient would require:
-
-- Inline restatement of HS visual rules (instead of pointing at HOPSKIP_PRD.md)
-- Per-component prop/interaction contracts (exact prop signatures, keyboard interactions, validation rules, edge cases)
-- Empty-state + loading-state + error-state specs per surface
-- HSModal accessibility spec (aria attributes, focus restore target, scroll lock)
-- Data-model crib sheet (Recipe / Hop / Fermentable type shapes)
-- Tier-gate handling notes (which features are premium and how to preserve those gates)
-
-The first 1.5x effort would buy that detail. The current document is intentionally lighter to stay scannable.
+**Roughly 8–12 focused sessions remaining** (excluding deferred deletion). With 2.1 + 2.2 shipped, the section + modal substrate is locked in — every remaining Phase 2 slice mechanically clones the same shape (section frame + ledger + sidebar visualizer + sidebar readout + HSModal-based per-section modal). Next-priority slice: **2.3 Fermentation** (smallest of all; near-identical pattern to 2.2 with honey accent), **2.4 Equipment** (no per-step list — more "grouped HSCards of fields" + 2 profile-picker modals), or **1.6 Version History** (closes Phase 1).

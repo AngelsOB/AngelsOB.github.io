@@ -123,6 +123,14 @@ export default tseslint.config([
             message:
               'Classic UI (OLD_ prefix marker). Use FermentableSection from @/modules/hopskip/components/builder/ (with FermentablePresetModal / CustomFermentableModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.1.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_MashScheduleSection',
+              '**/modules/beta-builder/presentation/components/OLD_MashStepModal',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use MashSection from @/modules/hopskip/components/builder/ (with MashStepModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.2.',
+          },
         ],
       }],
     },
