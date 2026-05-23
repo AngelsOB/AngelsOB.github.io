@@ -49,7 +49,7 @@ function colorForIndex(index: number, total: number): string {
   return hslToHex(hue, 70, 50);
 }
 
-export default function HopFlavorRadar({
+export default function OLD_HopFlavorRadar({
   series,
   maxValue = 5,
   size = 320,

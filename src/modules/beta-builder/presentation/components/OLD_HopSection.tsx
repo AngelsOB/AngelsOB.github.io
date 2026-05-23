@@ -25,14 +25,14 @@ import {
   getBjcpFlavorLabel,
   getBjcpHopNote,
 } from "@/data/bjcpFlavorProfiles";
-import HopFlavorMini from "./HopFlavorMini";
-import HopFlavorRadar from "./HopFlavorRadar";
-import HopVarietyCard from "./HopVarietyCard";
+import OLD_HopFlavorMini from "./OLD_HopFlavorMini";
+import OLD_HopFlavorRadar from "./OLD_HopFlavorRadar";
+import OLD_HopVarietyCard from "./OLD_HopVarietyCard";
 import { toast } from "../../../../stores/toastStore";
-import CustomHopModal from "./CustomHopModal";
+import OLD_CustomHopModal from "./OLD_CustomHopModal";
 import PresetPickerModal from "./PresetPickerModal";
 
-export default function HopSection() {
+export default function OLD_HopSection() {
   const { currentRecipe, addHop, updateHop, removeHop } = useRecipeStore();
   const { hopPresetsGrouped, hopPresets, loadHopPresets, saveHopPreset, isLoading: presetsLoading } =
     usePresetStore();
@@ -260,7 +260,7 @@ export default function HopSection() {
           {/* Variety cards in 2-column grid on desktop */}
           <div className={`grid grid-cols-1 ${hopGroups.length >= 2 ? 'lg:grid-cols-2' : ''} gap-3 items-start`}>
             {hopGroups.map((group) => (
-              <HopVarietyCard
+              <OLD_HopVarietyCard
                 key={group.varietyName}
                 group={group}
                 onUpdateHop={updateHop}
@@ -301,7 +301,7 @@ export default function HopSection() {
                   </button>
                 </div>
               </div>
-              <HopFlavorRadar
+              <OLD_HopFlavorRadar
                 series={(() => {
                   const recipeSeries: { name: string; flavor: HopFlavorProfile; isTarget?: boolean }[] =
                     flavorViewMode === "combined" && combinedFlavor
@@ -490,7 +490,7 @@ export default function HopSection() {
             className="brew-picker-row flex justify-between items-center"
           >
             <div className="flex items-center gap-3">
-              {preset.flavor && <HopFlavorMini flavor={preset.flavor} size={24} />}
+              {preset.flavor && <OLD_HopFlavorMini flavor={preset.flavor} size={24} />}
               <span className="font-medium">{preset.name}</span>
             </div>
             <span className="text-sm font-medium">
@@ -524,7 +524,7 @@ export default function HopSection() {
               <div className="text-sm font-semibold mb-2 text-center">
                 {hoveredPreset.name}
               </div>
-              <HopFlavorRadar
+              <OLD_HopFlavorRadar
                 series={[{ name: hoveredPreset.name, flavor: hoveredPreset.flavor }]}
                 maxValue={5}
                 size={240}
@@ -541,7 +541,7 @@ export default function HopSection() {
       />
 
       {/* Custom Hop Modal */}
-      <CustomHopModal
+      <OLD_CustomHopModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomPreset}

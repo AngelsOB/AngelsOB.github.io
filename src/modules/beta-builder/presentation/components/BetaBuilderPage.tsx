@@ -14,7 +14,7 @@ import { useRecipeStore } from "../stores/recipeStore";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import OLD_FermentableSection from "./OLD_FermentableSection";
 import OLD_MashScheduleSection from "./OLD_MashScheduleSection";
-import HopSection from "./HopSection";
+import OLD_HopSection from "./OLD_HopSection";
 import YeastSection from "./YeastSection";
 import WaterSection from "./WaterSection";
 import OLD_FermentationSection from "./OLD_FermentationSection";
@@ -818,7 +818,7 @@ export default function BetaBuilderPage({
             mobileOpen={mobileOpenSection}
             onToggle={toggleMobileSection}
           >
-            <HopSection />
+            <OLD_HopSection />
           </AccordionSection>
         </div>
 

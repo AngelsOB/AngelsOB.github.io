@@ -3,7 +3,9 @@
 import type { Recipe, RecipeCalculations, Hop } from '../beta-builder/domain/models/Recipe';
 import { packagingCalculationService as pkgCalc } from '../beta-builder/domain/services/PackagingCalculationService';
 import { srmToRgb } from '../beta-builder/utils/srmColorUtils';
-import HopFlavorRadar from '../beta-builder/presentation/components/HopFlavorRadar';
+// Classic radar quarantined as OLD_HopFlavorRadar; this file is itself @deprecated
+// from Phase 1.2 — HS replacement is HopSection's sidebar radar (Phase 2.8).
+import OLD_HopFlavorRadar from '../beta-builder/presentation/components/OLD_HopFlavorRadar';
 import ForkButton from './ForkButton';
 import { useState } from 'react';
 import { downloadTextFile, generateBeerXml, sanitizeFileName } from '../beta-builder/presentation/utils/recipeExport';
@@ -224,7 +226,7 @@ export default function PublicRecipeView({ recipe, calculations: calc, ownerName
           {/* Hop Flavor Radar */}
           {hopFlavorSeries.length > 0 && (
             <div className="mt-6 flex justify-center">
-              <HopFlavorRadar
+              <OLD_HopFlavorRadar
                 series={hopFlavorSeries}
                 colorStrategy="dominant"
                 labelColorize

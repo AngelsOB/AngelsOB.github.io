@@ -18,17 +18,17 @@ import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
 import ModalOverlay from "./ModalOverlay";
 
-interface CustomHopModalProps {
+interface OLD_CustomHopModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (preset: HopPreset) => void;
 }
 
-export default function CustomHopModal({
+export default function OLD_CustomHopModal({
   isOpen,
   onClose,
   onSave,
-}: CustomHopModalProps) {
+}: OLD_CustomHopModalProps) {
   const [name, setName] = useState("");
   const [alphaAcidPercent, setAlphaAcidPercent] = useState(10);
   const [category, setCategory] = useState("Custom");

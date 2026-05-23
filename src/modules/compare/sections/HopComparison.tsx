@@ -2,7 +2,10 @@
 
 import type { RecipeWithCalcs } from '../compareUtils';
 import { getHopSummary, getRecipeFlavorProfile, avg } from '../compareUtils';
-import HopFlavorRadar from '../../beta-builder/presentation/components/HopFlavorRadar';
+// Classic compare module is quarantined as of Phase 1.3; HS Compare uses its own
+// inline radar. The OLD_ import is allowed via relative-path exemption from the
+// no-restricted-imports rule (rule globs match absolute/@-prefixed paths only).
+import OLD_HopFlavorRadar from '../../beta-builder/presentation/components/OLD_HopFlavorRadar';
 import type { HopFlavorProfile } from '../../beta-builder/domain/models/Presets';
 
 export default function HopComparison({ items }: { items: RecipeWithCalcs[] }) {
@@ -129,7 +132,7 @@ export default function HopComparison({ items }: { items: RecipeWithCalcs[] }) {
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-muted)] mb-3">Flavor Profile</h3>
           <div className="flex justify-center">
-            <HopFlavorRadar
+            <OLD_HopFlavorRadar
               series={radarSeries}
               colorStrategy="index"
               legendPosition="bottom"
