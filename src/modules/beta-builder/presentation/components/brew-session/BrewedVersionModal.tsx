@@ -4,7 +4,7 @@ import HopSection from '../HopSection';
 import YeastSection from '../YeastSection';
 import WaterSection from '../WaterSection';
 import OLD_MashScheduleSection from '../OLD_MashScheduleSection';
-import FermentationSection from '../FermentationSection';
+import OLD_FermentationSection from '../OLD_FermentationSection';
 import { EquipmentSection } from '../EquipmentSection';
 
 interface BrewedVersionModalProps {
@@ -63,7 +63,7 @@ export function BrewedVersionModal({
               <YeastSection />
               <WaterSection calculations={calculations} recipe={recipe} />
               <OLD_MashScheduleSection />
-              <FermentationSection />
+              <OLD_FermentationSection />
             </>
           ) : (
             <div className="text-sm text-gray-500">Loading editor…</div>

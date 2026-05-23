@@ -241,6 +241,9 @@ export type Recipe = {
   style?: string; // BJCP style name (e.g., "American IPA")
   notes?: string; // Brew notes, tasting notes, etc.
   tags?: string[]; // User-defined tags (e.g., ["hoppy", "sessionable", "summer"])
+  /** Planned/actual brew date as ISO local-date string (YYYY-MM-DD). Drives
+   *  the journey-timeline calendar pills + the ready-date back-calculation. */
+  brewDate?: string;
 
   /** Version control */
   currentVersion: number; // Current version number (starts at 1)
