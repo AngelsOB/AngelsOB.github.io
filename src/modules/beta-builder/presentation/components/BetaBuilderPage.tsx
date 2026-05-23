@@ -13,7 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useRecipeStore } from "../stores/recipeStore";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import OLD_FermentableSection from "./OLD_FermentableSection";
-import MashScheduleSection from "./MashScheduleSection";
+import OLD_MashScheduleSection from "./OLD_MashScheduleSection";
 import HopSection from "./HopSection";
 import YeastSection from "./YeastSection";
 import WaterSection from "./WaterSection";
@@ -805,7 +805,7 @@ export default function BetaBuilderPage({
             mobileOpen={mobileOpenSection}
             onToggle={toggleMobileSection}
           >
-            <MashScheduleSection />
+            <OLD_MashScheduleSection />
           </AccordionSection>
         </div>
 

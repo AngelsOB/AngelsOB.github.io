@@ -3,7 +3,7 @@ import OLD_FermentableSection from '../OLD_FermentableSection';
 import HopSection from '../HopSection';
 import YeastSection from '../YeastSection';
 import WaterSection from '../WaterSection';
-import MashScheduleSection from '../MashScheduleSection';
+import OLD_MashScheduleSection from '../OLD_MashScheduleSection';
 import FermentationSection from '../FermentationSection';
 import { EquipmentSection } from '../EquipmentSection';
 
@@ -62,7 +62,7 @@ export function BrewedVersionModal({
               <HopSection />
               <YeastSection />
               <WaterSection calculations={calculations} recipe={recipe} />
-              <MashScheduleSection />
+              <OLD_MashScheduleSection />
               <FermentationSection />
             </>
           ) : (

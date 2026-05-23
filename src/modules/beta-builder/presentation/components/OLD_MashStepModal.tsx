@@ -19,7 +19,7 @@ import Input from "@components/Input";
 import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
 
-type MashStepModalProps = {
+type OLD_MashStepModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (step: MashStep) => void;
@@ -27,13 +27,13 @@ type MashStepModalProps = {
   existingStep?: MashStep; // For editing existing steps
 };
 
-export default function MashStepModal({
+export default function OLD_MashStepModal({
   isOpen,
   onClose,
   onSave,
   recipe,
   existingStep,
-}: MashStepModalProps) {
+}: OLD_MashStepModalProps) {
   // Form state
   const [stepName, setStepName] = useState("");
   const [temperature, setTemperature] = useState(67);

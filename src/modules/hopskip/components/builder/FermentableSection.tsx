@@ -399,10 +399,10 @@ function BillStack({
     <div
       className="hs-ferm-bill-stack"
       style={{
-        // Cream2 — same subtle grey used for row hover, so the bill
-        // stack reads as a quiet "summary" surface rather than a hero
-        // paper card.
-        background: hsTokens.cream2,
+        // 50/50 mix between cream + cream2 — slightly lighter than the
+        // header band so the sidebar card sits a touch quieter than the
+        // ledger header but still warmer than paper.
+        background: "color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))",
         border: `2px solid ${hsTokens.ink}`,
         borderRadius: 14,
         boxShadow: hsTokens.sh3,
@@ -960,13 +960,13 @@ function LedgerHead({ mode }: { mode: Mode }) {
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "10px 18px",
-        background: hsTokens.cream2,
+        background: hsTokens.cream,
         borderBottom: `2px solid ${hsTokens.ink}`,
         alignItems: "center",
         gap: 14,
       }}
     >
-      <Eyebrow size={9} style={{ textAlign: "center" }}>
+      <Eyebrow size={9} style={{ display: "block", textAlign: "center" }}>
         °L · PPG
       </Eyebrow>
       <Eyebrow size={10}>
@@ -985,8 +985,17 @@ function LedgerHead({ mode }: { mode: Mode }) {
           click name to swap
         </span>
       </Eyebrow>
-      <Eyebrow size={10}>{mode === "amount" ? "Weight" : "Percent"}</Eyebrow>
-      <Eyebrow size={10} style={{ textAlign: "right" }}>
+      {/* Editable + computed columns: center the header above the (also-
+          centered) value cell. The 28px paddingRight on the editable
+          header compensates for the EditableCell's stepper padding so
+          the header centers over the visible glyphs, not the button bbox. */}
+      <Eyebrow
+        size={10}
+        style={{ display: "block", textAlign: "center", paddingRight: 28 }}
+      >
+        {mode === "amount" ? "Weight" : "Percent"}
+      </Eyebrow>
+      <Eyebrow size={10} style={{ display: "block", textAlign: "center" }}>
         {mode === "amount" ? "Share" : "Weight"}
       </Eyebrow>
       <span />
@@ -1103,25 +1112,27 @@ function LedgerRow({
       </button>
 
       {/* Editable value (Weight in amount mode, % in percent mode) */}
-      <EditableCell
-        value={editableValue}
-        step={step}
-        min={0}
-        max={mode === "percent" ? 100 : undefined}
-        precision={editPrecision}
-        suffix={editSuffix}
-        format={(v) => (mode === "amount" ? v.toFixed(2) : v.toFixed(1))}
-        ariaLabel={mode === "amount" ? "Weight in kg" : "Percentage"}
-        onCommit={(v) => {
-          if (mode === "amount") onWeightChange(v);
-          else onPercentChange(v);
-        }}
-      />
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <EditableCell
+          value={editableValue}
+          step={step}
+          min={0}
+          max={mode === "percent" ? 100 : undefined}
+          precision={editPrecision}
+          suffix={editSuffix}
+          format={(v) => (mode === "amount" ? v.toFixed(2) : v.toFixed(1))}
+          ariaLabel={mode === "amount" ? "Weight in kg" : "Percentage"}
+          onCommit={(v) => {
+            if (mode === "amount") onWeightChange(v);
+            else onPercentChange(v);
+          }}
+        />
+      </div>
 
       {/* Computed value (Share in amount mode, kg in percent mode) — read-only. */}
       <div
         style={{
-          textAlign: "right",
+          textAlign: "center",
           fontFamily: hsTokens.body,
           fontVariantNumeric: "tabular-nums",
         }}
@@ -1229,31 +1240,36 @@ function LedgerTotal({
       >
         Total grain bill
       </span>
-      <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
-        <span
-          style={{
-            fontFamily: hsTokens.display,
-            fontSize: 20,
-            fontVariantNumeric: "tabular-nums",
-            letterSpacing: "-0.01em",
-            color: hsTokens.ink,
-          }}
-        >
-          {mode === "amount" ? totalGrainKg.toFixed(2) : totalPercent.toFixed(1)}
+      <div
+        style={{ display: "flex", justifyContent: "center", paddingRight: 28 }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
+          <span
+            style={{
+              fontFamily: hsTokens.display,
+              fontSize: 20,
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.01em",
+              color: hsTokens.ink,
+            }}
+          >
+            {mode === "amount" ? totalGrainKg.toFixed(2) : totalPercent.toFixed(1)}
+          </span>
+          <span
+            style={{
+              fontFamily: hsTokens.mono,
+              fontSize: 11,
+              color: hsTokens.muted,
+            }}
+          >
+            {mode === "amount" ? "kg" : "%"}
+          </span>
         </span>
-        <span
-          style={{
-            fontFamily: hsTokens.mono,
-            fontSize: 11,
-            color: hsTokens.muted,
-          }}
-        >
-          {mode === "amount" ? "kg" : "%"}
-        </span>
-      </span>
+      </div>
       <span
         style={{
-          textAlign: "right",
+          display: "block",
+          textAlign: "center",
           fontFamily: hsTokens.display,
           fontSize: 16,
           letterSpacing: "-0.01em",
