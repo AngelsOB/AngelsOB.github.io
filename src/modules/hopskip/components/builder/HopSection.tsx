@@ -852,22 +852,25 @@ function LedgerHead() {
       >
         Weight
       </Eyebrow>
-      <Eyebrow
-        size={10}
+      {/* Wrapper div carries the IBU bg + alignSelf stretch so the colored
+          band fills the head's full vertical extent (matching the data + total
+          rows). Negative horizontal margins consume the full column gap on
+          each side. */}
+      <div
         style={{
-          display: "block",
-          textAlign: "center",
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           background: IBU_CELL_BG,
-          // Negative horizontal margins consume the full 12px column gap on
-          // each side so the IBU bg meets the Weight column's right edge
-          // and the Actions column's left edge with no visible interruption.
           padding: "10px 12px",
           margin: "-10px -12px",
-          letterSpacing: "0.18em",
         }}
       >
-        IBU
-      </Eyebrow>
+        <Eyebrow size={10} style={{ letterSpacing: "0.18em" }}>
+          IBU
+        </Eyebrow>
+      </div>
       <span />
     </div>
   );
@@ -1040,10 +1043,13 @@ function LedgerRow({
       {/* IBU contribution — skinny darker readout cell. Negative horizontal
           margins (-12px each side) consume the full row column-gap so the
           tinted bg meets the Weight cell's right edge and the Actions cell's
-          left edge with no visible gap. */}
+          left edge. alignSelf stretch + the negative vertical margin makes
+          the cell fill the row's full height (overriding the row's
+          align-items: center which would otherwise center-shrink the cell). */}
       <div
         className="hs-hops-ibu-cell"
         style={{
+          alignSelf: "stretch",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -1051,7 +1057,6 @@ function LedgerRow({
           background: IBU_CELL_BG,
           padding: "14px 12px",
           margin: "-14px -12px",
-          minHeight: "100%",
         }}
         title={`Estimated IBU contribution from this addition`}
       >
@@ -1178,13 +1183,13 @@ function LedgerTotal({
       <div
         className="hs-hops-ibu-cell"
         style={{
+          alignSelf: "stretch",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           background: "color-mix(in srgb, var(--hs-ink) 9%, var(--hs-cream-2))",
           padding: "14px 12px",
           margin: "-14px -12px",
-          minHeight: "100%",
         }}
       >
         <span
