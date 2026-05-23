@@ -17,7 +17,7 @@ import OLD_MashScheduleSection from "./OLD_MashScheduleSection";
 import HopSection from "./HopSection";
 import YeastSection from "./YeastSection";
 import WaterSection from "./WaterSection";
-import FermentationSection from "./FermentationSection";
+import OLD_FermentationSection from "./OLD_FermentationSection";
 import PackagingSection from "./PackagingSection";
 import { EquipmentSection } from "./EquipmentSection";
 import StyleSelectorModal from "./StyleSelectorModal";
@@ -857,7 +857,7 @@ export default function BetaBuilderPage({
             mobileOpen={mobileOpenSection}
             onToggle={toggleMobileSection}
           >
-            <FermentationSection />
+            <OLD_FermentationSection />
           </AccordionSection>
         </div>
 

@@ -29,7 +29,7 @@ const STEP_TYPE_OPTIONS: Array<{ value: FermentationStepType; label: string; def
   { value: 'conditioning', label: 'Conditioning / Aging', defaultName: 'Conditioning', defaultTemp: 4, defaultDays: 14 },
 ];
 
-export default function FermentationStepModal({ isOpen, onClose, onSave, editingStep }: Props) {
+export default function OLD_FermentationStepModal({ isOpen, onClose, onSave, editingStep }: Props) {
   const [stepType, setStepType] = useState<FermentationStepType>('primary');
   const [name, setName] = useState('');
   const [durationDays, setDurationDays] = useState(14);

@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
 import EmptyState from '../../../../components/EmptyState';
-import FermentationStepModal from './FermentationStepModal';
+import OLD_FermentationStepModal from './OLD_FermentationStepModal';
 import type { FermentationStep } from '../../domain/models/Recipe';
 
 const STEP_TYPE_LABELS: Record<string, string> = {
@@ -20,7 +20,7 @@ const STEP_TYPE_LABELS: Record<string, string> = {
   'diacetyl-rest': 'Diacetyl Rest',
 };
 
-export default function FermentationSection() {
+export default function OLD_FermentationSection() {
   const { currentRecipe, updateRecipe } = useRecipeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStep, setEditingStep] = useState<FermentationStep | null>(null);
@@ -177,7 +177,7 @@ export default function FermentationSection() {
       )}
 
       {/* Modal */}
-      <FermentationStepModal
+      <OLD_FermentationStepModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
