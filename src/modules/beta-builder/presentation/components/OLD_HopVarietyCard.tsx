@@ -1,10 +1,10 @@
 import type { Hop } from "../../domain/models/Recipe";
 import type { HopFlavorProfile } from "../../domain/models/Presets";
 import type { HopGroup } from "../hooks/useHopGroups";
-import HopFlavorMini from "./HopFlavorMini";
-import HopAdditionRow from "./HopAdditionRow";
+import OLD_HopFlavorMini from "./OLD_HopFlavorMini";
+import OLD_HopAdditionRow from "./OLD_HopAdditionRow";
 
-type HopVarietyCardProps = {
+type OLD_HopVarietyCardProps = {
   group: HopGroup;
   onUpdateHop: (id: string, updates: Partial<Hop>) => void;
   onRemoveHop: (id: string) => void;
@@ -15,12 +15,12 @@ type HopVarietyCardProps = {
   ) => void;
 };
 
-export default function HopVarietyCard({
+export default function OLD_HopVarietyCard({
   group,
   onUpdateHop,
   onRemoveHop,
   onAddAddition,
-}: HopVarietyCardProps) {
+}: OLD_HopVarietyCardProps) {
   return (
     <div className="hop-variety-card">
       {/* Header: name + AA on left, visualizer on right */}
@@ -34,7 +34,7 @@ export default function HopVarietyCard({
           </span>
         </div>
         {group.flavor && (
-          <HopFlavorMini
+          <OLD_HopFlavorMini
             flavor={group.flavor}
             size={40}
             className="min-w-[40px] shrink-0"
@@ -45,7 +45,7 @@ export default function HopVarietyCard({
       {/* Addition sub-rows */}
       <div className="space-y-1.5">
         {group.additions.map((hop) => (
-          <HopAdditionRow
+          <OLD_HopAdditionRow
             key={hop.id}
             hop={hop}
             onUpdate={onUpdateHop}

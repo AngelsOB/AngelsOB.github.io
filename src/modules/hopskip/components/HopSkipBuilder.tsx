@@ -13,7 +13,7 @@ import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recip
 import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
 import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
 import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
-import HopSection from "@/modules/beta-builder/presentation/components/HopSection";
+import HopSection from "@/modules/hopskip/components/builder/HopSection";
 import MashSection from "@/modules/hopskip/components/builder/MashSection";
 import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
 import YeastSection from "@/modules/beta-builder/presentation/components/YeastSection";

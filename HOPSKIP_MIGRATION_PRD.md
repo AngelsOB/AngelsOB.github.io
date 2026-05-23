@@ -134,7 +134,7 @@ Make it unambiguous that classic is dead-code-on-life-support.
 
 # Phase 1 — Missing HS-native pages (full feature parity)
 
-**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections — until each builder tab gets an HS-native display-only equivalent, public viewers still show classic editable cells inside HS chrome). Phase 1.3 ✅ (mean-recipe + a few detail sub-views deferred). Phase 1.4 ✅. **Phase 1.5 closed** — subsumed into Phase 2.5a (display) ✅ + Phase 2.5b (Brew Mode wiring) ✅. Brewers can now record a brew day natively in HS at `/recipes/[id]?tab=brewsheet&session=<id>`; the classic `/betabuilder/recipes/sessions/[sessionId]` route stays as a labeled, deprecated reference. 1.6 ⏳ NOT STARTED.
+**Effort: 3–4 focused sessions.** Phase 1.1 ✅. Phase 1.2 chrome ✅ (inner read-only deferred to Phase 2 sections — until each builder tab gets an HS-native display-only equivalent, public viewers still show classic editable cells inside HS chrome). Phase 1.3 ✅ (mean-recipe + a few detail sub-views deferred). Phase 1.4 ✅. **Phase 1.5 closed** — subsumed into Phase 2.5a (display) ✅ + Phase 2.5b (Brew Mode wiring) ✅. Brewers can now record a brew day natively in HS at `/recipes/[id]?tab=brewsheet&session=<id>`; the classic `/betabuilder/recipes/sessions/[sessionId]` route stays as a labeled, deprecated reference. **1.6 deferred indefinitely** — see [Deferred / maybe never](#16--hsversionhistorypage--hsversionhistorymodal-deferred--maybe-never) below.
 
 HS is currently missing entire pages that classic has. After Phase 1, every URL classic offers has an HS-native equivalent. The classic side stays accessible at `/betabuilder/*` as the side-by-side reference; the HS routes are now actually HS.
 
@@ -233,7 +233,13 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 - [src/modules/beta-builder/presentation/components/BrewSessionPage.tsx](src/modules/beta-builder/presentation/components/BrewSessionPage.tsx) — `@deprecated`-tagged + eslint-blocked outside `/betabuilder/`. Still mounted at `/betabuilder/recipes/sessions/[sessionId]` (via an inline `// eslint-disable-next-line no-restricted-imports` on the mirror page) as the side-by-side reference per the quarantine-not-delete principle.
 - `useBrewSessionStore`, `FirestoreBrewSessionRepository`, `BrewSessionCalculationService` — reused unchanged by Phase 2.5b. The store gained one additive action (`updateAddedFlags`) and `SessionActuals` gained per-step / per-row / gravity-log fields.
 
-## 1.6 — HSVersionHistoryPage + HSVersionHistoryModal
+## 1.6 — HSVersionHistoryPage + HSVersionHistoryModal (deferred / maybe never)
+
+**Status:** Deferred indefinitely. ⏸ Not on the active roadmap; may never ship.
+
+**Why deprioritized (decision 2026-05-23):** Version history is low-traffic — most brewers iterate forward, not back; the few who restore old versions can do it via `/betabuilder/recipes/[id]/versions/[versionNumber]` which still works as a quarantined classic surface. Rebuilding it natively in HS for parity-sake doesn't earn the M session it would cost. The classic surface stays accessible as the quarantined reference per the [quarantine-not-delete principle](#architecture--principles) — no removal pressure. If user demand for an HS-native version viewer surfaces, revisit. Until then, this slice is not in the active count.
+
+**If we ever do build it, the plan is:**
 
 - **Current source:** [src/modules/beta-builder/presentation/components/VersionHistoryModal.tsx](src/modules/beta-builder/presentation/components/VersionHistoryModal.tsx) + the `versions/[versionNumber]` route at `/betabuilder/recipes/[id]/versions/[versionNumber]/page.tsx`.
 - **Route:** `/recipes/[id]/versions/[versionNumber]` (new).
@@ -243,21 +249,21 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
   - `HSVersionHistoryPage.tsx` — the page that opens when you click "View". Looks like the HS read-only public viewer (Phase 1.2), but pulls from `recipeVersionRepository` instead of `publicRecipeIndex`. Adds a "Restore this version" button.
 - **Data dependencies:** `recipeVersionRepository` (existing).
 - **Acceptance:** open version history modal, view a historical version, restore it.
-- **Effort:** M.
+- **Effort if we do it:** M.
 
 ---
 
-**After Phase 1 ships:** HS has page parity with classic. Every URL works in HS. `/betabuilder/*` is now purely a reference, not a fallback.
+**After Phase 1 (excluding deferred 1.6) ships:** HS has page parity with classic for the surfaces brewers actually use. Every active URL works in HS. `/betabuilder/*` is now purely a reference, not a fallback.
 
 ---
 
 # Phase 2 — Section-by-section HS-native rewrites
 
-**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅** + **2.2 (Mash) ✅** + **2.3 (Fermentation) ✅**. 2.4, 2.6, 2.7, 2.8 ⏳ NOT STARTED.
+**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅** + **2.2 (Mash) ✅** + **2.3 (Fermentation) ✅** + **2.8 (Hops) ✅**. 2.4, 2.6, 2.7 ⏳ NOT STARTED.
 
 Each section is one vertical slice including its own modals and sub-components. After each ships, the corresponding classic source files become unimported from anywhere outside `/betabuilder/*` and can be left quarantined.
 
-Order (simpler → harder). Each section's classic source files are listed under it; all of them get an HS-native equivalent in `src/modules/hopskip/components/builder/`. **Phase 2 was started out-of-order with 2.5a because the user reframed the brew sheet as the substrate for absorbing Phase 1.5 (brew session) functionality. The remaining sections will likely still follow the original sequence.**
+Order (simpler → harder). Each section's classic source files are listed under it; all of them get an HS-native equivalent in `src/modules/hopskip/components/builder/`. **Phase 2 was started out-of-order with 2.5a because the user reframed the brew sheet as the substrate for absorbing Phase 1.5 (brew session) functionality. After 2.3 shipped the per-list substrate, the user picked 2.8 Hops next (data-rich + visualizer slot is a real test of the substrate on a section with an established chart pattern from the brew sheet). The remaining sections (2.4 / 2.6 / 2.7) will be picked from there.**
 
 ## 2.1 — Fermentables (first slice; lands HSModal)
 
@@ -520,15 +526,32 @@ A follow-up session reworked the Brew Mode UX based on user feedback. Captured h
 
 ## 2.8 — Hops
 
-- **Classic sources:**
-  - [HopSection.tsx](src/modules/beta-builder/presentation/components/HopSection.tsx)
-  - [HopAdditionRow.tsx](src/modules/beta-builder/presentation/components/HopAdditionRow.tsx)
-  - [HopVarietyCard.tsx](src/modules/beta-builder/presentation/components/HopVarietyCard.tsx)
-  - [HopFlavorRadar.tsx](src/modules/beta-builder/presentation/components/HopFlavorRadar.tsx)
-  - [CustomHopModal.tsx](src/modules/beta-builder/presentation/components/CustomHopModal.tsx)
-- **HS plan:** `HSHopSection` — section shell + add-hop button + list of `HSHopAdditionRow`s + `HSHopFlavorRadar`. Each row is an HSCard (cream-2, no shadow) with variety name + AA% chip, HSPill segmented control for type (boil / whirlpool / dry hop / first wort / mash), inline number inputs for grams + time, chevron menu for delete/duplicate. `HSHopFlavorRadar` wraps recharts with HS color tokens. `HSHopVarietyCard` for the variety browser drawer.
-- **Data dependencies:** `useRecipeStore` hop actions, `useRecipeCalculations` for live IBU, `hopEnrichmentService` for variety database lookups.
-- **Effort:** L (radar + variety browser + most complex row layout). Saved for last.
+**Status:** Done. ✅ See the [Phase 2.8 retrospective](#phase-28-retrospective--lessons-for-subsequent-slices) below.
+
+**Decision change vs. original plan:** the pre-substrate plan called for per-row HSCards with usage-type pill toggles + a chevron menu + a variety browser drawer. Post-2.3 the locked substrate was the right pattern here too — **the hops section ended up a fermentables clone in hops-green** with a hop flavor radar in the sidebar visualizer slot. The user picked 2.8 next specifically because it tests the substrate on a section with an established sidebar chart (the `HopFlavorMini` SVG radar that already ships inside [HSBrewSheetSection.tsx](src/modules/hopskip/components/builder/HSBrewSheetSection.tsx)) — the radar style ported as a slightly larger 9-axis SVG with cursor-following per-axis tooltips.
+
+- **Classic sources (renamed + quarantined):**
+  - [OLD_HopSection.tsx](src/modules/beta-builder/presentation/components/OLD_HopSection.tsx) — was `HopSection.tsx`
+  - [OLD_HopAdditionRow.tsx](src/modules/beta-builder/presentation/components/OLD_HopAdditionRow.tsx) — was `HopAdditionRow.tsx`
+  - [OLD_HopVarietyCard.tsx](src/modules/beta-builder/presentation/components/OLD_HopVarietyCard.tsx) — was `HopVarietyCard.tsx`
+  - [OLD_HopFlavorRadar.tsx](src/modules/beta-builder/presentation/components/OLD_HopFlavorRadar.tsx) — was `HopFlavorRadar.tsx` (still imported by quarantined consumers: `HopRadarDemo`, `PublicRecipeView`, `compare/sections/HopComparison`)
+  - [OLD_HopFlavorMini.tsx](src/modules/beta-builder/presentation/components/OLD_HopFlavorMini.tsx) — was `HopFlavorMini.tsx`
+  - [OLD_CustomHopModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomHopModal.tsx) — was `CustomHopModal.tsx`
+- **New HS components** (no `HS` prefix per the [naming convention](#architecture--principles); design-system primitives like `HSModal` keep their prefix):
+  - [HopSection.tsx](src/modules/hopskip/components/builder/HopSection.tsx) — clones the 2.1/2.2/2.3 substrate: outer `sectionFrameStyle` (paper bg + 2px ink L/R/B border + `0 0 14px 14px` radius + sh3 shadow + 24px padding), `SectionTitle` (script kicker "your hop bill —" + display H2 "Hops." + 2px **hops-green** accent rule), 2-col grid via `grid-template-areas` with `display: contents` mobile reflow ordering `"radar" / "lhead" / "ltable" / "notes"`. `LedgerHeaderRow` with `THE HOP BILL` eyebrow + hairline + script entries-count + `IBU pill` (current calc) + `+ Add hop` button (hops-green CTA). Ledger table per-row grid: `[usage-color badge | variety name + AA% caption + usage caption | grams editable | time editable | actions]`. Badge color via a `usageColor(use)` switch: boil=hops-green / first-wort=hops-green-deep / whirlpool=honey / dry-hop=yeast / mash=roast. Per-row click-to-swap on the variety name opens the preset picker in swap mode (mirrors fermentables' swap pattern); usage type changes via a tiny inline `HSActionMenu` (5 options) on the usage caption — not a per-row pill toggle (rejected as too much horizontal real estate). Time editable cell is context-aware: minutes for boil/whirlpool/first-wort/mash, days for dry-hop. Total row: `~Σg | "Total hops" | display-font Σg | (IBU sum) | (empty)`.
+  - [HopPresetModal.tsx](src/modules/hopskip/components/modals/HopPresetModal.tsx) — HSModal + cream-2 pill search field + filter toggle + advanced filters (Country / Purpose chips — bittering / dual / aroma — and a flavor-cluster filter if `hopEnrichmentService` exposes one) + sticky country/purpose group headers + preset rows on hover-tinted bare buttons (variety dot + name + flag + AA range + 1-line flavor descriptor). Mirrors `FermentablePresetModal` shape almost verbatim, swapping fermentable-specific filters (Type / Color / Origin) for hop-specific ones (Country / Purpose / Flavor cluster). Same `swap` mode behaviour.
+  - [CustomHopModal.tsx](src/modules/hopskip/components/modals/CustomHopModal.tsx) — HSModal + inline `FieldText` (name) + `FieldSelect` (country) + `FieldNumber` row (alpha acid % + beta acid %) + `FieldSelect` (default usage: boil / first-wort / whirlpool / dry-hop / mash) + optional flavor data fields (the 9 axes the radar uses, default 0). Saves to user's hop preset library. Mirrors `CustomFermentableModal` shape.
+- **Sidebar (right column):** `[HopFlavorRadar card]` on top + `[BrewersNotesCard]` below — same packing as fermentables' `[BillStack] + [BrewersNotesCard]`. The hop flavor radar is a 9-axis SVG polygon (citrus, tropical, stone fruit, berry, pine, herbal, floral, spicy, earthy) showing the **gram-weighted aggregate** across all hops with inline `flavor` data. The card surface tone is the middle tier (`color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))` per the [2.2 surface-tone hierarchy lesson](#surface-tone-hierarchy--three-discrete-levels)). Use the inline SVG radar from [HSBrewSheetSection.tsx](src/modules/hopskip/components/builder/HSBrewSheetSection.tsx)'s `HopFlavorMini` as the starting point — it already computes the weighted aggregate and renders the polygon; lift it into a `HopFlavorVisualizer.tsx` helper alongside the section, or inline it directly in `HopSection.tsx` (decide during implementation based on whether the radar's tooltip behavior diverges). Cursor-following hover tooltip on each axis (axis name + the dominant hop contributing to that axis) follows the [BillStack tooltip pattern](#hover-tooltip-on-chart-segments--the-barrow-pattern-ports-verbatim) — this is the third consumer of the cursor-follow pattern, so consider promoting to a small `useCursorFollowTooltip()` hook per the 2.1 retro flag.
+- **Reused unchanged:** `useRecipeStore.addHop / updateHop / removeHop` (verify exact action names during 2.8 read-classic pass); `usePresetStore.hopPresetsGrouped / loadHopPresets / saveHopPreset` (verify); `hopEnrichmentService` for the variety database lookups; `useRecipeCalculations` for live IBU + per-hop IBU contribution; `getCountryFlag`, `BREWING_ORIGINS`. No new store actions, no new repos, no new services per the [2.2 scoping rule](#mashscheduleservice--userecipecalculations--recipestore-reused-exactly--zero-domain-changes).
+- **What's NOT in v1 (deferred):**
+  - **Hop addition timeline visualization.** A boil-time-axis stripe (60 → 0 min) with dots at each addition is an obvious visualization but the radar already earns the sidebar real estate. Add as a second sidebar card later if brewers ask for "when am I adding what" at a glance. The brew sheet already shows the full addition schedule for brew-day reference.
+  - **Per-row IBU contribution chip.** Could surface "~18 IBU" in the row caption next to the grams. Defer until brewers ask — the total IBU is in the ledger header pill + the live numbers strip.
+  - **Hop substitution suggestions.** Classic has a "similar hops" hint when picking a variety; defer to a follow-up unless it falls out cheaply from `hopEnrichmentService`.
+  - **Animated number transitions on input** — same deferral as 2.1/2.2/2.3.
+  - **Drag reorder** — same deferral as 2.2/2.3.
+- **Data dependencies:** All read-write via existing recipe + preset stores. No new server endpoints.
+- **Acceptance:** open recipe → switch to Hops tab → empty state with `+ Add your first hop` CTA + dashed-border invitation. Click → preset picker opens. Pick "Citra" → row appears with hops-green badge, AA% caption, default usage=boil, default time=60, grams stepper. Live IBU ticks. Click variety name → preset picker reopens in swap mode → pick "Mosaic" → swap preserves grams + time + usage. Click usage caption → 5-option action menu opens → pick "Dry hop" → row updates, time cell unit flips minute→days. Edit grams → IBU ticks. Add a second + third hop → radar updates (gram-weighted aggregate). Hover a radar axis → tooltip shows axis name + dominant contributor. Open custom modal → fill name + AA + flavor axes → save → toast confirms → custom hop appears in picker. ESC / backdrop / × close modals. No console errors. tsc + lint clean.
+- **Effort:** M+ (single focused session of ~1,500 LOC — the substrate is locked in, but the radar wiring + variety swap interactions + custom modal with 9 flavor-axis fields push it past pure 2.2 / 2.3 effort). Slightly above 2.1/2.2/2.3's M because of the radar; well under the original "L (saved for last)" estimate because the substrate ate the row-card complexity.
 
 ---
 
@@ -1340,13 +1363,86 @@ Two testing quirks worth remembering:
 
 ---
 
+## Phase 2.8 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 2.8 (Hops + HopPresetModal + CustomHopModal). Read before 2.4 / 2.6 / 2.7.
+
+### The substrate held on a data-richer section than 2.1/2.2/2.3 — visualizer slot earns its real estate when there's a chart worth showing.
+
+The PRD-1 lesson "for sections with a sidebar, the readout cards must either surface a derived cross-section value or host an input that drives downstream calculations" (from the [2.3 packaging-merge retro](#a-sparse-3-row-readout-is-not-enough-to-justify-a-sidebar)) ran in the opposite direction here: the radar IS the cross-section derivation (gram-weighted aggregate flavor across every hop with `flavor` data). It earned the slot trivially because the data is already there — `hopFlavorCalculationService.calculateCombinedFlavor()` was shipped in classic, lifted into the section with zero domain changes, and the brewer sees "what does my hop bill TASTE like" at a glance. **Rule:** the visualizer slot belongs to a chart only when there's a cross-row aggregate worth seeing. For sections where the ledger fully tells the story (Mash temp schedule, Fermentation steps), keep the sidebar a compact readout. For sections where multiple ingredients combine into something new (Hops → flavor profile, Water → ion balance), the chart earns its space.
+
+### Don't roll a fresh radar — port the existing inline `HopFlavorMini` pattern from `HSBrewSheetSection`.
+
+The brewsheet already has a 190px inline SVG radar with the polygon-fill + 9-axis pattern. The new sidebar radar bumps to 240px, adds axis labels in semantic colors (citrus = yellow, pine = green, etc.), and adds cursor-following per-axis tooltips that surface the dominant contributor ("most from Cascade"). The polygon math + ring math + axis spoke math is identical to the brewsheet's `HopFlavorMini`. **Rule for any future section that wants a radar chart:** copy the SVG block from `HSBrewSheetSection.tsx:6849-6979` (the `computeAggregateHopFlavor` + `HopFlavorMini` pair) as the starting point. Don't reach for recharts; the inline SVG is ~80 LOC, no library cost, easier to style.
+
+### `useRecipeCalculations` returns `RecipeCalculations | null` — always nullish-coalesce when reading from it.
+
+The `useRecipeCalculations(currentRecipe)` hook returns `null` when there's no recipe loaded (transitional state during recipe page mount). The `LedgerHeaderRow`'s IBU pill took `ibu: number`, so I wrote `calculations.ibu` and tsc immediately caught "possibly null". Fix: `calculations?.ibu ?? 0`. **Rule for upcoming Phase 2 sections that surface live numbers in their headers (Water cell summary, Yeast pitch info, Equipment derivations):** `useRecipeCalculations(currentRecipe)` is nullable; treat it as `?.someField ?? sensibleDefault` everywhere. The `useRecipeCalculations()` (no arg) form doesn't exist — the hook always takes a recipe argument.
+
+### Multi-value timing cells need a `compact` + `muted` variant of `EditableCell`.
+
+The ledger row's timing cell shapeshifts by usage type:
+- **boil** = single primary value ("60 min" at Caveat 30px) — same shape as fermentables' weight cell
+- **whirlpool** = two stacked values ("15 min" primary + "80 °C" secondary, smaller + muted)
+- **dry hop** = two stacked values ("3 days" primary + "0 day in" secondary, smaller + muted)
+- **first wort / mash** = static script text "✦ no timing"
+
+To make this fit in a 130px column without horizontal overflow, the substrate's `EditableCell` gained two new props: `compact` (drops font size from 30→22px, stepper buttons from 16→14px, suffix font 11→10pt) and `muted` (uses `hsTokens.muted` for value text + drops font to 18px). The same component handles all variants. **Rule for upcoming sections with multi-value cells (Equipment "Mash tun: 30L / sphere-bottom" type displays, Yeast pitch rate displays):** extend `EditableCell` with `compact` + `muted` rather than writing a second editable primitive. The two-row "primary big, secondary small" pattern is now established — clone it from `HopSection.tsx`'s `TimingCell`.
+
+### HSActionMenu's hardcoded 28×28 trigger needs override for any non-icon use.
+
+The Phase 2.2 retro flagged this for the "GENERATE ▾" pill (28×28 default crushed text-bearing triggers). For the usage badge — a 44×44 colored square with "BOIL"/"DRY"/etc. text — I overrode via `triggerStyle: { width: 44, height: 44, borderRadius: 10, padding: 0, background: color, ... }`. The override fully replaces the default chrome (no merging trick needed because `triggerMerged` spreads `triggerStyle` last). **Rule reinforced:** if your trigger is anything other than a small ⋯/⋮ icon button, always pass `triggerStyle` with explicit `width`/`height`/`background`. Don't fight the default. Consider promoting `triggerSize="pill" | "icon" | "square"` to the primitive if a third consumer hits this.
+
+### Flat ledger (one row per hop) beats grouped-by-variety even though classic grouped — substrate consistency wins.
+
+Classic `HopSection` grouped hop additions by variety name (`HopVarietyCard` containing multiple `HopAdditionRow`s per variety). The HS rewrite flattens — each addition is its own row, even if 3 Citra additions appear back-to-back. Trade-off: classic surfaced per-variety subtotals (Σg, IBU, g/L) in a footer below each variety group; HS shows them in a single Total row at the bottom. **Net:** the substrate's "one-row-per-thing" shape reads cleaner, scales identically with fermentables/mash/fermentation rows, and removes the cognitive load of "which variety am I editing". The aggregate radar in the sidebar still shows the "what's the recipe doing" view that variety grouping was meant to convey. **Rule:** when classic has a structural grouping that doesn't appear in the substrate, default to flattening. The aggregate visualization in the sidebar can re-surface the grouped insight without imposing it on the ledger.
+
+### Click-to-swap on the variety name + click-to-change-use on the badge are two distinct affordances — the row supports both without modal confusion.
+
+Two click targets on the same row (the name button opens the preset picker in swap mode; the badge opens a HSActionMenu with 5 usage options). They don't conflict because the badge is visually a separate cell (a colored 44px square in the leftmost column) and the name is in the second column with its own hover-underline cue. **Rule:** multiple click targets on a ledger row are fine as long as (a) each lives in its own visual cell, (b) hover state makes each one clear, (c) keyboard focus order is left-to-right reasonable. For Equipment (2.4) and Water (2.7), this lets per-row controls coexist without forcing a row-edit modal for the multi-action case.
+
+### `hopEnrichmentService.getFlavorByName` is the fallback for hops without inline `flavor` data — wire both sources into the radar's flavor map.
+
+Some hop presets have inline `flavor` data; others don't but match an entry in the enrichment service's variety database. The radar consumer needs to consult both: `const flavor = h.flavor ?? hopEnrichmentService.getFlavorByName(h.name)`. Without the enrichment fallback, the radar shows "no flavor data" for any user-saved or imported hop that lacks inline flavor. **Rule for upcoming sections that need preset metadata at runtime:** when adding a preset to a recipe, ALSO try the enrichment service for any optional fields the user might want to consume later. For 2.7 Water, this is the source-water mineral lookup; for 2.6 Yeast, the strain attenuation lookup.
+
+### Five external consumers of `HopFlavorRadar` to update during quarantine — not all hop quarantine is internal.
+
+Fermentables, Mash, and Fermentation each had ~2 classic-aggregator consumers (BetaBuilderPage + BrewedVersionModal). Hops had 5: those 2 PLUS `HopRadarDemo` (learn module), `PublicRecipeView` (sharing module), and `compare/sections/HopComparison` (compare module). All three external consumers are themselves quarantined per Phase 1.2/1.3/1.4 + Phase 4 plans, so they accept the OLD_-prefixed import via the relative-path exemption from the no-restricted-imports glob. **Rule for future quarantine passes:** before renaming, always `grep -rln '\\(<ClassicName\\|from.*ClassicName\\)' src app | head` to map ALL consumers. Don't assume internal-only.
+
+### `no-restricted-imports` glob doesn't match relative paths — the rule is a "stop NEW @/-prefixed imports" guard, not a hermetic seal.
+
+The Phase 2.1/2.2/2.3 retros all noted that the eslint rule pattern `**/modules/beta-builder/presentation/components/OLD_<File>` exempts intra-`beta-builder/` relative imports (`./OLD_<File>`). Phase 2.8 surfaced a second exemption tier: external module relative imports like `'../../beta-builder/presentation/components/OLD_HopFlavorRadar'` also slip past the glob. Two implications:
+
+1. **No `// eslint-disable-next-line no-restricted-imports` needed** on `HopComparison.tsx` / `PublicRecipeView.tsx`'s relative-path imports of `OLD_HopFlavorRadar`. The disable comment would be flagged as unused.
+2. **The `@/`-prefixed import in `HopRadarDemo.tsx` DOES need the disable** because absolute paths via the `@/` alias match the glob.
+
+**Rule:** before adding `// eslint-disable-next-line no-restricted-imports` to a quarantined consumer's import, check whether the import is absolute (`@/...`) or relative (`./...` / `../...`). Absolute = need the disable. Relative = the rule already exempts it (silently); no disable. Add a clarifying comment about the relative-path exemption instead of a redundant disable directive.
+
+### Quarantine took ~6 minutes for 6 files — the rename ratio held even at higher file count.
+
+`git mv` for 6 classic files → rename function + default export + interface types + intra-classic-aggregator JSX usage across BetaBuilderPage + BrewedVersionModal + the 3 external module consumers (HopRadarDemo, PublicRecipeView, HopComparison) → eslint rule extension → tsc clean on first pass. **Rule reinforced for the 4-file-or-fewer slices ahead (2.4 Equipment, 2.6 Yeast):** budget 5 minutes; if 6 files take 6 minutes, fewer files should be proportionally faster.
+
+### Stale Turbopack console-buffer errors from prior FermentationSection HMR cycles persist across page navigation.
+
+When verifying the new HopSection rendered correctly, `preview_console_logs` showed several `ReferenceError: DatePill is not defined` and `ReferenceError: brewDate is not defined` errors from FermentationSection's SummaryCard — none of which I touched. The Phase 2.2 retro's rule applies: "if `preview_console_logs` shows errors that reference a component whose CURRENT render is verified clean, trust the render-side assertions over the log buffer." The HopSection's DOM was confirmed correct (h2 = "Hops.", ledger renders, radar renders, modals open/close), so the buffer noise was safely ignored.
+
+### `preview_screenshot` viewport at recipe page is awkward — DOM assertions remain the primary verification.
+
+The recipe builder page has the live numbers strip at top, sticky bottom nav competing for viewport space, and the section content sandwiched between. Even after `scrollIntoView({block: 'start'})`, the screenshot captured just the radar card (zoomed in via OS-level page zoom). DOM-level assertions (section present, h2 text, IBU pill value, action menu items present, radar SVG axis count) gave faster + more reliable verification. **Rule reinforced from 2.2:** for builder-tab slices, lead with `preview_eval` DOM/data assertions; use `preview_screenshot` only when the layout regression is visible, not when verifying the core behaviour.
+
+### `<circle>` with React `onMouseEnter` doesn't trigger `jsx-a11y/no-static-element-interactions`.
+
+The radar's invisible per-axis hover circles fire mouse events but live inside an SVG, which the rule doesn't apply to. Initial cautionary `// eslint-disable-next-line jsx-a11y/no-static-element-interactions` was flagged as unused and removed. **Rule:** SVG children (`<circle>`, `<path>`, `<g>`) bearing interactive props don't need the static-element-interactions disable. The rule scopes to HTML elements (div, span, section, etc.) only.
+
+---
+
 ## Total effort estimate
 
 - **Phase 0** (free wins + quarantine labeling): ✅ Done — ≈ 1 focused session
-- **Phase 1** (6 missing pages: Browse, Public viewer, Compare, User profile, Brew session, Version history): **partially done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · 1.6 NOT STARTED · remaining: 1 focused session for 1.6
-- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.4 / 2.6 / 2.7 / 2.8 NOT STARTED · remaining: 3–4 focused sessions
+- **Phase 1** (5 active pages: Browse, Public viewer, Compare, User profile, Brew session — Version history deferred indefinitely): **done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · **1.6 deferred / maybe never** (low-traffic, classic surface stays as reference)
+- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.8 ✅ · 2.4 / 2.6 / 2.7 NOT STARTED · remaining: 2–3 focused sessions
 - **Phase 3** (6 calculator widgets extracted from existing inline implementations): NOT STARTED — 1 focused session
 - **Phase 4** (14 learn article body rewrites): NOT STARTED — 3–4 focused sessions
 - **Phase 5** (optional deferred deletion): NOT STARTED — ~1 focused session, whenever
 
-**Roughly 7–11 focused sessions remaining** (excluding deferred deletion). With 2.1 + 2.2 + 2.3 shipped, the per-list section template is locked in — every remaining list-shaped Phase 2 slice mechanically clones the same shape (section frame + ledger + sidebar readout + brewer's notes + HSModal-based per-section modal). Next-priority slice: **2.4 Equipment** (first non-list section — "grouped HSCards of fields" + 2 profile-picker modals; tests the substrate on a different shape), **2.7 Water** or **2.8 Hops** (data-rich, may want sidebar visualizations beyond the readout), or **1.6 Version History** (closes Phase 1).
+**Roughly 6–9 focused sessions remaining** (excluding deferred deletion + deferred 1.6). With 2.1 + 2.2 + 2.3 + 2.8 shipped, the per-list section template is locked in — every remaining list-shaped Phase 2 slice mechanically clones the same shape (section frame + ledger + sidebar readout/visualizer + brewer's notes + HSModal-based per-section modal). Next-priority slice: **2.4 Equipment** (first non-list section — "grouped HSCards of fields" + 2 profile-picker modals; tests the substrate on a different shape), then **2.6 Yeast** (mostly a list slice with starter calculator add-on), then **2.7 Water** (most modal-heavy + ion-comparison visualization slice).

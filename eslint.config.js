@@ -139,6 +139,18 @@ export default tseslint.config([
             message:
               'Classic UI (OLD_ prefix marker). Use FermentationSection from @/modules/hopskip/components/builder/ (with FermentationStepModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.3.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_HopSection',
+              '**/modules/beta-builder/presentation/components/OLD_HopAdditionRow',
+              '**/modules/beta-builder/presentation/components/OLD_HopVarietyCard',
+              '**/modules/beta-builder/presentation/components/OLD_HopFlavorRadar',
+              '**/modules/beta-builder/presentation/components/OLD_HopFlavorMini',
+              '**/modules/beta-builder/presentation/components/OLD_CustomHopModal',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use HopSection from @/modules/hopskip/components/builder/ (with HopPresetModal / CustomHopModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.8.',
+          },
         ],
       }],
     },

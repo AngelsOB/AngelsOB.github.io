@@ -2,7 +2,7 @@ import type { Hop } from "../../domain/models/Recipe";
 import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
 import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
-type HopAdditionRowProps = {
+type OLD_HopAdditionRowProps = {
   hop: Hop;
   onUpdate: (id: string, updates: Partial<Hop>) => void;
   onRemove: (id: string) => void;
@@ -86,7 +86,7 @@ function HopDatum({
   );
 }
 
-export default function HopAdditionRow({ hop, onUpdate, onRemove }: HopAdditionRowProps) {
+export default function OLD_HopAdditionRow({ hop, onUpdate, onRemove }: OLD_HopAdditionRowProps) {
   return (
     <div className="hop-addition-row">
       {/* Type selector badge */}

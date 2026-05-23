@@ -10,7 +10,7 @@ type Props = {
   className?: string;
 };
 
-export default function HopFlavorMini({
+export default function OLD_HopFlavorMini({
   flavor,
   size = 40,
   maxValue = 5,
