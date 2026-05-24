@@ -16,7 +16,7 @@ import FermentableSection from "@/modules/hopskip/components/builder/Fermentable
 import HopSection from "@/modules/hopskip/components/builder/HopSection";
 import MashSection from "@/modules/hopskip/components/builder/MashSection";
 import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
-import YeastSection from "@/modules/beta-builder/presentation/components/YeastSection";
+import YeastSection from "@/modules/hopskip/components/builder/YeastSection";
 import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import { EquipmentSection } from "@/modules/beta-builder/presentation/components/EquipmentSection";

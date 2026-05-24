@@ -19,17 +19,17 @@ import Button from "@components/Button";
 import { toast } from "../../../../stores/toastStore";
 import ModalOverlay from "./ModalOverlay";
 
-interface CustomYeastModalProps {
+interface OLD_CustomYeastModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (preset: YeastPreset) => void;
 }
 
-export default function CustomYeastModal({
+export default function OLD_CustomYeastModal({
   isOpen,
   onClose,
   onSave,
-}: CustomYeastModalProps) {
+}: OLD_CustomYeastModalProps) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Custom");
   const [attenuationPercent, setAttenuationPercent] = useState(75);

@@ -20,7 +20,7 @@ import { starterCalculationService } from "../../domain/services/StarterCalculat
 import { useHoldToRepeat } from "../../../../hooks/useHoldToRepeat";
 import AnimatedNumberInput from "../../../../components/AnimatedNumberInput";
 
-interface StarterCalculatorProps {
+interface OLD_StarterCalculatorProps {
   starterInfo?: StarterInfo;
   batchVolumeL: number;
   og: number;
@@ -125,14 +125,14 @@ function StarterReadout({ label, value, unit }: { label: string; value: string; 
   );
 }
 
-export default function StarterCalculator({
+export default function OLD_StarterCalculator({
   starterInfo,
   batchVolumeL,
   og,
   onStarterChange,
   onChangeYeast,
   children,
-}: StarterCalculatorProps) {
+}: OLD_StarterCalculatorProps) {
   const [yeastType, setYeastType] = useState<YeastType>(starterInfo?.yeastType ?? "liquid-100");
   const [packs, setPacks] = useState<number>(starterInfo?.packs ?? 1);
   const [mfgDate, setMfgDate] = useState<string>(starterInfo?.mfgDate ?? "");
