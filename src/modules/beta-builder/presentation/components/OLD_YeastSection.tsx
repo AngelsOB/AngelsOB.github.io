@@ -18,13 +18,13 @@ import EmptyState from "../../../../components/EmptyState";
 import { useRecipeCalculations } from "../hooks/useRecipeCalculations";
 import type { Yeast, StarterInfo } from "../../domain/models/Recipe";
 import type { YeastPreset } from "../../domain/models/Presets";
-import CustomYeastModal from "./CustomYeastModal";
+import OLD_CustomYeastModal from "./OLD_CustomYeastModal";
 import PresetPickerModal from "./PresetPickerModal";
 import YeastDisplay from "./YeastDisplay";
 import YeastLabBadge from "./YeastLabBadge";
-import StarterCalculator from "./StarterCalculator";
+import OLD_StarterCalculator from "./OLD_StarterCalculator";
 
-export default function YeastSection() {
+export default function OLD_YeastSection() {
   const { currentRecipe, addYeast, updateYeast, removeYeast } = useRecipeStore();
 
   // Get the first yeast (for backward compatibility with single-yeast UI)
@@ -173,7 +173,7 @@ export default function YeastSection() {
       ) : (
         <div className="yeast-stack">
           {calculations ? (
-            <StarterCalculator
+            <OLD_StarterCalculator
               starterInfo={currentYeast.starter}
               batchVolumeL={currentRecipe?.batchVolumeL || 20}
               og={calculations.og}
@@ -181,7 +181,7 @@ export default function YeastSection() {
               onChangeYeast={() => setIsPickerOpen(true)}
             >
               <YeastDisplay yeast={currentYeast} />
-            </StarterCalculator>
+            </OLD_StarterCalculator>
           ) : (
             <div className="yeast-card">
               <div className="yeast-card-header">
@@ -287,7 +287,7 @@ export default function YeastSection() {
       />
 
       {/* Custom Yeast Modal */}
-      <CustomYeastModal
+      <OLD_CustomYeastModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomPreset}

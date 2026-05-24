@@ -151,6 +151,15 @@ export default tseslint.config([
             message:
               'Classic UI (OLD_ prefix marker). Use HopSection from @/modules/hopskip/components/builder/ (with HopPresetModal / CustomHopModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.8.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_YeastSection',
+              '**/modules/beta-builder/presentation/components/OLD_StarterCalculator',
+              '**/modules/beta-builder/presentation/components/OLD_CustomYeastModal',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use YeastSection from @/modules/hopskip/components/builder/ (with YeastPresetModal / CustomYeastModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.6.',
+          },
         ],
       }],
     },

@@ -1,7 +1,7 @@
 import type { Recipe, RecipeCalculations } from '../../../domain/models/Recipe';
 import OLD_FermentableSection from '../OLD_FermentableSection';
 import OLD_HopSection from '../OLD_HopSection';
-import YeastSection from '../YeastSection';
+import OLD_YeastSection from '../OLD_YeastSection';
 import WaterSection from '../WaterSection';
 import OLD_MashScheduleSection from '../OLD_MashScheduleSection';
 import OLD_FermentationSection from '../OLD_FermentationSection';
@@ -60,7 +60,7 @@ export function BrewedVersionModal({
               <EquipmentSection />
               <OLD_FermentableSection />
               <OLD_HopSection />
-              <YeastSection />
+              <OLD_YeastSection />
               <WaterSection calculations={calculations} recipe={recipe} />
               <OLD_MashScheduleSection />
               <OLD_FermentationSection />
