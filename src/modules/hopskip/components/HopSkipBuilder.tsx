@@ -15,7 +15,7 @@ import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/
 import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
 import HopSection from "@/modules/hopskip/components/builder/HopSection";
 import MashSection from "@/modules/hopskip/components/builder/MashSection";
-import WaterSection from "@/modules/beta-builder/presentation/components/WaterSection";
+import WaterSection from "@/modules/hopskip/components/builder/WaterSection";
 import YeastSection from "@/modules/hopskip/components/builder/YeastSection";
 import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
@@ -33,6 +33,15 @@ import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import HSButton from "./HSButton";
 import HSForkButton from "./public/HSForkButton";
 import HSRatingStars from "./public/HSRatingStars";
+import dynamic from "next/dynamic";
+import BuilderTitleBar from "./builder/BuilderTitleBar";
+
+const HelperCardMorph = dynamic(() => import("./builder/HelperCardMorph"), {
+  ssr: false,
+});
+const MainSectionMorph = dynamic(() => import("./builder/MainSectionMorph"), {
+  ssr: false,
+});
 
 const display: CSSProperties = {
   fontFamily: hsTokens.display,
@@ -55,6 +64,12 @@ interface TabDef {
   k: TabKey;
   label: string;
   c: string;
+  /** Title-bar kicker + heading, hoisted out of each section so the
+      colored bottom rule can span the full builder grid width. */
+  kicker?: string;
+  heading?: string;
+  /** Use a smaller heading clamp for titles that wrap (Fermentation). */
+  smallHeading?: boolean;
   countFrom?: (totals: TabCounts) => number | null;
 }
 
@@ -67,12 +82,12 @@ interface TabCounts {
 }
 
 const TABS: TabDef[] = [
-  { k: "fermentables", label: "Fermentables", c: hsTokens.malt, countFrom: (t) => t.fermentables },
-  { k: "hops", label: "Hops", c: hsTokens.hops, countFrom: (t) => t.hops },
-  { k: "mash", label: "Mash", c: hsTokens.roast, countFrom: (t) => t.mash },
-  { k: "water", label: "Water", c: hsTokens.water },
-  { k: "yeast", label: "Yeast", c: hsTokens.yeast, countFrom: (t) => t.yeasts },
-  { k: "fermentation", label: "Fermentation", c: hsTokens.honey, countFrom: (t) => t.fermentation },
+  { k: "fermentables", label: "Fermentables", c: hsTokens.malt, kicker: "your grain bill —", heading: "Fermentables.", countFrom: (t) => t.fermentables },
+  { k: "hops", label: "Hops", c: hsTokens.hops, kicker: "your hop bill —", heading: "Hops.", countFrom: (t) => t.hops },
+  { k: "mash", label: "Mash", c: hsTokens.roast, kicker: "your mash schedule —", heading: "Mash.", countFrom: (t) => t.mash },
+  { k: "water", label: "Water", c: hsTokens.water, kicker: "your brewing water —", heading: "Water." },
+  { k: "yeast", label: "Yeast", c: hsTokens.yeast, kicker: "your fermenter friend —", heading: "Yeast.", countFrom: (t) => t.yeasts },
+  { k: "fermentation", label: "Fermentation", c: hsTokens.honey, kicker: "from pitch to package —", heading: "Fermentation & Conditioning.", smallHeading: true, countFrom: (t) => t.fermentation },
   { k: "brewsheet", label: "Brew sheet", c: hsTokens.ink },
 ];
 
@@ -956,38 +971,76 @@ export default function HopSkipBuilder({
         </div>
 
         <div
-          key={activeTab}
-          className={`hs-section-frame brew-theme hs-tab-slide hs-tab-slide-${tabDirection}${
-            isShared ? " brew-read-only" : ""
-          }`}
-          style={{ position: "relative" }}
+          className={`hs-builder-grid${
+            activeTab === "brewsheet" ? " is-brewsheet" : ""
+          }${isShared ? " brew-read-only" : ""}`}
+          data-tab={activeTab}
         >
-          {activeTab === "fermentables" ? <FermentableSection /> : null}
-          {activeTab === "hops" ? <HopSection /> : null}
-          {activeTab === "mash" ? <MashSection /> : null}
-          {activeTab === "water" && calc ? <WaterSection recipe={currentRecipe} calculations={calc} /> : null}
-          {activeTab === "yeast" ? <YeastSection /> : null}
-          {activeTab === "fermentation" ? <FermentationSection /> : null}
-          {activeTab === "brewsheet" && calc ? (
-            <HSBrewSheetSection
-              recipe={currentRecipe}
-              calculations={calc}
-              isBrewMode={isBrewMode}
-              sessionId={isBrewMode ? currentSession?.id : undefined}
-              sessionStatus={isBrewMode ? currentSession?.status : undefined}
-              actuals={isBrewMode ? currentSession?.actuals : undefined}
-              addedFlags={isBrewMode ? currentSession?.addedFlags : undefined}
-              onActualsChange={isBrewMode ? handleActualsChange : undefined}
-              onAddedChange={isBrewMode ? handleAddedChange : undefined}
-              onIngredientActualChange={
-                isBrewMode ? handleIngredientActualChange : undefined
-              }
-              onStatusChange={isBrewMode ? handleStatusChange : undefined}
-              onToggleBrewMode={isShared ? undefined : handleToggleBrewMode}
-              priorSessions={priorSessionsForRecipe}
-              onResumeSession={resumeSession}
-              onCreateNewSession={startNewSession}
-            />
+          {activeTab !== "brewsheet"
+            ? (() => {
+                const def = TABS.find((t) => t.k === activeTab);
+                if (!def?.kicker || !def?.heading) return null;
+                return (
+                  <BuilderTitleBar
+                    kicker={def.kicker}
+                    heading={def.heading}
+                    color={def.c}
+                    small={def.smallHeading}
+                  />
+                );
+              })()
+            : null}
+          <div className="hs-builder-main">
+            <MainSectionMorph
+              activeTab={activeTab}
+              direction={tabDirection}
+              isShared={isShared}
+            >
+              {activeTab === "fermentables" ? <FermentableSection /> : null}
+              {activeTab === "hops" ? <HopSection /> : null}
+              {activeTab === "mash" ? <MashSection /> : null}
+              {activeTab === "water" && calc ? <WaterSection recipe={currentRecipe} calculations={calc} /> : null}
+              {activeTab === "yeast" ? <YeastSection /> : null}
+              {activeTab === "fermentation" ? <FermentationSection /> : null}
+              {activeTab === "brewsheet" && calc ? (
+                <HSBrewSheetSection
+                  recipe={currentRecipe}
+                  calculations={calc}
+                  isBrewMode={isBrewMode}
+                  sessionId={isBrewMode ? currentSession?.id : undefined}
+                  sessionStatus={isBrewMode ? currentSession?.status : undefined}
+                  actuals={isBrewMode ? currentSession?.actuals : undefined}
+                  addedFlags={isBrewMode ? currentSession?.addedFlags : undefined}
+                  onActualsChange={isBrewMode ? handleActualsChange : undefined}
+                  onAddedChange={isBrewMode ? handleAddedChange : undefined}
+                  onIngredientActualChange={
+                    isBrewMode ? handleIngredientActualChange : undefined
+                  }
+                  onStatusChange={isBrewMode ? handleStatusChange : undefined}
+                  onToggleBrewMode={isShared ? undefined : handleToggleBrewMode}
+                  priorSessions={priorSessionsForRecipe}
+                  onResumeSession={resumeSession}
+                  onCreateNewSession={startNewSession}
+                />
+              ) : null}
+            </MainSectionMorph>
+          </div>
+
+          {activeTab !== "brewsheet" ? (
+            <div className="hs-builder-side">
+              <HelperCardMorph
+                activeTab={activeTab}
+                notes={currentRecipe.notes ?? ""}
+                tags={currentRecipe.tags ?? []}
+                onNotesChange={(v) =>
+                  updateRecipe({ notes: v || undefined })
+                }
+                onTagsChange={(v) =>
+                  updateRecipe({ tags: v.length ? v : undefined })
+                }
+                readOnly={isShared}
+              />
+            </div>
           ) : null}
         </div>
       </section>

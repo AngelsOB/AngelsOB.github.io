@@ -20,7 +20,7 @@ type Props = {
   onAdd: (name: string, category: OtherIngredientCategory) => void;
 };
 
-export default function CustomWaterIngredientModal({
+export default function OLD_CustomWaterIngredientModal({
   isOpen,
   onClose,
   onAdd,

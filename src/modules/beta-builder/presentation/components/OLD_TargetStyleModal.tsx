@@ -10,7 +10,7 @@
 import { useState, useMemo } from "react";
 import { BEER_STYLE_TARGETS, type WaterProfile } from "../../domain/services/WaterChemistryService";
 import PresetPickerModal from "./PresetPickerModal";
-import CustomTargetStyleModal from "./CustomTargetStyleModal";
+import OLD_CustomTargetStyleModal from "./OLD_CustomTargetStyleModal";
 
 type StylePreset = {
   name: string;
@@ -62,7 +62,7 @@ type Props = {
   currentStyleName?: string;
 };
 
-export default function TargetStyleModal({
+export default function OLD_TargetStyleModal({
   isOpen,
   onClose,
   onSelect,
@@ -139,7 +139,7 @@ export default function TargetStyleModal({
         onCreateCustom={() => setIsCustomModalOpen(true)}
       />
 
-      <CustomTargetStyleModal
+      <OLD_CustomTargetStyleModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleCustomSave}

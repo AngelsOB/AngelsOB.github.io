@@ -24,7 +24,7 @@ type Props = {
   onOpenCustomModal: () => void;
 };
 
-export default function WaterIngredientPickerModal({
+export default function OLD_WaterIngredientPickerModal({
   isOpen,
   onClose,
   onSelect,

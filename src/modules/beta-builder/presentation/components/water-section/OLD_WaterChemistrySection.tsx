@@ -6,8 +6,8 @@
  */
 
 import type { SaltAdditions, WaterProfile } from "../../../domain/services/WaterChemistryService";
-import SaltAdditionsPanel from "./SaltAdditionsPanel";
-import WaterProfileComparison from "./WaterProfileComparison";
+import OLD_SaltAdditionsPanel from "./OLD_SaltAdditionsPanel";
+import OLD_WaterProfileComparison from "./OLD_WaterProfileComparison";
 
 type TargetStyle = {
   profile: WaterProfile;
@@ -55,7 +55,7 @@ type Props = {
   onToggleBakingSoda?: (include: boolean) => void;
 };
 
-export default function WaterChemistrySection({
+export default function OLD_WaterChemistrySection({
   sourceProfile,
   sourceProfileName,
   targetStyle,
@@ -134,7 +134,7 @@ export default function WaterChemistrySection({
       </div>
 
       {/* Salt Additions */}
-      <SaltAdditionsPanel
+      <OLD_SaltAdditionsPanel
         saltAdditions={saltAdditions}
         mashSalts={mashSalts}
         spargeSalts={spargeSalts}
@@ -146,7 +146,7 @@ export default function WaterChemistrySection({
       />
 
       {/* Water Profile Comparison */}
-      <WaterProfileComparison
+      <OLD_WaterProfileComparison
         sourceProfile={sourceProfile}
         targetProfile={targetProfile}
         bjcpTargetProfile={bjcpTargetProfile}

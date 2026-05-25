@@ -125,19 +125,6 @@ export default function FermentationSection() {
     });
   };
 
-  // Brew date persists via recipe.brewDate (ISO YYYY-MM-DD string). Parsing
-  // back to Date uses local noon to avoid timezone-edge day shifts. Survives
-  // tab navigation, page refresh, and Firestore round-trips.
-  const brewDate = useMemo(() => {
-    const s = currentRecipe?.brewDate;
-    if (!s) return null;
-    const [y, m, d] = s.split("-").map(Number);
-    if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d, 12);
-  }, [currentRecipe?.brewDate]);
-  const handleBrewDateUpdate = (d: Date | null) => {
-    updateRecipe({ brewDate: d ? dateToInputValue(d) : undefined });
-  };
   // Residual CO₂ uses the PEAK fermentation temperature, matching Noonan's
   // formula and the convention in BeerSmith / Brewfather / BrewersFriend.
   // Reasoning: vigorous fermentation saturates the beer at ~1 atm CO₂ at the
@@ -372,31 +359,6 @@ export default function FermentationSection() {
           </div>
         </div>
 
-        <aside className="hs-fermentation-grid-aside">
-          <SummaryCard
-            steps={steps}
-            totalDays={totalDays}
-            hasPackaging={!!currentRecipe.packaging}
-            methods={currentRecipe.packaging?.methods ?? []}
-            targetVols={pkg.targetCo2Volumes}
-            kegPsi={kegPsi}
-            servingTempC={pkg.servingTempC ?? 4}
-            primingSugarG={primingSugarG}
-            sugarType={pkg.primingSugarType ?? "corn-sugar"}
-            carbMethod={pkg.carbonationMethod ?? "set-and-forget"}
-            conditioningTempC={pkg.conditioningTempC ?? 20}
-            brewDate={brewDate}
-            onBrewDateUpdate={handleBrewDateUpdate}
-          />
-          <BrewersNotesCard
-            notes={currentRecipe.notes ?? ""}
-            tags={currentRecipe.tags ?? []}
-            onNotesChange={(v) => updateRecipe({ notes: v || undefined })}
-            onTagsChange={(v) =>
-              updateRecipe({ tags: v.length ? v : undefined })
-            }
-          />
-        </aside>
       </div>
 
       <FermentationStepModal
@@ -692,7 +654,8 @@ function LedgerHead() {
         gridTemplateColumns: LEDGER_COLS,
         padding: "10px 18px 8px",
         borderBottom: `2px solid ${hsTokens.ink}`,
-        background: hsTokens.cream,
+        // Section-tinted ledger head: ~7% honey mixed into cream.
+        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-honey))",
         gap: 14,
         alignItems: "center",
       }}
@@ -948,7 +911,8 @@ function LedgerTotal({ totalDays }: { totalDays: number }) {
         gridTemplateColumns: LEDGER_COLS,
         padding: "14px 18px",
         borderTop: `2px solid ${hsTokens.ink}`,
-        background: hsTokens.cream,
+        // Section-tinted total band — same 7% honey mix as the ledger head.
+        background: "color-mix(in srgb, var(--hs-cream-2) 96%, var(--hs-honey))",
         alignItems: "center",
         gap: 14,
       }}
@@ -1695,8 +1659,11 @@ function SummaryCard({
     <div
       className="hs-fermentation-summary"
       style={{
-        background: "color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))",
-        border: `2px solid ${hsTokens.ink}`,
+        // Subtle ingredient tint: ~5% honey in the bg AND ~15% mixed into
+        // the ink border. Compound signal — neither dimension loud alone.
+        background:
+          "color-mix(in srgb, color-mix(in srgb, var(--hs-cream), var(--hs-cream-2)) 95%, var(--hs-honey))",
+        border: `2px solid color-mix(in srgb, ${hsTokens.ink} 85%, var(--hs-honey))`,
         borderRadius: 12,
         boxShadow: hsTokens.sh3,
         padding: "16px 16px 14px",
@@ -3147,294 +3114,6 @@ function InlineReadout({
   );
 }
 
-// ─── Brewer's notes card (sidebar) ────────────────────────────────
-
-function BrewersNotesCard({
-  notes,
-  tags,
-  onNotesChange,
-  onTagsChange,
-}: {
-  notes: string;
-  tags: string[];
-  onNotesChange: (v: string) => void;
-  onTagsChange: (v: string[]) => void;
-}) {
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [draftNotes, setDraftNotes] = useState(notes);
-  const [editingTags, setEditingTags] = useState(false);
-  const [draftTags, setDraftTags] = useState(tags.join(" "));
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingNotes) {
-      setDraftNotes(notes);
-      requestAnimationFrame(() => textareaRef.current?.focus());
-    }
-  }, [editingNotes, notes]);
-
-  useEffect(() => {
-    if (editingTags) {
-      setDraftTags(tags.join(" "));
-      requestAnimationFrame(() => tagInputRef.current?.focus());
-    }
-  }, [editingTags, tags]);
-
-  const commitNotes = () => {
-    const next = draftNotes.trim();
-    if (next !== notes) onNotesChange(next);
-    setEditingNotes(false);
-  };
-  const cancelNotes = () => {
-    setDraftNotes(notes);
-    setEditingNotes(false);
-  };
-  const commitTags = () => {
-    const next = draftTags
-      .split(/\s+/)
-      .map((t) => t.replace(/^#+/, "").trim().toLowerCase())
-      .filter(Boolean);
-    if (next.join(" ") !== tags.join(" ")) onTagsChange(next);
-    setEditingTags(false);
-  };
-  const cancelTags = () => {
-    setDraftTags(tags.join(" "));
-    setEditingTags(false);
-  };
-
-  return (
-    <div
-      className="hs-fermentation-notes-card"
-      style={{
-        background:
-          "color-mix(in srgb, var(--hs-cream-2) 86%, var(--hs-honey))",
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 14,
-        boxShadow: hsTokens.sh3,
-        padding: 18,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
-          paddingBottom: 8,
-        }}
-      >
-        <Eyebrow size={11}>Brewer&apos;s notes</Eyebrow>
-        <button
-          type="button"
-          onClick={() => setEditingNotes((v) => !v)}
-          aria-label={editingNotes ? "Save notes" : "Edit notes"}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 10,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-            borderRadius: 4,
-          }}
-        >
-          {editingNotes ? "Save" : "Edit"}{" "}
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            <path d="m15 5 4 4" />
-          </svg>
-        </button>
-      </div>
-
-      {editingNotes ? (
-        <textarea
-          ref={textareaRef}
-          value={draftNotes}
-          onChange={(e) => setDraftNotes(e.target.value)}
-          onBlur={commitNotes}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              cancelNotes();
-            } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              commitNotes();
-            }
-          }}
-          placeholder="Pitched at 19°C — krausen up by hour 14…"
-          rows={4}
-          style={{
-            width: "100%",
-            background: hsTokens.paper,
-            border: `1.5px solid ${hsTokens.honey}`,
-            borderRadius: 8,
-            padding: "10px 12px",
-            fontFamily: hsTokens.script,
-            fontSize: 19,
-            lineHeight: 1.35,
-            color: hsTokens.ink,
-            outline: "none",
-            resize: "vertical",
-            minHeight: 90,
-          }}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditingNotes(true)}
-          aria-label="Edit brewer's notes"
-          style={{
-            background: "transparent",
-            border: "none",
-            padding: 0,
-            margin: 0,
-            cursor: "text",
-            textAlign: "left",
-            display: "block",
-            width: "100%",
-            color: "inherit",
-            fontFamily: "inherit",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: hsTokens.script,
-              fontSize: 19,
-              lineHeight: 1.35,
-              color: notes ? hsTokens.ink : hsTokens.muted,
-              margin: 0,
-              whiteSpace: "pre-wrap",
-              opacity: notes ? 1 : 0.7,
-            }}
-          >
-            {notes ||
-              "Pitched at 19°C — krausen up by hour 14…"}
-          </p>
-        </button>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          alignItems: "center",
-        }}
-      >
-        {editingTags ? (
-          <input
-            ref={tagInputRef}
-            type="text"
-            value={draftTags}
-            onChange={(e) => setDraftTags(e.target.value)}
-            onBlur={commitTags}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelTags();
-              } else if (e.key === "Enter") {
-                e.preventDefault();
-                commitTags();
-              }
-            }}
-            placeholder="#dry-hop #lager"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: hsTokens.paper,
-              border: `1.5px solid ${hsTokens.honey}`,
-              borderRadius: 999,
-              padding: "5px 10px",
-              fontFamily: hsTokens.body,
-              fontSize: 12,
-              color: hsTokens.ink,
-              outline: "none",
-            }}
-          />
-        ) : (
-          <>
-            {tags.length > 0 ? (
-              tags.map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    background: hsTokens.paper,
-                    border: `1.5px solid ${hsTokens.ink}`,
-                    borderRadius: 999,
-                    padding: "3px 10px",
-                    fontFamily: hsTokens.body,
-                    fontWeight: 600,
-                    fontSize: 11,
-                    color: hsTokens.ink,
-                    letterSpacing: "0.02em",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  #{t}
-                </span>
-              ))
-            ) : (
-              <span
-                style={{
-                  fontFamily: hsTokens.body,
-                  fontSize: 11,
-                  color: hsTokens.muted,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                No tags yet —
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => setEditingTags(true)}
-              aria-label="Edit tags"
-              style={{
-                background: "transparent",
-                border: `1.5px dashed ${hsTokens.ink}44`,
-                borderRadius: 999,
-                padding: "2px 9px",
-                fontFamily: hsTokens.body,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: hsTokens.muted,
-                cursor: "pointer",
-              }}
-            >
-              + tag
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ─── Eyebrow ──────────────────────────────────────────────────────
 
@@ -3555,22 +3234,19 @@ function MobileAddRow({ onAdd }: { onAdd: () => void }) {
 function FermentationSectionStyles() {
   return (
     <style>{`
+      /* Single-column layout — the aside (summary + notes) has been
+         hoisted to the parent HopSkipBuilder grid so it can morph
+         between tabs. */
       .hs-fermentation-section .hs-fermentation-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-        grid-template-areas:
-          "lhead   ."
-          "main    aside";
-        column-gap: 20px;
+        display: flex;
+        flex-direction: column;
         row-gap: 16px;
-        align-items: start;
+        min-width: 0;
       }
       .hs-fermentation-section .hs-fermentation-grid-lhead {
-        grid-area: lhead;
         min-width: 0;
       }
       .hs-fermentation-section .hs-fermentation-grid-main {
-        grid-area: main;
         min-width: 0;
         display: flex;
         flex-direction: column;
@@ -3580,13 +3256,6 @@ function FermentationSectionStyles() {
         display: flex;
         flex-direction: column;
         gap: 14px;
-      }
-      .hs-fermentation-section .hs-fermentation-grid-aside {
-        grid-area: aside;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-width: 0;
       }
 
       .hs-fermentation-section .hs-fermentation-sugar-chip:hover {
@@ -3608,11 +3277,6 @@ function FermentationSectionStyles() {
 
       @media (max-width: 900px) {
         .hs-fermentation-section .hs-fermentation-grid {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-areas:
-            "lhead"
-            "main"
-            "aside";
           row-gap: 14px;
         }
       }
@@ -3622,7 +3286,9 @@ function FermentationSectionStyles() {
           transition: background 90ms ease;
         }
         .hs-fermentation-section .hs-fermentation-data-row:hover {
-          background: ${hsTokens.cream2};
+          /* Section-tinted hover: ~2% honey mixed into a paper/cream-2 base —
+             lighter overall than pure cream-2 so the hover lifts. */
+          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-honey));
         }
         .hs-fermentation-section .hs-fermentation-name-btn:hover .hs-fermentation-name {
           text-decoration: underline;
@@ -3744,5 +3410,63 @@ function FermentationSectionStyles() {
         }
       }
     `}</style>
+  );
+}
+
+// ─── Helper-card container (mounted by HelperCardMorph) ───────────
+
+export function FermentationHelperCard() {
+  const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const updateRecipe = useRecipeStore((s) => s.updateRecipe);
+  const steps = useMemo<FermentationStep[]>(
+    () => currentRecipe?.fermentationSteps ?? [],
+    [currentRecipe?.fermentationSteps]
+  );
+  const totalDays = steps.reduce((acc, s) => acc + s.durationDays, 0);
+  const pkg = currentRecipe?.packaging ?? DEFAULT_PACKAGING;
+  const peakFermTempC = useMemo(() => pkgCalc.highestFermTemp(steps), [steps]);
+  const residualCo2 = useMemo(() => pkgCalc.residualCo2(peakFermTempC), [peakFermTempC]);
+  const batchVolumeL = currentRecipe?.batchVolumeL ?? 0;
+  const kegPsi = useMemo(
+    () => pkgCalc.forcedCarbonationPsi(pkg.servingTempC ?? 4, pkg.targetCo2Volumes),
+    [pkg.servingTempC, pkg.targetCo2Volumes]
+  );
+  const primingSugarG = useMemo(
+    () =>
+      pkgCalc.primingSugarGrams(
+        pkg.targetCo2Volumes,
+        residualCo2,
+        batchVolumeL,
+        pkg.primingSugarType ?? "corn-sugar"
+      ),
+    [pkg.targetCo2Volumes, residualCo2, batchVolumeL, pkg.primingSugarType]
+  );
+  const brewDate = useMemo(() => {
+    const s = currentRecipe?.brewDate;
+    if (!s) return null;
+    const [y, m, d] = s.split("-").map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d, 12);
+  }, [currentRecipe?.brewDate]);
+  const handleBrewDateUpdate = (d: Date | null) => {
+    updateRecipe({ brewDate: d ? dateToInputValue(d) : undefined });
+  };
+  if (!currentRecipe || steps.length === 0) return null;
+  return (
+    <SummaryCard
+      steps={steps}
+      totalDays={totalDays}
+      hasPackaging={!!currentRecipe.packaging}
+      methods={currentRecipe.packaging?.methods ?? []}
+      targetVols={pkg.targetCo2Volumes}
+      kegPsi={kegPsi}
+      servingTempC={pkg.servingTempC ?? 4}
+      primingSugarG={primingSugarG}
+      sugarType={pkg.primingSugarType ?? "corn-sugar"}
+      carbMethod={pkg.carbonationMethod ?? "set-and-forget"}
+      conditioningTempC={pkg.conditioningTempC ?? 20}
+      brewDate={brewDate}
+      onBrewDateUpdate={handleBrewDateUpdate}
+    />
   );
 }

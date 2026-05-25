@@ -27,14 +27,14 @@ import { useRecipeStore } from "../stores/recipeStore";
 // import { useUserTier } from "../../../auth/useUserTier";
 // import { canAccess } from "../../../auth/tierAccess";
 import UpgradeModal from "../../../auth/components/UpgradeModal";
-import SourceWaterModal from "./SourceWaterModal";
-import CustomTargetStyleModal from "./CustomTargetStyleModal";
+import OLD_SourceWaterModal from "./OLD_SourceWaterModal";
+import OLD_CustomTargetStyleModal from "./OLD_CustomTargetStyleModal";
 import {
-  PhAdjustmentsSection,
-  WaterChemistrySection,
-  OtherIngredientsPanel,
-  WaterIngredientPickerModal,
-  CustomWaterIngredientModal,
+  OLD_PhAdjustmentsSection,
+  OLD_WaterChemistrySection,
+  OLD_OtherIngredientsPanel,
+  OLD_WaterIngredientPickerModal,
+  OLD_CustomWaterIngredientModal,
   getDefaultUnit,
   getDefaultTiming,
   ION_LABELS,
@@ -45,7 +45,7 @@ type Props = {
   recipe: Recipe;
 };
 
-export default function WaterSection({ calculations, recipe }: Props) {
+export default function OLD_WaterSection({ calculations, recipe }: Props) {
   const { updateRecipe, addOtherIngredient, updateOtherIngredient, removeOtherIngredient } =
     useRecipeStore();
   // TODO: Re-enable premium gating once Stripe is live
@@ -267,7 +267,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       <h2 className="brew-section-title mb-4">Water Chemistry</h2>
 
       {/* Water Chemistry */}
-      <WaterChemistrySection
+      <OLD_WaterChemistrySection
         sourceProfile={waterChem.sourceProfile}
         sourceProfileName={waterChem.sourceProfileName}
         targetStyle={targetStyle}
@@ -313,14 +313,14 @@ export default function WaterSection({ calculations, recipe }: Props) {
         </div>
 
         {/* Mash pH — stretches to match ion grid height */}
-        <PhAdjustmentsSection
+        <OLD_PhAdjustmentsSection
           calculations={calculations}
           onAddPhAdjustment={handleAddPhAdjustment}
         />
       </div>
 
       {/* Other Ingredients */}
-      <OtherIngredientsPanel
+      <OLD_OtherIngredientsPanel
         ingredients={otherIngredients}
         onOpenPicker={() => setIsIngredientPickerOpen(true)}
         onUpdate={updateOtherIngredient}
@@ -328,7 +328,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Source Water Modal */}
-      <SourceWaterModal
+      <OLD_SourceWaterModal
         isOpen={isSourceModalOpen}
         onClose={() => setIsSourceModalOpen(false)}
         onSelect={handleSourceProfileChange}
@@ -337,7 +337,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Custom Target Style Modal */}
-      <CustomTargetStyleModal
+      <OLD_CustomTargetStyleModal
         isOpen={isCustomTargetModalOpen}
         onClose={() => setIsCustomTargetModalOpen(false)}
         onSave={handleCustomTargetChange}
@@ -346,7 +346,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Other Ingredient Picker Modal */}
-      <WaterIngredientPickerModal
+      <OLD_WaterIngredientPickerModal
         isOpen={isIngredientPickerOpen}
         onClose={() => setIsIngredientPickerOpen(false)}
         onSelect={handleAddFromPreset}
@@ -354,7 +354,7 @@ export default function WaterSection({ calculations, recipe }: Props) {
       />
 
       {/* Custom Ingredient Modal */}
-      <CustomWaterIngredientModal
+      <OLD_CustomWaterIngredientModal
         isOpen={isCustomIngredientModalOpen}
         onClose={() => setIsCustomIngredientModalOpen(false)}
         onAdd={handleAddCustomIngredient}

@@ -9,7 +9,7 @@
 import { useState, useMemo } from "react";
 import { COMMON_WATER_PROFILES, type WaterProfile } from "../../domain/services/WaterChemistryService";
 import PresetPickerModal from "./PresetPickerModal";
-import CustomSourceWaterModal from "./CustomSourceWaterModal";
+import OLD_CustomSourceWaterModal from "./OLD_CustomSourceWaterModal";
 
 type WaterProfilePreset = {
   name: string;
@@ -28,7 +28,7 @@ type Props = {
   currentProfileName?: string;
 };
 
-export default function SourceWaterModal({
+export default function OLD_SourceWaterModal({
   isOpen,
   onClose,
   onSelect,
@@ -99,7 +99,7 @@ export default function SourceWaterModal({
         onCreateCustom={() => setIsCustomModalOpen(true)}
       />
 
-      <CustomSourceWaterModal
+      <OLD_CustomSourceWaterModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleCustomSave}

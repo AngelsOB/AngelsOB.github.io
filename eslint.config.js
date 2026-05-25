@@ -160,6 +160,27 @@ export default tseslint.config([
             message:
               'Classic UI (OLD_ prefix marker). Use YeastSection from @/modules/hopskip/components/builder/ (with YeastPresetModal / CustomYeastModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.6.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_WaterSection',
+              '**/modules/beta-builder/presentation/components/OLD_SourceWaterModal',
+              '**/modules/beta-builder/presentation/components/OLD_CustomSourceWaterModal',
+              '**/modules/beta-builder/presentation/components/OLD_TargetStyleModal',
+              '**/modules/beta-builder/presentation/components/OLD_CustomTargetStyleModal',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_WaterChemistrySection',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_PhAdjustmentsSection',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_SaltAdditionsPanel',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_SaltSummary',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_WaterProfileComparison',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_WaterIonRangeStrip',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_OtherIngredientsPanel',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_WaterIngredientPickerModal',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_CustomWaterIngredientModal',
+              '**/modules/beta-builder/presentation/components/water-section/OLD_WaterVolumesDisplay',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use WaterSection from @/modules/hopskip/components/builder/ (with SourceWaterPresetModal / CustomSourceWaterModal / TargetStylePresetModal / CustomTargetStyleModal / WaterIngredientPickerModal / CustomWaterIngredientModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.7.',
+          },
         ],
       }],
     },

@@ -14,7 +14,7 @@ type Props = {
   onAddPhAdjustment: (name: string, amount: number, unit: string) => void;
 };
 
-export default function PhAdjustmentsSection({
+export default function OLD_PhAdjustmentsSection({
   calculations,
   onAddPhAdjustment,
 }: Props) {

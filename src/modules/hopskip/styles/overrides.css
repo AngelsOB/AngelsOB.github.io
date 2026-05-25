@@ -21,7 +21,6 @@
 .hs-theme .brew-section[data-accent="grain"]        { --hs-section-accent: var(--hs-malt); }
 .hs-theme .brew-section[data-accent="hops"]         { --hs-section-accent: var(--hs-hops); }
 .hs-theme .brew-section[data-accent="mash"]         { --hs-section-accent: var(--hs-roast); }
-.hs-theme .brew-section[data-accent="water"]        { --hs-section-accent: var(--hs-water); }
 .hs-theme .brew-section[data-accent="yeast"]        { --hs-section-accent: var(--hs-yeast); }
 .hs-theme .brew-section[data-accent="fermentation"] { --hs-section-accent: var(--hs-honey); }
 .hs-theme .brew-section[data-accent="equipment"]    { --hs-section-accent: var(--hs-muted); }
@@ -1135,6 +1134,103 @@
 .hs-theme .hs-section-frame .brew-section.brew-animate-in,
 .hs-theme .hs-section-frame .brew-animate-in {
   animation: none !important;
+}
+
+/* ────────────── BUILDER GRID (main + helper aside + notes) ────────────── */
+/* The grid carries the OUTER section frame (ink border, paper bg, shadow,
+   rounded corners). Both the main column and the side column live inside
+   that single frame so the outline visually wraps the whole tab body.
+   Per-section frames are neutralized by .hs-builder-main .hs-*-section
+   rules further down. */
+
+.hs-theme .hs-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  grid-template-areas:
+    "title title"
+    "main  side";
+  column-gap: 24px;
+  row-gap: 22px;
+  align-items: start;
+  background: var(--hs-paper);
+  border: 2px solid var(--hs-ink);
+  border-radius: 0 0 14px 14px;
+  box-shadow: var(--hs-sh3);
+  padding: 24px;
+  position: relative;
+}
+.hs-theme .hs-builder-grid.is-brewsheet {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "main";
+  /* Brew sheet has its own internal frame — drop the wrapper one. */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.hs-theme .hs-builder-title { grid-area: title; }
+.hs-theme .hs-builder-main {
+  grid-area: main;
+  min-width: 0;
+}
+.hs-theme .hs-builder-side {
+  grid-area: side;
+  min-width: 0;
+  /* The grid-level title spans both columns now, so the side column
+     only needs a small top offset to align the helper with the *start
+     of the ledger table* — i.e. just under each section's ledger
+     header row ("THE HOP BILL", "THE GRAIN LEDGER", + ADD …). That
+     header row sits ~50px tall across sections. */
+  padding-top: 56px;
+}
+/* Water's first row is the "WATER PLAN" header (Montreal → Balanced),
+   which is shorter than the other sections' ledger header rows, so the
+   helper needs a smaller top offset to align with the salt additions
+   row (the equivalent of the "ledger table" in this section). */
+.hs-theme .hs-builder-grid[data-tab="water"] .hs-builder-side {
+  padding-top: 41px;
+}
+
+/* Hide each section's own SectionTitle when rendered inside the builder
+   grid — the title is now hoisted to the grid top by BuilderTitleBar so
+   the colored bottom rule can span both columns. The first DOM child of
+   each section is an inline <style> from XxxSectionStyles(), not the
+   header, so use header:first-of-type to target the title reliably. */
+.hs-theme .hs-builder-main section > header:first-of-type {
+  display: none !important;
+}
+
+/* Neutralize each per-section frame when it lives inside the builder grid.
+   The outer wrapper now provides border / background / padding / radius /
+   shadow, so the inner section should sit flush against it. */
+.hs-theme .hs-builder-main section.hs-ferm-section,
+.hs-theme .hs-builder-main section.hs-hops-section,
+.hs-theme .hs-builder-main section.hs-mash-section,
+.hs-theme .hs-builder-main section.hs-water-section,
+.hs-theme .hs-builder-main section.hs-yeast-section,
+.hs-theme .hs-builder-main section.hs-fermentation-section {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Mobile: stack helper above main above notes, matching the previous
+   in-section "display: contents" ordering (helper first, then ledger,
+   then notes anchored at the bottom). */
+@media (max-width: 900px) {
+  .hs-theme .hs-builder-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "main"
+      "side";
+    row-gap: 16px;
+    padding: 18px;
+  }
+  .hs-theme .hs-builder-side { padding-top: 0; }
 }
 
 /* ────────────── HS helpers ────────────── */

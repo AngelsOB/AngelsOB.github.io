@@ -20,7 +20,7 @@ type Props = {
   recipe: Recipe;
 };
 
-export default function WaterVolumesDisplay({ calculations, recipe }: Props) {
+export default function OLD_WaterVolumesDisplay({ calculations, recipe }: Props) {
   const preBoilGravity = calculations.preBoilGravity;
   const hasGravity = calculations.og > 1.0;
 
