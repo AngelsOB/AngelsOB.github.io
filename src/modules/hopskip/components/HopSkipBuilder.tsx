@@ -21,7 +21,7 @@ import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import { EquipmentSection } from "@/modules/beta-builder/presentation/components/EquipmentSection";
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
-import StyleRangeComparison from "@/modules/beta-builder/presentation/components/StyleRangeComparison";
+import BJCPStyleRail from "./BJCPStyleRail";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
 import type {
   SessionActuals,
@@ -29,7 +29,6 @@ import type {
 } from "@/modules/beta-builder/domain/models/BrewSession";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import HSButton from "./HSButton";
 import HSForkButton from "./public/HSForkButton";
 import HSRatingStars from "./public/HSRatingStars";
@@ -149,6 +148,68 @@ export default function HopSkipBuilder({
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
   const [showStyleRanges, setShowStyleRanges] = useState(true);
+
+  // Tab strip responsive layout — measure the tablist's available width
+  // and tier the rendering: full chrome → drop count → drop swatch →
+  // tight padding → two rows. See `tabStageConfig` for thresholds.
+  const [tabStripWidth, setTabStripWidth] = useState<number | null>(null);
+  // Callback ref: setup/teardown when the tablist mounts/unmounts. Critical
+  // because the parent early-returns a Loading state when currentRecipe is
+  // null, so the tablist doesn't exist on first render — a useEffect with
+  // empty deps would miss the mount entirely and the ResizeObserver would
+  // never attach, leaving tabStripWidth=null forever (stuck at stage A).
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const measureFnRef = useRef<(() => void) | null>(null);
+  const tabStripRef = useCallback((el: HTMLDivElement | null) => {
+    // Teardown previous observer + listener
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    if (measureFnRef.current) {
+      window.removeEventListener("resize", measureFnRef.current);
+      measureFnRef.current = null;
+    }
+    if (!el) return;
+    const measure = () => {
+      const w = el.getBoundingClientRect().width;
+      setTabStripWidth((prev) => (prev === w ? prev : w));
+    };
+    measureFnRef.current = measure;
+    measure();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => measure());
+      ro.observe(el);
+      observerRef.current = ro;
+    }
+    window.addEventListener("resize", measure);
+  }, []);
+  const tabStage: "A" | "B" | "C" | "D" | "E" = (() => {
+    const w = tabStripWidth ?? 1200;
+    if (w >= 1000) return "A";
+    if (w >= 850) return "B";
+    if (w >= 700) return "C";
+    if (w >= 560) return "D";
+    return "E";
+  })();
+  const tabStageConfig = {
+    A: { padding: "12px 20px", labelSize: 14, showSwatch: true, showCount: true },
+    B: { padding: "12px 18px", labelSize: 14, showSwatch: true, showCount: false },
+    C: { padding: "12px 14px", labelSize: 14, showSwatch: false, showCount: false },
+    D: { padding: "10px 12px", labelSize: 13, showSwatch: false, showCount: false },
+    E: { padding: "10px 12px", labelSize: 13, showSwatch: false, showCount: false },
+  } as const;
+  const tabCfg = tabStageConfig[tabStage];
+
+  // In stage E we split the swappable tabs into two 3-tab groups and keep
+  // Brew sheet pinned to the bottom-right. Track which swappable group
+  // was last active so selecting Brew sheet doesn't churn the layout.
+  // Group A = Fermentables, Hops, Mash. Group B = Water, Yeast, Fermentation.
+  const [lastSwappable, setLastSwappable] = useState<"A" | "B">("A");
+  useEffect(() => {
+    const idx = TABS.findIndex((t) => t.k === activeTab);
+    if (idx >= 0 && idx < 3) setLastSwappable("A");
+    else if (idx >= 3 && idx < 6) setLastSwappable("B");
+    // brewsheet (idx 6): leave lastSwappable alone
+  }, [activeTab]);
 
   const switchTab = useCallback(
     (next: TabKey) => {
@@ -346,8 +407,6 @@ export default function HopSkipBuilder({
   };
 
   const bjcpSpec = getBjcpStyleSpec(currentRecipe.style?.split(".")[0]?.trim());
-  const rangeStr = (r?: [number, number], precision = 3, suffix = "") =>
-    r ? `${r[0].toFixed(precision)}${suffix}–${r[1].toFixed(precision)}${suffix}` : "—";
 
   return (
     <>
@@ -467,7 +526,7 @@ export default function HopSkipBuilder({
             <h1
               style={{
                 ...display,
-                fontSize: 72,
+                fontSize: "clamp(36px, 8.5vw, 72px)",
                 fontFamily: hsTokens.display,
                 color: hsTokens.ink,
                 margin: 0,
@@ -486,7 +545,7 @@ export default function HopSkipBuilder({
               placeholder="Untitled recipe"
               style={{
                 ...display,
-                fontSize: 72,
+                fontSize: "clamp(36px, 8.5vw, 72px)",
                 border: "none",
                 background: "transparent",
                 fontFamily: hsTokens.display,
@@ -722,60 +781,6 @@ export default function HopSkipBuilder({
         </div>
       </div>
 
-      {/* ── BJCP band ── */}
-      {calc && currentRecipe.style ? (
-        <div
-          className={`hs-collapse${showStyleRanges ? " is-open" : ""}`}
-          aria-hidden={!showStyleRanges}
-        >
-          <div className="hs-collapse-inner">
-            <section
-              className="brew-theme hs-bjcp"
-              style={{
-                padding: `18px ${BAND_PADDING_X}`,
-                borderBottom: `2px solid ${hsTokens.ink}`,
-                background: hsTokens.paper,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  marginBottom: 10,
-                }}
-              >
-                <HSEyebrow>BJCP style ranges</HSEyebrow>
-                <span style={{ fontSize: 11, color: hsTokens.muted, fontFamily: hsTokens.body }}>
-                  · {currentRecipe.style}
-                </span>
-                <span
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background: hsTokens.ink,
-                    opacity: 0.18,
-                  }}
-                />
-                <HSScriptNote color={hsTokens.yeast} size={16} rotate={-3}>
-                  where you sit
-                </HSScriptNote>
-              </div>
-              <div className="hs-bjcp-grid">
-                <StyleRangeComparison
-                  styleCode={currentRecipe.style}
-                  abv={calc.abv}
-                  og={calc.og}
-                  fg={calc.fg}
-                  ibu={calc.ibu}
-                  srm={calc.srm}
-                />
-              </div>
-            </section>
-          </div>
-        </div>
-      ) : null}
-
       {/* ── Live numbers band ── */}
       {calc ? (
         <section
@@ -806,17 +811,37 @@ export default function HopSkipBuilder({
               gap: 12,
             }}
           >
-            <StatCard k="OG" v={calc.og.toFixed(3)} c={hsTokens.malt} range={rangeStr(bjcpSpec?.og, 3)} />
-            <StatCard k="FG" v={calc.fg.toFixed(3)} c={hsTokens.malt} range={rangeStr(bjcpSpec?.fg, 3)} />
-            <StatCard k="ABV" v={calc.abv.toFixed(1)} u="%" c={hsTokens.roast} range={rangeStr(bjcpSpec?.abv, 1, "%")} />
-            <StatCard k="IBU" v={Math.round(calc.ibu).toString()} c={hsTokens.hops} range={rangeStr(bjcpSpec?.ibu, 0)} />
-            <StatCard k="pH" v={calc.estimatedMashPh?.toFixed(2) ?? "—"} c={hsTokens.water} range="5.2–5.6" />
-            <StatCard k="Cal" v={Math.round(calc.calories ?? 0).toString()} u="/12oz" c={hsTokens.muted} range="—" />
+            <StatCard k="OG" v={calc.og.toFixed(3)} c={hsTokens.malt} />
+            <StatCard k="FG" v={calc.fg.toFixed(3)} c={hsTokens.malt} />
+            <StatCard k="ABV" v={calc.abv.toFixed(1)} u="%" c={hsTokens.roast} />
+            <StatCard k="IBU" v={Math.round(calc.ibu).toString()} c={hsTokens.hops} />
+            <StatCard k="pH" v={calc.estimatedMashPh?.toFixed(2) ?? "—"} c={hsTokens.water} />
+            <StatCard k="Cal" v={Math.round(calc.calories ?? 0).toString()} u="/12oz" c={hsTokens.muted} />
           </div>
-          <ColorIndicatorBar
-            srm={calc.srm}
-            styleSrmRange={bjcpSpec?.srm}
-          />
+          {currentRecipe.style ? (
+            <div
+              className={`hs-collapse${showStyleRanges ? " is-open" : ""}`}
+              aria-hidden={!showStyleRanges}
+            >
+              <div className="hs-collapse-inner">
+                {/* paddingRight/Bottom reserves clearance for the rail's
+                    4px hard shadow — the collapse-inner clips overflow to
+                    animate height. */}
+                <div style={{ paddingTop: 18, paddingRight: 6, paddingBottom: 6 }}>
+                  <BJCPStyleRail
+                    styleCode={currentRecipe.style}
+                    og={calc.og}
+                    fg={calc.fg}
+                    abv={calc.abv}
+                    ibu={calc.ibu}
+                    srm={calc.srm}
+                    srmRange={bjcpSpec?.srm}
+                    onSwitchStyle={isShared ? undefined : () => setIsStyleModalOpen(true)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
           <style>{`
             @media (max-width: 900px) {
               .hs-livestats { grid-template-columns: repeat(3, 1fr) !important; }
@@ -837,28 +862,117 @@ export default function HopSkipBuilder({
         }}
       >
         <div
+          ref={tabStripRef}
           role="tablist"
           aria-label="Recipe sections"
+          data-tab-stage={tabStage}
+          data-tab-strip-width={tabStripWidth ?? "null"}
           style={{
-            display: "flex",
-            alignItems: "stretch",
-            gap: 0,
-            overflowX: "auto",
             position: "relative",
             zIndex: 5,
-            paddingTop: 18,
-            marginBottom: -2,
+            paddingTop: tabStage === "E" ? 8 : 18,
+            marginBottom: -3,
           }}
           className="hs-no-scrollbar"
         >
+          {/* Hover effect for inactive tabs: rise 4px and reveal a faded
+              version of the tab's accent color at the top. !important
+              overrides the inline transform (used by the swap/scale logic).
+              Active tab is unaffected — its accent strip stays at opacity 1
+              and it shouldn't move. */}
+          <style>{`
+            /* Hover-rise: applies to all inactive tabs. */
+            .hs-builder-tab:not([aria-selected="true"]):hover {
+              transform: translateY(-3px) !important;
+            }
+            /* Counter-translate the inner bottom line so it stays anchored
+               to the content frame top while the rest of the tab lifts. */
+            .hs-builder-tab:not([aria-selected="true"]):hover .hs-bottom-line {
+              transform: translateY(3px);
+            }
+            /* Accent fade-in on hover: applies to all stages. */
+            .hs-builder-tab:not([aria-selected="true"]):hover .hs-tab-accent {
+              opacity: 0.4;
+            }
+          `}</style>
+          {/* Cover strip — stage E only. Hides the rounded tops of the
+              top-row tabs at the very top of the tablist. Cream2 bg
+              matches the surrounding band so it's visually invisible.
+              z-index above the row containers (z=1, z=2, z=3 inside this
+              tablist's stacking context). */}
+          {tabStage === "E" ? (
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 12,
+                background: hsTokens.cream2,
+                zIndex: 6,
+                pointerEvents: "none",
+              }}
+            />
+          ) : null}
           {(() => {
-            const mainTabs = TABS.filter((t) => t.k !== "brewsheet");
-            const rightTabs = TABS.filter((t) => t.k === "brewsheet");
-            const renderTab = (t: TabDef, i: number, arr: TabDef[]) => {
+            const renderTab = (
+              t: TabDef,
+              i: number,
+              arr: TabDef[],
+              isTopRow = false
+            ) => {
               const isActive = t.k === activeTab;
               const count = t.countFrom ? t.countFrom(totals) : null;
               const isFirst = i === 0;
               const isLast = i === arr.length - 1;
+              const showCount =
+                tabCfg.showCount && count !== null && count !== undefined;
+              // Single-row visible tab height (= padding-top * 2 + label + borders).
+              // Extension is the extra padding-bottom we add so the tab box
+              // extends past the visible area; on hover (translateY -4), the
+              // bottom of the tab still covers the original visible bottom,
+              // hiding the section bg that would otherwise be exposed below.
+              const padTop = parseInt(tabCfg.padding.match(/^(\d+)/)?.[1] ?? "12");
+              const tabBaseHeight = padTop * 2 + tabCfg.labelSize + 4;
+              const SINGLE_ROW_EXTENSION = 8;
+              const tabExtendedHeight = tabBaseHeight + SINGLE_ROW_EXTENSION;
+              // Top-row tabs in stage E: tall box (90px) with a small
+              // padding-top so the label sits near the top of the cap
+              // (minimal cream above the words), and a long padding-bottom
+              // that extends the box well past the bottom row's top edge
+              // for the tuck.
+              // Bottom-row tabs in stage E: box is stretched to
+              // BOTTOM_HEIGHT (50) by the row container, but only the
+              // top 40px is visible (extension clipped by wrapper). Add
+              // 10px to padding-bottom so the label is centered in the
+              // VISIBLE 40px, not the full 50px box.
+              // Single-row tabs (stages A-D): get the same extension trick —
+              // padding-bottom is bumped by SINGLE_ROW_EXTENSION, and the
+              // tablist inner wrapper clips the extension. Result: hover-rise
+              // doesn't expose the section bg underneath.
+              const sideMatch = tabCfg.padding.match(/^\d+\s*\w+\s+(\d+\w+)/);
+              const sidePadding = sideMatch ? sideMatch[1] : "12px";
+              const singleRowPadding = `${padTop}px ${sidePadding} ${padTop + SINGLE_ROW_EXTENSION}px`;
+              const padding =
+                tabStage === "E"
+                  ? isTopRow
+                    ? "8px 12px 65px"
+                    : "10px 12px 20px"
+                  : singleRowPadding;
+              const label = t.label;
+              // In stage E we drop the inactive-tab scale-down entirely —
+              // top-row tabs need their box to fill from y=0 to their full
+              // extended height (scaleY would compress and pull the visible
+              // top away from the section's top edge). The active/inactive
+              // cue in stage E is row position + paper-vs-cream bg, which
+              // is plenty.
+              const transformValue =
+                tabStage === "E"
+                  ? "none"
+                  : isActive
+                    ? "none"
+                    : "scaleY(0.92)";
               return (
                 <button
                   key={t.k}
@@ -866,8 +980,10 @@ export default function HopSkipBuilder({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => switchTab(t.k)}
+                  className="hs-builder-tab"
+                  data-stage={tabStage}
                   style={{
-                    padding: "12px 20px",
+                    padding,
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
@@ -881,11 +997,27 @@ export default function HopSkipBuilder({
                     borderTopRightRadius: 10,
                     borderBottomLeftRadius: 0,
                     borderBottomRightRadius: 0,
-                    background: isActive ? hsTokens.paper : hsTokens.cream,
+                    background: isActive
+                      ? hsTokens.paper
+                      : isTopRow
+                        ? hsTokens.cream
+                        : tabStage === "E"
+                          ? // Bottom row in stage E: box is 50px, only the
+                            // top 40px visible (10px extension clipped). Put
+                            // the gradient transition at 20-40% (= box y=30-40,
+                            // the visible bottom 10px) so it actually shows.
+                            `linear-gradient(to top, color-mix(in oklch, ${hsTokens.cream} 92.5%, ${hsTokens.ink} 7.5%) 20%, ${hsTokens.cream} 40%)`
+                          : // Single-row (A-D): tight bottom gradient.
+                            `linear-gradient(to top, color-mix(in oklch, ${hsTokens.cream} 92.5%, ${hsTokens.ink} 7.5%) 0%, ${hsTokens.cream} 25%)`,
                     color: isActive ? hsTokens.ink : hsTokens.muted,
                     fontFamily: hsTokens.body,
                     whiteSpace: "nowrap",
                     flex: "0 0 auto",
+                    // Single-row tabs: explicit height = extended height.
+                    // Stage E bottom row is sized by its row container so we
+                    // skip the explicit height there. Top row tabs are also
+                    // sized by their container.
+                    ...(tabStage !== "E" ? { height: tabExtendedHeight, boxSizing: "border-box" } : {}),
                     cursor: "pointer",
                     position: "relative",
                     /* overflow: hidden so the active tab's absolute accent
@@ -900,40 +1032,72 @@ export default function HopSkipBuilder({
                        with the section (so the 2px ink bottom border still
                        aligns with the row's bottom line). Active tab stays
                        full-size so it visually pops. */
-                    transform: isActive ? "none" : "scaleY(0.92)",
+                    transform: transformValue,
                     transformOrigin: "center bottom",
                     transition: "transform 120ms ease, background 120ms ease",
                   }}
                 >
-                  {isActive ? (
+                  {/* Accent strip — always rendered. Opacity 1 when active,
+                      0 when inactive (hidden), 0.4 when hovering an inactive
+                      tab (faded reveal, applied via CSS below). */}
+                  <span
+                    aria-hidden="true"
+                    className="hs-tab-accent"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: t.c,
+                      borderTopLeftRadius: 8,
+                      borderTopRightRadius: 8,
+                      pointerEvents: "none",
+                      opacity: isActive ? 1 : 0,
+                      transition: "opacity 160ms ease",
+                    }}
+                  />
+                  {/* Inactive tabs (bottom-row stage E + all single-row stages):
+                      extra ink "line" at the visible bottom of the box. The
+                      tab's own borderBottom has been pushed below the visible
+                      area by the height extension, so this inner line provides
+                      the visible bottom border in its place. Active tab skips
+                      this so its paper bg can merge with the content frame.
+                      On hover the parent button translateY(-4)s; this line
+                      counter-translateY(+4)s (via CSS) so it stays at the
+                      same absolute Y — anchored to the content frame top.
+                      `top` = visible_height - 4 (= -2 border-top, -2 line height). */}
+                  {!isActive && !(tabStage === "E" && isTopRow) ? (
                     <span
-                      aria-hidden="true"
+                      aria-hidden
+                      className="hs-bottom-line"
                       style={{
                         position: "absolute",
-                        top: 0,
                         left: 0,
                         right: 0,
-                        height: 4,
-                        background: t.c,
-                        borderTopLeftRadius: 8,
-                        borderTopRightRadius: 8,
+                        top: tabStage === "E" ? 36 : tabBaseHeight - 4,
+                        height: 2,
+                        background: hsTokens.ink,
                         pointerEvents: "none",
+                        transition: "transform 180ms cubic-bezier(0.32, 0.72, 0, 1)",
                       }}
                     />
                   ) : null}
-                  <span
-                    aria-hidden
-                    style={{
-                      width: 10,
-                      height: 10,
-                      background: t.c,
-                      borderRadius: 3,
-                      border: `1.5px solid ${hsTokens.ink}`,
-                      opacity: isActive ? 1 : 0.6,
-                    }}
-                  />
-                  <span style={{ ...display, fontSize: 14 }}>{t.label}</span>
-                  {count !== null && count !== undefined ? (
+                  {tabCfg.showSwatch ? (
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 10,
+                        height: 10,
+                        background: t.c,
+                        borderRadius: 3,
+                        border: `1.5px solid ${hsTokens.ink}`,
+                        opacity: isActive ? 1 : 0.6,
+                      }}
+                    />
+                  ) : null}
+                  <span style={{ ...display, fontSize: tabCfg.labelSize }}>{label}</span>
+                  {showCount ? (
                     <span
                       style={{
                         fontSize: 10,
@@ -952,8 +1116,166 @@ export default function HopSkipBuilder({
                 </button>
               );
             };
+
+            // Stage E — two-row layout. Swappable tabs split into two stable
+            // groups (A: Fermentables/Hops/Mash/Water, B: Yeast/Fermentation).
+            // Brew sheet is always anchored bottom-right and never moves.
+            // The swappable group containing the active tab gets translated
+            // down to sit adjacent to the content frame (preserving the
+            // binder pattern). When `lastSwappable` flips, both swappable
+            // rows transition translateY simultaneously — Brew sheet stays
+            // put. Top-row tabs get extra bottom padding so they appear to
+            // tuck under the bottom row (z-index keeps bottom row on top).
+            if (tabStage === "E") {
+              // Layout math:
+              //   Top row tabs sit at wrapper y=0 (= section y=0 since the
+              //   tablist drops its paddingTop in stage E). Their natural
+              //   height comes from extension padding — taller than the
+              //   bottom row — so their bottoms land BELOW the bottom row's
+              //   top edge. z-index keeps the bottom row in front, so the
+              //   overlap reads as "top tabs tucking under the bottom row."
+              //   Bottom row sits at translateY(BOTTOM_TOP). Its tabs are
+              //   forced to BOTTOM_HEIGHT via flex stretch and end at
+              //   WRAPPER_HEIGHT so the active tab's paper border merges
+              //   into the content frame just like single-row mode.
+              // Bottom row tabs are sized TALLER than the visible row
+              // height, with the extension clipped by the wrapper's
+              // overflow:hidden. This way, when a tab rises on hover the
+              // exposed area below it is *still* tab body (until the rise
+              // exceeds the extension), so you never see the section bg
+              // peek through underneath. Wrapper height is anchored to
+              // BOTTOM_TOP + BOTTOM_HEIGHT_VISIBLE so the visible bottom
+              // stays where it was.
+              const BOTTOM_HEIGHT_VISIBLE = 40;
+              const BOTTOM_HEIGHT_EXTENSION = 10;
+              const BOTTOM_HEIGHT = BOTTOM_HEIGHT_VISIBLE + BOTTOM_HEIGHT_EXTENSION;
+              const BOTTOM_TOP = 62;
+              const WRAPPER_HEIGHT = BOTTOM_TOP + BOTTOM_HEIGHT_VISIBLE;
+              // Top row sits at wrapper top; the tab itself is tall (90px)
+              // with the label near the top (small padding-top = small
+              // cream gap above the label) and a long padding-bottom that
+              // extends the box well past the bottom row's top for a
+              // clearly visible tuck.
+              const TOP_ROW_OFFSET = 32;
+              // Top tab box: padding 8 + label 13 + padding 65 + borders 4 = 90.
+              // Label sits at tab y=10 (top border + padding) → very close
+              // to the top of the tab. Tab bottom extends to wrapper y=90,
+              // bottom row top at wrapper y=62 → 28px of tuck.
+              const TOP_TAB_HEIGHT = 90;
+              const BREWSHEET_RESERVE = 120;
+              const groupA = TABS.slice(0, 3);
+              const groupB = TABS.slice(3, 6);
+              const brewTab = TABS[6];
+              const aIsBottom = lastSwappable === "A";
+              const bIsBottom = lastSwappable === "B";
+              // Offset the top row horizontally so its tabs don't line up
+              // edge-to-edge with the bottom row — a brick-stagger effect
+              // that makes the two rows read as distinct strata instead of
+              // a grid.
+              const TOP_ROW_X_OFFSET = 44;
+              const swapRowStyle = (isBottom: boolean): CSSProperties => ({
+                position: "absolute",
+                left: 0,
+                right: BREWSHEET_RESERVE,
+                top: 0,
+                // Explicit row heights — top row gets TOP_TAB_HEIGHT so flex
+                // stretch can fill the buttons to the extended size; bottom
+                // row gets BOTTOM_HEIGHT.
+                height: isBottom ? BOTTOM_HEIGHT : TOP_TAB_HEIGHT,
+                display: "flex",
+                alignItems: "stretch",
+                transform: isBottom
+                  ? `translate(0, ${BOTTOM_TOP}px)`
+                  : `translate(${TOP_ROW_X_OFFSET}px, ${TOP_ROW_OFFSET}px)`,
+                transition: "transform 90ms cubic-bezier(0.785, 0.135, 0.15, 0.86)",
+                zIndex: isBottom ? 2 : 1,
+                willChange: "transform",
+              });
+              return (
+                <div
+                  style={{
+                    position: "relative",
+                    height: WRAPPER_HEIGHT,
+                    // Clip the top-row tab boxes at the wrapper's bottom
+                    // so they can't extend down into the content frame
+                    // area below. The bottom row stays within the wrapper
+                    // naturally; only the top row's tall boxes would
+                    // otherwise extend past. Cover strip at the section
+                    // top still handles hiding the rounded tops.
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* BOTTOM LINE — stable baseline at the wrapper's bottom
+                      edge. z-index above the top row so the line shows
+                      through where top tabs would otherwise hide it (e.g.
+                      Fermentation extending past Mash). Bottom row tabs
+                      and Brewsheet sit on top via DOM order; the active
+                      tab's paper bottom border covers the ink line at its
+                      position (the binder merge). */}
+                  <div
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: 0,
+                      borderBottom: `2px solid ${hsTokens.ink}`,
+                      pointerEvents: "none",
+                      zIndex: 2,
+                    }}
+                  />
+                  <div style={swapRowStyle(aIsBottom)}>
+                    {groupA.map((t, i) =>
+                      renderTab(t, i, groupA, !aIsBottom)
+                    )}
+                  </div>
+                  <div style={swapRowStyle(bIsBottom)}>
+                    {groupB.map((t, i) =>
+                      renderTab(t, i, groupB, !bIsBottom)
+                    )}
+                  </div>
+                  {brewTab ? (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 0,
+                        height: BOTTOM_HEIGHT,
+                        display: "flex",
+                        alignItems: "stretch",
+                        transform: `translateY(${BOTTOM_TOP}px)`,
+                        zIndex: 3,
+                      }}
+                    >
+                      {renderTab(brewTab, 0, [brewTab], false)}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            }
+
+            // Stages A–D — single row with the brew-sheet tab right-anchored
+            // and a filler that carries the ink baseline across the gap.
+            // Inner wrapper has explicit height = original visible row
+            // height, with a clip-path that lets tabs extend ABOVE (for
+            // hover-rise visibility) but CLIPS below the wrapper's bottom
+            // (so the tab's padding-bottom extension stays hidden in
+            // normal state and only fills the gap on hover).
+            const mainTabs = TABS.filter((t) => t.k !== "brewsheet");
+            const rightTabs = TABS.filter((t) => t.k === "brewsheet");
+            const wrapperPadTop = parseInt(tabCfg.padding.match(/^(\d+)/)?.[1] ?? "12");
+            const wrapperTabBaseHeight = wrapperPadTop * 2 + tabCfg.labelSize + 4;
             return (
-              <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "stretch",
+                  gap: 0,
+                  height: wrapperTabBaseHeight,
+                  clipPath: "polygon(0% -200%, 100% -200%, 100% 100%, 0% 100%)",
+                }}
+              >
                 {mainTabs.map((t, i) => renderTab(t, i, mainTabs))}
                 <div
                   aria-hidden="true"
@@ -965,7 +1287,7 @@ export default function HopSkipBuilder({
                   }}
                 />
                 {rightTabs.map((t, i) => renderTab(t, i, rightTabs))}
-              </>
+              </div>
             );
           })()}
         </div>
@@ -1203,180 +1525,16 @@ function NumericMetaPill({
   );
 }
 
-// ─── Color indicator bar (rich SRM visualization) ────────────────
-// Sits below the live-numbers stat card grid. Long horizontal SRM
-// gradient, a vertical ink marker at the current SRM, optional hollow
-// markers for the BJCP style range endpoints, and a script-font color
-// adjective on the right.
-
-function srmAdjective(srm: number): string {
-  if (srm < 2) return "straw ✦";
-  if (srm < 4) return "pale gold ✦";
-  if (srm < 7) return "gold ✦";
-  if (srm < 10) return "amber ✦";
-  if (srm < 15) return "deep amber ✦";
-  if (srm < 20) return "copper ✦";
-  if (srm < 28) return "deep red ✦";
-  if (srm < 36) return "brown ✦";
-  return "black ✦";
-}
-
-/**
- * Build the SRM gradient programmatically by sampling srmToRgb at 1-SRM
- * intervals so the color at any X position matches what srmToRgb(srm)
- * returns for that SRM. This guarantees the indicator pin's color
- * (which uses srmToRgb(srm) directly) visually aligns with the gradient
- * underneath it.
- */
-const SRM_BAR_MAX = 40;
-const SRM_GRADIENT = (() => {
-  const stops: string[] = [];
-  for (let s = 1; s <= SRM_BAR_MAX; s += 1) {
-    const pct = ((s - 1) / (SRM_BAR_MAX - 1)) * 100;
-    stops.push(`${srmToRgb(s)} ${pct.toFixed(2)}%`);
-  }
-  return `linear-gradient(to right, ${stops.join(", ")})`;
-})();
-
-function ColorIndicatorBar({
-  srm,
-  styleSrmRange,
-}: {
-  srm: number;
-  styleSrmRange?: [number, number];
-}) {
-  const styleMin = styleSrmRange ? styleSrmRange[0] : undefined;
-  const styleMax = styleSrmRange ? styleSrmRange[1] : undefined;
-  // The gradient is sampled from SRM 1 → 40, so the percentage for an SRM
-  // value uses the same 1-based denominator. This is what keeps the pin's
-  // color match the underlying gradient color at its position.
-  const pct = (n: number) => {
-    const clamped = Math.max(1, Math.min(SRM_BAR_MAX, n));
-    return `${((clamped - 1) / (SRM_BAR_MAX - 1)) * 100}%`;
-  };
-  const ebc = Math.round(srm * 1.97);
-  const pinColor = srmToRgb(Math.max(1, Math.min(SRM_BAR_MAX, srm)));
-  return (
-    <div
-      style={{
-        marginTop: 12,
-        background: hsTokens.paper,
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 12,
-        boxShadow: hsTokens.sh2,
-        padding: "10px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-      }}
-    >
-      <HSEyebrow>Color</HSEyebrow>
-      <div
-        style={{
-          position: "relative",
-          flex: 1,
-          height: 20,
-          borderRadius: 4,
-          border: `1.5px solid ${hsTokens.ink}`,
-          background: SRM_GRADIENT,
-        }}
-      >
-        {/* Style-range endpoint markers (hollow rings) */}
-        {styleMin !== undefined && styleMax !== undefined ? (
-          <>
-            <span
-              aria-hidden
-              style={{
-                position: "absolute",
-                top: -5,
-                left: `calc(${pct(styleMin)} - 5px)`,
-                width: 10,
-                height: 10,
-                borderRadius: 999,
-                background: hsTokens.paper,
-                border: `1.5px solid ${hsTokens.ink}`,
-                boxSizing: "border-box",
-              }}
-            />
-            <span
-              aria-hidden
-              style={{
-                position: "absolute",
-                top: -5,
-                left: `calc(${pct(styleMax)} - 5px)`,
-                width: 10,
-                height: 10,
-                borderRadius: 999,
-                background: hsTokens.paper,
-                border: `1.5px solid ${hsTokens.ink}`,
-                boxSizing: "border-box",
-              }}
-            />
-          </>
-        ) : null}
-        {/* Current SRM marker — fill is the actual beer color (srmToRgb)
-            so the pin previews what the finished beer looks like. The
-            2px ink border keeps it visible against both light and dark
-            gradient regions. */}
-        <span
-          aria-hidden
-          title={`${srm.toFixed(1)} SRM · ${pinColor}`}
-          style={{
-            position: "absolute",
-            left: `calc(${pct(srm)} - 7px)`,
-            top: -6,
-            width: 14,
-            height: 32,
-            background: pinColor,
-            borderRadius: 3,
-            border: `2px solid ${hsTokens.ink}`,
-            boxShadow: `0 0 0 1.5px ${hsTokens.cream}`,
-            boxSizing: "border-box",
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 6,
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: hsTokens.display,
-            fontSize: 20,
-            fontVariantNumeric: "tabular-nums",
-            letterSpacing: "-0.02em",
-            color: hsTokens.ink,
-          }}
-        >
-          {srm.toFixed(1)}
-        </span>
-        <span style={{ fontFamily: hsTokens.mono, fontSize: 11, color: hsTokens.muted }}>
-          SRM / {ebc} EBC
-        </span>
-      </div>
-      <HSScriptNote color={hsTokens.roast} size={18} rotate={-3}>
-        {srmAdjective(srm)}
-      </HSScriptNote>
-    </div>
-  );
-}
-
 function StatCard({
   k,
   v,
   u,
   c,
-  range,
 }: {
   k: string;
   v: string;
   u?: string;
   c: string;
-  range: string;
 }) {
   return (
     <div
@@ -1418,17 +1576,6 @@ function StatCard({
         {u ? (
           <span style={{ fontSize: 11, color: hsTokens.muted, marginLeft: 3 }}>{u}</span>
         ) : null}
-      </div>
-      <div
-        style={{
-          fontSize: 10,
-          color: hsTokens.muted,
-          marginTop: 4,
-          fontVariantNumeric: "tabular-nums",
-          fontFamily: hsTokens.mono,
-        }}
-      >
-        {range}
       </div>
     </div>
   );

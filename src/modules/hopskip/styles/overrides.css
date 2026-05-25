@@ -11,7 +11,6 @@
    Marker classes the builder uses to switch override behaviour:
      - .hs-section-frame   wraps a tabbed section body (no top border).
      - .hs-loose-section   wraps a standalone section (full outlined card).
-     - .hs-bjcp / .hs-bjcp-grid  BJCP style range band.
      - .brew-theme         marks an element whose descendants are classic
                            components — required for some descendant rules.
    ===================================================================== */
@@ -954,11 +953,6 @@
   box-shadow: none !important;
   backdrop-filter: none !important;
 }
-.hs-theme .hs-bjcp-grid .style-strip-stack {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-  gap: 14px 32px !important;
-}
 .hs-theme .style-strip {
   gap: 4px !important;
 }
@@ -1023,14 +1017,6 @@
   font-size: 9px !important;
   color: var(--hs-muted) !important;
 }
-.hs-theme .hs-bjcp-grid {
-  padding: 0 8px;
-}
-.hs-theme .hs-bjcp-grid .style-strip {
-  min-width: 0;
-  padding-right: 6px;
-}
-
 /* ────────────── WATER & YEAST inline-styled inner panels ────────────── */
 
 .hs-theme .brew-theme .rounded-lg[style*="brew-accent-900"],

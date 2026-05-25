@@ -1459,6 +1459,86 @@ The recipe builder page has the live numbers strip at top, sticky bottom nav com
 
 The radar's invisible per-axis hover circles fire mouse events but live inside an SVG, which the rule doesn't apply to. Initial cautionary `// eslint-disable-next-line jsx-a11y/no-static-element-interactions` was flagged as unused and removed. **Rule:** SVG children (`<circle>`, `<path>`, `<g>`) bearing interactive props don't need the static-element-interactions disable. The rule scopes to HTML elements (div, span, section, etc.) only.
 
+### Polish iteration retrospective — UX lessons from the follow-up sessions
+
+Captured after an extensive polish pass on the initial 2.8 (Use dropdown clipping, hover previews on row mini-radars + modal presets, multi-series radar with Est/Both/Each toggle, per-row IBU column, animation port from classic OLD_HopFlavorRadar). Four cross-cutting lessons worth carrying into 2.4 / 2.7.
+
+### CSS custom properties don't cascade into `document.body` portals — wrap portal contents in `<div className="hs-theme">` + literal hex fallback.
+
+The HS theme tokens (`--hs-paper`, `--hs-ink`, etc.) are defined on a `.hs-theme` wrapper that lives DEEPER than `document.body`. When `createPortal(jsx, document.body)` mounts a tooltip / menu / preview at the body root, `var(--hs-paper)` resolves to nothing — the portal renders with no background, transparent borders, or default browser styling. Bit both the Use-menu panel (in `UsageBadge`) and the modal preset hover preview (in `HopPresetModal`) in this slice. **Fix pattern (applies to every portal'd HS element):**
+
+```tsx
+createPortal(
+  <div className="hs-theme" ref={previewRef} style={{
+    background: "#f8f3dc",                          // literal hex fallback
+    backgroundColor: "var(--hs-paper, #f8f3dc)",    // var with fallback for theme switching
+    border: `2px solid ${hsTokens.ink}`,            // hsTokens.* values already resolve via the wrapper
+    // ...
+  }}>
+    {/* content */}
+  </div>,
+  document.body
+)
+```
+
+**Rule for any future portal'd HS surface (2.7 Water's source/target modals, Equipment 2.4's profile picker, any custom popover):** always wrap in `.hs-theme` AND use literal-hex fallbacks for the most critical visual properties (background, color, border-color). Without the wrapper, CSS custom properties resolve to `inherit` → `initial` → nothing. The wrapper costs one extra div.
+
+### Cursor-follow tooltip pattern now has 4 consumers — time to promote to a `useCursorFollowTooltip()` hook.
+
+The pattern (position: fixed tooltip + ref-driven transform via mousemove + first-move snap with `void offsetHeight` reflow + velocity rotation + rest-timer to straighten) is now copy-pasted across:
+
+1. Compare page's `BarRow` (Phase 1.3)
+2. Fermentables `BillStack` (Phase 2.1)
+3. Hops main radar (`HopFlavorRadarCard`) per-axis tooltips (Phase 2.8 initial)
+4. Hops modal preset hover preview (Phase 2.8 polish)
+5. Hops row mini-radar hover preview (Phase 2.8 polish)
+
+That's 5 inline copies of the same ~80-line pattern. The 2.1 retro flagged "third consumer should promote to a shared hook" — at 5× the technical debt is real. **Rule for 2.7 Water / 2.4 Equipment if they need cursor-follow tooltips:** promote to `src/modules/hopskip/hooks/useCursorFollowTooltip.ts` BEFORE writing the new consumer. Signature roughly:
+
+```ts
+const { previewRef, onCursorMove, onCursorLeave } = useCursorFollowTooltip({
+  width: 200,           // tooltip width for viewport-edge flip
+  halfHeight: 110,      // for vertical clamp
+  offsetX: 18,          // distance from cursor on the non-clipped side
+});
+```
+
+Consumers thread `onCursorMove` into their hover target's `onMouseMove` handler and assign `previewRef` to the portal'd div. The hook handles all 80 lines of math + state internally.
+
+### Bespoke fixed-position menu is the right answer when `HSActionMenu`'s absolute panel gets clipped.
+
+`HSActionMenu`'s panel uses `position: absolute` relative to its trigger's parent. When the trigger lives inside a card with `overflow: hidden` (e.g., the hops ledger with rounded corners + bg fills), the panel gets clipped at the card boundary. Two alternatives:
+
+1. **Switch the card to `overflow: visible`** + add per-element corner-radius compensation (LedgerHead `border-top-*-radius`, last data row `border-bottom-*-radius`). The [2.6 retro](#overflow-visible-on-the-ledger-card-is-the-right-answer-for-in-row-dropdowns--compensate-with-per-element-corner-radii-instead-of-moving-the-dropdown) documents this for the yeast strain Type ▾ menu.
+2. **Build a bespoke menu that uses `position: fixed`** + a portal to escape every ancestor's overflow. Used in 2.8 for the hop row's `UsageBadge` because the ledger needed `overflow: hidden` to clip the per-row hover backgrounds against the 14px rounded corners.
+
+The shared `HSActionMenu` primitive stays untouched — other consumers (HSBrowseCard, MashSection's Generate ▾, FermentationSection's Generate ▾) don't have the clipping problem and benefit from the simpler absolute-positioning behavior. **Rule for 2.7 Water (per-row source-water picker) and 2.4 Equipment (per-row profile picker):** if the section's ledger uses `overflow: hidden`, build a bespoke fixed-position menu locally (~80 LOC inside the section file). If `overflow: visible` works (no per-row hover backgrounds, no rounded inner cells), use `HSActionMenu` with the 2.6 corner-compensation pattern.
+
+### Group-fade pattern for SVG entrance animations preserves children's `opacity` attributes.
+
+When animating opacity on individual SVG elements that have their own `opacity="0.35"` / `opacity="0.2"` attributes, `animation-fill-mode: both` overrides the attribute with the keyframe's final value (typically opacity: 1) — elements end up brighter than their intended static state. Implicit `to` keyframes don't reliably inherit the SVG attribute either (browsers interpret missing properties as defaults, not as the element's computed value).
+
+**Fix:** wrap the elements in a single `<g className="hs-foo-grid">` and animate the GROUP's opacity 0 → 1. Each child keeps its own opacity attribute; the compounded value (group_opacity × child_opacity) equals the child's natural opacity once the group reaches 1. Settled state is bit-identical to no-animation. Lost: per-element stagger (all children fade together). Gained: zero static-state regression.
+
+```css
+@keyframes hs-foo-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.hs-foo-grid {
+  animation: hs-foo-fade-in 500ms ease-out both;
+}
+```
+
+```tsx
+<g className="hs-foo-grid">
+  {rings.map((m) => <polygon key={m} opacity={m === 1 ? 0.35 : 0.2} {...} />)}
+  {axes.map((k) => <line key={k} opacity={0.25} {...} />)}
+</g>
+```
+
+**Rule for 2.7 Water's ion-comparison bars or any future SVG visualization with entrance animations:** wrap "grid" elements (rings, axes, reference markers) in a fading `<g>`; animate only that group's opacity. Reserve per-element animations for elements that don't need to preserve a specific static opacity (the series polygons, which animate scale 0.3 → 1.0 and end at full opacity by design). Also remember: `transform-box: fill-box` + `transform-origin: center` are required for scale animations on SVG children to use the child's own center (default is the SVG root).
+
 ## Phase 2.6 retrospective — lessons for subsequent slices
 
 Real notes captured while executing Phase 2.6 (Yeast + YeastPresetModal + CustomYeastModal). Read before 2.4 / 2.7.
