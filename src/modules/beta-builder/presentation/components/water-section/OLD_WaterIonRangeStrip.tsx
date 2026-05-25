@@ -70,7 +70,7 @@ function clampPpm(ppm: number): number {
   return Math.max(0, Math.min(MAX_PPM, Math.round(ppm)));
 }
 
-export default function WaterIonRangeStrip({
+export default function OLD_WaterIonRangeStrip({
   ion,
   label,
   source,

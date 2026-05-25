@@ -20,7 +20,7 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
-export default function OtherIngredientsPanel({
+export default function OLD_OtherIngredientsPanel({
   ingredients,
   onOpenPicker,
   onUpdate,

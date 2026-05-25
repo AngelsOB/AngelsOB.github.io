@@ -7,7 +7,7 @@
 
 import type { WaterProfile } from "../../../domain/services/WaterChemistryService";
 import { ION_LABELS } from "./constants";
-import WaterIonRangeStrip from "./WaterIonRangeStrip";
+import OLD_WaterIonRangeStrip from "./OLD_WaterIonRangeStrip";
 
 const ION_DISPLAY: Record<keyof WaterProfile, string> = {
   Ca: "Ca",
@@ -33,7 +33,7 @@ type Props = {
   onTargetDrag?: (ion: keyof WaterProfile, value: number) => void;
 };
 
-export default function WaterProfileComparison({
+export default function OLD_WaterProfileComparison({
   sourceProfile,
   targetProfile,
   bjcpTargetProfile,
@@ -46,7 +46,7 @@ export default function WaterProfileComparison({
       <h4 className="text-sm font-semibold mb-2">Water Profile (ppm)</h4>
       <div className="style-strip-stack">
         {ION_LABELS.map((ion) => (
-          <WaterIonRangeStrip
+          <OLD_WaterIonRangeStrip
             key={ion}
             ion={ion}
             label={ION_DISPLAY[ion]}

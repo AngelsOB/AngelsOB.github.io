@@ -79,7 +79,6 @@ export default function HopSection() {
   const addHop = useRecipeStore((s) => s.addHop);
   const updateHop = useRecipeStore((s) => s.updateHop);
   const removeHop = useRecipeStore((s) => s.removeHop);
-  const updateRecipe = useRecipeStore((s) => s.updateRecipe);
 
   const hopPresetsGrouped = usePresetStore((s) => s.hopPresetsGrouped);
   const loadHopPresets = usePresetStore((s) => s.loadHopPresets);
@@ -287,24 +286,6 @@ export default function HopSection() {
             />
           </div>
 
-          <aside className="hs-hops-grid-aside">
-            <div className="hs-hops-grid-radar">
-              <HopFlavorRadarCard
-                hops={hops}
-                batchVolumeL={currentRecipe?.batchVolumeL ?? 20}
-              />
-            </div>
-            <div className="hs-hops-grid-notes">
-              <BrewersNotesCard
-                notes={currentRecipe?.notes ?? ""}
-                tags={currentRecipe?.tags ?? []}
-                onNotesChange={(v) => updateRecipe({ notes: v || undefined })}
-                onTagsChange={(v) =>
-                  updateRecipe({ tags: v.length ? v : undefined })
-                }
-              />
-            </div>
-          </aside>
         </div>
       )}
 
@@ -711,7 +692,9 @@ const LEDGER_COLS = "52px minmax(0, 1.3fr) 116px 128px 88px 64px 32px";
 
 /** Darker, slightly tinted background applied to the IBU column so it
  *  reads as a "summary readout" column distinct from the editable cells. */
-const IBU_CELL_BG = "color-mix(in srgb, var(--hs-ink) 5%, var(--hs-paper))";
+// Section-tinted IBU column background — ink-on-paper base + ~4% hops tint.
+const IBU_CELL_BG =
+  "color-mix(in srgb, color-mix(in srgb, var(--hs-ink) 5%, var(--hs-paper)) 96%, var(--hs-hops))";
 
 function Ledger({
   hops,
@@ -815,7 +798,9 @@ function LedgerHead() {
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "10px 14px 10px 18px",
-        background: hsTokens.cream,
+        // Section-tinted ledger head: ~7% hops-green mixed into cream so each
+        // section's main table band feels distinct while staying in harmony.
+        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-hops))",
         borderBottom: `2px solid ${hsTokens.ink}`,
         alignItems: "center",
         gap: 12,
@@ -1128,7 +1113,8 @@ function LedgerTotal({
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "14px 14px 14px 18px",
-        background: hsTokens.cream2,
+        // Section-tinted total band — same 7% hops mix as the ledger head.
+        background: "color-mix(in srgb, var(--hs-cream-2) 96%, var(--hs-hops))",
         borderTop: `2px solid ${hsTokens.ink}`,
         alignItems: "center",
         gap: 12,
@@ -1187,7 +1173,9 @@ function LedgerTotal({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "color-mix(in srgb, var(--hs-ink) 9%, var(--hs-cream-2))",
+          // Section-tinted darker stripe: ~4% hops layered onto the ink-on-cream2
+          // base so the column reads as "this section's read-only column".
+          background: "color-mix(in srgb, color-mix(in srgb, var(--hs-ink) 9%, var(--hs-cream-2)) 96%, var(--hs-hops))",
           padding: "14px 12px",
           margin: "-14px -12px",
         }}
@@ -2216,9 +2204,11 @@ function HopFlavorRadarCard({
     <div
       className="hs-hops-radar-card"
       style={{
+        // Subtle ingredient tint: ~5% hops-green in the bg AND ~15% mixed
+        // into the ink border. Compound signal — neither loud on its own.
         background:
-          "color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))",
-        border: `2px solid ${hsTokens.ink}`,
+          "color-mix(in srgb, color-mix(in srgb, var(--hs-cream), var(--hs-cream-2)) 95%, var(--hs-hops))",
+        border: `2px solid color-mix(in srgb, ${hsTokens.ink} 85%, var(--hs-hops))`,
         borderRadius: 14,
         boxShadow: hsTokens.sh3,
         padding: 18,
@@ -2256,6 +2246,7 @@ function HopFlavorRadarCard({
           <HopFlavorRadarSvg
             series={activeSeries}
             dominantPerAxis={dominantPerAxis}
+            mode={mode}
           />
           <RadarLegend
             mode={mode}
@@ -2439,9 +2430,13 @@ function RadarEmpty({ hops }: { hops: Hop[] }) {
 function HopFlavorRadarSvg({
   series,
   dominantPerAxis,
+  mode,
 }: {
   series: HopSeries[];
   dominantPerAxis: Record<string, { name: string; value: number } | null>;
+  /** Mode is appended to series keys so toggling between estimated/all/both
+   *  remounts the visible polygons and replays the bounce-in animation. */
+  mode: string;
 }) {
   const [hoveredAxis, setHoveredAxis] = useState<string | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -2553,51 +2548,70 @@ function HopFlavorRadarSvg({
         style={{ maxWidth: size, display: "block", margin: "0 auto" }}
         aria-label="Estimated hop flavor profile"
       >
-        {/* rings */}
-        {[0.25, 0.5, 0.75, 1].map((mult) => (
-          <polygon
-            key={mult}
-            points={ringPoints(mult)}
-            fill="none"
-            stroke="var(--hs-ink)"
-            strokeWidth={0.5}
-            opacity={mult === 1 ? 0.35 : 0.2}
-          />
-        ))}
-        {/* axis spokes */}
-        {HOP_FLAVOR_KEYS.map((k, i) => {
-          const [x, y] = pointAt(i, max);
-          return (
-            <line
-              key={k}
-              x1={cx}
-              y1={cy}
-              x2={x}
-              y2={y}
+        {/* Rings + axes wrapped in a single fading group — the group's
+            opacity goes 0 → 1, multiplied by each child's natural opacity
+            attribute. After animation: group at 1, rings at 0.35/0.2,
+            axes at 0.25 — identical to the static pre-animation state. */}
+        <g className="hs-hops-radar-grid">
+          {[0.25, 0.5, 0.75, 1].map((mult) => (
+            <polygon
+              key={mult}
+              points={ringPoints(mult)}
+              fill="none"
               stroke="var(--hs-ink)"
-              strokeWidth={0.3}
-              opacity={0.25}
+              strokeWidth={0.5}
+              opacity={mult === 1 ? 0.35 : 0.2}
             />
-          );
-        })}
+          ))}
+          {HOP_FLAVOR_KEYS.map((k, i) => {
+            const [x, y] = pointAt(i, max);
+            return (
+              <line
+                key={k}
+                x1={cx}
+                y1={cy}
+                x2={x}
+                y2={y}
+                stroke="var(--hs-ink)"
+                strokeWidth={0.3}
+                opacity={0.25}
+              />
+            );
+          })}
+        </g>
         {/* series polygons — individual hops draw first at lower opacity,
-            estimated draws last so its heavier stroke sits on top. */}
-        {series.map((s) => (
-          <polygon
-            key={s.id}
-            points={flavorPolyPoints(s.flavor)}
-            fill={s.color}
-            fillOpacity={s.isEstimated ? 0.32 : 0.18}
-            stroke={s.color}
-            strokeWidth={s.isEstimated ? 1.8 : 1.2}
-            strokeLinejoin="round"
-            strokeDasharray={s.isEstimated ? undefined : "3 3"}
-          />
+            estimated draws last so its heavier stroke sits on top. Each
+            series scale-bounces in (staggered 120ms by series index) and
+            then subtly breathes via the inner polygon animation. Keyed by
+            id so toggling view mode (est/both/each) replays the entrance
+            on freshly-mounted series. */}
+        {series.map((s, si) => (
+          <g
+            key={`${mode}-${s.id}`}
+            className="hs-hops-radar-series"
+            style={{
+              animationDelay: `${si * 120}ms`,
+              transformOrigin: `${cx}px ${cy}px`,
+            }}
+          >
+            <polygon
+              points={flavorPolyPoints(s.flavor)}
+              fill={s.color}
+              fillOpacity={s.isEstimated ? 0.32 : 0.18}
+              stroke={s.color}
+              strokeWidth={s.isEstimated ? 1.8 : 1.2}
+              strokeLinejoin="round"
+              strokeDasharray={s.isEstimated ? undefined : "3 3"}
+            />
+          </g>
         ))}
-        {/* estimated vertex dots — only when the estimated polygon is rendered. */}
+        {/* Estimated vertex dots — scale-in staggered AFTER the grid + series
+            have settled (start at 600ms, 40ms per dot clockwise). */}
         {estimatedPoints.map(([x, y], i) => (
           <circle
             key={i}
+            className="hs-hops-radar-dot"
+            style={{ animationDelay: `${600 + i * 40}ms` }}
             cx={x}
             cy={y}
             r={2.2}
@@ -2796,48 +2810,74 @@ function MobileAddRow({ onAdd }: { onAdd: () => void }) {
 function HopSectionStyles() {
   return (
     <style>{`
+      /* ── Radar chart entrance animations (ported from classic
+         OLD_HopFlavorRadar) ── Rings + axes fade in, series polygons
+         scale-bounce in with stagger. Entrance-only — no perpetual
+         animation, and CRUCIALLY no persistent style changes (the classic
+         used stroke-dasharray for the rings to draw-in, but that
+         dasharray persisted after the animation and changed how the ring
+         outlines render — subtle artifacts at the closing vertex). Using
+         pure opacity entrance keeps the settled static state identical to
+         pre-animation. */
+      /* Animate a wrapping group's opacity (0 → 1) rather than each
+         element's opacity. The group's opacity compounds with each
+         child's opacity attribute (0.35 for outer ring / 0.2 for inner
+         rings / 0.25 for axes), so the settled compounded opacity equals
+         the original attribute value. Animating the GROUP avoids the
+         "fill-mode both forces opacity to 1" problem that bit a prior
+         attempt at per-element fades. */
+      @keyframes hs-hops-radar-fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes hs-hops-radar-enter {
+        0%   { opacity: 0; transform: scale(0.3); }
+        60%  { opacity: 1; transform: scale(1.04); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes hs-hops-radar-dot-in {
+        0%   { opacity: 0; transform: scale(0); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      .hs-hops-radar-grid {
+        animation: hs-hops-radar-fade-in 500ms ease-out both;
+      }
+      .hs-hops-radar-series {
+        animation: hs-hops-radar-enter 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      }
+      /* transform-box + transform-origin let SVG circles scale from their
+         own center (default would be SVG root origin). */
+      .hs-hops-radar-dot {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: hs-hops-radar-dot-in 320ms ease-out both;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hs-hops-radar-grid,
+        .hs-hops-radar-series,
+        .hs-hops-radar-dot {
+          animation: none !important;
+        }
+      }
+
       /* Desktop: 2-col grid. Row 1 = ledger header + empty. Row 2 =
          ledger table + aside (radar + notes packed via flex). Aside top
          aligns with the top of the ledger TABLE, not the header row. */
+      /* Single-column layout — the aside (radar + notes) has been hoisted
+         to the parent HopSkipBuilder grid so it can morph between tabs. */
       .hs-hops-section .hs-hops-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-        grid-template-areas:
-          "lhead  ."
-          "ltable aside";
-        column-gap: 20px;
-        row-gap: 16px;
-        align-items: start;
-      }
-      .hs-hops-section .hs-hops-grid-lhead { grid-area: lhead; min-width: 0; }
-      .hs-hops-section .hs-hops-grid-ltable { grid-area: ltable; min-width: 0; }
-      .hs-hops-section .hs-hops-grid-aside {
-        grid-area: aside;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        row-gap: 16px;
         min-width: 0;
       }
+      .hs-hops-section .hs-hops-grid-lhead { min-width: 0; }
+      .hs-hops-section .hs-hops-grid-ltable { min-width: 0; }
 
-      /* Mobile: collapse to single column. Use display:contents on aside
-         so radar + notes can claim their own grid slots — radar hoists to
-         the top (chart still leads visually), notes anchors to the bottom
-         under the ledger. */
       @media (max-width: 900px) {
         .hs-hops-section .hs-hops-grid {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-areas:
-            "radar"
-            "lhead"
-            "ltable"
-            "notes";
           row-gap: 12px;
         }
-        .hs-hops-section .hs-hops-grid-aside {
-          display: contents;
-        }
-        .hs-hops-section .hs-hops-grid-radar { grid-area: radar; }
-        .hs-hops-section .hs-hops-grid-notes { grid-area: notes; }
       }
 
       /* Desktop hover — subtle cream-2 tint across the ledger row, plus
@@ -2847,7 +2887,11 @@ function HopSectionStyles() {
           transition: background 90ms ease;
         }
         .hs-hops-section .hs-hops-data-row:hover {
-          background: ${hsTokens.cream2};
+          /* Section-tinted hover: ~2% hops mixed into a paper/cream-2 base.
+             Lighter overall than a pure cream-2 hover so the hover lifts
+             rather than darkens, while still tagging the row with the
+             section accent. */
+          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-hops));
         }
         .hs-hops-section .hs-hops-remove-btn {
           opacity: 0.32;
@@ -3008,276 +3052,17 @@ function HopSectionStyles() {
   );
 }
 
-// ─── Brewer's notes card (right sidebar) ─────────────────────────
+// ─── Helper-card container (mounted by HelperCardMorph) ───────────
 
-function BrewersNotesCard({
-  notes,
-  tags,
-  onNotesChange,
-  onTagsChange,
-}: {
-  notes: string;
-  tags: string[];
-  onNotesChange: (v: string) => void;
-  onTagsChange: (v: string[]) => void;
-}) {
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [draftNotes, setDraftNotes] = useState(notes);
-  const [editingTags, setEditingTags] = useState(false);
-  const [draftTags, setDraftTags] = useState(tags.join(" "));
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingNotes) {
-      setDraftNotes(notes);
-      requestAnimationFrame(() => textareaRef.current?.focus());
-    }
-  }, [editingNotes, notes]);
-
-  useEffect(() => {
-    if (editingTags) {
-      setDraftTags(tags.join(" "));
-      requestAnimationFrame(() => tagInputRef.current?.focus());
-    }
-  }, [editingTags, tags]);
-
-  const commitNotes = () => {
-    const next = draftNotes.trim();
-    if (next !== notes) onNotesChange(next);
-    setEditingNotes(false);
-  };
-  const cancelNotes = () => {
-    setDraftNotes(notes);
-    setEditingNotes(false);
-  };
-  const commitTags = () => {
-    const next = draftTags
-      .split(/\s+/)
-      .map((t) => t.replace(/^#+/, "").trim().toLowerCase())
-      .filter(Boolean);
-    if (next.join(" ") !== tags.join(" ")) onTagsChange(next);
-    setEditingTags(false);
-  };
-  const cancelTags = () => {
-    setDraftTags(tags.join(" "));
-    setEditingTags(false);
-  };
-
+export function HopHelperCard() {
+  const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const hops = currentRecipe?.hops ?? [];
+  if (hops.length === 0) return null;
   return (
-    <div
-      className="hs-hops-notes-card"
-      style={{
-        background:
-          "color-mix(in srgb, var(--hs-cream-2) 86%, var(--hs-honey))",
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 14,
-        boxShadow: hsTokens.sh3,
-        padding: 18,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
-          paddingBottom: 8,
-        }}
-      >
-        <Eyebrow size={11}>Brewer&apos;s notes</Eyebrow>
-        <button
-          type="button"
-          onClick={() => setEditingNotes((v) => !v)}
-          aria-label={editingNotes ? "Save notes" : "Edit notes"}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 10,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-            borderRadius: 4,
-          }}
-        >
-          {editingNotes ? "Save" : "Edit"}{" "}
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            <path d="m15 5 4 4" />
-          </svg>
-        </button>
-      </div>
-
-      {editingNotes ? (
-        <textarea
-          ref={textareaRef}
-          value={draftNotes}
-          onChange={(e) => setDraftNotes(e.target.value)}
-          onBlur={commitNotes}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              cancelNotes();
-            } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              commitNotes();
-            }
-          }}
-          placeholder="Last batch felt thin on aroma — try shifting some 20-min Citra to the whirlpool…"
-          rows={4}
-          style={{
-            width: "100%",
-            background: hsTokens.paper,
-            border: `1.5px solid ${hsTokens.hops}`,
-            borderRadius: 8,
-            padding: "10px 12px",
-            fontFamily: hsTokens.script,
-            fontSize: 19,
-            lineHeight: 1.35,
-            color: hsTokens.ink,
-            outline: "none",
-            resize: "vertical",
-            minHeight: 90,
-          }}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditingNotes(true)}
-          aria-label="Edit brewer's notes"
-          style={{
-            background: "transparent",
-            border: "none",
-            padding: 0,
-            margin: 0,
-            cursor: "text",
-            textAlign: "left",
-            display: "block",
-            width: "100%",
-            color: "inherit",
-            fontFamily: "inherit",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: hsTokens.script,
-              fontSize: 19,
-              lineHeight: 1.35,
-              color: notes ? hsTokens.ink : hsTokens.muted,
-              margin: 0,
-              whiteSpace: "pre-wrap",
-              opacity: notes ? 1 : 0.7,
-            }}
-          >
-            {notes ||
-              "Last batch felt thin on aroma — try shifting some 20-min Citra to the whirlpool…"}
-          </p>
-        </button>
-      )}
-
-      {/* Tags row */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          alignItems: "center",
-        }}
-      >
-        {editingTags ? (
-          <input
-            ref={tagInputRef}
-            type="text"
-            value={draftTags}
-            onChange={(e) => setDraftTags(e.target.value)}
-            onBlur={commitTags}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelTags();
-              } else if (e.key === "Enter") {
-                e.preventDefault();
-                commitTags();
-              }
-            }}
-            placeholder="ipa hazy dryhop"
-            style={{
-              flex: 1,
-              minWidth: 160,
-              background: hsTokens.paper,
-              border: `1.5px solid ${hsTokens.hops}`,
-              borderRadius: 8,
-              padding: "6px 10px",
-              fontFamily: hsTokens.body,
-              fontSize: 12,
-              color: hsTokens.ink,
-              outline: "none",
-            }}
-          />
-        ) : (
-          <>
-            {tags.map((t) => (
-              <span
-                key={t}
-                style={{
-                  display: "inline-flex",
-                  padding: "2px 8px",
-                  background: hsTokens.cream,
-                  border: `1px solid ${hsTokens.ink}55`,
-                  borderRadius: 999,
-                  fontFamily: hsTokens.body,
-                  fontWeight: 600,
-                  fontSize: 11,
-                  color: hsTokens.ink,
-                }}
-              >
-                #{t}
-              </span>
-            ))}
-            <button
-              type="button"
-              onClick={() => setEditingTags(true)}
-              aria-label="Edit tags"
-              style={{
-                background: "transparent",
-                border: "none",
-                padding: "2px 6px",
-                cursor: "pointer",
-                fontFamily: hsTokens.body,
-                fontWeight: 700,
-                fontSize: 10,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: hsTokens.muted,
-                borderRadius: 4,
-              }}
-            >
-              {tags.length ? "Edit tags" : "+ Add tags"}
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+    <HopFlavorRadarCard
+      hops={hops}
+      batchVolumeL={currentRecipe?.batchVolumeL ?? 20}
+    />
   );
 }
+

@@ -96,7 +96,6 @@ export default function YeastSection() {
   const addYeast = useRecipeStore((s) => s.addYeast);
   const updateYeast = useRecipeStore((s) => s.updateYeast);
   const removeYeast = useRecipeStore((s) => s.removeYeast);
-  const updateRecipe = useRecipeStore((s) => s.updateRecipe);
 
   const yeastPresetsGrouped = usePresetStore((s) => s.yeastPresetsGrouped);
   const loadYeastPresets = usePresetStore((s) => s.loadYeastPresets);
@@ -377,28 +376,6 @@ export default function YeastSection() {
           ) : null}
         </div>
 
-        <aside className="hs-yeast-grid-aside">
-          <div className="hs-yeast-grid-readout">
-            <PitchReadout
-              available={availableCells}
-              required={requiredCells}
-              diff={cellDiff}
-              underpitched={underpitched}
-              hasStrain={!!primary}
-              starterCount={starterInfo.steps.length}
-            />
-          </div>
-          <div className="hs-yeast-grid-notes">
-            <BrewersNotesCard
-              notes={currentRecipe.notes ?? ""}
-              tags={currentRecipe.tags ?? []}
-              onNotesChange={(v) => updateRecipe({ notes: v || undefined })}
-              onTagsChange={(v) =>
-                updateRecipe({ tags: v.length ? v : undefined })
-              }
-            />
-          </div>
-        </aside>
       </div>
 
       <YeastPresetModal
@@ -742,7 +719,8 @@ function StrainLedgerHead() {
         gridTemplateColumns: STRAIN_LEDGER_COLS,
         padding: "10px 18px 8px",
         borderBottom: `2px solid ${hsTokens.ink}`,
-        background: hsTokens.cream,
+        // Section-tinted ledger head: ~7% yeast mixed into cream.
+        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-yeast))",
         gap: 14,
         alignItems: "center",
         // Round only the top corners so the cream-bg head sits inside
@@ -1550,7 +1528,8 @@ function StarterLedgerHead() {
         gridTemplateColumns: STARTER_LEDGER_COLS,
         padding: "10px 18px 8px",
         borderBottom: `2px solid ${hsTokens.ink}`,
-        background: hsTokens.cream,
+        // Section-tinted ledger head: ~7% yeast mixed into cream.
+        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-yeast))",
         gap: 14,
         alignItems: "center",
       }}
@@ -1683,7 +1662,10 @@ function StarterLedgerRow({
           alignItems: "center",
           justifyContent: "center",
           gap: 4,
-          background: "color-mix(in srgb, var(--hs-ink) 5%, var(--hs-paper))",
+          // Section-tinted DME stripe: ~4% yeast layered onto the ink-on-paper
+          // base so the column reads as "this section's read-only column".
+          background:
+            "color-mix(in srgb, color-mix(in srgb, var(--hs-ink) 5%, var(--hs-paper)) 96%, var(--hs-yeast))",
           padding: "14px 12px",
           margin: "-14px 0",
         }}
@@ -2072,8 +2054,11 @@ function PitchReadout({
     <div
       className="hs-yeast-readout"
       style={{
-        background: "color-mix(in srgb, var(--hs-cream), var(--hs-cream-2))",
-        border: `2px solid ${hsTokens.ink}`,
+        // Subtle ingredient tint: ~5% yeast in the bg AND ~15% mixed into
+        // the ink border. Compound signal — neither dimension loud alone.
+        background:
+          "color-mix(in srgb, color-mix(in srgb, var(--hs-cream), var(--hs-cream-2)) 95%, var(--hs-yeast))",
+        border: `2px solid color-mix(in srgb, ${hsTokens.ink} 85%, var(--hs-yeast))`,
         borderRadius: 12,
         boxShadow: hsTokens.sh3,
         padding: "14px 16px 12px",
@@ -2176,294 +2161,6 @@ function ReadoutRow({
   );
 }
 
-// ─── Brewer's notes card (cloned from MashSection verbatim) ─────
-
-function BrewersNotesCard({
-  notes,
-  tags,
-  onNotesChange,
-  onTagsChange,
-}: {
-  notes: string;
-  tags: string[];
-  onNotesChange: (v: string) => void;
-  onTagsChange: (v: string[]) => void;
-}) {
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [draftNotes, setDraftNotes] = useState(notes);
-  const [editingTags, setEditingTags] = useState(false);
-  const [draftTags, setDraftTags] = useState(tags.join(" "));
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const tagInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editingNotes) {
-      setDraftNotes(notes);
-      requestAnimationFrame(() => textareaRef.current?.focus());
-    }
-  }, [editingNotes, notes]);
-
-  useEffect(() => {
-    if (editingTags) {
-      setDraftTags(tags.join(" "));
-      requestAnimationFrame(() => tagInputRef.current?.focus());
-    }
-  }, [editingTags, tags]);
-
-  const commitNotes = () => {
-    const next = draftNotes.trim();
-    if (next !== notes) onNotesChange(next);
-    setEditingNotes(false);
-  };
-  const cancelNotes = () => {
-    setDraftNotes(notes);
-    setEditingNotes(false);
-  };
-  const commitTags = () => {
-    const next = draftTags
-      .split(/\s+/)
-      .map((t) => t.replace(/^#+/, "").trim().toLowerCase())
-      .filter(Boolean);
-    if (next.join(" ") !== tags.join(" ")) onTagsChange(next);
-    setEditingTags(false);
-  };
-  const cancelTags = () => {
-    setDraftTags(tags.join(" "));
-    setEditingTags(false);
-  };
-
-  return (
-    <div
-      className="hs-yeast-notes-card"
-      style={{
-        background:
-          "color-mix(in srgb, var(--hs-cream-2) 86%, var(--hs-honey))",
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 14,
-        boxShadow: hsTokens.sh3,
-        padding: 18,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
-          paddingBottom: 8,
-        }}
-      >
-        <Eyebrow size={11}>Brewer&apos;s notes</Eyebrow>
-        <button
-          type="button"
-          onClick={() => setEditingNotes((v) => !v)}
-          aria-label={editingNotes ? "Save notes" : "Edit notes"}
-          style={{
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 10,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-            borderRadius: 4,
-          }}
-        >
-          {editingNotes ? "Save" : "Edit"}{" "}
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            <path d="m15 5 4 4" />
-          </svg>
-        </button>
-      </div>
-
-      {editingNotes ? (
-        <textarea
-          ref={textareaRef}
-          value={draftNotes}
-          onChange={(e) => setDraftNotes(e.target.value)}
-          onBlur={commitNotes}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.preventDefault();
-              cancelNotes();
-            } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              commitNotes();
-            }
-          }}
-          placeholder="Pitched at 18°C, took 8 hours to start, ramped to 20 after a day…"
-          rows={4}
-          style={{
-            width: "100%",
-            background: hsTokens.paper,
-            border: `1.5px solid ${hsTokens.yeast}`,
-            borderRadius: 8,
-            padding: "10px 12px",
-            fontFamily: hsTokens.script,
-            fontSize: 19,
-            lineHeight: 1.35,
-            color: hsTokens.ink,
-            outline: "none",
-            resize: "vertical",
-            minHeight: 90,
-          }}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditingNotes(true)}
-          aria-label="Edit brewer's notes"
-          style={{
-            background: "transparent",
-            border: "none",
-            padding: 0,
-            margin: 0,
-            cursor: "text",
-            textAlign: "left",
-            display: "block",
-            width: "100%",
-            color: "inherit",
-            fontFamily: "inherit",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: hsTokens.script,
-              fontSize: 19,
-              lineHeight: 1.35,
-              color: notes ? hsTokens.ink : hsTokens.muted,
-              margin: 0,
-              whiteSpace: "pre-wrap",
-              opacity: notes ? 1 : 0.7,
-            }}
-          >
-            {notes ||
-              "Pitched at 18°C, took 8 hours to start, ramped to 20 after a day…"}
-          </p>
-        </button>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 6,
-          alignItems: "center",
-        }}
-      >
-        {editingTags ? (
-          <input
-            ref={tagInputRef}
-            type="text"
-            value={draftTags}
-            onChange={(e) => setDraftTags(e.target.value)}
-            onBlur={commitTags}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelTags();
-              } else if (e.key === "Enter") {
-                e.preventDefault();
-                commitTags();
-              }
-            }}
-            placeholder="#under-pitch #stalled"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              background: hsTokens.paper,
-              border: `1.5px solid ${hsTokens.yeast}`,
-              borderRadius: 999,
-              padding: "5px 10px",
-              fontFamily: hsTokens.body,
-              fontSize: 12,
-              color: hsTokens.ink,
-              outline: "none",
-            }}
-          />
-        ) : (
-          <>
-            {tags.length > 0 ? (
-              tags.map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    background: hsTokens.paper,
-                    border: `1.5px solid ${hsTokens.ink}`,
-                    borderRadius: 999,
-                    padding: "3px 10px",
-                    fontFamily: hsTokens.body,
-                    fontWeight: 600,
-                    fontSize: 11,
-                    color: hsTokens.ink,
-                    letterSpacing: "0.02em",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  #{t}
-                </span>
-              ))
-            ) : (
-              <span
-                style={{
-                  fontFamily: hsTokens.body,
-                  fontSize: 11,
-                  color: hsTokens.muted,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                No tags yet —
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => setEditingTags(true)}
-              aria-label="Edit tags"
-              style={{
-                background: "transparent",
-                border: `1.5px dashed ${hsTokens.ink}44`,
-                borderRadius: 999,
-                padding: "2px 9px",
-                fontFamily: hsTokens.body,
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: hsTokens.muted,
-                cursor: "pointer",
-              }}
-            >
-              + tag
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ─── Eyebrow ──────────────────────────────────────────────────────
 
@@ -2584,19 +2281,17 @@ function MobileAddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
 function YeastSectionStyles() {
   return (
     <style>{`
+      /* Single-column layout — the aside (pitch readout + notes) has been
+         hoisted to the parent HopSkipBuilder grid so it can morph between
+         tabs. */
       .hs-yeast-section .hs-yeast-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-        grid-template-areas:
-          "lhead   ."
-          "main    aside";
-        column-gap: 20px;
+        display: flex;
+        flex-direction: column;
         row-gap: 16px;
-        align-items: start;
+        min-width: 0;
       }
-      .hs-yeast-section .hs-yeast-grid-lhead { grid-area: lhead; min-width: 0; }
+      .hs-yeast-section .hs-yeast-grid-lhead { min-width: 0; }
       .hs-yeast-section .hs-yeast-grid-main {
-        grid-area: main;
         min-width: 0;
         display: flex;
         flex-direction: column;
@@ -2607,21 +2302,9 @@ function YeastSectionStyles() {
         flex-direction: column;
         gap: 14px;
       }
-      .hs-yeast-section .hs-yeast-grid-aside {
-        grid-area: aside;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-width: 0;
-      }
 
       @media (max-width: 900px) {
         .hs-yeast-section .hs-yeast-grid {
-          grid-template-columns: minmax(0, 1fr);
-          grid-template-areas:
-            "lhead"
-            "main"
-            "aside";
           row-gap: 14px;
         }
       }
@@ -2642,7 +2325,9 @@ function YeastSectionStyles() {
           transition: background 90ms ease;
         }
         .hs-yeast-section .hs-yeast-data-row:hover {
-          background: ${hsTokens.cream2};
+          /* Section-tinted hover: ~2% yeast mixed into a paper/cream-2 base —
+             lighter overall than pure cream-2 so the hover lifts. */
+          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-yeast));
         }
         .hs-yeast-section .hs-yeast-name-btn:hover .hs-yeast-name {
           text-decoration: underline;
@@ -2816,5 +2501,62 @@ function YeastSectionStyles() {
         }
       }
     `}</style>
+  );
+}
+
+// ─── Helper-card container (mounted by HelperCardMorph) ───────────
+
+export function YeastHelperCard() {
+  const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const calculations = useRecipeCalculations(currentRecipe);
+  const yeasts = useMemo(
+    () => currentRecipe?.yeasts ?? [],
+    [currentRecipe?.yeasts]
+  );
+  const primary: Yeast | null = yeasts[0] ?? null;
+  const starterInfo: StarterInfo = useMemo(
+    () =>
+      primary?.starter ?? {
+        yeastType: "liquid-100",
+        packs: 1,
+        mfgDate: "",
+        slurryLiters: 0,
+        slurryBillionPerMl: 1,
+        steps: [],
+      },
+    [primary]
+  );
+  const starterResults = useMemo(() => {
+    if (!currentRecipe) return null;
+    return starterCalculationService.calculateStarter(
+      currentRecipe.batchVolumeL || 20,
+      calculations?.og ?? 1.05,
+      starterInfo.yeastType,
+      starterInfo.packs,
+      starterInfo.mfgDate,
+      starterInfo.slurryLiters ?? 0,
+      starterInfo.slurryBillionPerMl ?? 1,
+      starterInfo.steps
+    );
+  }, [currentRecipe, calculations?.og, starterInfo]);
+  const hasSteps = starterInfo.steps.length > 0;
+  const availableCells = starterResults
+    ? hasSteps
+      ? starterResults.finalEndB
+      : starterResults.cellsAvailableB
+    : 0;
+  const requiredCells = starterResults?.requiredCellsB ?? 0;
+  const cellDiff = availableCells - requiredCells;
+  const underpitched = cellDiff < 0;
+  if (yeasts.length === 0) return null;
+  return (
+    <PitchReadout
+      available={availableCells}
+      required={requiredCells}
+      diff={cellDiff}
+      underpitched={underpitched}
+      hasStrain={!!primary}
+      starterCount={starterInfo.steps.length}
+    />
   );
 }

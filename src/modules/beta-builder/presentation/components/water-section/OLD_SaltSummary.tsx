@@ -19,7 +19,7 @@ type Props = {
   sourceProfileName?: string;
 };
 
-export default function SaltSummary({
+export default function OLD_SaltSummary({
   saltAdditions,
   mashSalts,
   spargeSalts,

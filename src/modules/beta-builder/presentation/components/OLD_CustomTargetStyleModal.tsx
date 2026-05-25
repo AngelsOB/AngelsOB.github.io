@@ -31,7 +31,7 @@ type Props = {
   initialName?: string;
 };
 
-export default function CustomTargetStyleModal({ isOpen, onClose, onSave, initialProfile, initialName }: Props) {
+export default function OLD_CustomTargetStyleModal({ isOpen, onClose, onSave, initialProfile, initialName }: Props) {
   const [name, setName] = useState(initialName || "");
   const [profile, setProfile] = useState<WaterProfile>(initialProfile || DEFAULT_PROFILE);
 

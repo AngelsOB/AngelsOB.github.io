@@ -96,7 +96,7 @@ function SaltRow({
   );
 }
 
-export default function SaltAdditionsPanel({
+export default function OLD_SaltAdditionsPanel({
   saltAdditions,
   mashSalts,
   spargeSalts,
