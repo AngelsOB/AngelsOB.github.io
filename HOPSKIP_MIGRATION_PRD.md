@@ -537,17 +537,27 @@ A follow-up session reworked the Brew Mode UX based on user feedback. Captured h
 
 ## 2.7 — Water
 
-- **Classic sources:**
-  - [WaterSection.tsx](src/modules/beta-builder/presentation/components/WaterSection.tsx)
-  - [water-section/WaterChemistrySection.tsx](src/modules/beta-builder/presentation/components/water-section/WaterChemistrySection.tsx)
-  - [water-section/PhAdjustmentsSection.tsx](src/modules/beta-builder/presentation/components/water-section/PhAdjustmentsSection.tsx)
-  - [SourceWaterModal.tsx](src/modules/beta-builder/presentation/components/SourceWaterModal.tsx)
-  - [CustomSourceWaterModal.tsx](src/modules/beta-builder/presentation/components/CustomSourceWaterModal.tsx)
-  - [TargetStyleModal.tsx](src/modules/beta-builder/presentation/components/TargetStyleModal.tsx)
-  - [CustomTargetStyleModal.tsx](src/modules/beta-builder/presentation/components/CustomTargetStyleModal.tsx)
-- **HS plan:** Source/target pickers (`HSPill`s), salt cells (4 HSCards in a row with auto-calc button), 5 ion comparison bars (HS track + water-blue fill + ink target marker — see [HSBuilderMockups](src/modules/hopskip/components/HSBuilderMockups.tsx) `WaterChemMockup` for the reference pattern, then make it interactive). pH adjustments (acid malt / lactic acid toggle controls).
-- **Data dependencies:** `useRecipeStore` → `updateRecipe.waterChemistry`, water chemistry calc service, source/target water profile constants.
-- **Effort:** L (lots of modals, complex chemistry math wiring).
+**Status:** Done. ✅ See the [Phase 2.7 retrospective](#phase-27-retrospective--lessons-for-subsequent-slices) below.
+
+**Decision change vs. original plan:** the pre-substrate plan was a fairly minimal "ion bars + salt cells" port. The actual slice grew significantly during the design pass to land on a target-anchored UX with a compound section-identity system that ended up being applied retroactively across all sibling sections (Hops/Mash/Fermentables/Yeast/Fermentation). The visualizer underwent ~6 redesigns: square-target → outline target → line target / capsule current → shared scale → gamma curve, etc. — driven by the user's request that "ratios displayed should match the visual" without losing readability for small-magnitude ions.
+
+- **Classic sources (renamed + quarantined):**
+  - [OLD_WaterSection.tsx](src/modules/beta-builder/presentation/components/OLD_WaterSection.tsx)
+  - `water-section/OLD_*` — all 9 sub-files (WaterChemistrySection, PhAdjustmentsSection, SaltAdditionsPanel, SaltSummary, WaterProfileComparison, WaterIonRangeStrip, OtherIngredientsPanel, WaterIngredientPickerModal, CustomWaterIngredientModal, WaterVolumesDisplay)
+  - [OLD_SourceWaterModal.tsx](src/modules/beta-builder/presentation/components/OLD_SourceWaterModal.tsx) + [OLD_CustomSourceWaterModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomSourceWaterModal.tsx)
+  - [OLD_TargetStyleModal.tsx](src/modules/beta-builder/presentation/components/OLD_TargetStyleModal.tsx) + [OLD_CustomTargetStyleModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomTargetStyleModal.tsx)
+- **New HS components:**
+  - [WaterSection.tsx](src/modules/hopskip/components/builder/WaterSection.tsx) — outer `sectionFrameStyle` (paper bg + 2px ink L/R/B border + 14px bottom corners + sh3 + 22px padding + 10px gap). `SectionTitle` script kicker "your brewing water —" + display H2 "Water." + 2px **water-blue** accent rule. 2-row grid: row 1 = `"plan ."` (Water Plan header constrained to left col), row 2 = `"main aside"` (left flex-column of salts + pH + other ingredients; right aside = ion visualizer + brewers notes). Salt cells use the HSStatCard pattern (2px ink + sh1 + 12px radius + 4px water-blue accent strip + always-visible `[−] g [+]` horizontal flank).
+  - [SourceWaterPresetModal.tsx](src/modules/hopskip/components/modals/SourceWaterPresetModal.tsx) + [CustomSourceWaterModal.tsx](src/modules/hopskip/components/modals/CustomSourceWaterModal.tsx) — HSModal-based picker over `COMMON_WATER_PROFILES`.
+  - [TargetStylePresetModal.tsx](src/modules/hopskip/components/modals/TargetStylePresetModal.tsx) + [CustomTargetStyleModal.tsx](src/modules/hopskip/components/modals/CustomTargetStyleModal.tsx) — categorised BJCP style picker (Hoppy Ales / Lagers / Dark Ales / Belgian & Other) + live Cl:SO₄ ratio + flavor-label preview.
+  - [WaterIngredientPickerModal.tsx](src/modules/hopskip/components/modals/WaterIngredientPickerModal.tsx) + [CustomWaterIngredientModal.tsx](src/modules/hopskip/components/modals/CustomWaterIngredientModal.tsx) — finings / spices / water-agents / herbs / flavors / other.
+- **Ion visualizer (sidebar):** 6 horizontal bars (Ca/Mg/Na/Cl/SO₄/HCO₃) on a **shared, gamma-curved domain** so same-value targets sit at the same X position across ions. Each bar: cream paper track with 2px ink border, cross-hatch tinted with the row's proximity color from 0 → source, solid capsule fill from source → current (proximity-colored), source-ring marker, draggable 3px ink **target line**. Hard cap per ion enforces brewing-realistic ceilings (Ca 400 / Mg 100 / Na 300 / Cl 500 / SO₄ 600 / HCO₃ 500). Below: compact inline "Final" readout `Ca 96 · Mg 20 · Na 54 · Cl 103 · SO₄ 123 · HCO₃ 104 ppm` with proximity coloring. Cl:SO₄ ratio caption lives in the card header.
+- **AutoCalcCompoundButton:** ink pill containing `[☑ NaHCO₃ | Auto-Calc]` — embedded NaHCO₃ toggle controls whether baking soda is included in the optimizer. Lives in the water-plan header next to source/target pills, separated by a thin vertical ink divider.
+- **pH adjustments:** baking-soda CTA routes to `waterChemistry.saltAdditions.nahco3_g` directly (it IS NaHCO₃), incrementing the salt cell; lactic acid stays an "other ingredient" with `timing="mash"`.
+- **Reused unchanged:** `WaterChemistryService.calculateFinalProfileFromTotalSalts` / `splitSaltsProportionally` / `chlorideToSulfateRatio`; `WaterSaltOptimizer.optimizeSaltAdditions`; `MashPhCalculationService` via `RecipeCalculations`; `useRecipeStore.updateRecipe / addOtherIngredient / updateOtherIngredient / removeOtherIngredient`; constants `COMMON_WATER_PROFILES`, `BEER_STYLE_TARGETS`, `getWaterTargetForBjcpStyle`, `CATEGORY_LABELS`, `UNITS`, `TIMINGS`, `getDefaultUnit`, `getDefaultTiming`. **Zero domain changes.**
+- **Cross-cutting design pass (applied retroactively across all 2.x sections):** subtle ingredient-tinted visual identity layered across multiple touchpoints — see the [Phase 2.7 retrospective](#phase-27-retrospective--lessons-for-subsequent-slices).
+- **Data dependencies:** All read-write via existing recipe + preset stores. No new server endpoints.
+- **Effort:** L+ (single focused session — substrate locked but the visualizer and tinting iterations pushed actual time well beyond original L estimate; ~2,800 LOC across all new files + cross-section style updates).
 
 ## 2.8 — Hops
 
@@ -593,6 +603,40 @@ A follow-up session reworked the Brew Mode UX based on user feedback. Captured h
 9. **Commit** that section's vertical slice.
 
 The same choreography applies to Phase 1 sub-slices (replace HSBrowsePage / HSPublicRecipeView / HSCompareRecipesPage / HSUserProfile / HSBrewSessionPage / HSVersionHistoryPage, delete matching override rules, tag the replaced classic files, extend the lint rule). Phase 3 (calculators) and Phase 4 (learn articles) follow the same pattern — at smaller granularity.
+
+---
+
+## 2.9 — Builder shell polish (BJCP rail rebuild + responsive tab strip)
+
+**Status: ✅ Shipped.** Not a section-by-section migration — this is iteration on the builder shell (the tablist + live-numbers band) on top of the existing HopSkipBuilder. No new modal, no new section, no new repo/service touched.
+
+**What changed:**
+- Replaced the wrapped legacy `StyleRangeComparison` with native `BJCPStyleRail` + `BJCPRangeRow` components. Single boxed card lives inside the live-numbers band (collapsible via the existing `STYLE RANGES` toggle). 5 mini-range rows (OG/FG/ABV/IBU/BU·GU) + SRM color footer with cross-hatched out-of-range zones, vertical ink edge ticks, and a recipe-color pin marker.
+- Removed the standalone `ColorIndicatorBar` element — its content (SRM gradient + style-range markers + color adjective) is now the rail card's footer.
+- Removed the per-StatCard BJCP target range text — fully consolidated into the rail.
+- Tab strip became responsive across 5 stages (A → E): full chrome at ≥1000px container width down to a two-row layout at <560px. See HOPSKIP_PRD.md §8.E for the full table + stage E specifics (3+3 split, brick offset, tuck-under, cover strip, stable baseline filler, hover-rise + counter-translated inner line).
+- Hover effect: inactive tabs rise 4px (3px in stage E) + accent strip fades in to 0.4 opacity. Inner bottom line counter-translates so the binder line stays anchored to the content frame top regardless of hover position.
+
+**Files:**
+- New: `src/modules/hopskip/components/BJCPStyleRail.tsx`, `BJCPRangeRow.tsx`
+- Edits: `src/modules/hopskip/components/HopSkipBuilder.tsx` (live-numbers band restructure, responsive tab strip, hover styles)
+- Cleanup: dropped dead `ColorIndicatorBar` + `srmAdjective` + `SRM_BAR_MAX` + `SRM_GRADIENT` from HopSkipBuilder; dropped unused `srmToRgb` import. `.hs-bjcp` / `.hs-bjcp-grid` CSS rules deleted from `overrides.css` (legacy `style-strip-*` rules in §9 of design PRD are now marked deprecated — kept only because the classic beta builder still uses them).
+
+### Polish iteration retrospective — patterns for future builder work
+
+**1. Callback ref > useEffect+useRef for any ref-dependent setup when the parent might early-return.** `HopSkipBuilder` returns a `Loading recipe…` placeholder while `currentRecipe === null`. A `useEffect(() => { ... }, [])` setup with a `useRef` would attach to a null ref on mount and never retry once the tablist actually mounted — the ResizeObserver never attached and the responsive tier system was stuck at stage A. Switching to a callback ref (function passed to `ref={}` that runs on mount/unmount) fixed it cleanly. **Apply this pattern any time a ref-dependent effect runs in a component that has conditional early returns.**
+
+**2. Hover-rise needs container clipping + extension padding to avoid exposing the surface beneath.** The naive approach (just `transform: translateY(-4px)` on hover) exposes the section bg in the 4px gap that opens below the tab. The fix used in stage E AND single-row stages: (a) extend the tab's padding-bottom by N pixels so the tab box is taller than its visible area, (b) put the tabs inside a wrapper with `clip-path: polygon(0% -200%, 100% -200%, 100% 100%, 0% 100%)` — the polygon clips at the wrapper's bottom (extension hidden in normal state, fills the gap on hover) while extending 200% above (so the tab's risen top is still visible). Compensate for the bigger tab box via padding-bottom so the label stays at the same visual position.
+
+**3. Counter-translate inner elements to anchor them in absolute space while the parent transforms.** The binder line at the bottom of inactive tabs would normally lift with the tab on hover. Adding a `.hs-bottom-line` span inside each tab with its OWN `transform: translateY(+N)` matching the parent's `-N` keeps the line glued to the content frame top — purely CSS, no JS measurement. Same pattern works for any "anchored child" effect.
+
+**4. clip-path polygon math is more reliable than negative margin / negative top for "show above, clip below" layouts.** Tried both; `clip-path: polygon(0% -200%, 100% -200%, 100% 100%, 0% 100%)` is the cleanest expression and doesn't fight other margin collapsing.
+
+**5. Stage-aware styling beats responsive CSS for layouts that need structural changes (not just sizing).** A `data-stage="A|B|C|D|E"` attribute on the tablist (set from JS via ResizeObserver measurement) makes both the JSX and CSS branches easy to author. CSS-only media queries would force everything through a single layout that has to handle both single-row and two-row geometry — much harder.
+
+**6. Active tab's paper border merging with content frame is fragile under `position: relative` changes on ancestors.** When the tabs section was given `position: relative` (to anchor an absolute cover element), it created a new stacking context that put the tablist's positioned children ABOVE the content frame (which was non-positioned). The content frame's ink top border then leaked through above the active tab's paper border. Resolution: put cover elements INSIDE the tablist (which is already positioned with z-index:5) rather than as siblings of the tablist needing the section as their positioning ancestor. **Rule:** don't add `position: relative` to the tabs section. Anchor absolute children to the tablist instead.
+
+**7. SRM gradient slicing trick** for the BJCP color row's bulge-out in-range bar: each segment of the SRM bar (out-of-range left, in-range bulge, out-of-range right) uses the same full-width `SRM_GRADIENT` image but with `background-size` + `background-position` scaled so the gradient color at each segment's edge matches what it would be on a single continuous bar. See `srmSliceBackground(a, b)` helper in `BJCPStyleRail.tsx`.
 
 ---
 
@@ -1644,11 +1688,108 @@ The store returns `Array<{ label: YeastCategory; items: YeastPreset[] }>` — sa
 
 ---
 
+## Phase 2.7 retrospective — lessons for subsequent slices
+
+Real notes captured while executing Phase 2.7 (Water + 6 modals + cross-section identity pass). The water section is the only Phase 2 slice that *doesn't* have a per-row ledger as its central primitive, so a lot of the lessons here are about how the substrate adapts to "blocks + visualizer" sections — and the design-pass tinting work ended up being applied retroactively to every other 2.x section, so this retro is also the canonical reference for the section-identity system.
+
+### Non-ledger sections still wear the substrate frame — just compose different blocks underneath.
+
+Phases 2.1/2.2/2.3/2.6/2.8 all converged on `[LedgerHead + N data rows + LedgerTotal]` as the section's central primitive. Water doesn't have N homogeneous rows; it has FIVE heterogeneous blocks (water plan / salt cells / pH card / other ingredients / ion visualizer). The substrate accepts this: `sectionFrameStyle` (2px ink frame + paper bg + sh3) + `SectionTitle` (script kicker + display H2 + 2px accent rule) + a custom internal layout. The grid template ends up being `"plan ." / "main aside"` — water plan header constrained to the left column (so its hairline doesn't extend over the aside), then a 2-col body with a flex-column "main" stacking the left blocks and a flex-column "aside" stacking the right blocks. **Rule for future heterogeneous-content sections:** keep the section frame + SectionTitle; inside, build whatever the section needs as a flex/grid composition. The substrate is the FRAME, not the internal pattern.
+
+### Don't let a tall aside dictate left-column row heights — wrap the left column in its own flex container.
+
+First-pass attempts at the 2-row grid (`"source ." / "salts aside" / "ph aside" / "other aside"`) put each left-column block in its own grid row, with aside spanning all three. Because the aside (ion visualizer ~466px + notes card) was taller than salts/pH/other combined, the grid distributed the extra ~205px evenly across the three left rows — creating huge empty gaps below each block even though `row-gap: 10px` was set. The fix: collapse salts/pH/other into a SINGLE grid cell (`"main aside"`), with that cell being a flex-column owning its own internal gap. Now the left column's row heights are determined by content only; the aside can be as tall as it likes without distorting the left. **Rule for any 2-col layout where one column is taller than the other AND multiple stacked items live in the shorter column:** wrap those items in a single grid cell with `display: flex; flex-direction: column; gap: X` rather than putting each in its own grid row. Otherwise the spanned tall column will redistribute its excess height across the shorter column's rows.
+
+### Section header convention: eyebrow LEFT, flex-1 hairline, controls RIGHT — including the action button.
+
+Section headers across all 2.x sections (HopSection's `LedgerHeaderRow`, Fermentables, etc.) follow the same pattern: eyebrow on the left, a `flex: 1` ink-hairline filling the middle, meta + readouts + action button(s) on the right. The Water plan header initially put source/target pills in the middle and `Auto-Calc` on the far right with `marginLeft: auto` on the inner cluster — which silently consumed the hairline's flex-grow space (a margin-auto sibling beats flex-grow in the box model). Visible symptom: the hairline disappeared. **Rule:** when arranging items in a `flex; gap` row that includes a `flex: 1` hairline, do NOT also apply `marginLeft: auto` to a sibling — pick one or the other. The hairline approach is right when you want a continuous decorative rule between eyebrow and controls; the margin-auto approach is right when you don't.
+
+### When a button is configured by an adjacent control, pull the control INTO the button as a compound.
+
+The Auto-Calc button has an `includeBakingSoda` boolean toggle. The first cut put a separate checkbox above/beside the button; the user requested they live inside the button itself ("inside the AutoCalc button, there can be a checkbox for NaHCO₃"). The shipped `AutoCalcCompoundButton` is an `inline-flex` ink pill containing two visually-distinct halves separated by a cream-25%-opaque divider: `[☑ NaHCO₃ | Auto-Calc]`. The left half is a `<label>` wrapping `<input type="checkbox">`; the right half is a `<button onClick={onAutoCalculate}>`. Both halves stop click propagation correctly because they're separate elements. **Rule:** when a primary action has a single boolean modifier that lives *only with that action*, embed the modifier as a left-half compound rather than scattering it nearby. Single visual pill, two distinct interactions. Nested `<button>` is invalid HTML — use a wrapper div with two sibling interactive elements.
+
+### Iterative UX iteration count: 8+ rounds on the ion visualizer alone.
+
+The visualizer went through (in order): square target chip → outline-only square → square swapped with line (target=line, current=square) → revert (line is target, current is capsule fill end) → shared scale → gamma-curved scale → hard-cap per ion → debounced domain (grow-on-edge / shrink-on-slack) → fix post-drag shrink → tint hatch with proximity color → add Cl:SO₄ caption to header → final-profile inline readout simplification. **Rule reinforced from [2.6 retro](#iterative-ux-is-the-rule-not-the-exception-on-substrate-faithful-sections-budget-for-2-4-user-feedback-rounds-after-the-initial-substrate-match):** budget 6–10 user-feedback rounds for visualizer-centric sections. The first design is never the last. Each round is small (5–20 minutes of edits + an inspection), so the total cost is reasonable, but the *number* of rounds is much higher than the substrate-faithful row sections.
+
+### Debounced domain math: grow on right-edge, shrink-on-slack with delay, AND the drag-end transition must be in the effect deps.
+
+Final shape of the domain effect (after 3 corrections):
+
+```js
+useEffect(() => {
+  if (isDragging) { /* only grow if marker at edge */ return; }
+  if (ideal > domain * GROW_TRIGGER) { setDomain(ideal); return; }
+  if (ideal < domain * SHRINK_TRIGGER) { schedule shrink after delay; }
+}, [ideal, peak, domain, isDragging]);
+```
+
+The two bugs that surfaced: (1) shrink-during-drag is disorienting (mid-drag re-scale moves the marker under the user's cursor); fix is `if (isDragging) return` early. (2) The shrink schedule is set up inside the effect, but the effect only re-runs when its deps change. After a drag ends, `peak` may not have changed (the last pointermove already updated state to the final value), so the effect doesn't re-run, and the shrink never schedules. Fix: include `isDragging` in the dep array — the `true → false` transition forces a re-run, which then schedules the shrink. **Rule for any debounced-resize chart with drag interaction:** include the drag-state boolean in the effect's deps even if you reference it only via early-return — the boolean's transition is what triggers the post-drag work.
+
+### Visual semantics: TARGET = line, CURRENT = capsule fill. Source = empty ring marker. Don't make any of them the same shape.
+
+The mental model the user landed on after 5 rounds: target is a *destination*, so it's a thin draggable line — affords "you can move me". Current is a *journey* — the colored capsule fill that grows from source toward final, ending at the current value. Source is *where you started* — a small empty ring marker (paper interior, ink outline) sitting on the bar. Each shape is unambiguous and they never confuse each other. **Rule for any range-with-target visualizer (future use cases: pH, OG, ABV ranges?):** target → thin line, current → growing fill end, prior state → empty ring. Don't use a square chip for both target and current — they collide visually.
+
+### HSStatCard pattern (design system §05.4) is the right frame for any "small dense value card" — including salt cells.
+
+The salt cells initially used `1.5px subtle border` + no shadow + conditional cream/paper bg. Per the design system reference HTML the user attached, the HSStatCard pattern is: **2px ink border + sh1 hard offset shadow + 12px radius + 5px ingredient-color accent strip at the top + paper background**. Salts adopted this pattern — five cells in a horizontal flex row, each with a 4px water-blue accent strip (because salts ARE water-chemistry adjusters), `[− input +]` horizontal flank stepper layout, and a faded variant when `totalAmount = 0` (cream2 bg + 35%-opacity ink border + no shadow + 0.7 opacity + accent strip at 0.18). **Rule:** when a section displays a horizontal row of dense numeric cells (salt grams, future use cases: mash-tun volumes, batch volumes, calculator inputs?), use the HSStatCard shape. The accent strip carries the section identity; the framed card gives weight without being heavy. Empty/inactive variants fade EVERY dimension (bg, border, shadow, opacity, accent) — a half-faded card reads as "still active but quiet"; a fully-faded card reads as "available but unused".
+
+### Cross-ion ratio comparison requires a SHARED scale across bars — but a linear shared scale crushes small-magnitude ions.
+
+The user explicitly asked for cross-ion comparison ("Ca 75 and Cl 75 should look the same"). Per-row dynamic scale doesn't deliver this: same-value targets land at different visual X positions because each bar's domain is sized to its own content. A linear shared scale (single domainMax for all 6 ions) DOES deliver this — but Mg (target 15 ppm) on a 600 ppm scale fills only 2.5% of the bar, which is functionally invisible. The compromise: shared scale + **gamma curve** of 0.6 applied to value → position mapping. Effect: Mg target 15 occupies 33% of bar width (not 2.5%), Cl/SO₄/Ca target 75 all occupy 87% (same position!), HCO₃ target 49 falls at 67%. Math: `posPct = (value / domain) ^ 0.6`. The inverse for drag interaction: `ppm = pct ^ (1/0.6) * domain`. **Rule for cross-element comparison charts where element magnitudes vary by >5×:** linear shared scale crushes the small ones; per-element scale loses cross-element semantics; **gamma curve (0.5–0.7) on the shared scale** is the compromise that gives BOTH cross-element comparison AND visibility of small values. Document the inverse mapping next to the forward mapping or future drag-interaction code will be hard to derive.
+
+### Per-element hard caps prevent UI from drifting into brewing-nonsense values.
+
+Each ion has a different brewing-realistic maximum (Ca 400 / Mg 100 / Na 300 / Cl 500 / SO₄ 600 / HCO₃ 500 ppm). Without caps, drag could push the value arbitrarily high and the domain would grow to fit — leading to a Mg target of 800 ppm (which is meaningless chemistry). The visualizer enforces caps in THREE places: (1) drag input clamps via `Math.min(hardMax, computed)`, (2) keyboard arrow nudges clamp at `hardMax`, (3) domain growth is clipped at `hardMax`. The slider's `aria-valuemax` reports the hard cap to screen readers. **Rule for any user-driven numeric control with domain-specific sane bounds:** clamp at the UI layer, not just the data layer. The user shouldn't be able to drag a bar into a chemistry-nonsense state and then have to manually back off.
+
+### Routing "add baking soda" to the NaHCO₃ salt cell — NOT to a new "Baking soda" ingredient — is correct (same chemistry, different framing).
+
+The pH adjustments card's "+4.8 g baking soda" CTA initially added "Baking soda" as a separate `OtherIngredient` (water-agent category, timing=mash, unit=g). User pointed out that baking soda IS NaHCO₃ — the same substance as the existing NaHCO₃ salt cell. Routing the CTA to `waterChemistry.saltAdditions.nahco3_g` instead of `addOtherIngredient` consolidates the data, lets the salt cell reflect the addition, and avoids creating a second source-of-truth for the same substance. Lactic acid stays in OtherIngredients (it's not a salt; it's an acid, with no corresponding salt cell). **Rule:** when a derived suggestion (auto-calc, pH adjustment, ferment temp ramp) wants to mutate something the user already has a primary control for, route the suggestion INTO the primary control. Don't create a parallel/shadow representation of the same substance in a different data structure — even if it's slightly more code to wire the route. The data model should have one place per concept.
+
+### Section-identity tinting: a multi-touchpoint compound at very low intensities (3–5%) beats any single channel at high intensity.
+
+The user's request was "each section visually distinct while remaining in harmony". The first attempt was a single 5% accent tint on the sidebar visualizer card's background — read as too uniform across sections. The shipped pattern layers the section accent across SIX touchpoints, each at very low intensity:
+
+| Touchpoint | Recipe |
+|------------|--------|
+| Sidebar viz card **background** | `cream/cream-2` base + **5%** accent |
+| Sidebar viz card **border** | ink + **15%** accent (border is the strongest signal — small accent here is loud) |
+| **Ledger head** band | `cream` + **4%** accent |
+| **Total** band | `cream-2` + **4%** accent |
+| **Row hover** | `paper`/`cream-2` 20/80 base + **2%** accent (half intensity of head/total so it doesn't collide) |
+| **IBU / DME stripe** (read-only result column) | `ink + paper/cream-2` 5–9% base + **4%** accent |
+
+Brewers Notes card stays honey-tinted at 80/20 across all sections — that card is the "warm/handwritten" companion to the framed visualizer next to it, intentionally NOT tagged with the section's accent because its identity is the brewer's-voice motif, not the section.
+
+**Rule for cross-section visual identity:** a single high-intensity tint feels like a paint job. A multi-touchpoint very-low-intensity compound feels like the section is itself made of its ingredient. Pick 5–7 surfaces in the section that the eye lands on naturally (frame, headers, totals, hover, accent strips on cards) and apply 2–5% of the accent to each. The cumulative effect is unmistakable; no single touchpoint is loud enough to feel decorative.
+
+### Color hierarchy for proximity status: pull from the HS palette directly, don't synthesize mid-hues.
+
+The ion bars initially used HSL hue interpolation: `hue 145 (green) → hue 250 (blue)` for low, `hue 145 (green) → hue 25 (orange-red)` for high. The user pointed out that "high" rendered as muddy orange-brown (hue 25 with 60/45 saturation/lightness), not the punchy red they expected. The fix: replace the interpolation with discrete tokens. Ideal (within ±10% of target) = `hsTokens.hops` (#4a8a3d). Low (<90%) = `hsTokens.water` (#2b6fb8). High (>110%) = `hsTokens.roast` (#d4452c). Three discrete colors, sourced from the design system, no synthesis. **Rule:** when a chart needs to signal "good/low/high" or any other small-finite-state status, use the HS palette tokens directly. HSL interpolation between two tokens produces colors that aren't IN the design system — they read as muddy or off. Per the design system §001: "Don't introduce new accent colors. If you need another dimension of meaning, use shape — not a new hue." Discrete tokens are also accessibility-friendlier (each color has known WCAG contrast against cream/paper backgrounds).
+
+### Hover tint must be visually distinct from header/footer tint OR the table flattens.
+
+When all three (head, total, hover) used 4% accent intensity, hovering a row produced a band visually identical to the head/total bands above and below — flattening the table's vertical structure. The fix: cut hover intensity in half (2%) AND lighten the base (paper/cream-2 20/80 instead of cream-2 alone). Hover now reads as "a row that lifts toward the section accent" rather than "a row that's pretending to be the head". **Rule:** the head/footer bands are PROMINENT (they frame the data); the hover is TRANSIENT (it indicates "this row is interactive"). They should have visually different weights even if they share an accent color. The simplest knob is intensity (head/total 4%, hover 2%); the secondary knob is the base color (head: cream, total: cream-2, hover: lighter blend). Don't share the exact same `color-mix` recipe across both kinds of band.
+
+### Salt cell hover steppers: always-visible horizontal `[− input +]` flank beats hover-revealed vertical chevrons.
+
+First cut: hover-revealed vertical up/down chevrons positioned absolutely on the right edge of each salt cell. Felt like an Easter egg — brewers had to discover the steppers existed. Replaced with always-visible `[− input +]` horizontal flank inspired by the classic SaltAdditionsPanel's `starter-stepper` pattern. Minus on the left (with auto-disable when `totalAmount ≤ 0`), `+` on the right, the input claims `flex: 1` between them. Each button: 22×22, 1.5px ink border, paper bg → water-blue on hover. **Rule for inline steppers on a numeric input in a dense card:** flank the input horizontally with always-visible buttons. Hover-revealed steppers belong in larger ledger rows where the row itself has multiple affordances; on a small standalone card the stepper IS the primary affordance and should be visible at rest. Use literal `−` / `+` text glyphs (in body font, weight 700) — not chevrons. The math symbols read as a stepper instantly; chevrons read as "this expands a dropdown".
+
+### Quarantine took ~12 minutes for 14 files + 2 consumer updates — the rename ratio still holds.
+
+Six top-level OLD_ renames (WaterSection, SourceWaterModal, CustomSourceWaterModal, TargetStyleModal, CustomTargetStyleModal) + nine `water-section/OLD_*` renames + two consumer-import updates (BetaBuilderPage, BrewedVersionModal) + ESLint `no-restricted-imports` extension with 14 new paths. The Water section had the most quarantine files of any 2.x slice so far. The mechanical rename pattern (`git mv` + content rename + import update + `OLD_` function name) scaled linearly — no surprises. **Rule reinforced:** budget ~1 minute per file for quarantine rename work, plus 5–10 minutes for consumer-import updates and the ESLint extension. Water's 12 minutes was on-trend.
+
+### When the design system reference is available, USE it — don't reinvent component shapes.
+
+The user shared their HS design system HTML file mid-session. Reading it changed several decisions: salt cells adopted the documented HSStatCard pattern (2px ink frame + sh1 + accent strip), the ion bar status colors switched from HSL interpolation to direct palette tokens, and the section-identity tinting was capped at the design system's documented "pick at most three accents per screen" rule. **Rule for any future section slice:** if the design system has a documented pattern for the shape you're building, copy that pattern — even if your inline implementation works. Consistency with the design system pays off in cross-section harmony and in the cumulative effect of small touchpoints (the cross-section identity work in this slice could only land because all sections share the same frame language). The design system file is at `~/Downloads/Hop & Skip Design System.html` (user-local) — for future slices, ASK the user to share it if you don't have visibility into the canonical patterns.
+
+---
+
 ## Total effort estimate
 
 - **Phase 0** (free wins + quarantine labeling): ✅ Done — ≈ 1 focused session
 - **Phase 1** (5 active pages: Browse, Public viewer, Compare, User profile, Brew session — Version history deferred indefinitely): **done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · **1.6 deferred / maybe never** (low-traffic, classic surface stays as reference)
-- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.8 ✅ · 2.6 ✅ · 2.4 / 2.7 NOT STARTED · remaining: 1–2 focused sessions
+- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.8 ✅ · 2.6 ✅ · 2.7 ✅ · 2.4 NOT STARTED · remaining: 1 focused session
 - **Phase 3** (6 calculator widgets extracted from existing inline implementations): NOT STARTED — 1 focused session
 - **Phase 4** (14 learn article body rewrites): NOT STARTED — 3–4 focused sessions
 - **Phase 5** (optional deferred deletion): NOT STARTED — ~1 focused session, whenever

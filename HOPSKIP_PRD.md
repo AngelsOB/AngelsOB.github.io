@@ -334,36 +334,39 @@ The Advanced expander reuses whatever equipment-section component lives in live.
 
 ### C. BJCP style ranges strip (only when a style is set)
 
-Eyebrow ("BJCP style ranges") + " · {style name}" muted text + thin divider + "where you sit" Caveat script.
+✅ **Shipped — full redesign, see `BJCPStyleRail.tsx` + `BJCPRangeRow.tsx`.** The old plan (wrap legacy `StyleRangeComparison` with `style-strip-*` overrides) was scrapped. The current implementation:
 
-Below: the existing **StyleRangeComparison** component (or whatever shows style-range gauges in live). Wrap it in a div that styles its internal `style-strip-*` classes in HS tokens:
-- Ink track (1.5px ink-tinted border)
-- Range fill in the relevant ingredient color at 0.4 opacity
-- Ink needle (3px wide, 14px tall)
-- Mono micro-labels in muted text
-- **SRM strip keeps its real beer-color gradient** — don't override the inline `background` on `.style-strip-range.is-srm`
+- Single boxed card (paper bg, 2px ink border, 4px hard shadow) rendered **inside** the live-numbers band (collapsible via the existing `STYLE RANGES` toggle), positioned below the StatCards and above the SRM color bar.
+- **5 mini range rows**: OG, FG, ABV, IBU, BU/GU. Each row is a horizontal cell with eyebrow label + current value floating above the marker, a pill-shaped track with a tinted in-range band and edge ticks, and lo/hi labels under the band edges. View range is wider than the BJCP target so out-of-range markers travel visibly to their position instead of clamping. Marker color flips ink → roast when out of range.
+- **SRM color footer** merged into the same card (one card, not two): bottom-up gradient bar with **cross-hatched + 7.5%-paper-washed** regions outside the BJCP SRM range, ink vertical edge lines, a recipe-color pin marker showing the actual `srmToRgb` color of the recipe, lo/hi labels under, and a script-font color adjective on the right ("deep amber ✦", "deep red ✦", etc.).
+- Header: ink/roast badge + `BJCP {code}` eyebrow + style name in muted body type + summary script ("in style!" or "N over, M in") + `SWITCH STYLE ⇄` button wired to `setIsStyleModalOpen`.
+- BU/GU range derived from `spec.ibu` / `spec.og` endpoints (proven formula).
 
-Render the strips in a **2-column grid** to keep the section compact. 1-column at ≤640px.
+**Vital patterns kept from this slice:**
+- View-range formula: `pad = max(span * 1.0, statMinPad); viewLo = lo - pad; viewHi = hi + pad`; auto-expand if value is still outside. Per-stat `statMinPad` + `viewMin` clamps so OG/FG don't go below 1.000 and IBU/ABV don't go negative.
+- SRM gradient slicing trick: each segment of the SRM bar uses the same full-width gradient image but with `background-size` + `background-position` math so colors line up exactly with `srmToRgb` at the segment's edges (used when the in-range bulge is rendered taller than the surrounding hatched zones — see `srmSliceBackground`).
 
 ### D. Live numbers (cream-2 bg)
 
 "Live numbers" eyebrow · "updates as you type ✦" script.
 
-7-column grid of stat cards: OG, FG, ABV, IBU, SRM, pH, Cal/12oz. Each card:
+6-column grid of stat cards: OG, FG, ABV, IBU, pH, Cal/12oz (SRM moved to the BJCP rail's color footer; no longer a standalone card). Each card:
 - 5px ingredient-accent top strip
 - Eyebrow with the metric name
 - Big display numeric in tabular nums
-- BJCP target range in muted micro text
 
-The IBU card shows a rotated "nice!" Caveat script note in the top-right corner when the value falls inside the style's range.
+✅ **Shipped — see `HopSkipBuilder.tsx` live-numbers band.** Notes vs. original spec:
+- Removed the per-card BJCP target range text (was duplicated noise; the rail below now owns all BJCP comparison).
+- Removed the "nice!" script note on the IBU card (replaced by the in-range/out-of-range coloring in the rail).
+- Below the StatCards, the BJCP rail (§C) renders inside the same band (collapsible). The rail's SRM color footer replaces the standalone `ColorIndicatorBar` element.
 
 Values come from `useRecipeCalculations(recipe)` — same hook the classic builder uses.
 
-Responsive: 7-col → 4-col at ≤900px → 3-col at ≤640px.
+Responsive: 6-col → 3-col at ≤900px → 2-col at ≤640px.
 
 ### E. Tabs + section body — the "binder tab" pattern
 
-This is the most carefully-engineered part. See §10 for the full explanation.
+This is the most carefully-engineered part. See §10 for the full explanation. ✅ **Single-row chrome shipped + responsive tier system shipped.**
 
 Tabs: `Fermentables · Hops · Mash · Water · Yeast · Fermentation · Brew sheet`. Each tab has a 10×10 colored square (the ingredient color), a display label, and a small count chip showing how many items are in that section.
 
@@ -380,6 +383,35 @@ Section body renders whatever the existing classic section components are for ea
 
 The HS overrides (see §9) handle restyling the internals of these classic components automatically.
 
+#### Responsive tier system (5 stages A → E)
+
+The tab strip measures its own container width via a callback ref + ResizeObserver and adapts in 5 discrete stages. Critical fix during implementation: use a **callback ref** (not `useRef` + `useEffect` with empty deps) — the parent early-returns a `Loading recipe…` placeholder before `currentRecipe` is loaded, so the tablist doesn't exist on first render. With `useEffect([])` the observer would attach to a null ref and never re-attempt; callback ref handles mount/unmount transitions cleanly.
+
+| Stage | Container width | What changes |
+|---|---|---|
+| A | ≥1000px | Full chrome — color swatch + label + count badge, padding 12×20 |
+| B | ≥850px | Count badges hidden, padding 12×18 |
+| C | ≥700px | Color swatches hidden too, padding 12×14 |
+| D | ≥560px | Tight padding 10×12, label drops to 13px |
+| E | <560px | **Two-row layout** — 3 + 3 swappable tabs + Brewsheet pinned far-right-bottom |
+
+#### Stage E specifics (two-row layout)
+
+- **3 + 3 split**: Group A = Fermentables/Hops/Mash; Group B = Water/Yeast/Fermentation. Brewsheet is rendered as its own absolutely-positioned element always at `right: 0` and `translateY(BOTTOM_TOP)` — it never participates in the swap.
+- **Active group always on the bottom row**. State: `lastSwappable` ("A" or "B"), updated via `useEffect([activeTab])`. Brewsheet selection deliberately doesn't update it (so clicking Brewsheet doesn't shuffle the rows).
+- **Brick offset**: top row gets `translateX(44px)` so the two rows are staggered like bricks.
+- **Tuck under**: top-row tabs use padding `"8px 12px 65px"` → 90px tall box. Bottom row at `wrapper y=62` (BOTTOM_TOP), 50px tall (BOTTOM_HEIGHT_VISIBLE + extension). Top tab visible portion is its top ~30px (above bottom row); the rest is tucked behind the bottom row via z-index. Where no bottom row tab covers (e.g. Fermentation extending past Mash on the right), the top tab visibly extends down into the bottom row band.
+- **Cover strip**: a 12px-tall cream2 div at the top of the tablist (`zIndex: 6`, above the row containers' `zIndex: 1/2/3`) clips the rounded tops of the top row tabs so they appear "cut off" at the section divider above.
+- **Wrapper has `overflow: hidden`** at `height: WRAPPER_HEIGHT (102)` so top tab extensions can't bleed into the content frame area below.
+- **Stable bottom line filler**: a 0-height absolute div at the wrapper's bottom with `borderBottom: 2px ink` and `zIndex: 2` provides the binder baseline across the entire row including gaps between bottom-row tabs and Brewsheet. It does NOT move when the rows swap (because it's outside the row containers).
+- **Inactive bottom-row tabs** render an absolute `.hs-bottom-line` span at `top: 36` (= visible bottom of their 50-tall box) for the ink line; active skips it so its paper bg can merge with the content frame.
+
+#### Hover effect (all stages)
+
+- Inactive tabs translate `-4px` on hover (`-3` in stage E currently for fine alignment) + the accent strip fades in to `opacity: 0.4` (from `0`).
+- Inner bottom line counter-translates `+4px` (or `+3` in stage E) so it stays anchored to the content frame top while the rest of the tab lifts. CSS: `.hs-builder-tab:not([aria-selected="true"]):hover .hs-bottom-line { transform: translateY(4px); }`.
+- **Critical**: for the hover-rise to work in single-row stages (A–D) without exposing section bg beneath the tab, the tab box uses **padding-bottom extension** (`padTop * 2 + extension`, e.g. `12px 20px 20px` for stage A) + an **inner clipping wrapper** with `clip-path: polygon(0% -200%, 100% -200%, 100% 100%, 0% 100%)`. The polygon clips at the wrapper's bottom (so extension is hidden in normal state) but extends 200% above (so the tab top is visible when raised).
+
 ### F. Tab-change animation
 
 When the user clicks a different tab, the section body slides in from the appropriate side:
@@ -389,6 +421,8 @@ When the user clicks a different tab, the section body slides in from the approp
 Pattern: compute direction at click time (compare prev/next tab index), store on state, apply a CSS animation class to the section wrapper. Re-key the wrapper on `activeTab` so the animation re-fires on every switch.
 
 Animation: `translateX(20px → 0)` + `opacity(0 → 1)` over 220ms, cubic-bezier(0.2, 0.7, 0.3, 1). **Suppress** the classic `brew-animate-in` fade inside the tab body so you don't get two animations competing.
+
+✅ **Shipped + stage-E row-swap animation added.** When stage E is active and the active tab crosses group boundaries (e.g. from Mash in Group A to Yeast in Group B), both swappable row containers transition their `transform: translate(...)` simultaneously over 180ms `cubic-bezier(0.32, 0.72, 0, 1)`. Brewsheet stays put. The active tab's `aria-selected` (and therefore the paper bottom border + full accent strip opacity) updates instantly on click while the row slides into position.
 
 ### G. Init + save
 
@@ -447,6 +481,8 @@ This way three levels of nesting are visually distinct without using outlines. O
 - `<select>` background-image — that's the dropdown chevron.
 
 ### Style-strip overrides for the BJCP visualizer (full)
+
+⚠️ **Deprecated for the HS recipe builder** — the HS builder no longer wraps the legacy `StyleRangeComparison`; it uses the native `BJCPStyleRail` component instead (see §8.C). These CSS overrides are still present in `overrides.css` because the **classic beta builder at `/betabuilder/*`** still uses `StyleRangeComparison`, but they're no longer reachable from any HS route. Can be removed when Phase 5 (classic deletion) lands.
 
 These specifically retarget the existing style-strip CSS classes the BJCP visualizer uses:
 
