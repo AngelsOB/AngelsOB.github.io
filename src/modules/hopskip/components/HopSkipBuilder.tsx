@@ -19,7 +19,7 @@ import WaterSection from "@/modules/hopskip/components/builder/WaterSection";
 import YeastSection from "@/modules/hopskip/components/builder/YeastSection";
 import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
-import { EquipmentSection } from "@/modules/beta-builder/presentation/components/EquipmentSection";
+import EquipmentSection from "@/modules/hopskip/components/builder/EquipmentSection";
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
 import BJCPStyleRail from "./BJCPStyleRail";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
@@ -512,7 +512,7 @@ export default function HopSkipBuilder({
       <section
         style={{
           padding: `28px ${BAND_PADDING_X} 20px`,
-          borderBottom: `2px solid ${hsTokens.ink}`,
+          borderBottom: isEquipmentOpen ? "none" : `2px solid ${hsTokens.ink}`,
         }}
       >
         <HSScriptNote
@@ -641,7 +641,24 @@ export default function HopSkipBuilder({
             }}
           >
             <span>Advanced</span>
-            <span style={{ marginLeft: 2 }}>{isEquipmentOpen ? "▲" : "▼"}</span>
+            <svg
+              aria-hidden
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                marginLeft: 2,
+                transform: isEquipmentOpen ? "rotate(90deg)" : "rotate(0deg)",
+                transition: "transform 180ms cubic-bezier(0.32, 0.72, 0, 1)",
+              }}
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           </button>
           {currentRecipe.style ? (
             <label
@@ -763,17 +780,9 @@ export default function HopSkipBuilder({
       >
         <div className="hs-collapse-inner">
           <section
-            ref={(node) => {
-              if (!node) return;
-              node.querySelectorAll<HTMLDetailsElement>("details.equip-advanced").forEach((d) => {
-                if (!d.open) d.open = true;
-              });
-            }}
-            className="brew-theme hs-loose-section"
             style={{
               padding: `20px ${BAND_PADDING_X} 24px`,
               borderBottom: `2px solid ${hsTokens.ink}`,
-              background: hsTokens.cream2,
             }}
           >
             <EquipmentSection />

@@ -1182,8 +1182,16 @@
    grid — the title is now hoisted to the grid top by BuilderTitleBar so
    the colored bottom rule can span both columns. The first DOM child of
    each section is an inline <style> from XxxSectionStyles(), not the
-   header, so use header:first-of-type to target the title reliably. */
-.hs-theme .hs-builder-main section > header:first-of-type {
+   header, so use header:first-of-type to target the title reliably.
+   Scoped to the six per-tab section classes so the brew sheet's TitleBlock
+   and its nested ScheduleSection headers (Mash schedule, Boil, Fermentation)
+   stay visible. */
+.hs-theme .hs-builder-main section.hs-ferm-section > header:first-of-type,
+.hs-theme .hs-builder-main section.hs-hops-section > header:first-of-type,
+.hs-theme .hs-builder-main section.hs-mash-section > header:first-of-type,
+.hs-theme .hs-builder-main section.hs-water-section > header:first-of-type,
+.hs-theme .hs-builder-main section.hs-yeast-section > header:first-of-type,
+.hs-theme .hs-builder-main section.hs-fermentation-section > header:first-of-type {
   display: none !important;
 }
 
