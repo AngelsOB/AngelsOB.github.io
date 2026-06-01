@@ -10,7 +10,7 @@ function parseNum(input: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export default function BoilOffCalculator() {
+export default function OLD_BoilOffCalculator() {
   const [preVolInput, setPreVolInput] = useState("7");
   const [preGravInput, setPreGravInput] = useState("1.042");
   const [targetOGInput, setTargetOGInput] = useState("1.054");

@@ -1,9 +1,14 @@
 import GrainGradient from "@/components/GrainGradient";
-import AbvCalculator from "../components/AbvCalculator";
-import BoilOffCalculator from "../components/BoilOffCalculator";
-import CarbonationCalculator from "../components/CarbonationCalculator";
-import DilutionCalculator from "../components/DilutionCalculator";
-import HydrometerCorrectionCalculator from "../components/HydrometerCorrectionCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/calculators is the quarantined reference; intentional import
+import OLD_AbvCalculator from "../components/OLD_AbvCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/calculators is the quarantined reference; intentional import
+import OLD_BoilOffCalculator from "../components/OLD_BoilOffCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/calculators is the quarantined reference; intentional import
+import OLD_CarbonationCalculator from "../components/OLD_CarbonationCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/calculators is the quarantined reference; intentional import
+import OLD_DilutionCalculator from "../components/OLD_DilutionCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/calculators is the quarantined reference; intentional import
+import OLD_HydrometerCorrectionCalculator from "../components/OLD_HydrometerCorrectionCalculator";
 
 export default function Calculators() {
   return (
@@ -54,19 +59,19 @@ export default function Calculators() {
 
       <div className="space-y-6">
         <div className="brew-animate-in brew-stagger-4">
-          <AbvCalculator />
+          <OLD_AbvCalculator />
         </div>
         <div className="brew-animate-in brew-stagger-6">
-          <DilutionCalculator />
+          <OLD_DilutionCalculator />
         </div>
         <div className="brew-animate-in brew-stagger-8">
-          <BoilOffCalculator />
+          <OLD_BoilOffCalculator />
         </div>
         <div className="brew-animate-in brew-stagger-10">
-          <CarbonationCalculator />
+          <OLD_CarbonationCalculator />
         </div>
         <div className="brew-animate-in brew-stagger-12">
-          <HydrometerCorrectionCalculator />
+          <OLD_HydrometerCorrectionCalculator />
         </div>
       </div>
     </div>

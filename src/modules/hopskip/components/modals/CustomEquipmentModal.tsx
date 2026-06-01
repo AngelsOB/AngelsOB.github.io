@@ -108,7 +108,7 @@ export default function CustomEquipmentModal({
             value={description}
             onChange={setDescription}
             placeholder="2-vessel · 19 L kettle · plate chiller"
-            hint="optional — anything that helps you remember the kit ✦"
+            hint="optional — anything that helps you remember the kit"
             rows={3}
           />
 

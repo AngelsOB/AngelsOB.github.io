@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import AbvCalculator from "@/components/AbvCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_AbvCalculator from "@/components/OLD_AbvCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
@@ -70,7 +71,7 @@ export default function AbvCalcPage() {
         </p>
 
         <div className="my-6">
-          <AbvCalculator />
+          <OLD_AbvCalculator />
         </div>
 
         <p className="text-sm leading-relaxed">

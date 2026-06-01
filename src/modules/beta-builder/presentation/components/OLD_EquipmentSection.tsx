@@ -9,8 +9,8 @@ import React, { useState, useEffect } from 'react';
 import { useRecipeStore } from '../stores/recipeStore';
 import { useEquipmentStore } from '../stores/equipmentStore';
 import type { EquipmentProfile } from '../../domain/models/Equipment';
-import { EquipmentProfileModal } from './EquipmentProfileModal';
-import { CustomEquipmentModal } from './CustomEquipmentModal';
+import { OLD_EquipmentProfileModal } from './OLD_EquipmentProfileModal';
+import { OLD_CustomEquipmentModal } from './OLD_CustomEquipmentModal';
 import { useHoldToRepeat } from '../../../../hooks/useHoldToRepeat';
 import AnimatedNumberInput from '../../../../components/AnimatedNumberInput';
 
@@ -84,7 +84,7 @@ function EquipDatum({
   );
 }
 
-export const EquipmentSection: React.FC = () => {
+export const OLD_EquipmentSection: React.FC = () => {
   const recipe = useRecipeStore((state) => state.currentRecipe);
   const updateRecipe = useRecipeStore((state) => state.updateRecipe);
   const { profiles, loadProfiles, saveCustomProfile } = useEquipmentStore();
@@ -342,7 +342,7 @@ export const EquipmentSection: React.FC = () => {
       </details>
 
       {/* Equipment Profile Picker Modal */}
-      <EquipmentProfileModal
+      <OLD_EquipmentProfileModal
         isOpen={isPickerOpen}
         onClose={() => setIsPickerOpen(false)}
         onSelect={handleSelectProfile}
@@ -353,7 +353,7 @@ export const EquipmentSection: React.FC = () => {
       />
 
       {/* Custom Equipment Modal */}
-      <CustomEquipmentModal
+      <OLD_CustomEquipmentModal
         isOpen={isCustomModalOpen}
         onClose={() => setIsCustomModalOpen(false)}
         onSave={handleSaveCustomProfile}

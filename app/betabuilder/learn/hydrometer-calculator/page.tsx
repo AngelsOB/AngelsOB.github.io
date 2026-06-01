@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import HydrometerCorrectionCalculator from "@/components/HydrometerCorrectionCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_HydrometerCorrectionCalculator from "@/components/OLD_HydrometerCorrectionCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default function HydrometerCalcPage() {
           gravity.
         </p>
 
-        <div className="my-8"><HydrometerCorrectionCalculator /></div>
+        <div className="my-8"><OLD_HydrometerCorrectionCalculator /></div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It

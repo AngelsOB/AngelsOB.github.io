@@ -12,6 +12,12 @@ import type { Recipe } from "../../domain/models/Recipe";
 interface SidebarNavButtonProps {
   backPath: string;
   backLabel: string;
+  /**
+   * Optional override for the back-button click. When provided, this runs
+   * instead of `router.push(backPath)` — the recipe editor uses this to route
+   * navigation through the unsaved-changes guard.
+   */
+  onBackClick?: () => void;
   showShareControl?: boolean;
   isPublic?: boolean;
   shareSlug?: string;
@@ -24,6 +30,7 @@ interface SidebarNavButtonProps {
 export default function SidebarNavButton({
   backPath,
   backLabel,
+  onBackClick,
   showShareControl,
   isPublic,
   shareSlug,
@@ -171,7 +178,7 @@ export default function SidebarNavButton({
         {/* Left region: navigation */}
         <button
           className="sidebar-nav-back"
-          onClick={() => router.push(backPath)}
+          onClick={onBackClick ?? (() => router.push(backPath))}
         >
           <span className="sidebar-nav-arrow">&#8592;</span>
           <span className="sidebar-nav-label">{backLabel}</span>

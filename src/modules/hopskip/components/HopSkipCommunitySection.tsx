@@ -36,10 +36,8 @@ export default function HopSkipCommunitySection({ recipes }: Props) {
     >
       <HSSectionHeader
         index={4}
-        kicker="fresh from the community —"
         eyebrow="Community"
-        title="What other brewers are pouring."
-        kickerColor={hsTokens.water}
+        title="Recipes other brewers are pouring."
         alignEnd={
           <Link
             href="/browse"

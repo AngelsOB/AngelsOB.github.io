@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import BoilOffCalculator from "@/components/BoilOffCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_BoilOffCalculator from "@/components/OLD_BoilOffCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
@@ -45,7 +46,7 @@ export default function BoilOffCalcPage() {
           boil to hit your target gravity.
         </p>
 
-        <div className="my-8"><BoilOffCalculator /></div>
+        <div className="my-8"><OLD_BoilOffCalculator /></div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It

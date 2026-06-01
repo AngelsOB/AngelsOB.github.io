@@ -16,7 +16,7 @@ function parseNum(input: string): number | null {
 
 type Unit = "C" | "F";
 
-export default function StrikeTempCalculator() {
+export default function OLD_StrikeTempCalculator() {
   const [unit, setUnit] = useState<Unit>("C");
   const [targetInput, setTargetInput] = useState("67");
   const [grainTempInput, setGrainTempInput] = useState("20");

@@ -181,6 +181,27 @@ export default tseslint.config([
             message:
               'Classic UI (OLD_ prefix marker). Use WaterSection from @/modules/hopskip/components/builder/ (with SourceWaterPresetModal / CustomSourceWaterModal / TargetStylePresetModal / CustomTargetStyleModal / WaterIngredientPickerModal / CustomWaterIngredientModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.7.',
           },
+          {
+            group: [
+              '**/modules/beta-builder/presentation/components/OLD_EquipmentSection',
+              '**/modules/beta-builder/presentation/components/OLD_EquipmentProfileModal',
+              '**/modules/beta-builder/presentation/components/OLD_CustomEquipmentModal',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use EquipmentSection from @/modules/hopskip/components/builder/ (with EquipmentProfileModal / CustomEquipmentModal in modals/) instead. See HOPSKIP_MIGRATION_PRD.md §2.4.',
+          },
+          {
+            group: [
+              '**/components/OLD_AbvCalculator',
+              '**/components/OLD_BoilOffCalculator',
+              '**/components/OLD_CarbonationCalculator',
+              '**/components/OLD_DilutionCalculator',
+              '**/components/OLD_HydrometerCorrectionCalculator',
+              '**/components/OLD_StrikeTempCalculator',
+            ],
+            message:
+              'Classic UI (OLD_ prefix marker). Use the HS-native equivalents from @/modules/hopskip/components/calculators/ (AbvCalculator, BoilOffCalculator, CarbonationCalculator, DilutionCalculator, HydrometerCorrectionCalculator, StrikeTempCalculator). See HOPSKIP_MIGRATION_PRD.md §3.',
+          },
         ],
       }],
     },

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import CarbonationCalculator from "@/components/CarbonationCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import CarbonationCalculator from "@/modules/hopskip/components/calculators/CarbonationCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 
 export const metadata: Metadata = {
@@ -44,7 +46,16 @@ export default function CarbonationCalcPage() {
           . This calculator gives you that number instantly.
         </p>
 
-        <div className="my-8"><CarbonationCalculator /></div>
+        <div className="my-8">
+          <CalculatorEmbed
+            eyebrow="Carbonation"
+            title="Force carbonation PSI"
+            glyph="water"
+            accent={hsTokens.water}
+          >
+            <CarbonationCalculator />
+          </CalculatorEmbed>
+        </div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It

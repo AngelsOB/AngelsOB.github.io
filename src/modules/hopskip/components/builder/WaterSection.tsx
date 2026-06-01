@@ -256,9 +256,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.water}`,
       }}
     >
-      <HSScriptNote color={hsTokens.water} size={22} rotate={-3}>
-        your brewing water —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import StrikeTempCalculator from "@/components/StrikeTempCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_StrikeTempCalculator from "@/components/OLD_StrikeTempCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
@@ -74,7 +75,7 @@ export default function StrikeTempCalcPage() {
         </p>
 
         <div className="my-6">
-          <StrikeTempCalculator />
+          <OLD_StrikeTempCalculator />
         </div>
 
         <p className="text-sm leading-relaxed">

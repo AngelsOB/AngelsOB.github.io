@@ -26,10 +26,8 @@ export default function HopSkipLearnSection() {
     >
       <HSSectionHeader
         index={5}
-        kicker="behind the numbers —"
         eyebrow="Brewing science"
         title="The research behind the numbers."
-        kickerColor={hsTokens.roast}
         alignEnd={
           <Link
             href="/learn"

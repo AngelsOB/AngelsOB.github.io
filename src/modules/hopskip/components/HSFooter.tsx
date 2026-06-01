@@ -1,7 +1,11 @@
+'use client';
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { hsTokens } from "../tokens";
 import HSScriptNote from "./HSScriptNote";
+import { useUnsavedChangesStore } from "@/modules/beta-builder/presentation/stores/unsavedChangesStore";
 
 const COLS: { label: string; links: { href: string; text: string }[] }[] = [
   {
@@ -16,14 +20,13 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
     label: "Learn",
     links: [
       { href: "/learn", text: "Brewing science" },
-      { href: "/betabuilder/learn/ibu", text: "IBU" },
-      { href: "/betabuilder/learn/gravity", text: "Gravity" },
+      { href: "/learn/ibu", text: "IBU" },
+      { href: "/learn/gravity", text: "Gravity" },
     ],
   },
   {
     label: "About",
     links: [
-      { href: "/betabuilder", text: "Classic site" },
       { href: "/privacy", text: "Privacy" },
       { href: "/terms", text: "Terms" },
     ],
@@ -31,6 +34,27 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
 ];
 
 export default function HSFooter() {
+  const router = useRouter();
+  // Footer link click handler that routes through the unsaved-changes guard
+  // when the recipe editor is mounted with dirty edits.
+  const handleFooterClick = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (
+      e.defaultPrevented ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey ||
+      e.button !== 0
+    ) {
+      return;
+    }
+    const { isActive, guardNavigation } = useUnsavedChangesStore.getState();
+    if (isActive) {
+      e.preventDefault();
+      guardNavigation(() => router.push(href));
+    }
+  };
+
   return (
     <footer
       style={{
@@ -112,6 +136,7 @@ export default function HSFooter() {
                 <li key={l.href}>
                   <Link
                     href={l.href}
+                    onClick={handleFooterClick(l.href)}
                     style={{
                       color: hsTokens.cream,
                       textDecoration: "none",
@@ -143,7 +168,6 @@ export default function HSFooter() {
         }}
       >
         <span>© {new Date().getFullYear()} Brewing.It · Hop &amp; Skip preview</span>
-        <span>free, forever ✦</span>
       </div>
 
       <style>{`

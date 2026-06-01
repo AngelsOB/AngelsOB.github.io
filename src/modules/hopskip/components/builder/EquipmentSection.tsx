@@ -406,24 +406,22 @@ function TitleRow({
         borderBottom: `2px solid ${hsTokens.muted}`,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <HSScriptNote color={hsTokens.muted} size={16} rotate={-3}>
-          your kit —
-        </HSScriptNote>
-        <h2
-          style={{
-            fontFamily: hsTokens.display,
-            fontSize: 24,
-            letterSpacing: "-0.025em",
-            lineHeight: 0.95,
-            color: hsTokens.ink,
-            margin: 0,
-          }}
-        >
-          Equipment.
-        </h2>
-      </div>
+      <h2
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 24,
+          letterSpacing: "-0.025em",
+          lineHeight: 0.95,
+          color: hsTokens.ink,
+          margin: 0,
+        }}
+      >
+        Equipment.
+      </h2>
       <span aria-hidden style={{ flex: 1, minWidth: 12 }} />
+      <HSScriptNote color={hsTokens.muted} size={16} rotate={-3}>
+        your kit —
+      </HSScriptNote>
       <HSActionMenu
         trigger={
           <span

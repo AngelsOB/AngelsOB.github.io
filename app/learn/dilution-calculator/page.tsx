@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import DilutionCalculator from "@/components/DilutionCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import DilutionCalculator from "@/modules/hopskip/components/calculators/DilutionCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
@@ -45,7 +47,16 @@ export default function DilutionCalcPage() {
           needed.
         </p>
 
-        <div className="my-8"><DilutionCalculator /></div>
+        <div className="my-8">
+          <CalculatorEmbed
+            eyebrow="Dilution"
+            title="Water to add for target OG"
+            glyph="water"
+            accent={hsTokens.water}
+          >
+            <DilutionCalculator />
+          </CalculatorEmbed>
+        </div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It

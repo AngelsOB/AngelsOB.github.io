@@ -1,7 +1,10 @@
+'use client';
+
 import Link from "next/link";
 
 import { hsTokens } from "../tokens";
 import HSScriptNote from "./HSScriptNote";
+import { useGuardedLinkClick } from "@/modules/beta-builder/presentation/hooks/useGuardedLinkClick";
 
 interface Props {
   caption?: string;
@@ -9,6 +12,10 @@ interface Props {
 }
 
 export default function HSBrandMark({ caption, href = "/" }: Props) {
+  // Route the logo click through the unsaved-changes guard so leaving the
+  // editor via the brand mark prompts for unsaved edits. Pass-through when
+  // no editor is mounted (other pages).
+  const handleClick = useGuardedLinkClick(href);
   const ink = hsTokens.ink;
   const mark = (
     <div style={{ display: "flex", alignItems: "center" }}>
@@ -68,6 +75,7 @@ export default function HSBrandMark({ caption, href = "/" }: Props) {
   return (
     <Link
       href={href}
+      onClick={handleClick}
       style={{
         display: "flex",
         alignItems: "center",

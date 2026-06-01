@@ -1,0 +1,61 @@
+import type { Metadata } from "next";
+import type { CommunityRecipeCard } from "@/modules/hopskip/components/HopSkipCommunitySection";
+import LandingV2 from "./LandingV2";
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Landing v2 (experimental)",
+  description:
+    "Experimental homepage candidate — simpler hero, real product visual, community first.",
+};
+
+async function getCommunityData(): Promise<{
+  recipes: CommunityRecipeCard[];
+  total: number;
+}> {
+  try {
+    const { adminDb } = await import("@/config/firebase-admin");
+    const collection = adminDb.collection("publicRecipeIndex");
+
+    const [snapshot, countSnap] = await Promise.all([
+      collection.orderBy("publishedAt", "desc").limit(6).get(),
+      collection.count().get(),
+    ]);
+
+    const recipes: CommunityRecipeCard[] = snapshot.docs.map((doc) => {
+      const d = doc.data();
+      return {
+        name: d.name || "Untitled Recipe",
+        style: d.style || "",
+        ownerName: d.ownerName || "Anonymous Brewer",
+        ownerId: d.ownerId || "",
+        shareSlug: d.shareSlug as string,
+        tags: d.tags || [],
+        forkCount: d.forkCount ?? 0,
+        publishedAt: d.publishedAt || "",
+        stats: {
+          abv: d.stats?.abv ?? 0,
+          ibu: d.stats?.ibu ?? 0,
+          srm: d.stats?.srm ?? 4,
+          og: d.stats?.og ?? 0,
+          fg: d.stats?.fg ?? 0,
+        },
+      };
+    });
+
+    const total =
+      typeof countSnap.data === "function" ? countSnap.data().count ?? 0 : 0;
+
+    return { recipes, total };
+  } catch {
+    return { recipes: [], total: 0 };
+  }
+}
+
+export default async function LandingV2Page() {
+  const { recipes, total } = await getCommunityData();
+  // Floor for the mockup so the social-proof line never reads "0 recipes" while we're still tinkering.
+  const recipeCount = total > 0 ? total : 247;
+  return <LandingV2 recipes={recipes} recipeCount={recipeCount} />;
+}

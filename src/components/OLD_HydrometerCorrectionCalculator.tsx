@@ -21,7 +21,7 @@ function fToC(f: number): number {
 type TempUnit = "C" | "F";
 type CalPreset = "15" | "20";
 
-export default function HydrometerCorrectionCalculator() {
+export default function OLD_HydrometerCorrectionCalculator() {
   const [sgInput, setSgInput] = useState("1.050");
   const [tempInput, setTempInput] = useState("30");
   const [tempUnit, setTempUnit] = useState<TempUnit>("C");

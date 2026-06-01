@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import DilutionCalculator from "@/components/DilutionCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_DilutionCalculator from "@/components/OLD_DilutionCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 import FormulaCallout from "@/modules/learn/FormulaCallout";
 
@@ -45,7 +46,7 @@ export default function DilutionCalcPage() {
           needed.
         </p>
 
-        <div className="my-8"><DilutionCalculator /></div>
+        <div className="my-8"><OLD_DilutionCalculator /></div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It

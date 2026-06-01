@@ -21,6 +21,8 @@ import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import EquipmentSection from "@/modules/hopskip/components/builder/EquipmentSection";
 import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
+import UnsavedChangesModal from "@/modules/beta-builder/presentation/components/UnsavedChangesModal";
+import { useUnsavedChangesGuard } from "@/modules/beta-builder/presentation/hooks/useUnsavedChangesGuard";
 import BJCPStyleRail from "./BJCPStyleRail";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
 import type {
@@ -63,9 +65,8 @@ interface TabDef {
   k: TabKey;
   label: string;
   c: string;
-  /** Title-bar kicker + heading, hoisted out of each section so the
-      colored bottom rule can span the full builder grid width. */
-  kicker?: string;
+  /** Title-bar heading, hoisted out of each section so the colored
+      bottom rule can span the full builder grid width. */
   heading?: string;
   /** Use a smaller heading clamp for titles that wrap (Fermentation). */
   smallHeading?: boolean;
@@ -81,12 +82,12 @@ interface TabCounts {
 }
 
 const TABS: TabDef[] = [
-  { k: "fermentables", label: "Fermentables", c: hsTokens.malt, kicker: "your grain bill —", heading: "Fermentables.", countFrom: (t) => t.fermentables },
-  { k: "hops", label: "Hops", c: hsTokens.hops, kicker: "your hop bill —", heading: "Hops.", countFrom: (t) => t.hops },
-  { k: "mash", label: "Mash", c: hsTokens.roast, kicker: "your mash schedule —", heading: "Mash.", countFrom: (t) => t.mash },
-  { k: "water", label: "Water", c: hsTokens.water, kicker: "your brewing water —", heading: "Water." },
-  { k: "yeast", label: "Yeast", c: hsTokens.yeast, kicker: "your fermenter friend —", heading: "Yeast.", countFrom: (t) => t.yeasts },
-  { k: "fermentation", label: "Fermentation", c: hsTokens.honey, kicker: "from pitch to package —", heading: "Fermentation & Conditioning.", smallHeading: true, countFrom: (t) => t.fermentation },
+  { k: "fermentables", label: "Fermentables", c: hsTokens.malt, heading: "Fermentables.", countFrom: (t) => t.fermentables },
+  { k: "hops", label: "Hops", c: hsTokens.hops, heading: "Hops.", countFrom: (t) => t.hops },
+  { k: "mash", label: "Mash", c: hsTokens.roast, heading: "Mash.", countFrom: (t) => t.mash },
+  { k: "water", label: "Water", c: hsTokens.water, heading: "Water." },
+  { k: "yeast", label: "Yeast", c: hsTokens.yeast, heading: "Yeast.", countFrom: (t) => t.yeasts },
+  { k: "fermentation", label: "Fermentation", c: hsTokens.honey, heading: "Fermentation & Conditioning.", smallHeading: true, countFrom: (t) => t.fermentation },
   { k: "brewsheet", label: "Brew sheet", c: hsTokens.ink },
 ];
 
@@ -239,6 +240,27 @@ export default function HopSkipBuilder({
     const t = setTimeout(() => setSavedRecently(false), 2000);
     return () => clearTimeout(t);
   }, [saveCurrentRecipe]);
+
+  // Async save wrapper for the unsaved-changes guard. Resolves true on
+  // successful persistence so the guard knows whether to proceed with the
+  // pending navigation. Mirrors `handleSave` but awaits the store action.
+  const trySave = useCallback(async (): Promise<boolean> => {
+    const ok = await saveCurrentRecipe();
+    if (ok) {
+      setSavedRecently(true);
+      setTimeout(() => setSavedRecently(false), 2000);
+    }
+    return ok;
+  }, [saveCurrentRecipe]);
+
+  // Unsaved-changes guard. Inert when the recipe is being viewed in
+  // read-only shared mode. Registers a beforeunload listener and a popstate
+  // listener (with the history.pushState sentinel trick) and exposes
+  // `guardedPush` for the "Back to recipes / browse" link below.
+  const { guardedPush } = useUnsavedChangesGuard({
+    enabled: !isShared,
+    onSave: trySave,
+  });
 
   // ─── Brew Mode plumbing (Phase 2.5b) ───
   // Load a session when ?session=<id> is present in the URL
@@ -423,8 +445,12 @@ export default function HopSkipBuilder({
           flexWrap: "wrap",
         }}
       >
-        <Link
-          href={isShared ? "/browse" : "/recipes"}
+        {/* Back link routed through the unsaved-changes guard. Rendered as a
+            button (not a <Link>) so the guard can preventDefault and pop the
+            confirmation modal before navigating when edits are dirty. */}
+        <button
+          type="button"
+          onClick={() => guardedPush(isShared ? "/browse" : "/recipes")}
           style={{
             background: "transparent",
             color: hsTokens.muted,
@@ -436,10 +462,11 @@ export default function HopSkipBuilder({
             textTransform: "uppercase",
             textDecoration: "none",
             fontFamily: hsTokens.body,
+            cursor: "pointer",
           }}
         >
           ← {isShared ? "Back to browse" : "Back to recipes"}
-        </Link>
+        </button>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           {isShared ? (
             <>
@@ -468,23 +495,6 @@ export default function HopSkipBuilder({
               >
                 {savedRecently ? "✓ Saved!" : "Edits not saved"}
               </span>
-              <Link
-                href={recipeId ? `/betabuilder/recipes/${recipeId}` : "/betabuilder/recipes/new"}
-                style={{
-                  background: hsTokens.paper,
-                  color: hsTokens.ink,
-                  border: `2px solid ${hsTokens.ink}`,
-                  padding: "8px 14px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  borderRadius: 999,
-                  boxShadow: hsTokens.sh1,
-                  fontFamily: hsTokens.body,
-                  textDecoration: "none",
-                }}
-              >
-                Open in classic ↗
-              </Link>
               <button
                 type="button"
                 onClick={handleSave}
@@ -808,9 +818,6 @@ export default function HopSkipBuilder({
             }}
           >
             <HSEyebrow>Live numbers</HSEyebrow>
-            <HSScriptNote color={hsTokens.yeast} size={18} rotate={-2}>
-              {isShared ? "set when published ✦" : "updates as you type ✦"}
-            </HSScriptNote>
           </div>
           <div
             className="hs-livestats"
@@ -1310,10 +1317,9 @@ export default function HopSkipBuilder({
           {activeTab !== "brewsheet"
             ? (() => {
                 const def = TABS.find((t) => t.k === activeTab);
-                if (!def?.kicker || !def?.heading) return null;
+                if (!def?.heading) return null;
                 return (
                   <BuilderTitleBar
-                    kicker={def.kicker}
                     heading={def.heading}
                     color={def.c}
                     small={def.smallHeading}
@@ -1381,6 +1387,10 @@ export default function HopSkipBuilder({
         onClose={() => setIsStyleModalOpen(false)}
         onSelect={(style: string) => updateRecipe({ style: style || undefined })}
       />
+
+      {/* Unsaved-changes confirmation — opens when the guard intercepts a nav
+          attempt (back link, NavBar, browser back). Inert in shared view. */}
+      <UnsavedChangesModal />
     </>
   );
 }

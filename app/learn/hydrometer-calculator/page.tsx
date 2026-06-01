@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import HydrometerCorrectionCalculator from "@/components/HydrometerCorrectionCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import HydrometerCorrectionCalculator from "@/modules/hopskip/components/calculators/HydrometerCorrectionCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 
 export const metadata: Metadata = {
@@ -45,7 +47,16 @@ export default function HydrometerCalcPage() {
           gravity.
         </p>
 
-        <div className="my-8"><HydrometerCorrectionCalculator /></div>
+        <div className="my-8">
+          <CalculatorEmbed
+            eyebrow="Hydrometer"
+            title="Correct for sample temperature"
+            glyph="drop"
+            accent={hsTokens.yeast}
+          >
+            <HydrometerCorrectionCalculator />
+          </CalculatorEmbed>
+        </div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It

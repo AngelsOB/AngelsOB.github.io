@@ -9,6 +9,7 @@ import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
 import YeastPresetModal from "../modals/YeastPresetModal";
 import CustomYeastModal from "../modals/CustomYeastModal";
+import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
 
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
@@ -424,9 +425,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.yeast}`,
       }}
     >
-      <HSScriptNote color={hsTokens.yeast} size={22} rotate={-3}>
-        your fermenter friend —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,
@@ -669,32 +667,35 @@ function StrainLedger({
       }}
     >
       <StrainLedgerHead />
-      {rows.map((r, i) => (
-        <StrainLedgerRow
-          key={r.yeast.id}
-          row={r}
-          index={i}
-          isOnlyOne={rows.length === 1}
-          isLast={i === rows.length - 1}
-          yeastType={yeastType}
-          packs={packs}
-          slurryLiters={slurryLiters}
-          mfgDate={mfgDate}
-          onSwap={() => onSwap(r.yeast.id)}
-          onRemove={() => onRemove(r.yeast.id)}
-          onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}
-          onAttenuationNudge={(dir) =>
-            onAttenuationNudge(r.yeast.id, r.attenuationPct, dir)
-          }
-          onPacksChange={(v) => onPacksChange(r.yeast.id, v)}
-          onPacksNudge={(dir) => {
-            const current = yeastType === "slurry" ? slurryLiters : packs;
-            onPacksNudge(r.yeast.id, current, dir);
-          }}
-          onTypeChange={onTypeChange}
-          onMfgDateChange={onMfgDateChange}
-        />
-      ))}
+      <LedgerRowsAnimated>
+        {rows.map((r, i) => (
+          <LedgerRowMotion key={r.yeast.id}>
+            <StrainLedgerRow
+              row={r}
+              index={i}
+              isOnlyOne={rows.length === 1}
+              isLast={i === rows.length - 1}
+              yeastType={yeastType}
+              packs={packs}
+              slurryLiters={slurryLiters}
+              mfgDate={mfgDate}
+              onSwap={() => onSwap(r.yeast.id)}
+              onRemove={() => onRemove(r.yeast.id)}
+              onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}
+              onAttenuationNudge={(dir) =>
+                onAttenuationNudge(r.yeast.id, r.attenuationPct, dir)
+              }
+              onPacksChange={(v) => onPacksChange(r.yeast.id, v)}
+              onPacksNudge={(dir) => {
+                const current = yeastType === "slurry" ? slurryLiters : packs;
+                onPacksNudge(r.yeast.id, current, dir);
+              }}
+              onTypeChange={onTypeChange}
+              onMfgDateChange={onMfgDateChange}
+            />
+          </LedgerRowMotion>
+        ))}
+      </LedgerRowsAnimated>
       <MobileAddRow onAdd={onAdd} label="+ Add another strain" />
     </div>
   );
@@ -2093,7 +2094,7 @@ function PitchReadout({
             ? "pick a strain"
             : underpitched
               ? "add a starter step"
-              : "good to pitch ✦"
+              : "good to pitch"
         }
         value={diffStr}
         valueColor={diffColor}
