@@ -8,7 +8,6 @@ import SectionHero from "./components/SectionHero";
 import SectionCommunity from "./components/SectionCommunity";
 import SectionBrewDay from "./components/SectionBrewDay";
 import SectionMath from "./components/SectionMath";
-import SectionLibraryDemo from "./components/SectionLibraryDemo";
 import SectionLearn from "./components/SectionLearn";
 
 interface Props {
@@ -34,7 +33,6 @@ export default function LandingV2({ recipes, recipeCount }: Props) {
       <SectionMath />
       <SectionLearn />
       <SectionCommunity recipes={recipes} />
-      <SectionLibraryDemo />
       <HSFooter />
     </div>
   );

@@ -79,11 +79,11 @@ export default function SectionBrewDay() {
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.5, ease: SMOOTH }}
             style={{
-              fontSize: 15,
-              lineHeight: 1.65,
+              fontSize: 17,
+              lineHeight: 1.6,
               color: hsTokens.muted,
               marginTop: 0,
-              maxWidth: 460,
+              maxWidth: 520,
             }}
           >
             {COPY.brewDay.body}
@@ -127,7 +127,7 @@ export default function SectionBrewDay() {
                       style={{
                         fontFamily: hsTokens.body,
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 15,
                       }}
                     >
                       {pill.label}
@@ -136,9 +136,9 @@ export default function SectionBrewDay() {
                   <p
                     style={{
                       marginTop: 6,
-                      fontSize: 12,
+                      fontSize: 13.5,
                       color: hsTokens.muted,
-                      lineHeight: 1.45,
+                      lineHeight: 1.5,
                     }}
                   >
                     {pill.desc}

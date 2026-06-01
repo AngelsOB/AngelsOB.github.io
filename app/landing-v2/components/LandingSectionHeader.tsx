@@ -39,20 +39,21 @@ export default function LandingSectionHeader({
           marginBottom: "clamp(20px, 3vw, 32px)",
         }}
       >
-        {/* Big index numeral */}
+        {/* Big index numeral — sized to fill the title block's vertical space */}
         <motion.div
           initial={{ opacity: 0, x: -16, scale: 0.85 }}
           animate={inView ? { opacity: 1, x: 0, scale: 1 } : {}}
           transition={{ duration: 0.6, ease: SMOOTH }}
           style={{
             fontFamily: hsTokens.display,
-            fontSize: "clamp(72px, 12vw, 160px)",
-            lineHeight: 0.78,
-            letterSpacing: "-0.06em",
+            fontSize: "clamp(120px, 17vw, 240px)",
+            lineHeight: 0.74,
+            letterSpacing: "-0.07em",
             color: `color-mix(in oklch, ${hsTokens.ink} 14%, transparent)`,
             fontVariantNumeric: "tabular-nums",
             userSelect: "none",
-            paddingTop: 4,
+            paddingTop: 0,
+            marginBottom: "-0.12em",
           }}
           aria-hidden
         >

@@ -105,7 +105,7 @@ export default function SectionLearn() {
                   style={{
                     fontFamily: hsTokens.body,
                     fontWeight: 700,
-                    fontSize: 10,
+                    fontSize: 11,
                     letterSpacing: "0.16em",
                     textTransform: "uppercase",
                     color: hsTokens.muted,
@@ -116,10 +116,10 @@ export default function SectionLearn() {
                 <h3
                   style={{
                     fontFamily: hsTokens.display,
-                    fontSize: 22,
+                    fontSize: 26,
                     letterSpacing: "-0.035em",
                     lineHeight: 1.05,
-                    margin: "8px 0 8px",
+                    margin: "10px 0 10px",
                   }}
                 >
                   {link.label}
@@ -127,8 +127,8 @@ export default function SectionLearn() {
                 <p
                   style={{
                     fontFamily: hsTokens.body,
-                    fontSize: 13,
-                    lineHeight: 1.5,
+                    fontSize: 15,
+                    lineHeight: 1.55,
                     color: hsTokens.muted,
                     margin: 0,
                   }}

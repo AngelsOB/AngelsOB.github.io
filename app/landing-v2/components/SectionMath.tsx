@@ -324,10 +324,10 @@ export default function SectionMath() {
           ease: SMOOTH,
         }}
         style={{
-          maxWidth: 620,
-          marginBottom: 32,
+          maxWidth: 680,
+          marginBottom: 36,
           fontFamily: hsTokens.body,
-          fontSize: 16,
+          fontSize: 18,
           fontStyle: "italic",
           lineHeight: 1.5,
           color: hsTokens.ink,
@@ -396,7 +396,7 @@ export default function SectionMath() {
                 <div
                   style={{
                     fontFamily: hsTokens.body,
-                    fontSize: 13,
+                    fontSize: 14,
                     color: hsTokens.muted,
                     marginTop: 6,
                   }}
@@ -424,7 +424,7 @@ export default function SectionMath() {
           href={COPY.math.endHref}
           style={{
             fontFamily: hsTokens.body,
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: 700,
             color: hsTokens.ink,
             textDecoration: "none",
