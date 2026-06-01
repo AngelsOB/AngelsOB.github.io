@@ -1,20 +1,22 @@
-import HopSkipHomeContent from "@/modules/hopskip/components/HopSkipHomeContent";
-import HopSkipCommunitySection, {
-  type CommunityRecipeCard,
-} from "@/modules/hopskip/components/HopSkipCommunitySection";
-import HopSkipLearnSection from "@/modules/hopskip/components/HopSkipLearnSection";
+import type { CommunityRecipeCard } from "@/modules/hopskip/components/HopSkipCommunitySection";
+import LandingV2 from "./landing-v2/LandingV2";
 
 export const revalidate = 3600;
 
-async function getRecentCommunityRecipes(): Promise<CommunityRecipeCard[]> {
+async function getCommunityData(): Promise<{
+  recipes: CommunityRecipeCard[];
+  total: number;
+}> {
   try {
     const { adminDb } = await import("@/config/firebase-admin");
-    const snapshot = await adminDb
-      .collection("publicRecipeIndex")
-      .orderBy("publishedAt", "desc")
-      .limit(6)
-      .get();
-    return snapshot.docs.map((doc) => {
+    const collection = adminDb.collection("publicRecipeIndex");
+
+    const [snapshot, countSnap] = await Promise.all([
+      collection.orderBy("publishedAt", "desc").limit(6).get(),
+      collection.count().get(),
+    ]);
+
+    const recipes: CommunityRecipeCard[] = snapshot.docs.map((doc) => {
       const d = doc.data();
       return {
         name: d.name || "Untitled Recipe",
@@ -34,32 +36,20 @@ async function getRecentCommunityRecipes(): Promise<CommunityRecipeCard[]> {
         },
       };
     });
-  } catch {
-    return [];
-  }
-}
 
-async function getTotalCommunityRecipeCount(): Promise<number> {
-  try {
-    const { adminDb } = await import("@/config/firebase-admin");
-    const snapshot = await adminDb.collection("publicRecipeIndex").count().get();
-    return snapshot.data().count;
+    const total =
+      typeof countSnap.data === "function" ? countSnap.data().count ?? 0 : 0;
+
+    return { recipes, total };
   } catch {
-    return 0;
+    return { recipes: [], total: 0 };
   }
 }
 
 export default async function HopSkipHome() {
-  const [community, totalCommunityRecipes] = await Promise.all([
-    getRecentCommunityRecipes(),
-    getTotalCommunityRecipeCount(),
-  ]);
-
-  return (
-    <>
-      <HopSkipHomeContent totalCommunityRecipes={totalCommunityRecipes} />
-      {community.length > 0 ? <HopSkipCommunitySection recipes={community} /> : null}
-      <HopSkipLearnSection />
-    </>
-  );
+  const { recipes, total } = await getCommunityData();
+  // Floor so the social-proof line never reads "0 recipes" while the public
+  // collection is still small.
+  const recipeCount = total > 0 ? total : 247;
+  return <LandingV2 recipes={recipes} recipeCount={recipeCount} />;
 }

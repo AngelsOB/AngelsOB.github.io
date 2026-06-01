@@ -25,19 +25,6 @@ export default function ClientShell({
     pathname === "/betabuilder" ||
     pathname.startsWith("/betabuilder/");
 
-  // Experimental landing surfaces render their own full-page chrome.
-  const isBare =
-    pathname === "/landing-v2" || pathname.startsWith("/landing-v2/");
-
-  if (isBare) {
-    return (
-      <AuthProvider>
-        {children}
-        <Toaster />
-      </AuthProvider>
-    );
-  }
-
   if (isClassic) {
     // Classic /betabuilder/* routes — keep the original NavBar + Footer chrome.
     return (

@@ -1,8 +1,5 @@
 "use client";
 
-import HSHeader from "@/modules/hopskip/components/HSHeader";
-import HSFooter from "@/modules/hopskip/components/HSFooter";
-import { hsTokens } from "@/modules/hopskip/tokens";
 import type { CommunityRecipeCard } from "@/modules/hopskip/components/HopSkipCommunitySection";
 import SectionHero from "./components/SectionHero";
 import SectionCommunity from "./components/SectionCommunity";
@@ -15,25 +12,20 @@ interface Props {
   recipeCount: number;
 }
 
+/**
+ * The homepage candidate (now the default `/`). Renders the six narrative
+ * sections in order. Chrome (HSHeader + HSFooter + hs-theme wrapper) is
+ * provided by the global HSThemeWrapper via ClientShell, so this component
+ * just renders its own content.
+ */
 export default function LandingV2({ recipes, recipeCount }: Props) {
   return (
-    <div
-      className="hs-theme"
-      style={{
-        background: hsTokens.cream,
-        color: hsTokens.ink,
-        minHeight: "100dvh",
-        fontFamily: hsTokens.body,
-        overflowX: "hidden",
-      }}
-    >
-      <HSHeader />
+    <div style={{ overflowX: "hidden" }}>
       <SectionHero recipeCount={recipeCount} />
       <SectionBrewDay />
       <SectionMath />
       <SectionLearn />
       <SectionCommunity recipes={recipes} />
-      <HSFooter />
     </div>
   );
 }
