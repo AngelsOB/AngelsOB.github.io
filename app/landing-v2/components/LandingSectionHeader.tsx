@@ -34,26 +34,33 @@ export default function LandingSectionHeader({
         style={{
           display: "grid",
           gridTemplateColumns: "auto minmax(0, 1fr) auto",
-          alignItems: "start",
+          // Stretch so each cell can position itself within the full row.
+          // The numeral self-aligns to the bottom; the content stays at the
+          // top via its own paddingTop.
+          alignItems: "stretch",
           gap: "clamp(18px, 3vw, 36px)",
           marginBottom: "clamp(20px, 3vw, 32px)",
         }}
       >
-        {/* Big index numeral — sized to fill the title block's vertical space */}
+        {/* Big index numeral — bottom-aligned to the title's last line so the
+            numeral and the headline share a baseline. Sized to be visually
+            comparable to the title block (not larger). */}
         <motion.div
-          initial={{ opacity: 0, x: -16, scale: 0.85 }}
+          initial={{ opacity: 0, x: -16, scale: 0.9 }}
           animate={inView ? { opacity: 1, x: 0, scale: 1 } : {}}
           transition={{ duration: 0.6, ease: SMOOTH }}
           style={{
             fontFamily: hsTokens.display,
-            fontSize: "clamp(120px, 17vw, 240px)",
-            lineHeight: 0.74,
-            letterSpacing: "-0.07em",
+            fontSize: "clamp(98px, 12vw, 180px)",
+            lineHeight: 0.86,
+            letterSpacing: "-0.06em",
             color: `color-mix(in oklch, ${hsTokens.ink} 14%, transparent)`,
             fontVariantNumeric: "tabular-nums",
             userSelect: "none",
-            paddingTop: 0,
-            marginBottom: "-0.12em",
+            alignSelf: "end",
+            // Pull down so the numeral's optical bottom (descender-less digits)
+            // hugs the title's baseline rather than floating above it.
+            marginBottom: "-0.08em",
           }}
           aria-hidden
         >
