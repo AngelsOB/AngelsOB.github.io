@@ -61,11 +61,16 @@ interface Props {
   data?: MockData;
   /** When set, the green CTA reads "Open recipe →" and links here. */
   openHref?: string;
+  /** Auto-rotate through tabs every 2.4s. Defaults to true (marketing
+   *  showcase). Pass false when the card represents a user-selected recipe —
+   *  no one wants their own recipe panel auto-cycling out from under them. */
+  autoRotate?: boolean;
 }
 
 export default function HeroBuilderCard({
   data = DEFAULT_MOCK_DATA,
   openHref,
+  autoRotate = true,
 }: Props = {}) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-120px" });
@@ -82,9 +87,10 @@ export default function HeroBuilderCard({
   ];
 
   // Auto-rotate tabs. First switch fires 2s after mount, subsequent switches
-  // every 2.4s. Stops on user click.
+  // every 2.4s. Stops on user click. Skipped entirely when autoRotate=false
+  // (signed-in user looking at their own recipe).
   useEffect(() => {
-    if (userInteracted) return;
+    if (!autoRotate || userInteracted) return;
     let intervalId: ReturnType<typeof setInterval> | null = null;
     const advance = () =>
       setActiveTab((prev) => {
@@ -99,7 +105,7 @@ export default function HeroBuilderCard({
       clearTimeout(startId);
       if (intervalId) clearInterval(intervalId);
     };
-  }, [userInteracted]);
+  }, [autoRotate, userInteracted]);
 
   const handleTabClick = (tab: TabKey) => {
     setActiveTab(tab);
@@ -409,48 +415,6 @@ function SectionTitleRow({
           {meta}
         </span>
       </div>
-    </div>
-  );
-}
-
-function FooterStrip({
-  ctaLabel,
-  ctaColor,
-  ctaText,
-}: {
-  ctaLabel: string;
-  ctaColor: string;
-  ctaText: string;
-}) {
-  return (
-    <div
-      style={{
-        marginTop: 14,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        paddingTop: 8,
-        borderTop: `1.5px dashed color-mix(in oklch, ${INK} 18%, transparent)`,
-      }}
-    >
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 5,
-          padding: "5px 12px",
-          background: ctaColor,
-          border: `2px solid ${INK}`,
-          borderRadius: 999,
-          fontFamily: hsTokens.body,
-          fontSize: 11,
-          fontWeight: 700,
-          color: ctaText,
-          boxShadow: "2px 2px 0 var(--hs-ink)",
-        }}
-      >
-        {ctaLabel}
-      </span>
     </div>
   );
 }
