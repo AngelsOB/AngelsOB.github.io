@@ -8,6 +8,7 @@ import Logo from "./Logo";
 import SignInButton from "../modules/auth/components/SignInButton";
 import UserMenu from "../modules/auth/components/UserMenu";
 import { useAuthStore } from "../modules/auth/authStore";
+import { useGuardedLinkClick } from "../modules/beta-builder/presentation/hooks/useGuardedLinkClick";
 
 const navLinks = [
   { href: "/betabuilder/recipes", label: "My Recipes" },
@@ -27,11 +28,12 @@ function NavLinkItem({
 }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
+  const handleClick = useGuardedLinkClick(href, onClick);
 
   return (
     <Link
       href={href}
-      onClick={onClick}
+      onClick={handleClick}
       className={[
         "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
         isActive
@@ -55,11 +57,12 @@ function MobileNavLinkItem({
 }) {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
+  const handleClick = useGuardedLinkClick(href, onClick);
 
   return (
     <Link
       href={href}
-      onClick={onClick}
+      onClick={handleClick}
       className={[
         "block px-4 py-3 text-base font-medium transition-colors",
         isActive

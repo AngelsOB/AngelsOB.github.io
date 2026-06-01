@@ -43,7 +43,7 @@ function psiToBar(psi: number): number {
 
 type TempUnit = "C" | "F";
 
-export default function CarbonationCalculator() {
+export default function OLD_CarbonationCalculator() {
   const [volumesInput, setVolumesInput] = useState("2.4");
   const [tempInput, setTempInput] = useState("4");
   const [tempUnit, setTempUnit] = useState<TempUnit>("C");

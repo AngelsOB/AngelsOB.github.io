@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import AbvCalculator from "@/components/AbvCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import AbvCalculator from "@/modules/hopskip/components/calculators/AbvCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
@@ -70,7 +72,14 @@ export default function AbvCalcPage() {
         </p>
 
         <div className="my-6">
-          <AbvCalculator />
+          <CalculatorEmbed
+            eyebrow="ABV"
+            title="Alcohol by volume"
+            glyph="drop"
+            accent={hsTokens.malt}
+          >
+            <AbvCalculator />
+          </CalculatorEmbed>
         </div>
 
         <p className="text-sm leading-relaxed">

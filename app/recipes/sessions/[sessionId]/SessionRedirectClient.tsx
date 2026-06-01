@@ -64,7 +64,7 @@ export default function SessionRedirectClient({ sessionId }: Props) {
           marginBottom: 6,
         }}
       >
-        resuming brew session ✦
+        resuming brew session
       </div>
       <div>One moment…</div>
     </div>

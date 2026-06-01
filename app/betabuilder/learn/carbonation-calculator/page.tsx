@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import CarbonationCalculator from "@/components/CarbonationCalculator";
+// eslint-disable-next-line no-restricted-imports -- classic /betabuilder/learn/* is the quarantined reference; intentional import
+import OLD_CarbonationCalculator from "@/components/OLD_CarbonationCalculator";
 import LearnArticle from "@/modules/learn/LearnArticle";
 
 export const metadata: Metadata = {
@@ -44,7 +45,7 @@ export default function CarbonationCalcPage() {
           . This calculator gives you that number instantly.
         </p>
 
-        <div className="my-8"><CarbonationCalculator /></div>
+        <div className="my-8"><OLD_CarbonationCalculator /></div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4" style={{ fontFamily: "'Bitter', serif" }}>
           How We Calculate It

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import StrikeTempCalculator from "@/components/StrikeTempCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import StrikeTempCalculator from "@/modules/hopskip/components/calculators/StrikeTempCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
@@ -74,7 +76,14 @@ export default function StrikeTempCalcPage() {
         </p>
 
         <div className="my-6">
-          <StrikeTempCalculator />
+          <CalculatorEmbed
+            eyebrow="Strike temp"
+            title="Strike water temperature"
+            glyph="flame"
+            accent={hsTokens.roast}
+          >
+            <StrikeTempCalculator />
+          </CalculatorEmbed>
         </div>
 
         <p className="text-sm leading-relaxed">

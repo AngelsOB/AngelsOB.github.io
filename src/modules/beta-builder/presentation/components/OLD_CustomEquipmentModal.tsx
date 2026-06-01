@@ -34,7 +34,7 @@ interface CustomEquipmentModalProps {
   };
 }
 
-export const CustomEquipmentModal = ({
+export const OLD_CustomEquipmentModal = ({
   isOpen,
   onClose,
   onSave,

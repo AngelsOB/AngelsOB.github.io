@@ -33,6 +33,27 @@ input[type="number"],
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ========================================
+   SQUIRCLE EXPERIMENT
+   Native corne.rs-style smooth corners via CSS corner-shape.
+   Applies to every element that already has a border-radius —
+   no JSX changes required. Browsers without support (Safari,
+   Firefox today) gracefully fall back to normal rounded corners.
+   Tweak --brew-corner-shape, or delete this block to revert.
+   Alternatives: squircle | superellipse(4) | superellipse(0.6) | round
+   ======================================== */
+:root {
+  --brew-corner-shape: squircle;
+}
+
+@supports (corner-shape: squircle) {
+  *,
+  *::before,
+  *::after {
+    corner-shape: var(--brew-corner-shape);
+  }
+}
+
+/* ========================================
    THEME SYSTEM
    Light theme = default (:root)
    Dark theme = .dark class

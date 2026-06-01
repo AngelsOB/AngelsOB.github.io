@@ -19,7 +19,7 @@ import OLD_YeastSection from "./OLD_YeastSection";
 import OLD_WaterSection from "./OLD_WaterSection";
 import OLD_FermentationSection from "./OLD_FermentationSection";
 import PackagingSection from "./PackagingSection";
-import { EquipmentSection } from "./EquipmentSection";
+import { OLD_EquipmentSection } from "./OLD_EquipmentSection";
 import StyleSelectorModal from "./StyleSelectorModal";
 import StyleRangeComparison from "./StyleRangeComparison";
 import { srmToRgb } from "../../utils/srmColorUtils";
@@ -42,6 +42,8 @@ import type { Recipe, RecipeCalculations } from "../../domain/models/Recipe";
 import LabelUploader from "../../../labels/LabelUploader";
 import PhysicsCan from "../../../labels/PhysicsCan";
 import GrainGradient from "../../../../components/GrainGradient";
+import UnsavedChangesModal from "./UnsavedChangesModal";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 
 interface BetaBuilderPageProps {
   sharedRecipe?: Recipe;
@@ -319,6 +321,32 @@ export default function BetaBuilderPage({
 
   // Removed hard-coded fermentable handler - now using FermentableSection with presets
 
+  // Core save flow shared by the in-editor "Save & Close" button and the
+  // unsaved-changes guard's modal "Save & Leave" action. Resolves true on
+  // successful save; false if blocked by auth/tier checks or by a save error.
+  // Hooks must be declared before any conditional return — keep this above
+  // the `!currentRecipe` early exit.
+  const trySave = useCallback(async (): Promise<boolean> => {
+    if (!user) {
+      setIsSignInModalOpen(true);
+      return false;
+    }
+    if (saveDisabled) {
+      setIsLimitModalOpen(true);
+      return false;
+    }
+    return await saveCurrentRecipe();
+  }, [user, saveDisabled, saveCurrentRecipe]);
+
+  // Unsaved-changes guard: wires the editor into the global guard store,
+  // attaches beforeunload + popstate listeners, exposes a `guardedPush`
+  // helper for in-editor navigation buttons (Cancel, sticky-bar back, etc.).
+  // Inert in read-only views (shared recipes, version history).
+  const { guardedPush } = useUnsavedChangesGuard({
+    enabled: !isReadOnly,
+    onSave: trySave,
+  });
+
   if (!currentRecipe) {
     return (
       <div className="mx-auto max-w-4xl py-4">
@@ -339,17 +367,9 @@ export default function BetaBuilderPage({
     );
   }
 
-  const handleSave = () => {
-    if (!user) {
-      setIsSignInModalOpen(true);
-      return;
-    }
-    if (saveDisabled) {
-      setIsLimitModalOpen(true);
-      return;
-    }
-    saveCurrentRecipe();
-    router.push("/recipes");
+  const handleSave = async () => {
+    const ok = await trySave();
+    if (ok) router.push("/recipes");
   };
 
   return (
@@ -388,6 +408,10 @@ export default function BetaBuilderPage({
         navButton={{
           backPath: isShared ? "/browse" : "/recipes",
           backLabel: isShared ? "Back to Browse" : "Back to Recipes",
+          // Route the sidebar's back button through the guard so editing the
+          // recipe + clicking the sidebar arrow shows the unsaved-changes
+          // modal. No-op for shared recipes (guard inactive in read-only mode).
+          onBackClick: () => guardedPush(isShared ? "/browse" : "/recipes"),
           showShareControl: !isReadOnly && !isShared && !!user && !!id,
           isPublic: currentRecipe?.isPublic ?? false,
           shareSlug: currentRecipe?.shareSlug,
@@ -416,7 +440,7 @@ export default function BetaBuilderPage({
             isVisible={showStickyTop}
             leftAction={
               <button
-                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                onClick={() => guardedPush(isShared ? "/browse" : "/recipes")}
                 className="sticky-bar-btn"
               >
                 <span className="sticky-bar-btn-arrow">&#8592;</span>
@@ -453,7 +477,7 @@ export default function BetaBuilderPage({
             isVisible={showStickyBottom}
             leftAction={
               <button
-                onClick={() => router.push(isShared ? "/browse" : "/recipes")}
+                onClick={() => guardedPush(isShared ? "/browse" : "/recipes")}
                 className="sticky-bar-btn"
               >
                 <span className="sticky-bar-btn-arrow">&#8592;</span>
@@ -779,7 +803,7 @@ export default function BetaBuilderPage({
             mobileOpen={mobileOpenSection}
             onToggle={toggleMobileSection}
           >
-            <EquipmentSection />
+            <OLD_EquipmentSection />
           </AccordionSection>
         </div>
 
@@ -894,7 +918,7 @@ export default function BetaBuilderPage({
           <div>
             <div className="brew-section flex gap-3">
               <button
-                onClick={() => router.push("/recipes")}
+                onClick={() => guardedPush("/recipes")}
                 className="brew-btn-ghost flex-1 py-3"
               >
                 Cancel
@@ -962,6 +986,12 @@ export default function BetaBuilderPage({
         isOpen={isSignInModalOpen}
         onClose={() => setIsSignInModalOpen(false)}
       />
+
+      {/* Unsaved-changes confirmation — shown when the guard intercepts a
+          navigation (Cancel, sidebar/sticky back, NavBar link, browser back,
+          beforeunload uses native browser dialog instead). Inert in read-only
+          views — the hook doesn't register the editor at all. */}
+      <UnsavedChangesModal />
 
       {/* Bottom glow — warm upward gradient with animated brightness wave (dark mode only) */}
       <div

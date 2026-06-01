@@ -29,7 +29,11 @@ const CALC_PREVIEW: {
   { eyebrow: "Boil-off", value: "9.2%", subtitle: "to target OG", color: hsTokens.roast, glyph: "scale" },
 ];
 
-export default function HopSkipHomeContent() {
+interface HopSkipHomeContentProps {
+  totalCommunityRecipes: number;
+}
+
+export default function HopSkipHomeContent({ totalCommunityRecipes }: HopSkipHomeContentProps) {
   const recipes = useRecipeStore((s) => s.recipes);
   const recipesLoaded = useRecipeStore((s) => s.recipesLoaded);
   const loadRecipes = useRecipeStore((s) => s.loadRecipes);
@@ -83,8 +87,7 @@ export default function HopSkipHomeContent() {
                 color: hsTokens.ink,
               }}
             >
-              <span>Brew with</span>
-              <br />
+              A{" "}
               <span
                 style={{
                   background: hsTokens.malt,
@@ -93,10 +96,11 @@ export default function HopSkipHomeContent() {
                   transform: "rotate(-1.5deg)",
                 }}
               >
-                numbers
+                simpler
               </span>
+              {" "}place
               <br />
-              <span style={{ color: hsTokens.roast }}>that&nbsp;agree.</span>
+              <span style={{ color: hsTokens.roast }}>to brew.</span>
             </h1>
             <p
               style={{
@@ -108,8 +112,7 @@ export default function HopSkipHomeContent() {
                 marginTop: 22,
               }}
             >
-              A recipe builder, calculators, and a brewing science library &mdash; built by,
-              and for, homebrewers who keep forgetting things.
+              A recipe builder with live math, brew-day calculators, and the science behind them.
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 28, alignItems: "center" }}>
@@ -125,9 +128,6 @@ export default function HopSkipHomeContent() {
               <HSButton href="/calculators" variant="ghost" size="lg">
                 Open calculators
               </HSButton>
-              <HSScriptNote color={hsTokens.hops} size={20} rotate={-4} style={{ marginLeft: 4 }}>
-                free, forever ✦
-              </HSScriptNote>
             </div>
           </div>
 
@@ -197,8 +197,8 @@ export default function HopSkipHomeContent() {
           }}
         >
           {[
-            { color: hsTokens.roast, value: recipeCount, label: "recipes in your library" },
-            { color: hsTokens.water, value: 5, label: "calculators wired up" },
+            { color: hsTokens.roast, value: totalCommunityRecipes, label: "recipes in our collection" },
+            { color: hsTokens.water, value: "20+", label: "live calculations" },
             { color: hsTokens.hops, value: 0, label: "spreadsheets needed" },
           ].map((stat, i, arr) => (
             <div
@@ -273,10 +273,14 @@ export default function HopSkipHomeContent() {
       >
         <HSSectionHeader
           index={1}
-          kicker="every dial talks —"
           eyebrow="Recipe builder"
-          title="Every input nudges every output."
-          kickerColor={hsTokens.yeast}
+          title={
+            <>
+              Pick a style. Drop in grains and hops.
+              <br />
+              Watch the math work.
+            </>
+          }
         />
         <div
           className="hs-feature-grid"
@@ -289,9 +293,9 @@ export default function HopSkipHomeContent() {
         >
           <div>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: hsTokens.muted, marginTop: 0, maxWidth: 460 }}>
-              Build recipes with real-time calculations. Grain bills, hop schedules, mash
-              steps, water chemistry — everything talks to your equipment profile, the BJCP
-              style guide, and your saved preferences.
+              Build the recipe the way you&apos;d build it in a notebook, but the math runs as
+              you go. Adjust grain weights and OG updates. Add a late hop and IBU shifts.
+              Change your equipment profile and boil-off recalculates. Everything is connected.
             </p>
 
             <div
@@ -303,10 +307,10 @@ export default function HopSkipHomeContent() {
               }}
             >
               {[
-                { color: hsTokens.malt, label: "Live numbers", desc: "OG, FG, ABV, IBU, SRM update on every edit." },
+                { color: hsTokens.malt, label: "Live math", desc: "OG, FG, ABV, IBU, SRM update on every edit." },
                 { color: hsTokens.water, label: "Water chem", desc: "Mineral additions, salt targets, mash pH." },
-                { color: hsTokens.hops, label: "BJCP style guide", desc: "In-range gauges per metric, by style." },
-                { color: hsTokens.muted, label: "Equipment-aware", desc: "Boil-off, deadspace, absorption baked in." },
+                { color: hsTokens.hops, label: "Style targets", desc: "BJCP in-range gauges per metric." },
+                { color: hsTokens.muted, label: "Equipment-aware", desc: "Boil-off, deadspace, absorption built in." },
               ].map((f) => (
                 <HSCard key={f.label} shadow={2} padding="14px 16px">
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -324,7 +328,7 @@ export default function HopSkipHomeContent() {
 
             <div style={{ marginTop: 28 }}>
               <HSButton href="/recipes/new" variant="solid" color={hsTokens.hops} arrow size="md">
-                Open builder
+                Open the recipe builder
               </HSButton>
             </div>
           </div>
@@ -471,9 +475,22 @@ export default function HopSkipHomeContent() {
           index={2}
           kicker="brew-day math without the spreadsheet —"
           eyebrow="Calculators"
-          title="The numbers you'll need, ready when you are."
+          title="The math you'll reach for."
           kickerColor={hsTokens.water}
         />
+        <p
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 15,
+            lineHeight: 1.55,
+            color: hsTokens.muted,
+            maxWidth: 620,
+            margin: "-8px 0 24px",
+          }}
+        >
+          Did I hit my OG? What do I do now that I didn&apos;t? How long do I boil? How much
+          priming sugar? When you have a question, it&apos;s here.
+        </p>
         <div
           className="hs-calc-grid"
           style={{
@@ -555,15 +572,13 @@ export default function HopSkipHomeContent() {
         style={{
           maxWidth: 1600,
           margin: "0 auto",
-          padding: "clamp(40px, 6vw, 72px) clamp(20px, 4vw, 56px) clamp(56px, 8vw, 96px)",
+          padding: "clamp(40px, 6vw, 72px) clamp(20px, 4vw, 56px)",
         }}
       >
         <HSSectionHeader
           index={3}
-          kicker="most recent —"
           eyebrow="Your library"
           title="Pick up where you left off."
-          kickerColor={hsTokens.hops}
           alignEnd={
             recipeCount > 3 ? (
               <Link
@@ -591,18 +606,15 @@ export default function HopSkipHomeContent() {
 
         {recentRecipes.length === 0 ? (
           <HSCard shadow={3} padding="32px 28px" style={{ textAlign: "center", maxWidth: 520, margin: "0 auto" }}>
-            <HSScriptNote color={hsTokens.yeast} size={22}>
-              empty shelf —
-            </HSScriptNote>
             <div
               style={{
                 fontFamily: hsTokens.display,
                 fontSize: 28,
                 letterSpacing: "-0.035em",
-                margin: "10px 0 8px",
+                margin: "0 0 8px",
               }}
             >
-              Build your first recipe.
+              No recipes yet.
             </div>
             <p style={{ fontSize: 14, color: hsTokens.muted, lineHeight: 1.5, margin: "0 0 18px" }}>
               Pick a style, drop in grain and hops, and watch the numbers settle into shape.

@@ -11,7 +11,7 @@ function parseGravity(input: string): number | null {
   return n;
 }
 
-export default function AbvCalculator() {
+export default function OLD_AbvCalculator() {
   const [ogInput, setOgInput] = useState<string>("1.050");
   const [fgInput, setFgInput] = useState<string>("1.010");
 

@@ -7,6 +7,14 @@ import SidebarNavButton from "./SidebarNavButton";
 export interface SidebarNavConfig {
   backPath: string;
   backLabel: string;
+  /**
+   * Optional override for the back-button click. When provided, the sidebar
+   * delegates to this instead of doing `router.push(backPath)` itself — used
+   * by the recipe editor to route the click through the unsaved-changes guard.
+   * `backPath` is still required (e.g., as a fallback if the override is
+   * absent in some future caller).
+   */
+  onBackClick?: () => void;
   showShareControl?: boolean;
   isPublic?: boolean;
   shareSlug?: string;

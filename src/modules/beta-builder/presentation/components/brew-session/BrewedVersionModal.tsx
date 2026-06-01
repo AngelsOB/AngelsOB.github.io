@@ -5,7 +5,7 @@ import OLD_YeastSection from '../OLD_YeastSection';
 import OLD_WaterSection from '../OLD_WaterSection';
 import OLD_MashScheduleSection from '../OLD_MashScheduleSection';
 import OLD_FermentationSection from '../OLD_FermentationSection';
-import { EquipmentSection } from '../EquipmentSection';
+import { OLD_EquipmentSection } from '../OLD_EquipmentSection';
 
 interface BrewedVersionModalProps {
   isOpen: boolean;
@@ -57,7 +57,7 @@ export function BrewedVersionModal({
         <div className="p-6 overflow-y-auto max-h-[calc(92vh-80px)] space-y-6">
           {recipe ? (
             <>
-              <EquipmentSection />
+              <OLD_EquipmentSection />
               <OLD_FermentableSection />
               <OLD_HopSection />
               <OLD_YeastSection />

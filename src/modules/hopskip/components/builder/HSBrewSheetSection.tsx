@@ -1155,7 +1155,7 @@ export default function HSBrewSheetSection({
                           brewMode.actuals.originalGravity,
                           brewMode.actuals.finalGravity
                         ).toFixed(1)}
-                        % ✦
+                        %
                       </span>
                     ) : null}
                   </td>
@@ -4748,7 +4748,7 @@ function PostBoilOgTip({
             color: hsTokens.honey,
           }}
         >
-          post-boil reading ✦
+          post-boil reading
         </span>
       </div>
       <div style={{ marginBottom: options.length > 0 ? 8 : 0 }}>
@@ -4961,7 +4961,7 @@ function OgPredictorTip({
             color: hsTokens.water,
           }}
         >
-          predicted OG ✦
+          predicted OG
         </span>
       </div>
       <div style={{ marginBottom: options.length > 0 ? 8 : 0 }}>

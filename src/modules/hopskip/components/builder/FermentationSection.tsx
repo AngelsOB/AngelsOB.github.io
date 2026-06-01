@@ -395,9 +395,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.honey}`,
       }}
     >
-      <HSScriptNote color={hsTokens.honey} size={22} rotate={-3}>
-        from pitch to package —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import BoilOffCalculator from "@/components/BoilOffCalculator";
+import { hsTokens } from "@/modules/hopskip/tokens";
+import BoilOffCalculator from "@/modules/hopskip/components/calculators/BoilOffCalculator";
+import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
 import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
 
@@ -45,7 +47,16 @@ export default function BoilOffCalcPage() {
           boil to hit your target gravity.
         </p>
 
-        <div className="my-8"><BoilOffCalculator /></div>
+        <div className="my-8">
+          <CalculatorEmbed
+            eyebrow="Boil-off"
+            title="Pre-boil → post-boil volume"
+            glyph="flame"
+            accent={hsTokens.roast}
+          >
+            <BoilOffCalculator />
+          </CalculatorEmbed>
+        </div>
 
         <h2 id="how-we-calculate-it" className="text-xl font-bold mt-10 mb-4">
           How We Calculate It

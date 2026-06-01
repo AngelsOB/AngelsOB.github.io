@@ -225,9 +225,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.roast}`,
       }}
     >
-      <HSScriptNote color={hsTokens.roast} size={22} rotate={-3}>
-        your mash schedule —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,

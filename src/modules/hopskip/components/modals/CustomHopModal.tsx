@@ -124,7 +124,7 @@ export default function CustomHopModal({ isOpen, onClose, onSave }: Props) {
               lineHeight: 1.35,
             }}
           >
-            ✦ flavor profile fields stay defaulted; tune the radar later from the
+            flavor profile fields stay defaulted; tune the radar later from the
             hop row after you&apos;ve brewed with it.
           </p>
         </div>

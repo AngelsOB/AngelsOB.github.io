@@ -20,7 +20,7 @@ interface EquipmentProfileModalProps {
   onCreateCustom: () => void;
 }
 
-export const EquipmentProfileModal = ({
+export const OLD_EquipmentProfileModal = ({
   isOpen,
   onClose,
   onSelect,

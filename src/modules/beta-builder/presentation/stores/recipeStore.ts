@@ -49,10 +49,31 @@ function checkRecipeLimit(): boolean {
 /** IDs of recipes deleted this session — prevents stale network responses from restoring them */
 const deletedIds = new Set<string>();
 
+/**
+ * Compare current recipe to the saved snapshot to detect unsaved changes.
+ * Ignores `updatedAt` (mutates on every keystroke) and compares everything else.
+ * Reference-equality fast path: snapshot is set to the exact same object on save/load.
+ */
+export function isRecipeDirty(current: Recipe | null, snapshot: Recipe | null): boolean {
+  if (!current) return false;
+  if (!snapshot) return false;
+  if (current === snapshot) return false; // fast path: same reference → clean
+  const a = { ...current, updatedAt: '' };
+  const b = { ...snapshot, updatedAt: '' };
+  return JSON.stringify(a) !== JSON.stringify(b);
+}
+
 type RecipeStore = {
   // State (like @Published properties)
   recipes: Recipe[];
   currentRecipe: Recipe | null;
+  /**
+   * Snapshot of the recipe as last persisted (or loaded from storage).
+   * Used by the unsaved-changes guard to detect dirty state without
+   * an explicit isDirty flag on every mutator. Compared to currentRecipe
+   * via `isRecipeDirty`, ignoring updatedAt.
+   */
+  savedSnapshot: Recipe | null;
   isLoading: boolean;
   error: string | null;
   /** True once recipes have been fetched from Firestore/localStorage this session */
@@ -64,7 +85,8 @@ type RecipeStore = {
   createNewRecipe: () => void;
   duplicateRecipe: (id: RecipeId) => void;
   updateRecipe: (updates: Partial<Recipe>) => void;
-  saveCurrentRecipe: () => void;
+  /** Persists the current recipe; resolves true on success, false on failure. */
+  saveCurrentRecipe: () => Promise<boolean>;
   deleteRecipe: (id: RecipeId) => void;
   setCurrentRecipe: (recipe: Recipe | null) => void;
   importFromBeerXml: (xml: string) => Recipe | null;
@@ -107,6 +129,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   // Initial state
   recipes: [],
   currentRecipe: null,
+  savedSnapshot: null,
   isLoading: false,
   error: null,
   recipesLoaded: false,
@@ -174,14 +197,17 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   loadRecipe: (id: RecipeId) => {
     // 1. Already displaying this recipe (e.g. set by RecipeListPage before navigation)
     if (get().currentRecipe?.id === id) {
-      set({ isLoading: false, error: null });
+      // Re-sync snapshot to current — if we got here via setCurrentRecipe,
+      // the snapshot is already aligned; this is just defensive.
+      const existing = get().currentRecipe;
+      set({ isLoading: false, error: null, savedSnapshot: existing });
       return;
     }
 
     // 2. Check recipes array cache
     const cached = get().recipes.find((r) => r.id === id);
     if (cached) {
-      set({ currentRecipe: cached, isLoading: false, error: null });
+      set({ currentRecipe: cached, savedSnapshot: cached, isLoading: false, error: null });
       return;
     }
 
@@ -193,11 +219,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Try IndexedDB cache first for instant display, then fetch fresh
       firestoreRepo.loadByIdFromCache(id).then((cachedRecipe) => {
         if (cachedRecipe) {
-          set({ currentRecipe: cachedRecipe, isLoading: false });
+          set({ currentRecipe: cachedRecipe, savedSnapshot: cachedRecipe, isLoading: false });
         }
       });
       firestoreRepo.loadByIdAsync(id).then(
-        (recipe) => set({ currentRecipe: recipe, isLoading: false }),
+        (recipe) => set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false }),
         () => {
           if (!get().currentRecipe || get().currentRecipe?.id !== id) {
             set({ error: 'Failed to load recipe', isLoading: false });
@@ -209,7 +235,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
     try {
       const recipe = recipeRepository.loadById(id);
-      set({ currentRecipe: recipe, isLoading: false });
+      set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false });
     } catch {
       set({ error: 'Failed to load recipe', isLoading: false });
     }
@@ -250,7 +276,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    set({ currentRecipe: newRecipe });
+    // Snapshot = the fresh recipe → blank state is "clean" (no dirty prompt until edits)
+    set({ currentRecipe: newRecipe, savedSnapshot: newRecipe });
   },
 
   // Duplicate an existing recipe
@@ -319,10 +346,14 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     set({ currentRecipe: updated });
   },
 
-  // Save current recipe to storage
-  saveCurrentRecipe: () => {
+  // Save current recipe to storage. Resolves true on success, false on failure.
+  // Updates `savedSnapshot` optimistically before the network call so the
+  // unsaved-changes guard sees clean state during the in-flight save.
+  // Rolls the snapshot back if the save errors out.
+  saveCurrentRecipe: async () => {
     const current = get().currentRecipe;
-    if (!current) return;
+    if (!current) return false;
+    const prevSnapshot = get().savedSnapshot;
 
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
@@ -343,37 +374,48 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const isNew = !get().recipes.some((r) => r.id === recipeToSave.id);
 
       // Belt-and-suspenders: UI disables save button, but guard here too
-      if (isNew && !checkRecipeLimit()) return;
+      if (isNew && !checkRecipeLimit()) return false;
 
-      const savePromise = isNew
-        ? firestoreRepo.saveNewAsync(recipeToSave)
-        : firestoreRepo.saveAsync(recipeToSave);
+      // Optimistically mark clean — the guard treats currentRecipe == snapshot as clean.
+      set({ savedSnapshot: recipeToSave });
 
-      savePromise.then(
-        () => {
-          // Update local array instead of re-fetching from Firestore
-          const recipes = get().recipes;
-          const idx = recipes.findIndex((r) => r.id === recipeToSave.id);
-          const updated = idx >= 0
-            ? recipes.map((r) => r.id === recipeToSave.id ? recipeToSave : r)
-            : [...recipes, recipeToSave];
-          set({ recipes: updated, error: null });
+      try {
+        if (isNew) {
+          await firestoreRepo.saveNewAsync(recipeToSave);
+        } else {
+          await firestoreRepo.saveAsync(recipeToSave);
+        }
+      } catch (err) {
+        // Roll back the optimistic snapshot — user still has unsaved changes.
+        console.error('[Firestore] Failed to save recipe:', err);
+        set({ savedSnapshot: prevSnapshot, error: 'Failed to save recipe' });
+        return false;
+      }
 
-          // Optimistically update recipeCount for new recipes
-          if (isNew) {
-            useAuthStore.getState().adjustRecipeCount(1);
-          }
+      // Update local array instead of re-fetching from Firestore
+      const recipes = get().recipes;
+      const idx = recipes.findIndex((r) => r.id === recipeToSave.id);
+      const updated = idx >= 0
+        ? recipes.map((r) => r.id === recipeToSave.id ? recipeToSave : r)
+        : [...recipes, recipeToSave];
+      set({ recipes: updated, error: null });
 
-          // Sync publicRecipeIndex in the background for public recipes
-          if (recipeToSave.isPublic) {
-            syncPublicIndex(recipeToSave);
-          }
-        },
-        (err) => { console.error('[Firestore] Failed to save recipe:', err); set({ error: 'Failed to save recipe' }); },
-      );
-      return;
+      // Optimistically update recipeCount for new recipes
+      if (isNew) {
+        useAuthStore.getState().adjustRecipeCount(1);
+      }
+
+      // Sync publicRecipeIndex in the background for public recipes
+      if (recipeToSave.isPublic) {
+        syncPublicIndex(recipeToSave);
+      }
+      return true;
     }
+
+    // localStorage path (anonymous users)
     try {
+      // Optimistically mark clean before the (synchronous) save.
+      set({ savedSnapshot: current });
       recipeRepository.save(current);
       // Update local array instead of re-reading localStorage
       const recipes = get().recipes;
@@ -382,8 +424,10 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         ? recipes.map((r) => r.id === current.id ? current : r)
         : [...recipes, current];
       set({ recipes: updated, error: null });
+      return true;
     } catch {
-      set({ error: 'Failed to save recipe' });
+      set({ savedSnapshot: prevSnapshot, error: 'Failed to save recipe' });
+      return false;
     }
   },
 
@@ -431,7 +475,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
   // Set current recipe directly
   setCurrentRecipe: (recipe: Recipe | null) => {
-    set({ currentRecipe: recipe });
+    // Reset the snapshot in lockstep — a freshly-set recipe is "clean".
+    set({ currentRecipe: recipe, savedSnapshot: recipe });
   },
 
   // Import BeerXML and persist

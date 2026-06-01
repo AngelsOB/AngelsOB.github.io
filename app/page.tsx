@@ -39,12 +39,25 @@ async function getRecentCommunityRecipes(): Promise<CommunityRecipeCard[]> {
   }
 }
 
+async function getTotalCommunityRecipeCount(): Promise<number> {
+  try {
+    const { adminDb } = await import("@/config/firebase-admin");
+    const snapshot = await adminDb.collection("publicRecipeIndex").count().get();
+    return snapshot.data().count;
+  } catch {
+    return 0;
+  }
+}
+
 export default async function HopSkipHome() {
-  const community = await getRecentCommunityRecipes();
+  const [community, totalCommunityRecipes] = await Promise.all([
+    getRecentCommunityRecipes(),
+    getTotalCommunityRecipeCount(),
+  ]);
 
   return (
     <>
-      <HopSkipHomeContent />
+      <HopSkipHomeContent totalCommunityRecipes={totalCommunityRecipes} />
       {community.length > 0 ? <HopSkipCommunitySection recipes={community} /> : null}
       <HopSkipLearnSection />
     </>

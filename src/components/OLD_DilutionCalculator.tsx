@@ -10,7 +10,7 @@ function parseNum(input: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export default function DilutionCalculator() {
+export default function OLD_DilutionCalculator() {
   const [volumeInput, setVolumeInput] = useState("20");
   const [currentSGInput, setCurrentSGInput] = useState("1.060");
   const [targetSGInput, setTargetSGInput] = useState("1.050");

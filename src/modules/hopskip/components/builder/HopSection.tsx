@@ -9,6 +9,7 @@ import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HopPresetModal from "../modals/HopPresetModal";
 import CustomHopModal from "../modals/CustomHopModal";
+import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
 
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
@@ -540,9 +541,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.hops}`,
       }}
     >
-      <HSScriptNote color={hsTokens.hops} size={22} rotate={-3}>
-        your hop bill —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,
@@ -753,29 +751,32 @@ function Ledger({
               recipeCalculationService.calculateSingleHopIBU(h, og, batchVolumeGal);
             totalIbu += ibuContribution;
             return (
-              <LedgerRow
-                key={h.id}
-                hop={h}
-                ibuContribution={ibuContribution}
-                isLast={i === hops.length - 1}
-                onGramsChange={(v) => onGramsChange(h.id, v)}
-                onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
-                onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
-                onWhirlpoolTimeChange={(v) => onWhirlpoolTimeChange(h.id, v)}
-                onDryHopDaysChange={(v) => onDryHopDaysChange(h.id, v)}
-                onDryHopStartDayChange={(v) => onDryHopStartDayChange(h.id, v)}
-                onSwap={() => onSwap(h.id)}
-                onUsageChange={(next) => onUsageChange(h.id, next)}
-                onRemove={() => onRemove(h.id)}
-                onRowHoverStart={onRowHoverStart}
-                onRowCursorMove={onRowCursorMove}
-                onRowHoverEnd={onRowHoverEnd}
-              />
+              <LedgerRowMotion key={h.id}>
+                <LedgerRow
+                  hop={h}
+                  ibuContribution={ibuContribution}
+                  isLast={i === hops.length - 1}
+                  onGramsChange={(v) => onGramsChange(h.id, v)}
+                  onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
+                  onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
+                  onWhirlpoolTimeChange={(v) => onWhirlpoolTimeChange(h.id, v)}
+                  onDryHopDaysChange={(v) => onDryHopDaysChange(h.id, v)}
+                  onDryHopStartDayChange={(v) =>
+                    onDryHopStartDayChange(h.id, v)
+                  }
+                  onSwap={() => onSwap(h.id)}
+                  onUsageChange={(next) => onUsageChange(h.id, next)}
+                  onRemove={() => onRemove(h.id)}
+                  onRowHoverStart={onRowHoverStart}
+                  onRowCursorMove={onRowCursorMove}
+                  onRowHoverEnd={onRowHoverEnd}
+                />
+              </LedgerRowMotion>
             );
           });
           return (
             <>
-              {rows}
+              <LedgerRowsAnimated>{rows}</LedgerRowsAnimated>
               <LedgerTotal
                 totalGrams={totalGrams}
                 totalIbu={totalIbu}
@@ -1697,7 +1698,7 @@ function TimingCell({
           : "Added to mash — no timing"
       }
     >
-      ✦ no timing
+      no timing
     </span>
   );
 }
@@ -2099,6 +2100,7 @@ function HopFlavorRadarCard({
   batchVolumeL: number;
 }) {
   const [mode, setMode] = useState<RadarMode>("estimated");
+  const [hoveredSeriesId, setHoveredSeriesId] = useState<string | null>(null);
 
   const flavorByName = useMemo(() => {
     const map = new Map<string, HopFlavorProfile>();
@@ -2234,7 +2236,7 @@ function HopFlavorRadarCard({
             whiteSpace: "nowrap",
           }}
         >
-          aroma-weighted ✦
+          aroma-weighted
         </span>
         <span aria-hidden style={{ flex: 1 }} />
         {individualSeries.length >= 1 && estimatedSeries ? (
@@ -2247,11 +2249,14 @@ function HopFlavorRadarCard({
             series={activeSeries}
             dominantPerAxis={dominantPerAxis}
             mode={mode}
+            hoveredSeriesId={hoveredSeriesId}
           />
           <RadarLegend
             mode={mode}
             individualSeries={individualSeries}
             estimatedSeries={estimatedSeries}
+            hoveredSeriesId={hoveredSeriesId}
+            onHoverSeries={setHoveredSeriesId}
           />
         </>
       ) : (
@@ -2324,22 +2329,117 @@ function RadarModeToggle({
   );
 }
 
-/** Legend strip below the radar — color swatch + name + grams per series. */
+/** Legend strip below the radar — color swatch + name + grams per series.
+ *  Hovering an entry highlights the matching polygon in the radar (bulge +
+ *  full opacity) and dims the others. A compact cursor-follow stats card
+ *  appears BELOW the cursor (anchored to the cursor's top-center) so it
+ *  never covers the radar sitting above the legend. Tilt-on-velocity
+ *  plumbing is borrowed from BillStack in FermentableSection. */
 function RadarLegend({
   mode,
   individualSeries,
   estimatedSeries,
+  hoveredSeriesId,
+  onHoverSeries,
 }: {
   mode: RadarMode;
   individualSeries: HopSeries[];
   estimatedSeries: HopSeries;
+  hoveredSeriesId: string | null;
+  onHoverSeries: (id: string | null) => void;
 }) {
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const lastClientXRef = useRef<number | null>(null);
+  const restTimerRef = useRef<number | null>(null);
+
   const entries: HopSeries[] =
     mode === "estimated"
       ? [estimatedSeries]
       : mode === "individual"
         ? individualSeries
         : [estimatedSeries, ...individualSeries];
+
+  const hovered =
+    hoveredSeriesId !== null
+      ? entries.find((e) => e.id === hoveredSeriesId) ?? null
+      : null;
+
+  // Every flavor note present on the hovered series, sorted strongest first.
+  // Hop presets store integer 0-5 scores (0 = absent), so `> 0` is the
+  // natural "exists" threshold. Combined/estimated profiles may carry
+  // tiny fractional residues — anything > 0 still represents a real
+  // contribution and shows up on the radar polygon, so we list it too.
+  const topNotes = useMemo(() => {
+    if (!hovered) return [] as Array<{ k: string; v: number }>;
+    return HOP_FLAVOR_KEYS.map((k) => ({
+      k,
+      v: hovered.flavor[k] ?? 0,
+    }))
+      .filter((e) => e.v > 0)
+      .sort((a, b) => b.v - a.v);
+  }, [hovered]);
+
+  // For an "Estimated" hover, grams = sum across all individuals (the
+  // estimated series itself doesn't carry grams).
+  const totalGrams = useMemo(
+    () => individualSeries.reduce((sum, s) => sum + (s.grams ?? 0), 0),
+    [individualSeries]
+  );
+  const hoveredGrams = hovered
+    ? hovered.isEstimated
+      ? totalGrams
+      : hovered.grams ?? 0
+    : 0;
+
+  function applyTransform(clientX: number, clientY: number, rotation: number) {
+    const t = tooltipRef.current;
+    if (!t) return;
+    // Tooltip's top-center anchored 14px below the cursor — keeps the radar
+    // above completely unobscured even when the user hovers the topmost
+    // legend row.
+    t.style.transform = `translate(${clientX}px, ${clientY + 14}px) translate(-50%, 0%) rotate(${rotation}deg)`;
+  }
+
+  function onItemMouseMove(e: React.MouseEvent<HTMLElement>) {
+    const t = tooltipRef.current;
+    if (!t) return;
+    const last = lastClientXRef.current;
+    const isFirstMove = last === null;
+    const dx = last !== null ? e.clientX - last : 0;
+    lastClientXRef.current = e.clientX;
+    const rotation = isFirstMove ? 0 : Math.max(-18, Math.min(18, -dx * 0.6));
+
+    if (isFirstMove) {
+      // Snap to cursor on first appearance so the card doesn't fly in from
+      // the prior resting position (which would otherwise be the viewport
+      // origin, since the tooltip is position:fixed at 0,0).
+      t.style.transition = "none";
+      applyTransform(e.clientX, e.clientY, 0);
+      void t.offsetHeight;
+      t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
+    } else {
+      applyTransform(e.clientX, e.clientY, rotation);
+    }
+    t.style.opacity = "1";
+    if (restTimerRef.current !== null) window.clearTimeout(restTimerRef.current);
+    const restClientX = e.clientX;
+    const restClientY = e.clientY;
+    restTimerRef.current = window.setTimeout(
+      () => applyTransform(restClientX, restClientY, 0),
+      120
+    );
+  }
+
+  function onWrapperMouseLeave() {
+    onHoverSeries(null);
+    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
+    lastClientXRef.current = null;
+    if (restTimerRef.current !== null) {
+      window.clearTimeout(restTimerRef.current);
+      restTimerRef.current = null;
+    }
+  }
+
   return (
     <div
       style={{
@@ -2352,10 +2452,15 @@ function RadarLegend({
         alignItems: "center",
         justifyContent: "center",
       }}
+      onMouseLeave={onWrapperMouseLeave}
     >
-      {entries.map((s) => (
+      {entries.map((s) => {
+        const isDimmed = hoveredSeriesId !== null && hoveredSeriesId !== s.id;
+        return (
         <span
           key={s.id}
+          onMouseEnter={() => onHoverSeries(s.id)}
+          onMouseMove={onItemMouseMove}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -2364,6 +2469,14 @@ function RadarLegend({
             fontSize: 12,
             color: hsTokens.ink,
             lineHeight: 1.1,
+            cursor: "pointer",
+            opacity: isDimmed ? 0.4 : 1,
+            transition: "opacity 180ms ease",
+            // Pad the hit area so flicking the cursor along the legend strip
+            // catches each entry without pixel-hunting. Vertical padding
+            // dominates because the chips are already comfortably wide.
+            padding: "8px 6px",
+            borderRadius: 6,
           }}
         >
           <span
@@ -2379,18 +2492,7 @@ function RadarLegend({
             }}
           />
           <span style={{ fontWeight: s.isEstimated ? 700 : 600 }}>{s.name}</span>
-          {s.isEstimated ? (
-            <span
-              style={{
-                fontFamily: hsTokens.script,
-                fontSize: 13,
-                color: hsTokens.muted,
-                marginLeft: 1,
-              }}
-            >
-              ✦
-            </span>
-          ) : s.grams !== undefined ? (
+          {s.isEstimated ? null : s.grams !== undefined ? (
             <span
               style={{
                 fontFamily: hsTokens.mono,
@@ -2402,7 +2504,141 @@ function RadarLegend({
             </span>
           ) : null}
         </span>
-      ))}
+        );
+      })}
+      {/* Compact cursor-following stats card for the hovered legend entry.
+          Vertically lean (2 short rows) and anchored BELOW the cursor so it
+          never blocks the radar above. */}
+      <div
+        ref={tooltipRef}
+        aria-hidden
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          opacity: 0,
+          pointerEvents: "none",
+          zIndex: 100,
+          transition: "opacity 140ms ease, transform 90ms ease-out",
+          willChange: "transform, opacity",
+        }}
+      >
+        {hovered ? (
+          <div
+            style={{
+              background: hsTokens.paper,
+              border: `2px solid ${hsTokens.ink}`,
+              borderRadius: 10,
+              boxShadow: hsTokens.sh2,
+              padding: "8px 12px",
+              minWidth: 180,
+              maxWidth: 260,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
+                justifyContent: "space-between",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: hsTokens.body,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  color: hsTokens.ink,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {hovered.name}
+                {null}
+              </span>
+              {hoveredGrams > 0 ? (
+                <span
+                  style={{
+                    fontFamily: hsTokens.mono,
+                    fontSize: 11,
+                    color: hsTokens.muted,
+                    fontVariantNumeric: "tabular-nums",
+                    flexShrink: 0,
+                  }}
+                >
+                  {hoveredGrams.toFixed(0)}g
+                </span>
+              ) : null}
+            </div>
+            {topNotes.length > 0 ? (
+              <div
+                style={{
+                  marginTop: 5,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "3px 8px",
+                  fontFamily: hsTokens.body,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: hsTokens.muted,
+                }}
+              >
+                {topNotes.map((n) => (
+                  <span
+                    key={n.k}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background:
+                          HOP_FLAVOR_COLOR[n.k] ?? hsTokens.muted,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>
+                      {HOP_FLAVOR_LABEL[n.k]?.split(" ")[0] ?? n.k}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: hsTokens.mono,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: 0,
+                        color: hsTokens.ink,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {n.v.toFixed(1)}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: 5,
+                  fontFamily: hsTokens.script,
+                  fontSize: 12,
+                  color: hsTokens.muted,
+                }}
+              >
+                no standout flavor notes
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -2431,12 +2667,16 @@ function HopFlavorRadarSvg({
   series,
   dominantPerAxis,
   mode,
+  hoveredSeriesId,
 }: {
   series: HopSeries[];
   dominantPerAxis: Record<string, { name: string; value: number } | null>;
   /** Mode is appended to series keys so toggling between estimated/all/both
    *  remounts the visible polygons and replays the bounce-in animation. */
   mode: string;
+  /** When non-null, the matching polygon bulges + stays opaque while the
+   *  other polygons fade back. Driven by legend hover in the parent. */
+  hoveredSeriesId: string | null;
 }) {
   const [hoveredAxis, setHoveredAxis] = useState<string | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -2585,41 +2825,95 @@ function HopFlavorRadarSvg({
             then subtly breathes via the inner polygon animation. Keyed by
             id so toggling view mode (est/both/each) replays the entrance
             on freshly-mounted series. */}
-        {series.map((s, si) => (
-          <g
-            key={`${mode}-${s.id}`}
-            className="hs-hops-radar-series"
-            style={{
-              animationDelay: `${si * 120}ms`,
-              transformOrigin: `${cx}px ${cy}px`,
-            }}
-          >
-            <polygon
-              points={flavorPolyPoints(s.flavor)}
-              fill={s.color}
-              fillOpacity={s.isEstimated ? 0.32 : 0.18}
-              stroke={s.color}
-              strokeWidth={s.isEstimated ? 1.8 : 1.2}
-              strokeLinejoin="round"
-              strokeDasharray={s.isEstimated ? undefined : "3 3"}
-            />
-          </g>
-        ))}
+        {series.map((s, si) => {
+          const isHovered = hoveredSeriesId === s.id;
+          const isDimmed = hoveredSeriesId !== null && !isHovered;
+          return (
+            <g
+              key={`${mode}-${s.id}`}
+              className="hs-hops-radar-series"
+              style={{
+                animationDelay: `${si * 120}ms`,
+                transformOrigin: `${cx}px ${cy}px`,
+              }}
+            >
+              {/* Inner wrapper handles the legend-hover bulge + dim. The
+                  entrance animation rides on the OUTER group so the two
+                  transforms compose without fighting. */}
+              <g
+                style={{
+                  transformOrigin: `${cx}px ${cy}px`,
+                  transform: isHovered ? "scale(1.07)" : "scale(1)",
+                  opacity: isDimmed ? 0.22 : 1,
+                  transition:
+                    "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
+                }}
+              >
+                <polygon
+                  points={flavorPolyPoints(s.flavor)}
+                  fill={s.color}
+                  fillOpacity={
+                    isHovered
+                      ? s.isEstimated
+                        ? 0.5
+                        : 0.36
+                      : s.isEstimated
+                        ? 0.32
+                        : 0.18
+                  }
+                  stroke={s.color}
+                  strokeWidth={
+                    isHovered
+                      ? s.isEstimated
+                        ? 2.4
+                        : 1.8
+                      : s.isEstimated
+                        ? 1.8
+                        : 1.2
+                  }
+                  strokeLinejoin="round"
+                  strokeDasharray={s.isEstimated ? undefined : "3 3"}
+                  style={{
+                    transition:
+                      "fill-opacity 200ms ease, stroke-width 200ms ease",
+                  }}
+                />
+              </g>
+            </g>
+          );
+        })}
         {/* Estimated vertex dots — scale-in staggered AFTER the grid + series
-            have settled (start at 600ms, 40ms per dot clockwise). */}
-        {estimatedPoints.map(([x, y], i) => (
-          <circle
-            key={i}
-            className="hs-hops-radar-dot"
-            style={{ animationDelay: `${600 + i * 40}ms` }}
-            cx={x}
-            cy={y}
-            r={2.2}
-            fill={hsTokens.hops}
-            stroke="var(--hs-ink)"
-            strokeWidth={0.5}
-          />
-        ))}
+            have settled (start at 600ms, 40ms per dot clockwise). The wrapping
+            group mirrors the estimated polygon's hover state so the dots ride
+            outward with the bulge instead of being orphaned inside the
+            scaled polygon. */}
+        <g
+          style={{
+            transformOrigin: `${cx}px ${cy}px`,
+            transform:
+              hoveredSeriesId === "__estimated__" ? "scale(1.07)" : "scale(1)",
+            opacity:
+              hoveredSeriesId !== null && hoveredSeriesId !== "__estimated__"
+                ? 0.22
+                : 1,
+            transition:
+              "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
+          }}
+        >
+          {estimatedPoints.map(([x, y], i) => (
+            <circle
+              key={i}
+              className="hs-hops-radar-dot"
+              style={{ animationDelay: `${600 + i * 40}ms` }}
+              cx={x}
+              cy={y}
+              r={2.2}
+              fill={hsTokens.hops}
+              stroke="var(--hs-ink)"
+              strokeWidth={0.5}
+            />
+          ))}
+        </g>
         {/* axis labels + invisible hover hit areas. */}
         {HOP_FLAVOR_KEYS.map((k, i) => {
           const [lx, ly] = labelPointAt(i);

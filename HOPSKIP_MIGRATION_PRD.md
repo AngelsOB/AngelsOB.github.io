@@ -54,7 +54,7 @@ src/modules/hopskip/
 │   ├── HopSkipBuilder.tsx, HopSkipHomeContent.tsx, etc. (already exist)
 │   ├── builder/         ← Phase 2 — HSBrewSheetSection (2.5a ✅ + 2.5b ✅ + polish ✅); FermentableSection (2.1 ✅); MashSection (2.2 ✅); FermentationSection (2.3 ✅); HopSection (2.8 ✅); YeastSection (2.6 ✅). 2.4/2.7 to follow.
 │   ├── modals/          ← HSModal primitive (keeps HS prefix) + FermentablePresetModal + CustomFermentableModal (2.1 ✅) + MashStepModal (2.2 ✅) + FermentationStepModal (2.3 ✅) + HopPresetModal + CustomHopModal (2.8 ✅) + YeastPresetModal + CustomYeastModal (2.6 ✅). Future per-section modals land here without HS prefix.
-│   ├── calculators/     ← NEW (Phase 3 — extracted calculator widgets — folder doesn't exist yet)
+│   ├── calculators/     ← Phase 3 ✅ — ResultGauge + Segmented + CalculatorEmbed + AbvCalculator + BoilOffCalculator + DilutionCalculator + IbuCalculator + CarbonationCalculator + HydrometerCorrectionCalculator + StrikeTempCalculator
 │   └── public/          ← Phase 1 — HSBrowsePage + HSBrowseCard live here (1.1 ✅); HSPublicRecipeShell/HSForkButton/HSRatingStars/useForkRecipe (1.2 ✅); HSCompareRecipesPage (1.3 ✅); HSUserProfile (1.4 ✅). BrewSession deferred to 2.5b; VersionHistory ⏳ NOT STARTED (1.6).
 └── styles/
     ├── tokens.css       (stays forever)
@@ -259,7 +259,7 @@ After Phase 0 shipped, `/browse` was the most visually painful HS-chrome-around-
 
 # Phase 2 — Section-by-section HS-native rewrites
 
-**Effort: 6–8 focused sessions.** Status: **2.5a (Brew Sheet display) ✅** + **2.5b (Brew Mode wiring) ✅** + **2.1 (Fermentables) ✅** + **2.2 (Mash) ✅** + **2.3 (Fermentation) ✅** + **2.8 (Hops) ✅** + **2.6 (Yeast) ✅**. 2.4, 2.7 ⏳ NOT STARTED.
+**Effort: 6–8 focused sessions.** Status: **All 8 builder sections shipped.** ✅ — 2.5a (Brew Sheet display) · 2.5b (Brew Mode wiring) · 2.1 (Fermentables) · 2.2 (Mash) · 2.3 (Fermentation) · 2.8 (Hops) · 2.6 (Yeast) · 2.7 (Water) · 2.4 (Equipment).
 
 Each section is one vertical slice including its own modals and sub-components. After each ships, the corresponding classic source files become unimported from anywhere outside `/betabuilder/*` and can be left quarantined.
 
@@ -370,13 +370,32 @@ After the initial ship, the user iterated heavily against a Claude Design handof
 
 ## 2.4 — Equipment
 
-- **Classic sources:**
-  - [EquipmentSection.tsx](src/modules/beta-builder/presentation/components/EquipmentSection.tsx) — equipment fields
-  - [EquipmentProfileModal.tsx](src/modules/beta-builder/presentation/components/EquipmentProfileModal.tsx) — saved profile picker
-  - [CustomEquipmentModal.tsx](src/modules/beta-builder/presentation/components/CustomEquipmentModal.tsx) — "create new profile" form
-- **HS plan:** `HSEquipmentSection.tsx` — grouped HSCards (Mash tun / Kettle / Fermenter / Profile picker), each with eyebrow + grid of HS number fields. Profile picker is an `HSPill` opening the profile modal.
-- **Data dependencies:** `useRecipeStore` → `updateRecipe.equipment`, equipment profile load/save.
-- **Effort:** M.
+**Status:** Done. ✅ See the [Phase 2.4 retrospective](#phase-24-retrospective--lessons-for-subsequent-slices) below.
+
+**Decision change vs. original plan:** the pre-substrate plan called for "grouped HSCards (Mash tun / Kettle / Fermenter / Profile picker), each with eyebrow + grid of HS number fields." The substrate-faithful first pass shipped exactly that — outer frame + 4 cream2 sub-cards + per-field stepper tiles + sidebar (volumes readout + brewers notes). User feedback was immediate: **"visually crazy busy though. So much black and harsh colours. Look how scary this is to parse."** The substrate doesn't fit a settings page. Three iterations later the section landed at "one outer substrate frame + 2-col grid of plain rows + click-to-edit values, hover-revealed steppers" — visually quiet, set-and-forget. Equipment is the first Phase 2 slice where the substrate was actively *rejected* for the visual layer (the frame stayed; everything inside is non-substrate). The retrospective captures the lesson.
+
+- **Classic sources (renamed + quarantined):**
+  - [OLD_EquipmentSection.tsx](src/modules/beta-builder/presentation/components/OLD_EquipmentSection.tsx) — was `EquipmentSection.tsx`. Eslint-blocked outside `/betabuilder/`.
+  - [OLD_EquipmentProfileModal.tsx](src/modules/beta-builder/presentation/components/OLD_EquipmentProfileModal.tsx) — was `EquipmentProfileModal.tsx`.
+  - [OLD_CustomEquipmentModal.tsx](src/modules/beta-builder/presentation/components/OLD_CustomEquipmentModal.tsx) — was `CustomEquipmentModal.tsx`.
+- **New HS components** (no `HS` prefix per the [naming convention](#architecture--principles)):
+  - [EquipmentSection.tsx](src/modules/hopskip/components/builder/EquipmentSection.tsx) — single substrate frame (paper bg + 2px ink + 14px corners + sh3 + 18-22px padding). Title row: Caveat kicker "your kit —" + display H2 "Equipment." + a single right-anchored consolidated profile pill ("Profile · {name} ▾") that opens the HSActionMenu; pill text shows current profile in ink (or muted "none selected"). Save-as-custom HSButton appears only when `hasUnsavedChanges`. Below the title: a plain-prose "Heads up — batch volume here is your final packaged beer …" callout. Then a 2-col grid (`grid-template-columns: repeat(2, 1fr)`, single col on ≤720px) of 4 groups: Batch & boil / Mash system / Kettle / Cooling & fermenter. Each group is just an eyebrow + hairline rule + a list of `FieldRow`s — no card chrome, no border, no shadow per group. Each row: `[label] [value unit]` with a dotted hairline bottom, click value to edit, `:hover` / `:focus-within` reveals tiny ghost − / + steppers on either side.
+  - [EquipmentProfileModal.tsx](src/modules/hopskip/components/modals/EquipmentProfileModal.tsx) — HSModal (3xl, muted accent) + cream-2 pill search field + Source filter chips (All / Presets / Custom — Custom chip disables when none exist) + sticky group headers (Preset profiles / Custom profiles) + ProfileRow cards (each shows name + `Custom` chip + "in use ✦" script when current + optional description + 4-stat strip: Batch / Boil / Mash eff / BH eff).
+  - [CustomEquipmentModal.tsx](src/modules/hopskip/components/modals/CustomEquipmentModal.tsx) — HSModal (md, honey accent) + FieldText (profile name) + FieldTextarea (description) + a `SnapshotPreview` showing what gets saved (8 of the 13 settings as a stat strip).
+- **Quarantine pass:** ESLint `no-restricted-imports` rule extended with a new block for the 3 `OLD_` paths. Two external importers (BetaBuilderPage, BrewedVersionModal) had their `EquipmentSection` import + JSX symbol renamed to `OLD_EquipmentSection`. The renamed `OLD_EquipmentSection` had its internal modal imports + symbols renamed too. `OLD_` files are now only referenced by classic-aggregator code that itself is `OLD_` or already classic.
+- **Wrapper changes in [HopSkipBuilder.tsx](src/modules/hopskip/components/HopSkipBuilder.tsx):** the Advanced expander band wrapper dropped `brew-theme hs-loose-section` className and the `ref` callback that auto-opened classic `<details>` (neither applies now). The wrapper bg `cream2` was dropped so the band inherits the page `cream` to match the Title band above. The Title band's `borderBottom: 2px ink` is conditionally dropped when `isEquipmentOpen`, so the Equipment section flows directly out of the title row when open. The Advanced toggle chevron switched from text `▲ / ▼` to an SVG `›` that rotates 90deg on open via `cubic-bezier(0.32, 0.72, 0, 1)`. The `.hs-collapse` opening easing was tuned to `cubic-bezier(0.785, 0.135, 0.15, 0.86)` (note this also affects the BJCP ranges expander which shares the class).
+- **Reused unchanged:** `useRecipeStore.updateRecipe` (for both `batchVolumeL` and `equipment.*`); `useEquipmentStore.loadProfiles / saveCustomProfile / profiles`; `useHoldToRepeat` (lifted directly for the stepper hold). No new store actions, no new repos, no new services.
+- **Batch-volume convention note (new HS-wide pattern worth reusing):** the section anchors a single plain-prose paragraph above the grid explaining that `batchVolumeL` represents the *final packaged* beer (what ends up in the keg), not into-the-fermenter as most calculators define it. The Recipe model docs the same — `"Target batch volume in liters (final packaged volume — fermenter loss is added on top)"`. This convention note pattern (1-line plain prose with bolded keywords, body-font, muted-color) is the right primitive for any HS surface where our calculation convention diverges from industry default; it doesn't need to be a fancy callout card.
+- **What's NOT in v1 (deferred):**
+  - **Per-field hint text / tooltips** — labels like "Tun deadspace" / "Grain absorption" assume the brewer knows what they mean. If brewers ask "what's deadspace?" add a small "(?)" tooltip pattern then.
+  - **Profile diffing UI** — when `hasUnsavedChanges` is true, only the "Save as custom" button hints at it. We don't surface *what* changed vs. the selected profile. Could add a small "modified ✦" chip per changed field. Defer.
+  - **Equipment-specific brewers notes / volume readout sidebar** — both shipped in v1, both dropped after user feedback ("just a settings page"). Brewers notes live with the recipe-shape sections (Fermentables, Mash, etc.); volume readout duplicates the brew sheet. If brewers ask, the right home is a small inline "you're using X% of your kettle" hint per row, not a sidebar.
+  - **Custom-modal validation** — name field is required (toast warning if blank). No validation on profile-name uniqueness, no warning if the description is super long, no preview of what the calc-impact will be. Settings page; add later only if brewers report friction.
+  - **Profile delete** — neither modal exposes delete for custom profiles. `useEquipmentStore.deleteCustomProfile` exists; add a 🗑 affordance per ProfileRow in EquipmentProfileModal when `profile.isCustom`. Defer.
+  - **Animated number transitions on input** — same deferral as 2.1/2.2/2.3/2.6/2.7/2.8. Click-to-edit + scoped input is the commit feedback.
+- **Data dependencies:** All read-write via existing recipe + equipment stores. No new server endpoints.
+- **Acceptance:** ✅ open recipe → click Advanced (chevron rotates from right to down, section slides open with cubic-bezier easing, title band's bottom border disappears, Equipment band's cream bg matches the Title band above). Section renders with one substrate frame, kicker + "Equipment." + "Profile · {name} ▾" pill, batch-volume callout, 2-col grid of 4 groups. Hover any row → tiny − / + steppers fade in on either side of the value + dashed underline appears on the value. Click value → input swaps in, type, Enter/blur commits, Escape cancels. Hold − / + → accelerating repeat via `useHoldToRepeat`. Click the profile pill → HSActionMenu opens with all profiles + "Browse the full library" footer item. Pick "Browse" → EquipmentProfileModal opens with search + Source filter chips + grouped Preset/Custom lists; pick a profile → recipe + batch volume update + modal closes. Edit any field → "Save as custom" honey-accent HSButton appears in the title row; click → CustomEquipmentModal opens with name (required) + description fields + snapshot preview of the 8 main settings; save → toast confirms + profile becomes the active one. ESC / backdrop / × close modals. tsc + lint clean (no new findings vs. baseline).
+- **Effort:** M (single focused session for v1 substrate-faithful pass + 4 user-led design iterations to land the quiet-settings shape + ~5 minutes quarantine + ESLint rule). ~1,000 LOC across EquipmentSection + the 2 modals (less than half of the data-richer Phase 2 sections like Yeast/Water; equipment has no per-row ledger and no chart so the LOC is concentrated in the FieldRow primitive + the profile modal).
 
 ## 2.5 — Brew sheet (split into 2.5a display + 2.5b Brew Mode)
 
@@ -642,24 +661,52 @@ The same choreography applies to Phase 1 sub-slices (replace HSBrowsePage / HSPu
 
 # Phase 3 — Calculator widgets
 
-**Effort: 1 focused session.**
+**Status:** Done. ✅ See the [Phase 3 retrospective](#phase-3-retrospective--lessons-for-phase-4) below.
 
-The HS calculators page at [app/calculators/page.tsx](app/calculators/page.tsx) already implements all six calculators inline using HS primitives (`HSNumberField`, `ResultGauge`, etc.). The 6 calculator learn articles (`/learn/abv-calculator`, `/learn/boil-off-calculator`, `/learn/dilution-calculator`, `/learn/carbonation-calculator`, `/learn/hydrometer-calculator`, `/learn/strike-temp-calculator`) still import the classic versions from `src/components/`.
+**Scope correction vs. original plan:** the PRD asserted "app/calculators/page.tsx already implements all six calculators inline." In reality the page had only **four** (ABV, IBU, BoilOff, Dilution) inline — Carbonation, Hydrometer, and StrikeTemp existed only as classic Tailwind widgets in `src/components/`. The Phase 3 slice covered both the **extraction** of the four inline calcs and the **HS-native rewrite** of the three missing ones (drawing on the same pure calc functions used by classic).
 
-**Action:** Extract each inline calculator from `app/calculators/page.tsx` into its own component in `src/modules/hopskip/components/calculators/`:
+- **Classic sources (renamed + quarantined):**
+  - [OLD_AbvCalculator.tsx](src/components/OLD_AbvCalculator.tsx) — was `AbvCalculator.tsx`. Eslint-blocked outside `/betabuilder/`.
+  - [OLD_BoilOffCalculator.tsx](src/components/OLD_BoilOffCalculator.tsx) — was `BoilOffCalculator.tsx`.
+  - [OLD_CarbonationCalculator.tsx](src/components/OLD_CarbonationCalculator.tsx) — was `CarbonationCalculator.tsx`.
+  - [OLD_DilutionCalculator.tsx](src/components/OLD_DilutionCalculator.tsx) — was `DilutionCalculator.tsx`.
+  - [OLD_HydrometerCorrectionCalculator.tsx](src/components/OLD_HydrometerCorrectionCalculator.tsx) — was `HydrometerCorrectionCalculator.tsx`.
+  - [OLD_StrikeTempCalculator.tsx](src/components/OLD_StrikeTempCalculator.tsx) — was `StrikeTempCalculator.tsx`.
+- **New HS components** (no `HS` prefix per the [naming convention](#architecture--principles) — feature components drop the prefix; the classic widgets renamed with `OLD_` so the new files can take the canonical name):
+  - [ResultGauge.tsx](src/modules/hopskip/components/calculators/ResultGauge.tsx) — shared cream-2 result tile (eyebrow + 48px display-font value + optional script note). Sized `md` / `lg` via prop. Extracted from the inline version on the calculators page.
+  - [Segmented.tsx](src/modules/hopskip/components/calculators/Segmented.tsx) — generic 2-option pill toggle (ink border + paper bg + accent-filled active cell). Used for °C/°F unit toggles in Carbonation/Hydrometer/StrikeTemp and the 15/20°C calibration toggle in Hydrometer.
+  - [CalculatorEmbed.tsx](src/modules/hopskip/components/calculators/CalculatorEmbed.tsx) — small HSCard wrapper with title row (Glyph badge + eyebrow + display title + "live ✦" script note). Wraps each calc in the 6 learn articles for consistent HS chrome.
+  - [AbvCalculator.tsx](src/modules/hopskip/components/calculators/AbvCalculator.tsx), [BoilOffCalculator.tsx](src/modules/hopskip/components/calculators/BoilOffCalculator.tsx), [DilutionCalculator.tsx](src/modules/hopskip/components/calculators/DilutionCalculator.tsx), [IbuCalculator.tsx](src/modules/hopskip/components/calculators/IbuCalculator.tsx) — extracted from `app/calculators/page.tsx`. ABV grew validation (range checks + FG ≤ OG); BoilOff gained the boil-off rate input + boil-time output (matches the classic feature set the inline version was missing); Dilution grew a total-volume gauge + conservation-of-points hint.
+  - [CarbonationCalculator.tsx](src/modules/hopskip/components/calculators/CarbonationCalculator.tsx), [HydrometerCorrectionCalculator.tsx](src/modules/hopskip/components/calculators/HydrometerCorrectionCalculator.tsx), [StrikeTempCalculator.tsx](src/modules/hopskip/components/calculators/StrikeTempCalculator.tsx) — net-new HS-native ports of the classic widgets. Reuse the existing pure calc functions (`correctHydrometer`, `calculateStrikeTemp`); Carbonation adds a new pure module at [src/calculators/carbonation.ts](src/calculators/carbonation.ts) (Tinseth/Carbonation polynomial + C↔F + psi→bar) that didn't exist before.
+- **`/calculators` page** ([app/calculators/page.tsx](app/calculators/page.tsx)) — rewritten to import the components instead of inlining them. Catalog expanded from 4 → 7 calcs (added Hydrometer to Gravity & ABV, StrikeTemp to Mash & water, Carbonation to a new Packaging category). Active calc stays single-select.
+- **6 learn articles wired:** each `/learn/<calc>-calculator/page.tsx` swapped from `@/components/<Calc>Calculator` to `@/modules/hopskip/components/calculators/<Calc>Calculator`, wrapped in `<CalculatorEmbed eyebrow=… title=… glyph=… accent=…>`. The standalone classic widget chrome (`brew-section` title bar + blurb) is gone; the embed card supplies the eyebrow + title + accent badge.
+- **Quarantine pass:** `app/betabuilder/learn/*/page.tsx` (6 files) + `src/views/Calculators.tsx` (1 file, the classic `/betabuilder/calculators` page body) had their imports + JSX symbols renamed to `OLD_*Calculator` with inline `// eslint-disable-next-line no-restricted-imports` headers. ESLint `no-restricted-imports` rule extended with a new block for the 6 OLD_ paths pointing at the new HS folder.
+- **Reused unchanged:** pure calc functions in [src/calculators/](src/calculators/) (`abv`, `boilOff`, `dilution`, `hydrometerCorrection`, `strikeTemp`); `HSNumberField`, `HSCard`, `HSEyebrow`, `HSScriptNote`, `Glyph`, `HSRangeBar`. The IBU calc continues to use `recipeCalculationService.calculateIBU` via a `Recipe` shim (same approach as the inline original).
+- **What's NOT in v1 (deferred):**
+  - **Yeast pitch rate + starter sizing calcs.** Out of scope for Phase 3 (the original PRD didn't list them). Could be a future addition — the math already exists in `starterCalculationService` (reused by `YeastSection`). The page footer card now teases "Mash pH, yeast pitch rate, and starter sizing — coming next."
+  - **Mash pH calculator widget.** Same as above — math exists in `MashPhCalculationService`. Not in this slice's scope.
+  - **`CalculatorCard.tsx` + `WaterSaltsCalc.tsx`.** Orphaned dead code in `src/components/` — no consumers, neither in HS-active nor classic-quarantine paths. Not renamed in this slice. Candidate for a separate cleanup PR (these aren't "classic widgets we're replacing" — they're never-shipped scaffolding).
+  - **Animated number transitions on input** — same deferral as Phase 2 sections. `HSNumberField` uses a plain `<input type="number">`; the display-font value is the commit cue.
+  - **Validation toast on out-of-range inputs.** v1 surfaces inline error strings instead (matches classic widget pattern). If brewers find them too quiet, switch to toasts.
+- **Data dependencies:** Pure math from [src/calculators/](src/calculators/) — unchanged. Existing `abv.ts`, `boilOff.ts`, `dilution.ts`, `hydrometerCorrection.ts`, `strikeTemp.ts` reused as-is. New `carbonation.ts` adds the polynomial fit + temperature conversions (lifted verbatim from the classic Carbonation widget so the math agrees with what brewers were getting before).
+- **Acceptance:** ✅ `/calculators` renders the 7-calc catalog with the active calc shown in the featured HSCard; click any catalog tile → swap the featured calc. ✅ Each of the 6 learn articles renders a `CalculatorEmbed` card with the new HS-native calc inside; the classic Tailwind chrome is gone. ✅ `/betabuilder/calculators` and `/betabuilder/learn/*-calculator` still serve 200 with the original classic widgets (now renamed `OLD_*Calculator`). ✅ tsc clean. ✅ ESLint clean for new code (the renamed `OLD_HydrometerCorrectionCalculator.tsx` carries a single pre-existing `label-has-associated-control` warning that the rename inherited verbatim).
+- **Effort:** S — single focused session as estimated. ~1,500 LOC across the 10 new files (7 calc components + ResultGauge + Segmented + CalculatorEmbed) plus the rewrites to `app/calculators/page.tsx` and 7 learn-article touch-ups + 7 quarantine renames + ESLint rule extension.
 
-- `HSAbvCalculator.tsx`
-- `HSBoilOffCalculator.tsx`
-- `HSDilutionCalculator.tsx`
-- `HSCarbonationCalculator.tsx`
-- `HSHydrometerCorrectionCalculator.tsx`
-- `HSStrikeTempCalculator.tsx`
+### Phase 3 retrospective — lessons for Phase 4
 
-Then both `/calculators` and the 6 learn articles import the HS versions.
+**The PRD's "already implements all six" overcount was the same gotcha as Phase 0.** Phase 0 was sized assuming "75 Bitter / 8 Shadows / 7 coral-500 inline declarations" exist; actual counts were 65 / 0 / 0. Phase 3 was sized assuming six calculators were inline; actual count was four. **Always verify pattern existence via `grep -c` or by reading the source before sizing.** For Phase 4, this means: before committing to "14 articles, S each, 3–4 sessions" — actually grep each article for the patterns the cleanup targets (`text-base`/`text-sm` Tailwind size classes, inline-gradient styles, custom inline mockups). Skip articles that are already clean; size up articles with custom mockups (`HopAdditionPreview` in IBU, etc.) separately.
 
-**Data dependencies:** Pure math from [src/calculators/](src/calculators/) — unchanged.
+**Classic widget feature parity is a moving target — preserve features the user already has.** The inline BoilOff calc on `/calculators` had only 3 inputs (pre vol, pre SG, target OG); the classic BoilOff widget had 4 (+ boil-off rate, with a boil-time output). The HS-native rewrite restored the 4th input because the classic was the more useful product. Same for Dilution: classic added a `Total volume` gauge + conservation-of-points hint that the inline version dropped. For Phase 4 article body cleanup, the same rule applies — when rewriting prose / mockups, the article must read at least as well as the classic version. Drop nothing without a deliberate decision.
 
-**Effort:** S each (6× S).
+**Pure calc math should always live in `src/calculators/`, never in the component.** The classic `CarbonationCalculator.tsx` had the carbonation polynomial inline (with `calculatePsi` + `psiToBar` + `cToF` + `fToC` as private file-locals). Lifting it to [src/calculators/carbonation.ts](src/calculators/carbonation.ts) means: (a) Phase 2.3's Fermentation section can also use `carbonationPsi` if it ever needs to surface a "what PSI is my keg sitting at" annotation; (b) the new HS calc and the OLD_ classic calc both prove they agree on the math because they import the same function. **Rule for Phase 4:** if a learn article's mockup contains math (e.g. IBU's `HopAdditionPreview` likely does), lift the math into `src/calculators/` or `src/modules/beta-builder/domain/services/` rather than re-inlining it. Article body should read the math via a function, not embed numbers.
+
+**`CalculatorEmbed` is a reusable Phase 4 primitive.** Any learn article that wants to show a "live HS-themed widget" can use it. The pattern is the same shape as the title bar on `/calculators` page but smaller — a 38px Glyph badge + eyebrow + 18pt display title + "live ✦" script note + 2px ink top border + cream-2 padding. For Phase 4, when porting article-specific mockups (e.g. the `HopAdditionPreview` mini-builder), wrap them in `CalculatorEmbed` (or a similar `MockupEmbed` that drops the "live ✦" and lets the article title the mockup more descriptively) for visual consistency.
+
+**The substrate for non-builder surfaces is the embed card, not the full section frame.** Phase 2 builder sections use a heavy outer frame (paper bg + 2px ink + 14px-bottom-only corners + 24px padding + sh3 + section title block + sidebar grid). That works because the section seats flush against the tab strip and owns its full tab. For learn articles + standalone calc surfaces, the embed card is enough — no kicker / display H2 / accent rule per calc; the surrounding article supplies the heading hierarchy. **Rule:** if a Phase 4 mockup is decoration, embed it with `CalculatorEmbed`-style chrome (compact header, no sidebar). If it's load-bearing pedagogy (e.g. a step-through that progresses the article's argument), consider a full HSCard with its own header + footer. Don't over-frame decoration; don't under-frame pedagogy.
+
+**Naming convention applied cleanly to calc widgets.** The OLD_-classic + no-prefix-new pattern from Phase 2 ports cleanly because (a) classic and new files want the same canonical name; (b) the new files live in a different folder, so there's no cross-folder collision; (c) the ESLint `no-restricted-imports` rule already had the right shape — just append a new `group` block. **Rule for Phase 4:** if any article body component (e.g. `HopAdditionPreview`, custom IBU mockup) gets ported, keep the same pattern. `OLD_HopAdditionPreview.tsx` in `src/modules/learn/` (or wherever it lives), new `HopAdditionPreview.tsx` in `src/modules/hopskip/components/learn-mockups/` or inline in the article.
+
+**Carbonation polynomial verification.** The classic Carbonation widget used `-16.6999 - 0.0101059·T + 0.00116512·T² + 0.173354·T·V + 4.24267·V - 0.0684226·V²` (T in °F, V in volumes). This is the standard fit used by most homebrew calculators (BeerSmith, Brewfather agree to ~0.1 PSI). The new module exposes the formula in [src/calculators/carbonation.ts](src/calculators/carbonation.ts) with a comment block citing the polynomial — if a future PR wants to switch to a more accurate model (e.g. Henry's law-based), they're swapping the implementation behind the same function signature. **Rule for Phase 4:** any time you encounter math inline in an article body, that math should already live in `src/calculators/` or a service. If it doesn't, lift it. Don't have two sources of truth.
 
 ---
 
@@ -1785,13 +1832,83 @@ The user shared their HS design system HTML file mid-session. Reading it changed
 
 ---
 
+## Phase 2.4 retrospective — lessons for subsequent slices
+
+### The substrate doesn't fit a settings page. Reject it for the visual layer when the section is set-and-forget.
+
+Every other Phase 2 section (Fermentables / Mash / Fermentation / Hops / Yeast / Water / Brew sheet) is *active authoring* — the brewer is making decisions, comparing values, scrolling through ledgers, watching live numbers tick. The substrate's chrome budget (paper bg + 2px ink border + 14px corners + sh3 + sub-card eyebrows + cream2 secondary cards + sidebar visualizer + brewer's notes) is *earned* by how often the brewer's eye lands on each surface element. Equipment is the opposite. Brewers tune it once when they get a new vessel and then never look at it again — the success metric is invisibility, not legibility.
+
+The first pass shipped substrate-faithful: substrate outer frame, 4 cream2 sub-cards (Batch & boil / Mash system / Kettle / Cooling & fermenter) with their own borders + shadows + muted accent strips + script-font ✦ taglines, per-field StepperFields each with their own ink border + cream2 bg + label eyebrow + always-visible − / + buttons, plus a right sidebar with a VolumesReadout (Mash water / Sparge / Pre-boil / Batch / Total / Strike temp) + the shared BrewersNotesCard. User screenshot reaction: **"visually crazy busy though. So much black and harsh colours. Look how scary this is to parse. This is bad design."** 13 stepper-field cards + 26 stepper-button cards + 4 sub-card borders + outer frame = ~44 ink strokes on one page. The substrate's chrome is fine when the surface earns it; on Equipment it reads as a black grid.
+
+**Rule:** when a section is configuration rather than authoring, keep the outer substrate frame (HS signature, one stroke total) and drop *everything* inner-substrate. No per-field cards, no sub-card borders, no sidebars, no brewer's notes, no script ✦ taglines. The substrate's role on this kind of section is to anchor the section in the HS visual language; the *content* layer should be quiet enough that the brewer can leave it and forget it.
+
+### Iterate through "too busy → too generic → just right" — three passes, not one.
+
+The visual landed across four iterations: (1) substrate-faithful with sidebar — too busy; (2) substrate frame + flat per-field cards inside it — still ~78 ink strokes, still busy; (3) no chrome at all (no outer frame, plain rows, generic web-form look) — user feedback **"doesnt really fit stylistically"**; (4) outer substrate frame back + plain rows inside + 2-col grid + Caveat script kicker for HS identity — landed.
+
+The middle iteration (3) was useful data even though it didn't ship: it confirmed the outer substrate frame is the HS signature that earns its keep on every section regardless of how quiet the content is. Stripping it made the page read as a generic settings form, not a Brewing.It section. **Rule for any "quiet" surface:** the outer substrate frame is non-negotiable; the inner chrome is the dial.
+
+### Consolidate split affordances into single buttons when set-and-forget.
+
+The first profile picker shipped as `Profile · {name}  [Switch ▾]` — a label and a separate button. The user asked for it consolidated: `[Profile · {name} ▾]` — single pill, clicking anywhere on it opens the HSActionMenu. The split made sense for an active-authoring section (the label is the *current value*, the button is the *action*). On a set-and-forget section, the brewer doesn't need to read the current value before deciding to switch — they're either switching or they're not. Consolidation removes one element of visual decision-making.
+
+**Rule for any settings-page-shaped section:** when an information element and its action are adjacent, fold them into one button. Especially when the section's whole job is to fade into the background.
+
+### The substrate's outer frame + the page's band wrapper double up — drop one bg.
+
+The Advanced expander band wrapper sets `background: cream2`. The substrate frame inside sets `background: paper`. The combined effect on the user's screenshot read as: title band (cream, from page bg) → band wrapper (cream2) → section frame (paper). Three distinct surfaces stacked. User feedback: **"Background colour needs to be unified to be the same as the header colour."**
+
+Fix: drop the wrapper's `background: cream2` so the band inherits page `cream` like the Title band above. The substrate frame's `paper` then sits on top of the same cream surface the Title band uses — visually unified. **Rule for any Phase 2 section mounted inside a colored band wrapper:** check whether the wrapper bg actually serves a purpose. If the section's own substrate frame already provides visual containment, the wrapper bg is redundant chrome.
+
+### Title band's `borderBottom` becomes a separator-too-far when the expander opens — drop it conditionally.
+
+The Title band has a permanent `borderBottom: 2px ink` that separates it from the live-numbers band below. When the Advanced expander opens, the *Equipment section* slides in *between* — so now the Title band's bottom border sits between the title row and the Equipment section, creating a visual separator the brewer doesn't want. The Equipment band has its own `borderBottom` to separate from live-numbers, so the Title's border is redundant when open.
+
+Fix: `borderBottom: isEquipmentOpen ? "none" : "2px solid ink"` on the Title band. When closed: title separates from live-numbers. When open: title flows directly into Equipment, Equipment separates from live-numbers. **Rule for any expanding band that slides between two sibling bands:** the upstream sibling's bottom border should disappear while the expander is open so the expanded surface reads as a continuation of the upstream surface, not a separate insertion.
+
+### Chevron rotation > glyph swap for expander state.
+
+Classic equipment used `▲ / ▼` text glyphs. The user asked for the chevron to point right when closed and rotate to point down when open. A single SVG `›` path with `transform: rotate(0deg | 90deg)` and a 180ms cubic-bezier transition reads as one continuous motion — the open/close state is felt, not just inferred. Stroke weight + cap style stay consistent across both states (glyph swap mid-state can flicker the font fallback chain). **Rule for any expander chevron:** one SVG path, transform-rotated. Not two text glyphs swapped via JSX.
+
+### Click-to-edit + hover-revealed steppers is the right field UX for settings pages.
+
+Default state: just the value as a span. Hover the row: tiny ghost − / + steppers fade in on either side + dashed underline appears under the value. Click the value: it swaps to a typeable input scoped to the row. Enter/blur commits; Escape cancels.
+
+Why this works for settings: the page is read-mostly. Brewers come to *check* what their equipment is set to, not to actively tune it. The values being readable as plain text matches what the brewer is actually doing 99% of the time. The +/− steppers only appear when a brewer expresses intent to change something (hover), keeping the default state visually quiet. The click-to-edit fallback is for keyboard-first users and for typing a new value directly (faster than holding +/−).
+
+**Rule for any set-and-forget configuration surface:** invert the affordance defaults. Read state is the canonical state; edit state is conditional. Substrate sections do the opposite (edit-by-default, since authoring is the canonical state) — Equipment proves that swapping the default is the right call for the settings shape.
+
+### Pure-CSS hover/focus-within beats React state for ephemeral chrome.
+
+First implementation used `useState(hovered)` + `onMouseEnter / onMouseLeave` on each FieldRow to drive the steppers' opacity. eslint flagged jsx-a11y warnings about non-interactive elements with mouse handlers. Fix: drop React state entirely, use `:hover` and `:focus-within` in a scoped `<style>` block to flip the steppers' opacity. Same behavior, zero React re-renders, lint-clean, fewer LOC.
+
+**Rule for any "ephemeral chrome appears on row hover" pattern:** CSS first, React state only if the visibility depends on something React knows but CSS doesn't (e.g. a sibling component's state). For pure visual hover effects, CSS is faster, cheaper, and keeps the eslint warnings off.
+
+### `batchVolumeL = final packaged volume` deserves a permanent prose note.
+
+The Recipe model documents `batchVolumeL` as "Target batch volume in liters (final packaged volume — fermenter loss is added on top)". Most brewing calculators (BeerSmith, Brewfather) define batch volume as into-the-fermenter, with packaging-loss subtracted as a separate readout. Brewing.It's convention is the opposite: brewers enter what they actually want to drink (final keg or bottle volume), and fermenter / chiller / cooling losses are added on top of that to compute mash + sparge water.
+
+This is a meaningful convention difference — brewers coming from other tools will misread the value if it's not flagged. A single plain-prose paragraph above the field grid is enough: bold the keywords (`Heads up —`, `final packaged`), use body font in muted color, no card chrome, no script flourishes. The note is one line of plain text — that's enough to set expectations without dominating the page.
+
+**Rule:** any HS surface where our calculation convention diverges from industry default earns a one-line plain-prose note anchored next to the field. Don't bury it in tooltips, don't lift it into a banner card, don't write it in Caveat script. The convention note pattern is: body font · 12.5px · 1.45 line-height · muted color · bold keywords in ink · single paragraph. Cumulatively cheap; high-value when the brewer hits it.
+
+### Quarantine took ~5 minutes for 3 files + 2 consumer updates — matches the per-file budget.
+
+Three `git mv` renames, three `export const … → OLD_…` renames, three internal-import-and-symbol updates (the section's modal imports + JSX usages), two external importer updates (BetaBuilderPage + BrewedVersionModal — both classic-only aggregators), one ESLint `no-restricted-imports` block append. tsc clean first pass, lint baseline holds (3 warnings on touched files, all pre-existing — `autoFocus` on OLD_CustomEquipmentModal + 2 unused eslint-disable directives on BetaBuilderPage that pre-date this slice). The mechanical pattern is now locked across 7 Phase 2 quarantine passes: budget ~1 minute per file, plus 2–3 minutes for consumer-import + ESLint rule extension. 3 files × ~1.5 min = ~5 min for this slice. **Rule confirmed for all future quarantine work:** the per-slice quarantine effort scales linearly with file count; no slice has surprised this estimate so far.
+
+### `presetStore` / `equipmentStore` shape is consistent — the picker modal pattern ports without surprises.
+
+`useEquipmentStore.profiles: EquipmentProfile[]` is flatter than the `{label, items}[]` shape used by `presetStore.fermentablePresetsGrouped` / `hopPresetsGrouped` / `yeastPresetsGrouped`. The EquipmentProfileModal handles the grouping inline (split into `presets` vs `customs` by `profile.isCustom`). That's a minor port-time difference but doesn't change the picker modal pattern — search field + filter chips + group headers + rows + footer with "+ Create custom" still ports verbatim from YeastPresetModal. **Rule for any future preset-picker work:** if the store returns a flat array instead of `{label, items}[]`, do the grouping inline in the modal's filtered-grouped useMemo. Don't push the grouping into the store unless multiple consumers need it.
+
+---
+
 ## Total effort estimate
 
 - **Phase 0** (free wins + quarantine labeling): ✅ Done — ≈ 1 focused session
 - **Phase 1** (5 active pages: Browse, Public viewer, Compare, User profile, Brew session — Version history deferred indefinitely): **done** — 1.1 ✅ · 1.2 chrome ✅ · 1.3 ✅ · 1.4 ✅ · **1.5 closed via 2.5a + 2.5b ✅** · **1.6 deferred / maybe never** (low-traffic, classic surface stays as reference)
-- **Phase 2** (8 builder sections + their bundled modals): **partially done** — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.8 ✅ · 2.6 ✅ · 2.7 ✅ · 2.4 NOT STARTED · remaining: 1 focused session
+- **Phase 2** (8 builder sections + their bundled modals): **done** ✅ — 2.5a ✅ · 2.5b ✅ · 2.1 ✅ · 2.2 ✅ · 2.3 ✅ · 2.8 ✅ · 2.6 ✅ · 2.7 ✅ · 2.4 ✅
 - **Phase 3** (6 calculator widgets extracted from existing inline implementations): NOT STARTED — 1 focused session
 - **Phase 4** (14 learn article body rewrites): NOT STARTED — 3–4 focused sessions
 - **Phase 5** (optional deferred deletion): NOT STARTED — ~1 focused session, whenever
 
-**Roughly 5–8 focused sessions remaining** (excluding deferred deletion + deferred 1.6). With 2.1 + 2.2 + 2.3 + 2.8 + 2.6 shipped, the per-list section template is locked in — every remaining list-shaped Phase 2 slice mechanically clones the same shape (section frame + ledger + sidebar readout/visualizer + brewer's notes + HSModal-based per-section modal). 2.6 also confirmed the substrate scales *downward* to single-row "lists" (single yeast strain + mini-ledger of starter steps) without a separate template. Next-priority slice: **2.4 Equipment** (first non-list section — "grouped HSCards of fields" + 2 profile-picker modals; tests the substrate on a different shape), then **2.7 Water** (most modal-heavy + ion-comparison visualization slice).
+**Roughly 4–5 focused sessions remaining** (excluding deferred deletion + deferred 1.6). With all 8 Phase 2 sections shipped, the substrate is fully validated — across ledger-shaped sections (2.1/2.2/2.3/2.8/2.6) and non-ledger sections (2.7 visualizer-anchored, 2.4 quiet settings page). 2.4 Equipment was the first Phase 2 slice where the substrate was actively *rejected* for the visual layer (the frame stayed; everything inside is non-substrate flat-form). Next-priority slice: **Phase 3** (extract the 6 inline calculator widgets from `app/calculators/page.tsx` into `src/modules/hopskip/components/calculators/` so the 6 learn articles can share them — ~1 focused session, very mechanical), then **Phase 4** (14 learn article body rewrites — 3–4 focused sessions; start with the 6 calculator articles after Phase 3, then the 4 short articles, then the 4 long articles with custom inline mockups).

@@ -3,11 +3,33 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
+import { AnimatePresence, m, useReducedMotion } from "framer-motion";
+
 import { hsTokens } from "../../tokens";
+import {
+  springEnter,
+  springSoft,
+  springTilt,
+  springTrack,
+  tweenStandard,
+} from "../../motion";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import FermentablePresetModal from "../modals/FermentablePresetModal";
 import CustomFermentableModal from "../modals/CustomFermentableModal";
+import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
+
+// All bill-stack property animations (segment widths shifting as
+// percentages change, new segment growing on add, hover-expand, color
+// swatch interpolation, padding collapse) use the shared `springSoft`
+// token — same family as the ledger rows, lower energy. Exits use
+// `tweenStandard` for a calm fade-out.
+//
+// Minimum share a hovered segment will claim, so even a 2% sliver can
+// surface its %+name label. Siblings scale proportionally to fill the
+// remaining width. Tuned to comfortably fit "30% / Cara Munich" at the
+// display font size in the typical sidebar width.
+const HOVER_REVEAL_PCT = 30;
 
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
@@ -289,9 +311,6 @@ function SectionTitle() {
         borderBottom: `2px solid ${hsTokens.malt}`,
       }}
     >
-      <HSScriptNote color={hsTokens.malt} size={22} rotate={-3}>
-        your grain bill —
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,
@@ -328,55 +347,184 @@ function BillStack({
   totalGrainKg: number;
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  // X position (within the bar's local coords, in px) the tooltip
+  // anchors to. Updated on mousemove; framer-motion springs the
+  // tooltip toward this value so it tracks the cursor with a little
+  // life of its own.
+  const [cursorX, setCursorX] = useState<number>(0);
+  // Tooltip rotation in degrees. Derived from cursor velocity — moving
+  // right tilts the card left (it "swings" trailing the motion), and
+  // vice versa. Settles back to 0 once the cursor rests. Range clamped
+  // to ±18° so the tilt is playful, not chaotic.
+  const [tilt, setTilt] = useState<number>(0);
+  // Hover-intent gate. The tooltip only appears after the cursor has
+  // hovered without moving for SHOW_DELAY_MS — prevents the card from
+  // flashing in/out during a quick sweep across the bar. Once visible,
+  // it sticks (no dismissal while inside the bar). On leave, a short
+  // HIDE_COOLDOWN_MS keeps it visible so brief excursions don't
+  // dismiss it.
+  const [tooltipVisible, setTooltipVisible] = useState<boolean>(false);
+  const barRef = useRef<HTMLDivElement | null>(null);
+  // Last clientX we saw, used to compute dx on the next mousemove.
+  // Refs (not state) so updates don't trigger re-renders on every move.
   const lastClientXRef = useRef<number | null>(null);
-  const restTimerRef = useRef<number | null>(null);
+  // Timer that resets tilt to 0 after the cursor stops moving. Without
+  // this the card would freeze at its last tilted angle when the user
+  // rests on a segment.
+  const tiltRestTimerRef = useRef<number | null>(null);
+  // Hover-intent timers. `showTimer` fires after the cursor has been
+  // still for the dwell period and reveals the tooltip. `hideTimer`
+  // fires after the cursor has been outside the bar long enough that
+  // we believe the user is genuinely done.
+  const showTimerRef = useRef<number | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  // Reduced-motion: drop the width interpolation (segments snap to their
+  // new widths) and keep only the opacity transition for entry/exit.
+  const reduced = useReducedMotion();
+
+  // Reveal the tooltip only after the cursor has dwelled this long
+  // without moving. 300ms is the classic "hover intent" sweet spot —
+  // long enough to filter sweeps, short enough to feel responsive.
+  const SHOW_DELAY_MS = 300;
+  // After the cursor leaves the bar, wait this long before tearing the
+  // tooltip down. Re-entry within the cooldown cancels the dismiss so
+  // brief overshoots don't flicker the card.
+  const HIDE_COOLDOWN_MS = 350;
 
   const hovered = hoveredIdx !== null ? rows[hoveredIdx] : null;
 
-  function applyTransform(clientX: number, clientY: number, rotation: number) {
-    const t = tooltipRef.current;
-    if (!t) return;
-    t.style.transform = `translate(${clientX}px, ${clientY - 14}px) translate(-50%, -100%) rotate(${rotation}deg)`;
+  // Effective widths each segment renders at. When a segment is hovered,
+  // it claims at least HOVER_REVEAL_PCT of the bar so its %+name label
+  // can surface; the other segments are scaled proportionally to fill
+  // the remaining width. Without a hover, segments render at their true
+  // r.pct. Memoized so framer-motion doesn't re-trigger on every paint.
+  const displayPcts = useMemo<number[]>(() => {
+    const originalPcts = rows.map((r) => r.pct);
+    if (hoveredIdx === null || reduced) return originalPcts;
+    const hoveredRow = rows[hoveredIdx];
+    if (!hoveredRow || hoveredRow.pct >= HOVER_REVEAL_PCT) return originalPcts;
+    const reveal = HOVER_REVEAL_PCT;
+    const othersTotal = originalPcts.reduce(
+      (sum, pct, i) => (i === hoveredIdx ? sum : sum + pct),
+      0
+    );
+    // Defensive: if hovered grain is the only one with weight, others
+    // are already 0 — give the hovered the whole bar.
+    if (othersTotal <= 0) {
+      return originalPcts.map((_, i) => (i === hoveredIdx ? 100 : 0));
+    }
+    const scale = (100 - reveal) / othersTotal;
+    return originalPcts.map((pct, i) =>
+      i === hoveredIdx ? reveal : pct * scale
+    );
+  }, [rows, hoveredIdx, reduced]);
+
+  // Cancel any pending timers when this BillStack unmounts (e.g. user
+  // navigates away mid-hover). Without this the dangling setTimeout
+  // would fire on a stale closure.
+  useEffect(() => {
+    return () => {
+      if (tiltRestTimerRef.current !== null) {
+        window.clearTimeout(tiltRestTimerRef.current);
+      }
+      if (showTimerRef.current !== null) {
+        window.clearTimeout(showTimerRef.current);
+      }
+      if (hideTimerRef.current !== null) {
+        window.clearTimeout(hideTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Hover-intent: arm or re-arm the show timer. Called on bar enter and
+  // on each mousemove while the tooltip is still hidden. Each fresh
+  // call clears the previous timer, so the tooltip only appears once
+  // the cursor has been still for SHOW_DELAY_MS continuously.
+  function armShowTimer() {
+    if (showTimerRef.current !== null) {
+      window.clearTimeout(showTimerRef.current);
+    }
+    showTimerRef.current = window.setTimeout(() => {
+      setTooltipVisible(true);
+      showTimerRef.current = null;
+    }, SHOW_DELAY_MS);
   }
 
+  // Mouseenter on the bar: re-entry during the hide cooldown means the
+  // user came back — cancel the dismissal. If the tooltip isn't visible
+  // yet, start the show-intent timer so the dwell test can run even
+  // without a subsequent mousemove (e.g. user places the cursor and
+  // holds still).
+  function onBarMouseEnter() {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (!tooltipVisible) armShowTimer();
+  }
+
+  // Cursor X within the bar's own coordinate space (0 = left edge of
+  // bar). The framer-motion `x` animation springs toward this value, so
+  // moving the cursor causes the tooltip to glide horizontally rather
+  // than snap. We also derive a velocity-driven tilt from dx so the
+  // card "swings" while the cursor is in motion — same trick the old
+  // cursor-following tooltip used; brought back because it's fun.
   function onBarMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const t = tooltipRef.current;
-    if (!t) return;
+    const bar = barRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    setCursorX(e.clientX - rect.left);
+
     const last = lastClientXRef.current;
-    const isFirstMove = last === null;
     const dx = last !== null ? e.clientX - last : 0;
     lastClientXRef.current = e.clientX;
-    const rotation = isFirstMove ? 0 : Math.max(-18, Math.min(18, -dx * 0.6));
+    // Negative sign so the card tilts AWAY from the direction of
+    // motion (moving right → tilts left, dragging behind the cursor).
+    // 0.35 multiplier and ±10° clamp keep the swing gentle — the
+    // motion reads as a slight, playful sway rather than a swing.
+    const rotation = Math.max(-10, Math.min(10, -dx * 0.35));
+    setTilt(rotation);
 
-    if (isFirstMove) {
-      // Snap to cursor on first appearance — no transform transition from
-      // the prior resting position (otherwise it shoots in from viewport origin).
-      t.style.transition = "none";
-      applyTransform(e.clientX, e.clientY, 0);
-      void t.offsetHeight;
-      t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
-    } else {
-      applyTransform(e.clientX, e.clientY, rotation);
+    if (tiltRestTimerRef.current !== null) {
+      window.clearTimeout(tiltRestTimerRef.current);
     }
-    t.style.opacity = "1";
-    if (restTimerRef.current !== null) window.clearTimeout(restTimerRef.current);
-    const restClientX = e.clientX;
-    const restClientY = e.clientY;
-    restTimerRef.current = window.setTimeout(
-      () => applyTransform(restClientX, restClientY, 0),
-      120
-    );
+    // After 120ms of no movement the card settles upright. Matches the
+    // old code's rest timing.
+    tiltRestTimerRef.current = window.setTimeout(() => setTilt(0), 120);
+
+    // Hover-intent: if the tooltip is not yet visible, every mousemove
+    // resets the dwell timer — the cursor has to stop for SHOW_DELAY_MS
+    // before the card appears. Once visible, mousemove no longer
+    // affects visibility (the tooltip is "sticky" and just slides with
+    // the cursor).
+    if (!tooltipVisible) armShowTimer();
   }
 
   function onBarMouseLeave() {
-    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
-    setHoveredIdx(null);
-    lastClientXRef.current = null;
-    if (restTimerRef.current !== null) {
-      window.clearTimeout(restTimerRef.current);
-      restTimerRef.current = null;
+    // Cancel a pending show — the user left before the dwell completed.
+    if (showTimerRef.current !== null) {
+      window.clearTimeout(showTimerRef.current);
+      showTimerRef.current = null;
     }
+    // Tilt resets immediately so the card doesn't freeze tilted while
+    // it fades out during the cooldown.
+    setTilt(0);
+    lastClientXRef.current = null;
+    if (tiltRestTimerRef.current !== null) {
+      window.clearTimeout(tiltRestTimerRef.current);
+      tiltRestTimerRef.current = null;
+    }
+    // Schedule the dismissal. If the user returns to the bar within
+    // HIDE_COOLDOWN_MS, `onBarMouseEnter` cancels this timer and the
+    // tooltip stays put.
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = window.setTimeout(() => {
+      setTooltipVisible(false);
+      setHoveredIdx(null);
+      hideTimerRef.current = null;
+    }, HIDE_COOLDOWN_MS);
   }
 
   return (
@@ -417,12 +565,17 @@ function BillStack({
           </span>
         </span>
       </div>
-      {/* Bill bar is a presentational chart; hover events drive the cursor-
-          follow tooltip below. Segment buttons aren't appropriate (they
-          aren't activatable beyond hovering — clicking does nothing). */}
+      {/* position:relative so the absolutely-positioned tooltip (below)
+          anchors above the bar rather than the document. */}
+      <div style={{ position: "relative" }}>
+      {/* Bill bar is a presentational chart; hover events drive the
+          tooltip that sits above it. Segment buttons aren't appropriate
+          (they aren't activatable beyond hovering — clicking does nothing). */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
+        ref={barRef}
         className="hs-ferm-bill-bar"
+        onMouseEnter={onBarMouseEnter}
         onMouseMove={onBarMouseMove}
         onMouseLeave={onBarMouseLeave}
         style={{
@@ -435,172 +588,306 @@ function BillStack({
           background: hsTokens.cream2,
         }}
       >
-        {rows.map((r, i) => {
-          const dark = r.f.colorLovibond > 25;
-          // Match mockup: only the dominant slice carries a percentage +
-          // name label. Smaller slices are pure color so the eye can rest.
-          const showLabel = r.pct >= 25;
-          const showName = r.pct >= 30;
-          return (
-            // Presentational segment — hover updates the cursor-follow tooltip;
-            // no click behaviour, so no role is appropriate here.
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-            <div
-              key={r.f.id}
-              onMouseEnter={() => setHoveredIdx(i)}
-              style={{
-                width: `${r.pct}%`,
-                background: r.srmColor,
-                borderRight:
-                  i < rows.length - 1 ? `2px solid ${hsTokens.ink}` : "none",
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 4,
-                overflow: "hidden",
-                cursor: "default",
-              }}
-            >
-              {showLabel ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: dark ? "#fff" : hsTokens.ink,
-                    pointerEvents: "none",
-                  }}
-                >
+        <AnimatePresence initial={false}>
+          {rows.map((r, i) => {
+            const isHovered = i === hoveredIdx;
+            const dark = r.f.colorLovibond > 25;
+            // Hovering a small slice should also surface the label the
+            // way the dominant slice surfaces it — the segment expands
+            // (see displayPcts above) and we lift the label render gate
+            // to match. The text still shows the *true* r.pct so users
+            // see the actual share, not the expanded visual share.
+            const showLabel = isHovered || r.pct >= 25;
+            const showName = isHovered || r.pct >= 30;
+            const bigFont = isHovered || r.pct >= 30;
+            const targetWidth = `${displayPcts[i]}%`;
+            // Framer-motion interpolates "rgb(r,g,b)" values natively, so
+            // swapping a grain (e.g. Pale → Crystal) tweens its segment
+            // color over the same duration as the width shift. Width
+            // animation: percentage strings interpolate numerically.
+            return (
+              // Presentational segment — hover updates the cursor-follow tooltip;
+              // no click behaviour, so no role is appropriate here.
+              // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+              <m.div
+                key={r.f.id}
+                onMouseEnter={() => setHoveredIdx(i)}
+                initial={{
+                  width: reduced ? targetWidth : 0,
+                  opacity: 0,
+                  backgroundColor: r.srmColor,
+                  paddingLeft: reduced ? 4 : 0,
+                  paddingRight: reduced ? 4 : 0,
+                }}
+                animate={{
+                  width: targetWidth,
+                  opacity: 1,
+                  backgroundColor: r.srmColor,
+                  paddingLeft: 4,
+                  paddingRight: 4,
+                }}
+                exit={{
+                  width: reduced ? targetWidth : 0,
+                  opacity: 0,
+                  paddingLeft: reduced ? 4 : 0,
+                  paddingRight: reduced ? 4 : 0,
+                  // Calm tween for exit — matches the ledger-row exit
+                  // pattern (entrance springs, exit eases). Also avoids
+                  // any spring overshoot below 0 on the way to width: 0.
+                  transition: tweenStandard,
+                }}
+                // `springSoft` — gentler than the ledger-row entrance.
+                // Bar segments are delicate (small width/color shifts,
+                // hover-expand on tiny slices), so the snappy
+                // `springEnter` reads as aggressive here. Same family
+                // of motion, lower energy.
+                transition={springSoft}
+                style={{
+                  borderRight:
+                    i < rows.length - 1 ? `2px solid ${hsTokens.ink}` : "none",
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingTop: 4,
+                  paddingBottom: 4,
+                  // border-box so width: 0 collapses fully. The inner
+                  // padding-left/right are animated separately so the
+                  // exiting segment can shed its horizontal padding
+                  // alongside its width — otherwise the 4px L/R padding
+                  // plus 2px border floor the exit at ~10px and the
+                  // sibling segments visibly snap when it finally
+                  // unmounts.
+                  boxSizing: "border-box",
+                  // Flex items default to min-width: auto, which prevents
+                  // shrinking below content size. min-width:0 lets the
+                  // exit reach a true zero.
+                  minWidth: 0,
+                  overflow: "hidden",
+                  cursor: "default",
+                }}
+              >
+                {showLabel ? (
                   <div
                     style={{
-                      fontFamily: hsTokens.display,
-                      fontSize: r.pct >= 30 ? 24 : 16,
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1,
+                      textAlign: "center",
+                      color: dark ? "#fff" : hsTokens.ink,
+                      pointerEvents: "none",
                     }}
                   >
-                    {Math.round(r.pct)}%
-                  </div>
-                  {showName ? (
                     <div
                       style={{
-                        fontFamily: hsTokens.body,
-                        fontWeight: 700,
-                        fontSize: 9,
-                        letterSpacing: "0.1em",
-                        textTransform: "uppercase",
-                        marginTop: 3,
-                        opacity: 0.92,
+                        fontFamily: hsTokens.display,
+                        fontSize: bigFont ? 24 : 16,
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1,
                       }}
                     >
-                      {shortName(r.f.name)}
+                      {Math.round(r.pct)}%
                     </div>
+                    {showName ? (
+                      <div
+                        style={{
+                          fontFamily: hsTokens.body,
+                          fontWeight: 700,
+                          fontSize: 9,
+                          letterSpacing: "0.1em",
+                          textTransform: "uppercase",
+                          marginTop: 3,
+                          opacity: 0.92,
+                        }}
+                      >
+                        {shortName(r.f.name)}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </m.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+      {/* Anchored tooltip — sits above the bar, bounces in on first
+          hover, slides horizontally with the cursor via a tight spring,
+          and drops a small vertical connector line down to the bar so
+          the user can see which segment it's pointing at. */}
+      <AnimatePresence>
+        {tooltipVisible && hovered ? (
+          <m.div
+            key="bill-tooltip"
+            style={{
+              position: "absolute",
+              bottom: "100%",
+              left: 0,
+              pointerEvents: "none",
+              zIndex: 10,
+              // Small lift above the bar so the connector line has room
+              // to land cleanly on the bar's top edge.
+              paddingBottom: 0,
+            }}
+            // Initial x set to the current cursor position so the
+            // tooltip pops in AT the cursor instead of sliding in from
+            // x=0 (framer-motion's implicit default for transforms).
+            initial={{ x: cursorX }}
+            animate={{ x: cursorX }}
+            // Shared `springTrack` token — same spring used anywhere
+            // we follow a continuously-updating value with the cursor.
+            transition={{ x: springTrack }}
+          >
+            {/* Center the card+line stack on the anchor X. CSS transform
+                here is independent of framer-motion's transforms on the
+                nested motion divs, so they compose cleanly. */}
+            <div
+              style={{
+                transform: "translateX(-50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <m.div
+                // Symmetric in/out — the same shape that the card exits
+                // with is the shape it enters from. Less pop than the
+                // previous { scale: 0.7, y: 10 } initial, but the
+                // user-facing motion now reads as one consistent
+                // gesture played forward or in reverse.
+                initial={{ opacity: 0, scale: 0.85, y: 6, rotate: 0 }}
+                animate={{ opacity: 1, scale: 1, y: 0, rotate: tilt }}
+                exit={{ opacity: 0, scale: 0.85, y: 6, rotate: 0 }}
+                transition={{
+                  // House spring — same one new ingredient rows use, so
+                  // the tooltip pop and a grain row arriving below feel
+                  // like the same family of motion.
+                  ...springEnter,
+                  // Tilt rotation gets the `springTilt` token — tighter,
+                  // less bouncy than the entrance spring. Responds
+                  // quickly to cursor velocity without compounding into
+                  // chaotic rocking when the cursor moves fast.
+                  rotate: springTilt,
+                }}
+                style={{
+                  background: hsTokens.paper,
+                  border: `2px solid ${hsTokens.ink}`,
+                  borderRadius: 10,
+                  boxShadow: hsTokens.sh2,
+                  padding: "10px 14px",
+                  minWidth: 220,
+                  maxWidth: 320,
+                  // Grow upward from the bottom so the pop-in keeps the
+                  // line-meeting-point fixed while the card expands.
+                  // Rotation also pivots around this point — the card
+                  // swings like a tag hanging from the connector line.
+                  transformOrigin: "bottom center",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: hsTokens.body,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: hsTokens.ink,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {hovered.f.name}
+                  {hovered.f.originCode ? (
+                    <span style={{ marginLeft: 6 }}>
+                      {getCountryFlag(hovered.f.originCode)}
+                    </span>
                   ) : null}
                 </div>
-              ) : null}
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontFamily: hsTokens.body,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: hsTokens.muted,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {hovered.pct.toFixed(1)}% of grain bill ·{" "}
+                  {hovered.f.weightKg.toFixed(2)} kg
+                </div>
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontFamily: hsTokens.mono,
+                    fontSize: 11,
+                    color: hsTokens.muted,
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  {hovered.f.colorLovibond}°L · {hovered.f.ppg} PPG ·{" "}
+                  {(hovered.f.colorLovibond * 1.97).toFixed(1)} EBC
+                </div>
+              </m.div>
+              {/* Connector — drops from the card's bottom-center to the
+                  bar's top edge. transformOrigin top so it "draws on"
+                  downward as scaleY animates 0 → 1. Slight delay so it
+                  appears after the card has settled into place. */}
+              <m.div
+                initial={{ scaleY: 0, opacity: 0 }}
+                animate={{ scaleY: 1, opacity: 1 }}
+                exit={{ scaleY: 0, opacity: 0 }}
+                transition={{
+                  // Same `springTilt` token; tiny delay so the line
+                  // appears just after the card has arrived.
+                  scaleY: { ...springTilt, delay: 0.06 },
+                  opacity: { duration: 0.12, delay: 0.06 },
+                }}
+                style={{
+                  width: 2,
+                  height: 12,
+                  background: hsTokens.ink,
+                  transformOrigin: "top",
+                }}
+              />
             </div>
-          );
-        })}
+          </m.div>
+        ) : null}
+      </AnimatePresence>
       </div>
       {/* Mono weight legend — each weight sits at the start of its slice. */}
       <div style={{ display: "flex", marginTop: 8 }}>
-        {rows.map((r) => (
-          <div
-            key={r.f.id}
-            style={{
-              width: `${r.pct}%`,
-              fontFamily: hsTokens.mono,
-              fontSize: 10,
-              color: hsTokens.muted,
-              paddingLeft: 2,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {r.f.weightKg.toFixed(2)}kg
-          </div>
-        ))}
+        <AnimatePresence initial={false}>
+          {rows.map((r) => {
+            const targetWidth = `${r.pct}%`;
+            return (
+              <m.div
+                key={r.f.id}
+                initial={{ width: reduced ? targetWidth : 0, opacity: 0 }}
+                animate={{ width: targetWidth, opacity: 1 }}
+                exit={{
+                  width: reduced ? targetWidth : 0,
+                  opacity: 0,
+                  transition: tweenStandard,
+                }}
+                // `springSoft` to match the bar segments above —
+                // weight legend widths move in lockstep with their
+                // slice, so they should share the same spring.
+                transition={springSoft}
+                style={{
+                  fontFamily: hsTokens.mono,
+                  fontSize: 10,
+                  color: hsTokens.muted,
+                  paddingLeft: 2,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {r.f.weightKg.toFixed(2)}kg
+              </m.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
-      {/* Cursor-following tooltip — appears on segment hover. */}
-      <div
-        ref={tooltipRef}
-        aria-hidden
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          opacity: 0,
-          pointerEvents: "none",
-          zIndex: 100,
-          transition: "opacity 140ms ease, transform 90ms ease-out",
-          willChange: "transform, opacity",
-        }}
-      >
-        {hovered ? (
-          <div
-            style={{
-              background: hsTokens.paper,
-              border: `2px solid ${hsTokens.ink}`,
-              borderRadius: 10,
-              boxShadow: hsTokens.sh2,
-              padding: "10px 14px",
-              minWidth: 220,
-              maxWidth: 320,
-            }}
-          >
-            <HSScriptNote color={hovered.srmColor} size={18}>
-              {hovered.category.toLowerCase()} —
-            </HSScriptNote>
-            <div
-              style={{
-                fontFamily: hsTokens.body,
-                fontWeight: 700,
-                fontSize: 14,
-                color: hsTokens.ink,
-                marginTop: 4,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {hovered.f.name}
-              {hovered.f.originCode ? (
-                <span style={{ marginLeft: 6 }}>
-                  {getCountryFlag(hovered.f.originCode)}
-                </span>
-              ) : null}
-            </div>
-            <div
-              style={{
-                marginTop: 8,
-                fontFamily: hsTokens.body,
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: hsTokens.muted,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {hovered.pct.toFixed(1)}% of grain bill ·{" "}
-              {hovered.f.weightKg.toFixed(2)} kg
-            </div>
-            <div
-              style={{
-                marginTop: 4,
-                fontFamily: hsTokens.mono,
-                fontSize: 11,
-                color: hsTokens.muted,
-                letterSpacing: "0.02em",
-              }}
-            >
-              {hovered.f.colorLovibond}°L · {hovered.f.ppg} PPG ·{" "}
-              {(hovered.f.colorLovibond * 1.97).toFixed(1)} EBC
-            </div>
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
@@ -821,19 +1108,22 @@ function Ledger({
       }}
     >
       <LedgerHead mode={mode} />
-      {rows.map((r, i) => (
-        <LedgerRow
-          key={r.f.id}
-          row={r}
-          isLast={i === rows.length - 1}
-          mode={mode}
-          percentValue={percentById[r.f.id] ?? r.pct}
-          onWeightChange={(v) => onWeightChange(r.f.id, v)}
-          onPercentChange={(v) => onPercentChange(r.f.id, v)}
-          onSwap={() => onSwap(r.f.id)}
-          onRemove={() => onRemove(r.f.id)}
-        />
-      ))}
+      <LedgerRowsAnimated>
+        {rows.map((r, i) => (
+          <LedgerRowMotion key={r.f.id}>
+            <LedgerRow
+              row={r}
+              isLast={i === rows.length - 1}
+              mode={mode}
+              percentValue={percentById[r.f.id] ?? r.pct}
+              onWeightChange={(v) => onWeightChange(r.f.id, v)}
+              onPercentChange={(v) => onPercentChange(r.f.id, v)}
+              onSwap={() => onSwap(r.f.id)}
+              onRemove={() => onRemove(r.f.id)}
+            />
+          </LedgerRowMotion>
+        ))}
+      </LedgerRowsAnimated>
       <LedgerTotal
         mode={mode}
         totalGrainKg={totalGrainKg}

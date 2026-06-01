@@ -1,10 +1,8 @@
 "use client";
 
 import { hsTokens } from "../../tokens";
-import HSScriptNote from "../HSScriptNote";
 
 interface Props {
-  kicker: string;
   heading: string;
   color: string;
   /** Use a smaller heading clamp for long titles (e.g. "Fermentation & Conditioning."). */
@@ -12,7 +10,6 @@ interface Props {
 }
 
 export default function BuilderTitleBar({
-  kicker,
   heading,
   color,
   small,
@@ -26,9 +23,6 @@ export default function BuilderTitleBar({
         gridColumn: "1 / -1",
       }}
     >
-      <HSScriptNote color={color} size={22} rotate={-3}>
-        {kicker}
-      </HSScriptNote>
       <h2
         style={{
           fontFamily: hsTokens.display,

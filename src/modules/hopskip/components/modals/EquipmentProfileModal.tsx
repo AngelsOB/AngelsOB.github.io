@@ -417,7 +417,7 @@ function ProfileRow({
               flexShrink: 0,
             }}
           >
-            in use ✦
+            in use
           </span>
         ) : null}
       </div>

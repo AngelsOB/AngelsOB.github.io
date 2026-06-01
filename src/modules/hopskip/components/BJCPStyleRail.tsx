@@ -29,15 +29,15 @@ const SRM_GRADIENT = (() => {
 })();
 
 function srmAdjective(srm: number): string {
-  if (srm < 2) return "straw ✦";
-  if (srm < 4) return "pale gold ✦";
-  if (srm < 7) return "gold ✦";
-  if (srm < 10) return "amber ✦";
-  if (srm < 15) return "deep amber ✦";
-  if (srm < 20) return "copper ✦";
-  if (srm < 28) return "deep red ✦";
-  if (srm < 36) return "brown ✦";
-  return "black ✦";
+  if (srm < 2) return "straw";
+  if (srm < 4) return "pale gold";
+  if (srm < 7) return "gold";
+  if (srm < 10) return "amber";
+  if (srm < 15) return "deep amber";
+  if (srm < 20) return "copper";
+  if (srm < 28) return "deep red";
+  if (srm < 36) return "brown";
+  return "black";
 }
 
 function srmPctNum(n: number): number {
