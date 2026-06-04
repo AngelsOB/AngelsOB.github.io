@@ -4779,7 +4779,6 @@ function AddedActualPopover({
 function PostBoilOgTip({
   actuals,
   targetOG,
-  originalTargetOG,
   boilOffRateLPerHour,
   hops,
   onClick,
@@ -4962,7 +4961,6 @@ function PostBoilOgTip({
 function OgPredictorTip({
   actuals,
   targetOG,
-  originalTargetOG,
   boilOffRateLPerHour,
   recipeBoilMin,
   onClick,

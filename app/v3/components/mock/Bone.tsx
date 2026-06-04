@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Transition } from "framer-motion";
+import { motion, type Transition, type TargetAndTransition } from "framer-motion";
 import type { CSSProperties, ReactNode } from "react";
 
 // A Bone is a self-contained piece of the mock builder that can be
@@ -65,8 +65,8 @@ export function Bone<StateName extends string>({
   return (
     <motion.div
       data-bone={id}
-      initial={initial === false ? false : initial}
-      animate={target}
+      initial={initial === false ? false : (initial as unknown as TargetAndTransition)}
+      animate={target as unknown as TargetAndTransition}
       transition={transition}
       style={{
         position: "absolute",

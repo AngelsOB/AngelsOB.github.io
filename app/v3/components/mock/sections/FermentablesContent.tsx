@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { Highlight } from "../types";
@@ -20,9 +19,7 @@ const GRAINS = [
   { name: "Caramel 40", category: "Crystal", amount: "1.5 lb", pct: 12.5, srm: 40 },
 ];
 
-export function FermentablesContent({ highlight }: Props) {
-  const isFocus = highlight === "fermentables";
-
+export function FermentablesContent(_props: Props) {
   return (
     <div
       style={{
