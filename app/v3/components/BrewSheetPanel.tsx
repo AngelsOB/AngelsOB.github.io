@@ -381,7 +381,7 @@ function MiniTable({
   accent,
 }: {
   eyebrow: string;
-  rows: Array<{ label: string; value: string; srm?: number }>;
+  rows: ReadonlyArray<{ label: string; value: string; srm?: number }>;
   accent?: "malt";
 }) {
   return (

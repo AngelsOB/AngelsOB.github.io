@@ -30,7 +30,7 @@ export function useStageInView<T extends HTMLElement = HTMLElement>(opts: {
   const { margin = "0px 0px -33% 0px", onEnter } = opts;
 
   const ref = useRef<T | null>(null);
-  const inView = useInView(ref, { margin });
+  const inView = useInView(ref, { margin } as Parameters<typeof useInView>[1]);
 
   const onEnterRef = useRef(onEnter);
   useEffect(() => {

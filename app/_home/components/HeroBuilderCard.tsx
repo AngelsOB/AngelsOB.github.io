@@ -61,16 +61,6 @@ const BASE_TABS: { label: TabKey; enabled: boolean }[] = [
   { label: "Boil", enabled: false },
 ];
 
-// The Brewsheet tab is opt-in via the showBrewsheetTab prop — it only shows
-// in the v3 homepage tour, where the breakout animation literally grows
-// out of this tab. Other surfaces (signed-in hero, signed-out hero,
-// signed-in empty hero) don't include it because clicking it from those
-// contexts wouldn't go anywhere useful.
-const BREWSHEET_TAB: { label: TabKey; enabled: boolean } = {
-  label: "Brewsheet",
-  enabled: true,
-};
-
 // Auto-rotate cycles through these. Brewsheet is intentionally omitted so
 // the marketing showcase doesn't auto-cycle to it (controlled-mode in v3
 // drives it by scroll position instead).
@@ -102,12 +92,6 @@ interface Props {
    *  the inline BrewsheetTabPanel placeholder. v3 passes its own
    *  BrewSheetPanel here so the section renders real brew sheet content. */
   brewsheetSection?: React.ReactNode;
-  /** When true, the active section card expands beyond its 360px slot
-   *  (overflow becomes visible, height becomes auto) and the rest of the
-   *  builder (header, stats, non-active tabs) fades out. The active
-   *  section becomes the focal element. v3 uses this for the stage 6
-   *  Brewsheet breakout. */
-  expandActiveSection?: boolean;
 }
 
 export default function HeroBuilderCard({
@@ -119,7 +103,6 @@ export default function HeroBuilderCard({
   showBrewsheetTab = false,
   hideBrewsheetTab = false,
   brewsheetSection,
-  expandActiveSection = false,
 }: Props = {}) {
   // Regular tabs stay in their array map. The Brewsheet tab is rendered
   // separately after the map so we can right-align it via the flex

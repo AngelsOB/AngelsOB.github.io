@@ -147,7 +147,18 @@ export default function HomeV4({ recipeCount }: Props) {
         gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
         ScrollTrigger.addEventListener("refreshInit", measure);
 
-        // ── Hops beat: radar explodes, then closes back to default ──────
+        // ── Hops beat: intro → grow → linger → quick tuck-back ──────────
+        // Timeline total duration is exactly 1, so a tween's position == the
+        // scroll fraction it fires at. Four phases (the knobs to tune feel):
+        //   0.00–INTRO  intro: the hop bill sits IN the mock (radar home,
+        //               mock at rest) so you read it in context first.
+        //   INTRO–GROW  radar pulls out + grows; mock recedes + dims.
+        //   GROW–CLOSE  HELD fully exploded — the money shot lingers.
+        //   CLOSE–1.00  quick tuck-back, offset so the mock leads home and the
+        //               radar shrinks into its slot LAST, landing at the seam.
+        const HOPS_INTRO = 0.2; // radar starts growing here
+        const HOPS_GROW = 0.4; // radar fully exploded here
+        const HOPS_CLOSE = 0.8; // tuck-back starts here
         const hops = gsap.timeline({
           scrollTrigger: {
             trigger: '[data-v4-stage="hops"]',
@@ -161,15 +172,22 @@ export default function HomeV4({ recipeCount }: Props) {
             },
           },
         });
+        const growDur = HOPS_GROW - HOPS_INTRO;
         hops
+          // intro spacer — reserve real scroll time with the hop bill sitting
+          // IN the mock (radar at home) before the pull-out. GSAP trims a
+          // LEADING gap from a timeline's duration, so without this empty
+          // tween the grow would start at scroll 0 instead of at HOPS_INTRO.
+          .to({}, { duration: HOPS_INTRO }, 0)
+          // ── GROW (INTRO → GROW) ───────────────────────────────────────
           // the WHOLE mock (outline + chrome) scales down + slides left, like
           // the brew sheet beat. The radar is a child, so its own scale is
           // bumped to stay large against the receding card.
           .fromTo(
             '[data-v4="mock"]',
             { scale: 1, xPercent: 0 },
-            { scale: 0.84, xPercent: -12, ease: "none" },
-            0,
+            { scale: 0.84, xPercent: -12, duration: growDur, ease: "none" },
+            HOPS_INTRO,
           )
           .fromTo(
             '[data-v4="radar"]',
@@ -178,43 +196,53 @@ export default function HomeV4({ recipeCount }: Props) {
               x: () => exploded.x,
               y: () => exploded.y,
               scale: () => exploded.scale,
+              duration: growDur,
               ease: "power2.out",
             },
-            0,
+            HOPS_INTRO,
           )
           // soft drop shadow via FILTER so the chunky offset boxShadow (the
           // brand backdrop) stays put — both shadows show at once, no swap.
           .fromTo(
             '[data-v4="radar"] > div',
             { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
-            { filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))", ease: "none" },
-            0,
+            {
+              filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))",
+              duration: growDur,
+              ease: "none",
+            },
+            HOPS_INTRO,
           )
           // the rest of the builder also dims to emphasize the visualizer
-          .fromTo(".v4-dim", { opacity: 1 }, { opacity: 0.4, ease: "none" }, 0)
-          // CLOSE — offset so the mock starts returning BEFORE the radar
-          // tucks back into it: mock first (0.5), contents (0.6), then the
-          // radar shrinks home (0.72), shadow last (0.85).
+          .fromTo(
+            ".v4-dim",
+            { opacity: 1 },
+            { opacity: 0.4, duration: growDur, ease: "none" },
+            HOPS_INTRO,
+          )
+          // ── HELD fully exploded (GROW → CLOSE), no tweens ─────────────
+          // ── CLOSE (CLOSE → 1.00) — offset: mock leads home, radar last ─
           .to(
             '[data-v4="mock"]',
-            { scale: 1, xPercent: 0, ease: "power2.out" },
-            0.5,
+            { scale: 1, xPercent: 0, duration: 0.13, ease: "power2.out" },
+            HOPS_CLOSE,
           )
-          .to(".v4-dim", { opacity: 1, ease: "none" }, 0.6)
+          .to(".v4-dim", { opacity: 1, duration: 0.13, ease: "none" }, HOPS_CLOSE)
           .to(
             '[data-v4="radar"]',
             {
               x: () => home.x,
               y: () => home.y,
               scale: () => home.scale,
+              duration: 0.16,
               ease: "power2.in",
             },
-            0.72,
+            HOPS_CLOSE + 0.04,
           )
           .to(
             '[data-v4="radar"] > div',
-            { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", ease: "none" },
-            0.85,
+            { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.14, ease: "none" },
+            HOPS_CLOSE + 0.06,
           );
 
         // ── Brewsheet beat: hard-pin the text column; mock recedes, the
