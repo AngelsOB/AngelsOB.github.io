@@ -117,6 +117,42 @@ export type SessionActuals = {
    * (HS Brew Mode — Phase 2.5b)
    */
   ingredientActualAmounts?: Record<string, number>;
+
+  /**
+   * Brewer's chosen corrective action for an off-target OG miss. Captured at
+   * the moment of selection so the suggested action sticks even if downstream
+   * calcs shift (e.g. dilution amount recomputed after the user picks).
+   *
+   * - `preBoil`: predicted post-boil OG miss based on pre-boil actuals
+   * - `postBoil`: measured OG miss after the boil is done
+   */
+  ogFixChoices?: {
+    preBoil?: OgFixChoice;
+    postBoil?: OgFixChoice;
+  };
+
+  /**
+   * Per-stage flag set when the brewer minimizes the OG predictor card.
+   * While true, the predictor stays hidden and the matrix returns to its
+   * usual side-by-side phase-box layout — the brewer can still discover the
+   * warning via the small flag glyph in the phase box header.
+   */
+  ogWarningMinimized?: {
+    preBoil?: boolean;
+    postBoil?: boolean;
+  };
+};
+
+/**
+ * A brewer's selected fix for an OG miss — kind identifies which option (so
+ * the UI can highlight it later) and `action` is the human-readable summary
+ * as it appeared when chosen ("Add 80 g DME at flameout"). `at` is an ISO
+ * timestamp for the selection.
+ */
+export type OgFixChoice = {
+  kind: "dme" | "boil" | "water" | "accept";
+  action: string;
+  at: string;
 };
 
 /**

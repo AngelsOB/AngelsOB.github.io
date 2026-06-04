@@ -1,6 +1,8 @@
-import type { CommunityRecipeCard } from "./_home/lib/communityCard";
-import Home from "./_home/Home";
+import type { CommunityRecipeCard } from "../_home/lib/communityCard";
+import HomeV4 from "./HomeV4";
 
+// Ported from app/v3/page.tsx — identical server fetch. Production swap
+// (Phase 9) points app/page.tsx at this same data + HomeV4.
 export const revalidate = 3600;
 
 async function getCommunityData(): Promise<{
@@ -46,10 +48,8 @@ async function getCommunityData(): Promise<{
   }
 }
 
-export default async function HopSkipHome() {
+export default async function HomeV4Page() {
   const { recipes, total } = await getCommunityData();
-  // Floor so the social-proof line never reads "0 recipes" while the public
-  // collection is still small.
   const recipeCount = total > 0 ? total : 247;
-  return <Home recipes={recipes} recipeCount={recipeCount} />;
+  return <HomeV4 recipes={recipes} recipeCount={recipeCount} />;
 }

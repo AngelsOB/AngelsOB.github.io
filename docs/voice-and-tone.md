@@ -34,13 +34,15 @@ Don't push log / logbook / brew log / entry vocabulary in product copy. The brew
 
 - A "brewing science library". The Learn section exists and may grow into one as more articles get written. Until then, frame it as articles or as the research behind the calculators. Don't oversell.
 
-### The founder hook (acquisition only)
+### The founder hook (acquisition contexts + the homepage)
 
-For ads, social posts, launch announcements, and external content aimed at first-time visitors, the founder hook is the strongest angle:
+For ads, social posts, launch announcements, and **the homepage**, the founder hook is the strongest angle:
 
-> "Built by a homebrewer who got tired of switching tabs."
+> "Built by a brewer tired of forgetting things on brew day."
 
-Use it there. **Do not use it inside the app itself.** The app frames itself as its own thing.
+The homepage is the one exception to the "no founder hook inside the app" rule, for now. The rest of the app (builder, calculators, learn pages, sharing, account screens, etc.) stays clean. The founder hook does not appear there. When the product outgrows the indie-by-a-brewer framing, the homepage will shed it too. See [homepage-v3-copy.md](homepage-v3-copy.md) for the rationale.
+
+On the homepage, the founder voice extends slightly past the hook itself: the opening paragraph and the stage-lead sentences are first-person ("I made this so I'd never forget things and find myself there again.", "I added the hop visualizer because..."). Feature descriptions in the stage bodies stay product-voice. This is a specific exception for the homepage scroll narrative, not a license to write the rest of the app in first-person.
 
 ## The five rules
 
@@ -173,8 +175,10 @@ Same voice as marketing copy, just denser. SEO is allowed slightly more keyword 
 
 These are the lines the rest of the audit should pattern off. If a proposed line doesn't sound like it belongs in the same app as these, redraft.
 
-- **Hero:** "A simpler place to brew."
-- **Hero subhead:** "A recipe builder with live math, brew-day calculators, and the science behind them."
+- **Homepage hero (v3):** "A recipe builder that thinks ahead."
+- **Homepage hero subhead (v3):** "Recipes, water chemistry, mash pH, priming sugar, starter calcs, keg PSI. Everything where you need it."
+- **Homepage hero kicker (v3):** "built by a brewer tired of forgetting things on brew day —"
+- **Homepage trust line (v3):** "Free. Save locally without an account. Sign in to sync across devices."
 - **Calculators section title:** "The math you'll reach for."
 - **Calculators section body:** "Did I hit my OG? What do I do now that I didn't? How long do I boil? How much priming sugar? When you have a question, it's here."
 - **Empty library:** "No recipes yet. Let's make one."
@@ -183,6 +187,8 @@ These are the lines the rest of the audit should pattern off. If a proposed line
 - **Share success:** "Recipe published."
 - **Fork error:** "Fork failed. Try again."
 - **Link copy:** "Link copied."
+
+The previous homepage hero ("A simpler place to brew." / "A recipe builder with live math, brew-day calculators, and the science behind them.") is retired with the v3 homepage. Don't reuse those exact lines.
 
 ## Learn section is exempt
 

@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 
 import type {
   FermentationStep,
@@ -12,6 +13,7 @@ import type {
 import type {
   BrewSession,
   GravityLogEntry,
+  OgFixChoice,
   SessionActuals,
   SessionStatus,
 } from "@/modules/beta-builder/domain/models/BrewSession";
@@ -980,6 +982,11 @@ export default function HSBrewSheetSection({
           ) : undefined
         }
       >
+        {/* LayoutGroup scopes the shared-layout morph between the predictor
+            cards (in the matrix grid) and the matrix flag glyphs (in the
+            phase-box headers). Without a LayoutGroup the morph crosses too
+            many DOM boundaries to coordinate reliably. */}
+        <LayoutGroup id="boil-warnings">
         <BoilNumbersMatrix
           preBoilVolumeL={calculations.preBoilVolumeL}
           preBoilGravity={calculations.preBoilGravity}
@@ -989,13 +996,22 @@ export default function HSBrewSheetSection({
           og={calculations.og}
           actualsCalculations={actualsCalculations}
           brewMode={brewMode}
+          preBoilResolved={brewMode?.actuals.ogFixChoices?.preBoil != null}
+          postBoilResolved={brewMode?.actuals.ogFixChoices?.postBoil != null}
           preBoilFlag={
             // Pre-boil flag (hover tooltip with predicted OG + fix options).
-            // Hidden once post-boil data has been measured (the actual reading
-            // supersedes the prediction at that point).
+            // Shown whenever the pre-boil predictor would render content; if
+            // the brewer minimizes the card, the flag becomes the click
+            // target to bring it back (with a brief pulse to telegraph that).
+            // `morphId` ties this glyph to the card via framer-motion's
+            // shared layout animation so minimize/restore visibly morphs.
             brewMode &&
-            (brewMode.actuals.originalGravity == null ||
-              brewMode.actuals.postBoilVolumeHotL == null) ? (
+            shouldShowPreBoilPredictor(
+              brewMode.actuals,
+              actualsCalculations?.og ?? calculations.og,
+              recipe.equipment.boilOffRateLPerHour,
+              brewMode.actuals.boilTimeMin ?? recipe.equipment.boilTimeMin
+            ) ? (
               <OgPredictorTip
                 actuals={brewMode.actuals}
                 targetOG={actualsCalculations?.og ?? calculations.og}
@@ -1007,16 +1023,32 @@ export default function HSBrewSheetSection({
                 }
                 boilOffRateLPerHour={recipe.equipment.boilOffRateLPerHour}
                 recipeBoilMin={recipe.equipment.boilTimeMin}
+                onClick={
+                  brewMode.actuals.ogWarningMinimized?.preBoil
+                    ? () =>
+                        brewMode.onActualsChange({
+                          ogWarningMinimized: {
+                            ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                            preBoil: false,
+                          },
+                        })
+                    : undefined
+                }
+                pulse={brewMode.actuals.ogWarningMinimized?.preBoil ?? false}
+                morphId="og-warning-pre-boil"
+                minimized={
+                  brewMode.actuals.ogWarningMinimized?.preBoil ?? false
+                }
               />
             ) : null
           }
           postBoilFlag={
-            // Post-boil flag (hover tooltip with measured OG + fix options).
+            // Post-boil flag — same un-minimize behaviour as above.
             brewMode &&
-            brewMode.actuals.originalGravity != null &&
-            brewMode.actuals.postBoilVolumeHotL != null &&
-            brewMode.actuals.originalGravity > 1 &&
-            brewMode.actuals.postBoilVolumeHotL > 0 ? (
+            shouldShowPostBoilPredictor(
+              brewMode.actuals,
+              actualsCalculations?.og ?? calculations.og
+            ) ? (
               <PostBoilOgTip
                 actuals={brewMode.actuals}
                 targetOG={actualsCalculations?.og ?? calculations.og}
@@ -1028,10 +1060,156 @@ export default function HSBrewSheetSection({
                 }
                 boilOffRateLPerHour={recipe.equipment.boilOffRateLPerHour}
                 hops={recipe.hops}
+                onClick={
+                  brewMode.actuals.ogWarningMinimized?.postBoil
+                    ? () =>
+                        brewMode.onActualsChange({
+                          ogWarningMinimized: {
+                            ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                            postBoil: false,
+                          },
+                        })
+                    : undefined
+                }
+                pulse={brewMode.actuals.ogWarningMinimized?.postBoil ?? false}
+                morphId="og-warning-post-boil"
+                minimized={
+                  brewMode.actuals.ogWarningMinimized?.postBoil ?? false
+                }
+              />
+            ) : null
+          }
+          preBoilCard={
+            // Predictor anchored to the Pre-boil row — predicts post-boil OG
+            // from pre-boil readings. Hidden when the brewer has minimized
+            // it (`ogWarningMinimized.preBoil`) — matrix falls back to its
+            // usual side-by-side layout in that case.
+            brewMode &&
+            !brewMode.actuals.ogWarningMinimized?.preBoil &&
+            shouldShowPreBoilPredictor(
+              brewMode.actuals,
+              actualsCalculations?.og ?? calculations.og,
+              recipe.equipment.boilOffRateLPerHour,
+              brewMode.actuals.boilTimeMin ?? recipe.equipment.boilTimeMin
+            ) ? (
+              <OgPredictorCard
+                actuals={brewMode.actuals}
+                targetOG={actualsCalculations?.og ?? calculations.og}
+                targetPreBoilVolumeL={
+                  actualsCalculations?.preBoilVolumeL ??
+                  calculations.preBoilVolumeL
+                }
+                targetPreBoilGravity={
+                  actualsCalculations?.preBoilGravity ??
+                  calculations.preBoilGravity
+                }
+                boilOffRateLPerHour={recipe.equipment.boilOffRateLPerHour}
+                recipeBoilMin={recipe.equipment.boilTimeMin}
+                hops={recipe.hops}
+                morphId="og-warning-pre-boil"
+                selectedKind={brewMode.actuals.ogFixChoices?.preBoil?.kind}
+                onSelectFix={(fix) =>
+                  // Auto-minimize on selection — the chosen fix is the
+                  // brewer's decision, so the loud warning card collapses
+                  // into the small inline flag that reads back the choice.
+                  brewMode.onActualsChange({
+                    ogFixChoices: {
+                      ...(brewMode.actuals.ogFixChoices ?? {}),
+                      preBoil: {
+                        kind: fix.kind,
+                        action: fix.titlePlain ?? String(fix.title),
+                        at: new Date().toISOString(),
+                      },
+                    },
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      preBoil: true,
+                    },
+                  })
+                }
+                onClearFix={() =>
+                  // Clearing the choice expands the card back so the brewer
+                  // can pick a different fix.
+                  brewMode.onActualsChange({
+                    ogFixChoices: {
+                      ...(brewMode.actuals.ogFixChoices ?? {}),
+                      preBoil: undefined,
+                    },
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      preBoil: false,
+                    },
+                  })
+                }
+                onMinimize={() =>
+                  brewMode.onActualsChange({
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      preBoil: true,
+                    },
+                  })
+                }
+              />
+            ) : null
+          }
+          postBoilCard={
+            // Predictor anchored to the Post-boil row — compares measured OG
+            // to target once post-boil readings are in.
+            brewMode &&
+            !brewMode.actuals.ogWarningMinimized?.postBoil &&
+            shouldShowPostBoilPredictor(
+              brewMode.actuals,
+              actualsCalculations?.og ?? calculations.og
+            ) ? (
+              <PostBoilOgCard
+                actuals={brewMode.actuals}
+                targetOG={actualsCalculations?.og ?? calculations.og}
+                targetPostBoilVolumeHotL={postBoilHotL}
+                boilOffRateLPerHour={recipe.equipment.boilOffRateLPerHour}
+                hops={recipe.hops}
+                morphId="og-warning-post-boil"
+                selectedKind={brewMode.actuals.ogFixChoices?.postBoil?.kind}
+                onSelectFix={(fix) =>
+                  brewMode.onActualsChange({
+                    ogFixChoices: {
+                      ...(brewMode.actuals.ogFixChoices ?? {}),
+                      postBoil: {
+                        kind: fix.kind,
+                        action: fix.titlePlain ?? String(fix.title),
+                        at: new Date().toISOString(),
+                      },
+                    },
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      postBoil: true,
+                    },
+                  })
+                }
+                onClearFix={() =>
+                  brewMode.onActualsChange({
+                    ogFixChoices: {
+                      ...(brewMode.actuals.ogFixChoices ?? {}),
+                      postBoil: undefined,
+                    },
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      postBoil: false,
+                    },
+                  })
+                }
+                onMinimize={() =>
+                  brewMode.onActualsChange({
+                    ogWarningMinimized: {
+                      ...(brewMode.actuals.ogWarningMinimized ?? {}),
+                      postBoil: true,
+                    },
+                  })
+                }
               />
             ) : null
           }
         />
+        </LayoutGroup>
 
         {/* Additions section: hops (boil + whirlpool) + other (whirlfloc, nutrient) */}
         {boilHops.length > 0 || whirlpoolHops.length > 0 || boilAdditions.length > 0 ? (
@@ -3931,7 +4109,11 @@ function CheckGlyph() {
   );
 }
 
-/** Hand-drawn warning triangle glyph — for caution-severity flags. */
+/**
+ * Hand-drawn warning triangle glyph — pairs with `CheckGlyph`'s round-cap
+ * 2px linework so the brew sheet's caution + success flags share a notebook
+ * sketch vocabulary. No fill — clean outline like an ink doodle.
+ */
 function WarningTriangleGlyph({ color }: { color: string }) {
   return (
     <svg
@@ -3942,47 +4124,111 @@ function WarningTriangleGlyph({ color }: { color: string }) {
       style={{ display: "inline-block", verticalAlign: "middle" }}
     >
       <path
-        d="M8 2 L14.5 13.5 L1.5 13.5 Z"
+        d="M8 2.5 L13.6 13.2 L2.4 13.2 Z"
         stroke={color}
-        strokeWidth="1.6"
-        fill={`color-mix(in oklch, ${color} 18%, transparent)`}
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M8 6 L8 9.5"
+        d="M8 6.3 L8 9.4"
         stroke={color}
-        strokeWidth="1.6"
+        strokeWidth="2"
         strokeLinecap="round"
       />
-      <circle cx="8" cy="11.6" r="0.9" fill={color} />
+      <circle cx="8" cy="11.5" r="0.95" fill={color} />
     </svg>
   );
 }
 
 /**
- * Severity flag with hover tooltip — replaces verbose inline tip cards.
- * Mirrors the cursor-following tooltip pattern from HSCompareRecipesPage's
- * GrainBlock (position: fixed, z-index 100 to escape overflow:hidden, first-show
- * snap to cursor with transition temporarily disabled).
+ * Hand-drawn ink arrow — used in the matrix's flanking layout to point each
+ * predictor card at the phase box it explains. Same round-cap 2px vocabulary
+ * as `CheckGlyph` / `WarningTriangleGlyph`.
+ */
+function ArrowGlyph({
+  direction,
+  color = hsTokens.muted,
+}: {
+  direction: "left" | "right";
+  color?: string;
+}) {
+  // Long horizontal stroke with a chevron head on the pointing end.
+  const path =
+    direction === "left"
+      ? "M22 8 L2 8 M8 3 L2 8 L8 13"
+      : "M2 8 L22 8 M16 3 L22 8 L16 13";
+  return (
+    <svg
+      width="26"
+      height="16"
+      viewBox="0 0 24 16"
+      aria-hidden
+      style={{ display: "block", flexShrink: 0 }}
+    >
+      <path
+        d={path}
+        stroke={color}
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Convert the leading verb of a fix action (present-tense imperative) to
+ * past-tense so the matrix flag reads as a completed brewer's note —
+ * "Added ~2.4 L water at flameout" instead of "Add ~2.4 L water…".
+ */
+function toPastTense(action: string): string {
+  if (!action) return action;
+  return action
+    .replace(/^Add\b/, "Added")
+    .replace(/^Boil\b/, "Boiled")
+    .replace(/^Accept\b/, "Accepted")
+    .replace(/^Dilute\b/, "Diluted")
+    .replace(/^Stir\b/, "Stirred");
+}
+
+/**
+ * Compact severity flag — glyph + short label inside the phase-box header.
+ * Acts as either a passive indicator (no `onClick`) or, when its predictor
+ * card is minimized, a clickable target that morphs the card back in.
  *
- * Severity drives color + animation:
- *  - `caution`: roast/red, subtle pulse to draw attention
- *  - `success`: hops/green, no pulse
- *  - `info`: water/blue, no pulse
+ * Severity drives the color:
+ *  - `caution`: roast/red
+ *  - `success`: hops/green (uses CheckGlyph)
+ *  - `info`: water/blue
+ *
+ * (The hover tooltip from earlier iterations was removed — the predictor
+ * card itself surfaces the full details now, so a duplicate tooltip on the
+ * flag added clutter.)
  */
 function BrewTipFlag({
   severity,
   shortLabel,
-  tooltipContent,
+  onClick,
+  pulse,
+  morphId,
+  minimized,
 }: {
   severity: "caution" | "info" | "success";
   shortLabel: ReactNode;
-  tooltipContent: ReactNode;
+  /** Optional click handler — used to un-minimize the predictor card. */
+  onClick?: () => void;
+  /** Brief attention-grab pulse animation. */
+  pulse?: boolean;
+  /** Framer-motion `layoutId` shared with the predictor card so the morph
+   *  animates the card → flag transition. */
+  morphId?: string;
+  /** Whether the predictor card is currently minimized — the flag only
+   *  claims the morph `layoutId` while the card is hidden. */
+  minimized?: boolean;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement | null>(null);
-  const lastClientXRef = useRef<number | null>(null);
-
   const sevColor =
     severity === "caution"
       ? hsTokens.roast
@@ -3990,109 +4236,53 @@ function BrewTipFlag({
       ? hsTokens.hops
       : hsTokens.water;
 
-  function applyTransform(clientX: number, clientY: number) {
-    const t = tooltipRef.current;
-    if (!t) return;
-    t.style.transform = `translate(${clientX}px, ${clientY - 14}px) translate(-50%, -100%)`;
-  }
-
-  function onMouseEnter() {
-    setHovered(true);
-  }
-  function onMouseMove(e: React.MouseEvent<HTMLSpanElement>) {
-    const t = tooltipRef.current;
-    if (!t) return;
-    const last = lastClientXRef.current;
-    const isFirstMove = last === null;
-    lastClientXRef.current = e.clientX;
-    if (isFirstMove) {
-      // Snap to cursor on first appearance — no transform transition from the
-      // prior resting position (otherwise it shoots in from viewport origin
-      // where position: fixed parks it by default).
-      t.style.transition = "none";
-      applyTransform(e.clientX, e.clientY);
-      void t.offsetHeight;
-      t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
-    } else {
-      applyTransform(e.clientX, e.clientY);
-    }
-    t.style.opacity = "1";
-  }
-  function onMouseLeave() {
-    if (tooltipRef.current) tooltipRef.current.style.opacity = "0";
-    lastClientXRef.current = null;
-    setHovered(false);
-  }
-
   return (
-    <>
-      <button
-        type="button"
-        className="hs-print-hide"
-        onMouseEnter={onMouseEnter}
-        onMouseMove={onMouseMove}
-        onMouseLeave={onMouseLeave}
-        onFocus={() => setHovered(true)}
-        onBlur={onMouseLeave}
-        aria-label={typeof shortLabel === "string" ? shortLabel : "Brew tip"}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 5,
-          padding: 0,
-          margin: 0,
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          fontFamily: hsTokens.script,
-          fontSize: 15,
-          color: sevColor,
-          cursor: "help",
-          lineHeight: 1,
-        }}
-      >
-        {severity === "success" ? (
-          <CheckGlyph />
-        ) : (
-          <WarningTriangleGlyph color={sevColor} />
-        )}
-        <span>{shortLabel}</span>
-      </button>
-      <div
-        ref={tooltipRef}
-        aria-hidden
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          opacity: 0,
-          pointerEvents: "none",
-          zIndex: 100,
-          transition: "opacity 140ms ease, transform 90ms ease-out",
-          willChange: "transform, opacity",
-        }}
-      >
-        {hovered ? (
-          <div
-            style={{
-              background: hsTokens.paper,
-              border: `2px solid ${hsTokens.ink}`,
-              borderRadius: 10,
-              boxShadow: hsTokens.sh2,
-              padding: "10px 14px",
-              minWidth: 260,
-              maxWidth: 380,
-              fontFamily: hsTokens.body,
-              fontSize: 12,
-              color: hsTokens.ink,
-              lineHeight: 1.5,
-            }}
-          >
-            {tooltipContent}
-          </div>
-        ) : null}
-      </div>
-    </>
+    <motion.button
+      type="button"
+      // Key changes when the layoutId activates/deactivates so framer-motion
+      // treats this as a fresh mount — triggers the shared-layout morph
+      // from the predictor card's position to here.
+      key={minimized && morphId ? `${morphId}-min` : "flag"}
+      className="hs-print-hide"
+      layoutId={minimized && morphId ? morphId : undefined}
+      transition={{
+        layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+      }}
+      onClick={onClick}
+      aria-label={
+        onClick
+          ? "Show fix options"
+          : typeof shortLabel === "string"
+          ? shortLabel
+          : "Brew tip"
+      }
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "2px 4px",
+        margin: 0,
+        background: "transparent",
+        border: "none",
+        outline: "none",
+        borderRadius: 4,
+        fontFamily: hsTokens.script,
+        // Bumped from 15 → 18 so the brewer's note reads at a glance even
+        // when it carries the full "Gravity X pts high — Added Y" sentence.
+        fontSize: 18,
+        color: sevColor,
+        cursor: onClick ? "pointer" : "default",
+        lineHeight: 1.15,
+        animation: pulse ? "hsTipFlagPulse 1.6s ease-in-out 3" : undefined,
+      }}
+    >
+      {severity === "success" ? (
+        <CheckGlyph />
+      ) : (
+        <WarningTriangleGlyph color={sevColor} />
+      )}
+      <span>{shortLabel}</span>
+    </motion.button>
   );
 }
 
@@ -4592,6 +4782,10 @@ function PostBoilOgTip({
   originalTargetOG,
   boilOffRateLPerHour,
   hops,
+  onClick,
+  pulse,
+  morphId,
+  minimized,
 }: {
   actuals: SessionActuals;
   /** Realistic OG ceiling — follows grain actuals when present. */
@@ -4603,6 +4797,15 @@ function PostBoilOgTip({
   /** Recipe's hop additions — used to detect late additions that would suffer
    *  from extra boil time. */
   hops: Recipe["hops"];
+  /** Optional click handler — fires when the brewer clicks the flag (used
+   *  to un-minimize the predictor card from the phase-box header). */
+  onClick?: () => void;
+  /** Brief attention-grab pulse animation. */
+  pulse?: boolean;
+  /** Framer-motion `layoutId` for the card-to-flag morph. */
+  morphId?: string;
+  /** Whether the predictor card is currently minimized. */
+  minimized?: boolean;
 }) {
   const measuredOG = actuals.originalGravity;
   const measuredVol = actuals.postBoilVolumeHotL;
@@ -4732,71 +4935,26 @@ function PostBoilOgTip({
   }
 
   const measuredPoints = Math.abs((measuredOG - targetOG) * 1000);
+  const directionWord = delta > 0 ? "high" : "low";
+  const chosen = actuals.ogFixChoices?.postBoil;
+  // When a fix is chosen, the flag reads as a journal entry: what happened,
+  // then the action we took. Past tense on both sides ("was … — Added …").
   const shortLabel = onTarget
     ? "on target"
-    : delta > 0
-    ? `~${measuredPoints.toFixed(0)} pts high`
-    : `~${measuredPoints.toFixed(0)} pts low`;
-
-  const tooltipContent = (
-    <>
-      <div style={{ marginBottom: 6 }}>
-        <span
-          style={{
-            fontFamily: hsTokens.script,
-            fontSize: 18,
-            color: hsTokens.honey,
-          }}
-        >
-          post-boil reading
-        </span>
-      </div>
-      <div style={{ marginBottom: options.length > 0 ? 8 : 0 }}>
-        {onTarget ? (
-          <>
-            You're at <strong>{measuredVol.toFixed(1)} L</strong> @{" "}
-            <strong>{measuredOG.toFixed(3)}</strong> — that's spot on. Beer
-            should land around ~{estABV(measuredOG).toFixed(1)}% ABV.
-          </>
-        ) : (
-          <>
-            You're at <strong>{measuredVol.toFixed(1)} L</strong> @{" "}
-            <strong>{measuredOG.toFixed(3)}</strong>, ~
-            {measuredPoints.toFixed(0)} points {delta > 0 ? "above" : "below"}{" "}
-            target <strong>{targetOG.toFixed(3)}</strong>
-            {originalTargetOG !== undefined ? (
-              <span style={{ color: hsTokens.muted, fontStyle: "italic" }}>
-                {" "}
-                (revised from {originalTargetOG.toFixed(3)} after grain changes)
-              </span>
-            ) : null}
-            .
-          </>
-        )}
-      </div>
-      {options.length > 0 ? (
-        <ul
-          style={{
-            margin: "6px 0 0",
-            padding: "0 0 0 18px",
-            listStyle: "disc",
-          }}
-        >
-          {options.map((opt, i) => (
-            <li key={i} style={{ marginTop: i === 0 ? 0 : 3 }}>
-              {opt.node}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </>
-  );
+    : chosen
+    ? `Gravity was ${measuredPoints.toFixed(
+        0
+      )} pts ${directionWord} — ${toPastTense(chosen.action)}`
+    : `~${measuredPoints.toFixed(0)} pts ${directionWord}`;
 
   return (
     <BrewTipFlag
       severity={onTarget ? "success" : "caution"}
       shortLabel={shortLabel}
-      tooltipContent={tooltipContent}
+      onClick={onClick}
+      pulse={pulse}
+      morphId={morphId}
+      minimized={minimized}
     />
   );
 }
@@ -4807,6 +4965,10 @@ function OgPredictorTip({
   originalTargetOG,
   boilOffRateLPerHour,
   recipeBoilMin,
+  onClick,
+  pulse,
+  morphId,
+  minimized,
 }: {
   actuals: SessionActuals;
   /** The realistic OG ceiling — follows grain actuals when present. */
@@ -4819,6 +4981,15 @@ function OgPredictorTip({
    *  "total boil" suggestions — falls back to actuals.boilTimeMin if user has
    *  overridden it. */
   recipeBoilMin: number;
+  /** Optional click handler — fires when the brewer clicks the flag (used
+   *  to un-minimize the predictor card from the phase-box header). */
+  onClick?: () => void;
+  /** Brief attention-grab pulse animation. */
+  pulse?: boolean;
+  /** Framer-motion `layoutId` for the card-to-flag morph. */
+  morphId?: string;
+  /** Whether the predictor card is currently minimized. */
+  minimized?: boolean;
 }) {
   if (
     actuals.preBoilGravity == null ||
@@ -4944,73 +5115,1100 @@ function OgPredictorTip({
   }
 
   // Flag short-label — kept brief; section header already says "Pre-boil".
+  // When a fix is chosen, the flag reads as a journal entry: what happened,
+  // then what we did about it ("was … — Added …").
   const points = Math.abs((predictedOG - targetOG) * 1000);
+  const directionWord = delta > 0 ? "high" : "low";
+  const chosen = actuals.ogFixChoices?.preBoil;
   const shortLabel = onTarget
     ? "on track"
-    : delta > 0
-    ? `~${points.toFixed(0)} pts high`
-    : `~${points.toFixed(0)} pts low`;
-
-  const tooltipContent = (
-    <>
-      <div style={{ marginBottom: 6 }}>
-        <span
-          style={{
-            fontFamily: hsTokens.script,
-            fontSize: 18,
-            color: hsTokens.water,
-          }}
-        >
-          predicted OG
-        </span>
-      </div>
-      <div style={{ marginBottom: options.length > 0 ? 8 : 0 }}>
-        {onTarget ? (
-          <>
-            With a {plannedBoilMin}-min boil, you should land at{" "}
-            <strong>{predictedPostBoilVol.toFixed(1)} L</strong> @{" "}
-            <strong>{predictedOG.toFixed(3)}</strong> — right on target.
-          </>
-        ) : (
-          <>
-            A {plannedBoilMin}-min boil will land at{" "}
-            <strong>{predictedPostBoilVol.toFixed(1)} L</strong> @{" "}
-            <strong>{predictedOG.toFixed(3)}</strong>, ~{points.toFixed(0)} points{" "}
-            {delta > 0 ? "above" : "below"} target{" "}
-            <strong>{targetOG.toFixed(3)}</strong>
-            {originalTargetOG !== undefined ? (
-              <span style={{ color: hsTokens.muted, fontStyle: "italic" }}>
-                {" "}
-                (revised from {originalTargetOG.toFixed(3)} after grain changes)
-              </span>
-            ) : null}
-            .
-          </>
-        )}
-      </div>
-      {options.length > 0 ? (
-        <ul
-          style={{
-            margin: "6px 0 0",
-            padding: "0 0 0 18px",
-            listStyle: "disc",
-          }}
-        >
-          {options.map((opt, i) => (
-            <li key={i} style={{ marginTop: i === 0 ? 0 : 4 }}>
-              {opt.node}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </>
-  );
+    : chosen
+    ? `Gravity was ${points.toFixed(
+        0
+      )} pts ${directionWord} — ${toPastTense(chosen.action)}`
+    : `~${points.toFixed(0)} pts ${directionWord}`;
 
   return (
     <BrewTipFlag
       severity={onTarget ? "success" : "caution"}
       shortLabel={shortLabel}
-      tooltipContent={tooltipContent}
+      onClick={onClick}
+      pulse={pulse}
+      morphId={morphId}
+      minimized={minimized}
+    />
+  );
+}
+
+/**
+ * Selectable fix option for an OG miss. Each fix has a stable `kind` so the
+ * brewer's selection persists into the session (see `OgFixChoice` in the
+ * BrewSession model). The body explains the trade-off; an optional warning
+ * surfaces a caveat (e.g. whirlpool hops over-extracting on extended boil).
+ */
+type BrewTipFix = {
+  /** Stable identifier — used to persist the user's choice. */
+  kind: OgFixChoice["kind"];
+  /** Small uppercase label (e.g. "CLEANEST", "OR"). */
+  eyebrow: string;
+  /** Optional accent color for the eyebrow (defaults to muted). */
+  eyebrowColor?: string;
+  /** Bold action heading — the title also becomes the persisted `action`
+   *  string when this fix is selected. Pass a plain string when possible. */
+  title: ReactNode;
+  /** Plain-text version of the title used for persistence (falls back to
+   *  String(title) if omitted). */
+  titlePlain?: string;
+  /** Prose explanation beneath the title. */
+  body: ReactNode;
+  /** Optional caveat surfaced as a small inline note beneath the body. */
+  warning?: ReactNode;
+};
+
+/**
+ * OG predictor card. Lives in a row of the boil matrix, paired with its
+ * phase box. Two visual states:
+ *  - Unresolved: roast accent strip + warning glyph — a notebook alert
+ *  - Resolved (a fix is chosen): hops accent strip + check glyph
+ *
+ * Hover behavior: when nothing is selected, hover surfaces a subtle bg
+ * highlight (no width change). Once a fix is chosen, hovering the other
+ * option grows it so the brewer can peek the alternative before switching.
+ *
+ * Mirrors `ScheduleSection`'s accent-strip pattern so the card feels
+ * native to the brew sheet's vocabulary.
+ */
+function BrewTipCard({
+  problemLabel,
+  reasoning,
+  fixes,
+  morphId,
+  selectedKind,
+  onSelect,
+  onClear,
+  onMinimize,
+}: {
+  /** Eyebrow describing the problem (e.g. "POST-BOIL OG PREDICTED TO MISS"). */
+  problemLabel: string;
+  /** Optional one-line reason the prediction is off (e.g. "pre-boil volume
+   *  came in low"). Surfaced beneath the problem statement as a script aside. */
+  reasoning?: string;
+  /** Available corrective actions. */
+  fixes: BrewTipFix[];
+  /** Framer-motion `layoutId` — shared with the resolved note and the matrix
+   *  flag glyph so transitions between those states visibly morph. */
+  morphId?: string;
+  /** Currently-selected fix kind, if the brewer has chosen one. */
+  selectedKind?: OgFixChoice["kind"];
+  /** Fires when the brewer picks a fix. */
+  onSelect?: (fix: BrewTipFix) => void;
+  /** Fires when the brewer toggles off the currently-selected fix. */
+  onClear?: () => void;
+  /** Fires when the brewer minimizes the card — parent should persist this
+   *  and stop rendering the card. The matrix falls back to side-by-side. */
+  onMinimize?: () => void;
+}) {
+  if (fixes.length === 0) return null;
+
+  const resolved = selectedKind != null;
+  const selectedFix = resolved
+    ? fixes.find((f) => f.kind === selectedKind)
+    : undefined;
+
+  // Resolved state collapses to a compact "brewer's note" — no need for
+  // a min-height the size of the warning card. Clicking the note reverts
+  // to the option grid so the brewer can pick a different fix.
+  if (resolved && selectedFix) {
+    return (
+      <BrewTipResolvedNote
+        fix={selectedFix}
+        reasoning={reasoning}
+        morphId={morphId}
+        onClear={onClear}
+        onMinimize={onMinimize}
+      />
+    );
+  }
+
+  return (
+    <motion.div
+      layoutId={morphId}
+      className="hs-print-hide"
+      // Shared layout animation morphs this card → matrix flag (and back) via
+      // the `layoutId`. AnimatePresence in the parent keeps this component
+      // mounted during the morph; `exit` fades it out so the layoutId target
+      // (the flag) has a moment to register as the new layout anchor.
+      initial={false}
+      exit={{ opacity: 0 }}
+      transition={{
+        layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+        opacity: { duration: 0.22, ease: "easeOut" },
+      }}
+      style={{
+        position: "relative",
+        // Sized to its own content range — fits inside an auto-width grid
+        // column rather than forcing the column to expand. Phase boxes
+        // around it claim the remaining width naturally.
+        width: "fit-content",
+        minWidth: 380,
+        maxWidth: 520,
+        minHeight: 200,
+        background: hsTokens.cream,
+        border: `2px solid ${hsTokens.ink}`,
+        borderRadius: 10,
+        boxShadow: hsTokens.sh1,
+        padding: "12px 12px 10px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        overflow: "hidden",
+      }}
+    >
+      {/* Accent strip — roast for the warning state, mirrors
+          ScheduleSection's top edge. */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 4,
+          background: hsTokens.roast,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Header — single row: glyph + uppercase problem label + script
+          reasoning aside + minimize button. `nowrap` + `minWidth: 0` on the
+          reasoning keeps everything on one line; the reasoning truncates
+          with an ellipsis if the slot is narrower than its prose. */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "nowrap",
+          minWidth: 0,
+        }}
+      >
+        <span style={{ flexShrink: 0, lineHeight: 0 }}>
+          <WarningTriangleGlyph color={hsTokens.roast} />
+        </span>
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.16em",
+            color: hsTokens.roast,
+            textTransform: "uppercase",
+            flexShrink: 0,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {problemLabel}
+        </span>
+        {reasoning ? (
+          <>
+            <span
+              aria-hidden
+              style={{
+                color: hsTokens.muted,
+                fontSize: 13,
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              ·
+            </span>
+            <span
+              style={{
+                fontFamily: hsTokens.script,
+                fontSize: 14,
+                color: hsTokens.muted,
+                lineHeight: 1.2,
+                flex: "1 1 auto",
+                minWidth: 0,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {reasoning}
+            </span>
+          </>
+        ) : null}
+        {onMinimize ? (
+          <span style={{ marginLeft: reasoning ? 0 : "auto", flexShrink: 0 }}>
+            <BrewTipMinimizeButton onClick={onMinimize} />
+          </span>
+        ) : null}
+      </div>
+
+      <BrewTipFixGrid
+        fixes={fixes}
+        selectedKind={selectedKind}
+        onSelect={onSelect}
+        onClear={onClear}
+      />
+    </motion.div>
+  );
+}
+
+/**
+ * Compact "brewer's note" surfaced once a fix is chosen. Strips away the
+ * options grid and reads as a Problem / Solution pair — like a jotted note
+ * in the margin of the brew sheet. Capped at a narrow max-width so the
+ * resting state takes far less horizontal space than the warning card.
+ *
+ * Clicking the note re-opens the full options card so the brewer can switch
+ * their pick.
+ */
+function BrewTipResolvedNote({
+  fix,
+  reasoning,
+  morphId,
+  onClear,
+  onMinimize,
+}: {
+  fix: BrewTipFix;
+  reasoning?: string;
+  morphId?: string;
+  onClear?: () => void;
+  onMinimize?: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const action =
+    fix.titlePlain ?? (typeof fix.title === "string" ? fix.title : "your fix");
+  return (
+    <motion.div
+      layoutId={morphId}
+      className="hs-print-hide"
+      initial={false}
+      exit={{ opacity: 0 }}
+      transition={{
+        layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+        opacity: { duration: 0.22, ease: "easeOut" },
+      }}
+      style={{
+        position: "relative",
+        // Resolved state collapses horizontally — the brewer's note doesn't
+        // need a full half of the matrix row. Max-width keeps it tight.
+        width: "fit-content",
+        maxWidth: 360,
+        minWidth: 240,
+        background: hsTokens.cream,
+        border: `2px solid ${hsTokens.ink}`,
+        borderRadius: 10,
+        boxShadow: hsTokens.sh1,
+        padding: "10px 12px 10px 14px",
+        overflow: "hidden",
+      }}
+    >
+      {/* Hops accent strip — signals "warning has been resolved". */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 4,
+          background: hsTokens.hops,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Minimize button anchored top-right, floats above the note. */}
+      {onMinimize ? (
+        <div style={{ position: "absolute", top: 8, right: 8, zIndex: 1 }}>
+          <BrewTipMinimizeButton onClick={onMinimize} />
+        </div>
+      ) : null}
+
+      {/* The note itself — clickable to re-open the option grid. Hover
+          surfaces a faint honey tint so the affordance is discoverable. */}
+      <button
+        type="button"
+        onClick={onClear}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        aria-label="Change selection"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "auto 1fr",
+          rowGap: 6,
+          columnGap: 12,
+          width: "100%",
+          padding: "4px 30px 4px 0",
+          background: hovered
+            ? `color-mix(in oklch, ${hsTokens.honey} 14%, transparent)`
+            : "transparent",
+          border: "none",
+          borderRadius: 6,
+          textAlign: "left",
+          color: hsTokens.ink,
+          fontFamily: hsTokens.body,
+          cursor: "pointer",
+          transition: "background 140ms ease",
+          outline: "none",
+        }}
+      >
+        {/* PROBLEM row: muted eyebrow + reasoning */}
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            color: hsTokens.muted,
+            textTransform: "uppercase",
+            alignSelf: "start",
+            paddingTop: 3,
+          }}
+        >
+          Problem
+        </span>
+        <span
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 12,
+            color: hsTokens.ink,
+            lineHeight: 1.4,
+          }}
+        >
+          {reasoning ?? "off-target reading"}
+        </span>
+        {/* SOLUTION row: hops-tinted eyebrow + script action */}
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            fontFamily: hsTokens.display,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            color: hsTokens.hops,
+            textTransform: "uppercase",
+            alignSelf: "start",
+            paddingTop: 4,
+          }}
+        >
+          <CheckGlyph />
+          <span>Solution</span>
+        </span>
+        <span
+          style={{
+            fontFamily: hsTokens.script,
+            fontSize: 18,
+            color: hsTokens.ink,
+            lineHeight: 1.2,
+          }}
+        >
+          {action}
+        </span>
+      </button>
+    </motion.div>
+  );
+}
+
+/**
+ * Tiny "—" minimize affordance — top-right of the predictor card header.
+ * Darkens on hover to match the brew sheet's other icon buttons (e.g.
+ * print, status pill).
+ */
+function BrewTipMinimizeButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      aria-label="Hide warning"
+      title="Hide warning"
+      style={{
+        marginLeft: "auto",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 22,
+        height: 22,
+        padding: 0,
+        background: hovered
+          ? `color-mix(in oklch, ${hsTokens.ink} 14%, transparent)`
+          : "transparent",
+        border: "none",
+        borderRadius: 4,
+        color: hovered ? hsTokens.ink : hsTokens.muted,
+        cursor: "pointer",
+        transition: "background 140ms ease, color 140ms ease",
+        lineHeight: 0,
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+        <path
+          d="M2 6 L10 6"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
+/**
+ * Renders the side-by-side fix cards with hover-driven flex growth. Pulled
+ * into its own component so the hover state can live in a hook without
+ * leaking into the parent `BrewTipCard`.
+ */
+function BrewTipFixGrid({
+  fixes,
+  selectedKind,
+  onSelect,
+  onClear,
+}: {
+  fixes: BrewTipFix[];
+  selectedKind?: OgFixChoice["kind"];
+  onSelect?: (fix: BrewTipFix) => void;
+  onClear?: () => void;
+}) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const selectedIdx = selectedKind
+    ? fixes.findIndex((f) => f.kind === selectedKind)
+    : -1;
+  const hasSelection = selectedIdx >= 0;
+
+  // Flex-grow only kicks in once a fix is chosen — hover-peek the
+  // alternative without overwriting the brewer's choice. Before any
+  // selection, hover is a subtle bg shift inside the fix card, no width
+  // changes. (User feedback: idle hover-grow felt overeager.)
+  const focusedIdx = hasSelection
+    ? hoveredIdx !== null
+      ? hoveredIdx
+      : selectedIdx
+    : -1;
+  const hasFocus = focusedIdx >= 0;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "stretch",
+        gap: 6,
+        flexWrap: "nowrap",
+      }}
+      onMouseLeave={() => setHoveredIdx(null)}
+    >
+      {fixes.map((fix, i) => {
+        const isSelected = selectedIdx === i;
+        const isFocused = focusedIdx === i;
+        // Width split:
+        //  - no selection → equal halves (1 / 1), hover does NOT grow
+        //  - selection exists → focused grows (2.4), other shrinks (0.8)
+        const flexWeight = !hasFocus ? 1 : isFocused ? 2.4 : 0.8;
+        const isDimmed = hasFocus && !isFocused;
+        const isHoveredIdle = !hasSelection && hoveredIdx === i;
+        return (
+          <Fragment key={`${fix.kind}-${i}`}>
+            {i > 0 ? (
+              <div
+                aria-hidden
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontFamily: hsTokens.display,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
+                  color: hsTokens.muted,
+                  padding: "0 2px",
+                }}
+              >
+                OR
+              </div>
+            ) : null}
+            <div
+              style={{
+                flexGrow: flexWeight,
+                flexShrink: 1,
+                flexBasis: 0,
+                minWidth: 0,
+                display: "flex",
+                transition: "flex-grow 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              onMouseEnter={() => setHoveredIdx(i)}
+            >
+              <BrewFixCard
+                fix={fix}
+                selected={isSelected}
+                dimmed={isDimmed}
+                idleHovered={isHoveredIdle}
+                onClick={() =>
+                  isSelected ? onClear?.() : onSelect?.(fix)
+                }
+              />
+            </div>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A single fix option rendered as a clickable card. Visual states:
+ *  - Idle: paper bg, ink border
+ *  - Idle + hovered: paper bg tinted toward honey (subtle, no width change)
+ *  - Selected: honey background + check glyph, full opacity, expanded width
+ *  - Dimmed (another card is selected): low opacity, narrow width, body
+ *    text collapses to keep the eyebrow + title legible at a glance
+ */
+function BrewFixCard({
+  fix,
+  selected,
+  dimmed,
+  idleHovered,
+  onClick,
+}: {
+  fix: BrewTipFix;
+  selected?: boolean;
+  dimmed?: boolean;
+  idleHovered?: boolean;
+  onClick?: () => void;
+}) {
+  const background = selected
+    ? `color-mix(in oklch, ${hsTokens.honey} 55%, ${hsTokens.paper})`
+    : idleHovered
+    ? `color-mix(in oklch, ${hsTokens.honey} 18%, ${hsTokens.paper})`
+    : hsTokens.paper;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        padding: "10px 12px",
+        background,
+        border: `1.5px solid ${hsTokens.ink}`,
+        borderRadius: 8,
+        textAlign: "left",
+        color: hsTokens.ink,
+        fontFamily: hsTokens.body,
+        cursor: "pointer",
+        opacity: dimmed ? 0.45 : 1,
+        transition: "background 140ms ease, opacity 240ms ease",
+        outline: "none",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        {selected ? <CheckGlyph /> : null}
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            color: selected ? hsTokens.ink : fix.eyebrowColor ?? hsTokens.muted,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {fix.eyebrow}
+        </span>
+      </div>
+      <div
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 15,
+          letterSpacing: "-0.005em",
+          lineHeight: 1.2,
+          // Title clamps to 2 lines so a narrow (dimmed) card can't grow
+          // taller than its focused sibling — keeps the predictor's overall
+          // height stable across hover/select states.
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: 2,
+          overflow: "hidden",
+        }}
+      >
+        {fix.title}
+      </div>
+      {/* Body always renders — we just dim its opacity when another card
+          is focused. Line-clamp keeps wrapping from triggering height
+          changes when the card narrows. (The previous max-height collapse
+          caused matrix-row reflow flicker during hover animations.) */}
+      <div
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 12,
+          color: hsTokens.muted,
+          lineHeight: 1.45,
+          display: "-webkit-box",
+          WebkitBoxOrient: "vertical",
+          WebkitLineClamp: 3,
+          overflow: "hidden",
+          opacity: dimmed ? 0.45 : 1,
+          transition: "opacity 180ms ease",
+        }}
+      >
+        {fix.body}
+      </div>
+      {fix.warning ? (
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "flex-start",
+            gap: 5,
+            marginTop: 2,
+            fontFamily: hsTokens.script,
+            fontSize: 13,
+            color: hsTokens.roast,
+            lineHeight: 1.25,
+            opacity: dimmed ? 0.45 : 1,
+            transition: "opacity 180ms ease",
+          }}
+        >
+          <span style={{ flexShrink: 0, marginTop: 2 }}>
+            <WarningTriangleGlyph color={hsTokens.roast} />
+          </span>
+          <span>{fix.warning}</span>
+        </div>
+      ) : null}
+    </button>
+  );
+}
+
+/**
+ * Predicate matching the early-return checks inside `OgPredictorCard`. The
+ * parent layout calls this to decide whether to render the card at all — if
+ * it would produce null, we skip the slot so the matrix falls back to the
+ * side-by-side phase-box layout instead of leaving an empty column.
+ */
+function shouldShowPreBoilPredictor(
+  actuals: SessionActuals,
+  targetOG: number,
+  boilOffRateLPerHour: number,
+  plannedBoilMin: number
+): boolean {
+  if (
+    actuals.preBoilGravity == null ||
+    actuals.preBoilVolumeL == null ||
+    actuals.preBoilGravity <= 1 ||
+    actuals.preBoilVolumeL <= 0
+  ) {
+    return false;
+  }
+  const plannedBoilOffL = boilOffRateLPerHour * (plannedBoilMin / 60);
+  const predictedPostBoilVol = Math.max(
+    0.1,
+    actuals.preBoilVolumeL - plannedBoilOffL
+  );
+  const predictedOG =
+    1 +
+    (actuals.preBoilVolumeL * (actuals.preBoilGravity - 1)) /
+      predictedPostBoilVol;
+  return Math.abs(predictedOG - targetOG) >= 0.002;
+}
+
+/** Mirror predicate for `PostBoilOgCard` — measured OG must be present and
+ *  meaningfully off the target. */
+function shouldShowPostBoilPredictor(
+  actuals: SessionActuals,
+  targetOG: number
+): boolean {
+  if (
+    actuals.originalGravity == null ||
+    actuals.postBoilVolumeHotL == null ||
+    actuals.originalGravity <= 1 ||
+    actuals.postBoilVolumeHotL <= 0
+  ) {
+    return false;
+  }
+  return Math.abs(actuals.originalGravity - targetOG) >= 0.002;
+}
+
+/**
+ * Pre-boil OG predictor card — always-visible variant of `OgPredictorTip`.
+ * Renders below the boil numbers matrix once pre-boil gravity + volume actuals
+ * are entered. Hidden on-target (nothing to recommend) and once post-boil data
+ * supersedes the prediction.
+ */
+function OgPredictorCard({
+  actuals,
+  targetOG,
+  targetPreBoilVolumeL,
+  targetPreBoilGravity,
+  boilOffRateLPerHour,
+  recipeBoilMin,
+  hops,
+  morphId,
+  selectedKind,
+  onSelectFix,
+  onClearFix,
+  onMinimize,
+}: {
+  actuals: SessionActuals;
+  targetOG: number;
+  /** Recipe's pre-boil volume target (for reasoning copy). */
+  targetPreBoilVolumeL: number;
+  /** Recipe's pre-boil gravity target (for reasoning copy). */
+  targetPreBoilGravity: number;
+  boilOffRateLPerHour: number;
+  recipeBoilMin: number;
+  hops: Recipe["hops"];
+  /** Framer-motion `layoutId` used to morph between the card and the matrix
+   *  flag glyph on minimize / restore. */
+  morphId?: string;
+  selectedKind?: OgFixChoice["kind"];
+  onSelectFix?: (fix: BrewTipFix) => void;
+  onClearFix?: () => void;
+  onMinimize?: () => void;
+}) {
+  if (
+    actuals.preBoilGravity == null ||
+    actuals.preBoilVolumeL == null ||
+    actuals.preBoilGravity <= 1 ||
+    actuals.preBoilVolumeL <= 0
+  ) {
+    return null;
+  }
+
+  const plannedBoilMin = actuals.boilTimeMin ?? recipeBoilMin;
+  const plannedBoilOffL = boilOffRateLPerHour * (plannedBoilMin / 60);
+  const predictedPostBoilVol = Math.max(
+    0.1,
+    actuals.preBoilVolumeL - plannedBoilOffL
+  );
+  const predictedOG =
+    1 +
+    (actuals.preBoilVolumeL * (actuals.preBoilGravity - 1)) /
+      predictedPostBoilVol;
+  const delta = predictedOG - targetOG;
+  const onTarget = Math.abs(delta) < 0.002;
+  if (onTarget) return null;
+
+  const estimatedFG = (og: number) => 1 + (og - 1) * (1 - 0.72);
+  const estABV = (og: number) => abvFromOGFG(og, estimatedFG(og));
+  const DME_PPL_PER_KG_PER_L = 375.5;
+
+  const lateAdditions = hops.filter((h) => {
+    if (h.type === "whirlpool") return true;
+    if (h.type === "boil" && (h.timeMinutes ?? 60) < 30) return true;
+    return false;
+  });
+  const hasLateAdditions = lateAdditions.length > 0;
+
+  const fixes: BrewTipFix[] = [];
+
+  if (delta > 0) {
+    // Predicted OG too high — dilute at flameout.
+    const addWaterL = dilutionWater(
+      predictedPostBoilVol,
+      predictedOG,
+      targetOG
+    );
+    const dilutionFraction = addWaterL / predictedPostBoilVol;
+    if (addWaterL > 0.1 && dilutionFraction < 0.25) {
+      const action = `Add ~${addWaterL.toFixed(1)} L water at flameout`;
+      fixes.push({
+        kind: "water",
+        eyebrow: "CLEANEST",
+        eyebrowColor: hsTokens.hops,
+        title: action,
+        titlePlain: action,
+        body: "Boil hops are already utilized, so dilution just lowers OG and slightly lightens color.",
+      });
+    }
+    const acceptAction = `Accept ~${estABV(predictedOG).toFixed(1)}% ABV`;
+    fixes.push({
+      kind: "accept",
+      eyebrow: fixes.length === 0 ? "CLEANEST" : "EASIEST",
+      eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+      title: acceptAction,
+      titlePlain: acceptAction,
+      body: `Beer lands a touch stronger than target (~${estABV(
+        targetOG
+      ).toFixed(1)}%). Still drinks great.`,
+    });
+  } else {
+    // Predicted OG too low — DME + boil-longer + maybe accept.
+    const targetVol = postBoilVolume(
+      actuals.preBoilVolumeL,
+      actuals.preBoilGravity,
+      targetOG
+    );
+    const extraMin = Math.max(
+      0,
+      ((predictedPostBoilVol - targetVol) / boilOffRateLPerHour) * 60
+    );
+    const missingPoints = (targetOG - predictedOG) * 1000;
+    const dmeG = Math.max(
+      0,
+      Math.round(
+        ((missingPoints * predictedPostBoilVol) / DME_PPL_PER_KG_PER_L) * 1000
+      )
+    );
+
+    if (dmeG > 0) {
+      const action = `Add ~${dmeG} g DME at flameout`;
+      fixes.push({
+        kind: "dme",
+        eyebrow: "CLEANEST",
+        eyebrowColor: hsTokens.hops,
+        title: action,
+        titlePlain: action,
+        body: "Brings predicted OG up to target without changing volume or kettle time.",
+      });
+    }
+
+    if (extraMin > 1 && extraMin <= 30) {
+      const action = `Boil ~${Math.round(extraMin)} min longer`;
+      fixes.push({
+        kind: "boil",
+        eyebrow:
+          fixes.length === 0
+            ? "CLEANEST"
+            : hasLateAdditions
+            ? "RISKIER"
+            : "MORE WORK",
+        eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+        title: action,
+        titlePlain: action,
+        body: "Concentrates the wort the same amount. Affects hop timing and volume.",
+        warning: hasLateAdditions
+          ? "Your whirlpool hops will over-extract. Pull them with a filter first."
+          : undefined,
+      });
+    }
+
+    if (Math.abs(missingPoints) < 6) {
+      const action = `Accept ~${estABV(predictedOG).toFixed(1)}% ABV`;
+      fixes.push({
+        kind: "accept",
+        eyebrow: fixes.length === 0 ? "CLEANEST" : "EASIEST",
+        eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+        title: action,
+        titlePlain: action,
+        body: `Within normal brew-day variance — beer hits ~${estABV(
+          predictedOG
+        ).toFixed(1)}% instead of ~${estABV(targetOG).toFixed(1)}%.`,
+      });
+    }
+  }
+
+  // Reasoning: explain WHY the predicted OG is off by inspecting which
+  // pre-boil reading(s) drifted from target. Volume + gravity each have a
+  // direction; phrase it in plain words ("pre-boil volume came in low").
+  const volDelta = actuals.preBoilVolumeL - targetPreBoilVolumeL;
+  const gravDelta = actuals.preBoilGravity - targetPreBoilGravity;
+  const volSignificant = Math.abs(volDelta) >= 0.3;
+  const gravSignificant = Math.abs(gravDelta) >= 0.002;
+  let reasoning: string | undefined;
+  if (volSignificant && gravSignificant) {
+    reasoning = `pre-boil volume came in ${
+      volDelta > 0 ? "high" : "low"
+    } and gravity ran ${gravDelta > 0 ? "high" : "low"}`;
+  } else if (volSignificant) {
+    reasoning = `pre-boil volume came in ${volDelta > 0 ? "high" : "low"}`;
+  } else if (gravSignificant) {
+    reasoning = `pre-boil gravity ran ${gravDelta > 0 ? "high" : "low"}`;
+  } else {
+    reasoning = "small drift in both pre-boil volume and gravity";
+  }
+
+  return (
+    <BrewTipCard
+      morphId={morphId}
+      problemLabel="Post-boil OG predicted to miss"
+      reasoning={reasoning}
+      fixes={fixes}
+      selectedKind={selectedKind}
+      onSelect={onSelectFix}
+      onClear={onClearFix}
+      onMinimize={onMinimize}
+    />
+  );
+}
+
+/**
+ * Post-boil OG card — always-visible variant of `PostBoilOgTip`. Appears once
+ * `originalGravity` + `postBoilVolumeHotL` actuals are present, surfacing
+ * measured-vs-target framing and corrective options.
+ */
+function PostBoilOgCard({
+  actuals,
+  targetOG,
+  targetPostBoilVolumeHotL,
+  boilOffRateLPerHour,
+  hops,
+  morphId,
+  selectedKind,
+  onSelectFix,
+  onClearFix,
+  onMinimize,
+}: {
+  actuals: SessionActuals;
+  targetOG: number;
+  /** Recipe's post-boil volume target (for reasoning copy). */
+  targetPostBoilVolumeHotL: number;
+  boilOffRateLPerHour: number;
+  hops: Recipe["hops"];
+  morphId?: string;
+  selectedKind?: OgFixChoice["kind"];
+  onSelectFix?: (fix: BrewTipFix) => void;
+  onClearFix?: () => void;
+  onMinimize?: () => void;
+}) {
+  const measuredOG = actuals.originalGravity;
+  const measuredVol = actuals.postBoilVolumeHotL;
+  if (
+    measuredOG == null ||
+    measuredVol == null ||
+    measuredOG <= 1 ||
+    measuredVol <= 0
+  ) {
+    return null;
+  }
+
+  const delta = measuredOG - targetOG;
+  const onTarget = Math.abs(delta) < 0.002;
+  if (onTarget) return null;
+
+  const estimatedFG = (og: number) => 1 + (og - 1) * (1 - 0.72);
+  const estABV = (og: number) => abvFromOGFG(og, estimatedFG(og));
+  const DME_PPL_PER_KG_PER_L = 375.5;
+
+  const lateAdditions = hops.filter((h) => {
+    if (h.type === "whirlpool") return true;
+    if (h.type === "boil" && (h.timeMinutes ?? 60) < 30) return true;
+    return false;
+  });
+  const hasLateAdditions = lateAdditions.length > 0;
+
+  const fixes: BrewTipFix[] = [];
+
+  if (delta > 0) {
+    // Measured OG too high — dilute.
+    const addWaterL = dilutionWater(measuredVol, measuredOG, targetOG);
+    if (addWaterL > 0.05) {
+      const action = `Add ~${addWaterL.toFixed(1)} L water`;
+      fixes.push({
+        kind: "water",
+        eyebrow: "CLEANEST",
+        eyebrowColor: hsTokens.hops,
+        title: action,
+        titlePlain: action,
+        body: "Boil hops are already utilized, so dilution only affects color and alcohol — not bitterness.",
+      });
+    }
+    const acceptAction = `Accept ~${estABV(measuredOG).toFixed(1)}% ABV`;
+    fixes.push({
+      kind: "accept",
+      eyebrow: fixes.length === 0 ? "CLEANEST" : "EASIEST",
+      eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+      title: acceptAction,
+      titlePlain: acceptAction,
+      body: `Lands a touch stronger than target (~${estABV(targetOG).toFixed(
+        1
+      )}%). Still drinks great.`,
+    });
+  } else {
+    // Measured OG too low.
+    const missingPoints = (targetOG - measuredOG) * 1000;
+    const dmeG = Math.max(
+      0,
+      Math.round(((missingPoints * measuredVol) / DME_PPL_PER_KG_PER_L) * 1000)
+    );
+    if (dmeG > 0) {
+      const action = `Add ~${dmeG} g DME at flameout`;
+      fixes.push({
+        kind: "dme",
+        eyebrow: "CLEANEST",
+        eyebrowColor: hsTokens.hops,
+        title: action,
+        titlePlain: action,
+        body: "Stir in dry malt extract to bring gravity up — cleanest fix at this point.",
+      });
+    }
+    const targetVol = postBoilVolume(measuredVol, measuredOG, targetOG);
+    const extraMin = Math.max(
+      0,
+      ((measuredVol - targetVol) / boilOffRateLPerHour) * 60
+    );
+    if (extraMin > 1 && extraMin <= 30) {
+      const action = `Boil ~${Math.round(extraMin)} min longer`;
+      fixes.push({
+        kind: "boil",
+        eyebrow:
+          fixes.length === 0
+            ? "CLEANEST"
+            : hasLateAdditions
+            ? "RISKIER"
+            : "MORE WORK",
+        eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+        title: action,
+        titlePlain: action,
+        body: "Concentrates the wort the same amount. Affects hop timing and volume.",
+        warning: hasLateAdditions
+          ? "Your whirlpool hops will over-extract. Pull them with a filter first."
+          : undefined,
+      });
+    }
+    const acceptAction = `Accept ~${estABV(measuredOG).toFixed(1)}% ABV`;
+    fixes.push({
+      kind: "accept",
+      eyebrow: fixes.length === 0 ? "CLEANEST" : "EASIEST",
+      eyebrowColor: fixes.length === 0 ? hsTokens.hops : hsTokens.muted,
+      title: acceptAction,
+      titlePlain: acceptAction,
+      body: `Lands ~${Math.abs(missingPoints).toFixed(0)} points below target — beer hits ~${estABV(
+        measuredOG
+      ).toFixed(1)}% instead of ~${estABV(targetOG).toFixed(1)}%.${
+        Math.abs(missingPoints) < 5 ? " Within normal brew-day variance." : ""
+      }`,
+    });
+  }
+
+  // Reasoning: simpler than pre-boil — the brewer measured the OG directly,
+  // so the only signal is whether they boiled off too much or too little.
+  // Volume tells the story: low post-boil volume = boiled off too aggressively
+  // (concentrating wort → OG high); high volume = under-boiled (OG low).
+  const volDelta = measuredVol - targetPostBoilVolumeHotL;
+  const volSignificant = Math.abs(volDelta) >= 0.4;
+  let reasoning: string | undefined;
+  if (volSignificant) {
+    reasoning =
+      volDelta > 0
+        ? "post-boil volume high — boiled off less than expected"
+        : "post-boil volume low — boiled off more than expected";
+  } else {
+    reasoning = "boiled off as expected — efficiency must have drifted";
+  }
+
+  return (
+    <BrewTipCard
+      morphId={morphId}
+      problemLabel={delta > 0 ? "Post-boil OG landed high" : "Post-boil OG landed low"}
+      reasoning={reasoning}
+      fixes={fixes}
+      selectedKind={selectedKind}
+      onSelect={onSelectFix}
+      onClear={onClearFix}
+      onMinimize={onMinimize}
     />
   );
 }
@@ -5026,6 +6224,10 @@ function BoilNumbersMatrix({
   brewMode,
   preBoilFlag,
   postBoilFlag,
+  preBoilCard,
+  postBoilCard,
+  preBoilResolved,
+  postBoilResolved,
 }: {
   preBoilVolumeL: number;
   preBoilGravity: number;
@@ -5042,6 +6244,16 @@ function BoilNumbersMatrix({
    *  Post-boil header cells. Used in Brew Mode to surface OG predictor / actuals tips. */
   preBoilFlag?: ReactNode;
   postBoilFlag?: ReactNode;
+  /** Predictor card paired with the Pre-boil row — surfaces OG fix options
+   *  computed from the pre-boil actuals. When either card prop is set, the
+   *  matrix switches to a layout that includes the predictor(s). */
+  preBoilCard?: ReactNode;
+  postBoilCard?: ReactNode;
+  /** Whether each predictor is in its resolved (compact note) state. Used to
+   *  pick the layout — one resolved predictor can sit in a single 3-column
+   *  row, but anything in the expanded warning state needs its own row. */
+  preBoilResolved?: boolean;
+  postBoilResolved?: boolean;
 }) {
   // Derived "with actuals" boil numbers — used to render strikethrough revisions
   // when grain weights shift them. Boil-off and boil time are equipment-driven,
@@ -5145,14 +6357,72 @@ function BoilNumbersMatrix({
     ) : undefined,
   };
 
+  // Layout selector — always a single row:
+  //   0 cards → side-by-side pre/post boxes (existing behaviour)
+  //   1+ cards → 3-col flanking layout: pre-box · stacked center · post-box
+  //              Each predictor card in the center has an arrow pointing at
+  //              the phase box it explains. Stacks vertically when both
+  //              predictors have content.
+  void preBoilResolved; // kept for API compatibility; layout no longer branches on it
+  void postBoilResolved;
+  const hasPreCard = preBoilCard != null;
+  const hasPostCard = postBoilCard != null;
+  const cardCount = (hasPreCard ? 1 : 0) + (hasPostCard ? 1 : 0);
+
+  if (cardCount === 0) {
+    return (
+      <div className="hs-boil-numbers">
+        <div className="hs-boil-phase-grid">
+          <BoilPhaseBox
+            title="Pre-boil"
+            flag={preBoilFlag}
+            metrics={preBoilMetrics}
+          />
+          <BoilPhaseBox
+            title="Post-boil"
+            flag={postBoilFlag}
+            metrics={postBoilMetrics}
+          />
+        </div>
+        <BoilPhaseBox
+          title="Boil time"
+          metrics={[boilTimeMetric]}
+          compact
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="hs-boil-numbers">
-      <div className="hs-boil-phase-grid">
+      <div className="hs-boil-phase-grid hs-boil-phase-grid-flanking">
         <BoilPhaseBox
           title="Pre-boil"
           flag={preBoilFlag}
           metrics={preBoilMetrics}
         />
+        <div className="hs-boil-phase-center-stack">
+          {hasPreCard ? (
+            <div className="hs-boil-phase-card-row">
+              <ArrowGlyph direction="left" />
+              <div className="hs-boil-phase-card-slot">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {preBoilCard}
+                </AnimatePresence>
+              </div>
+            </div>
+          ) : null}
+          {hasPostCard ? (
+            <div className="hs-boil-phase-card-row hs-boil-phase-card-row-right">
+              <ArrowGlyph direction="right" />
+              <div className="hs-boil-phase-card-slot">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {postBoilCard}
+                </AnimatePresence>
+              </div>
+            </div>
+          ) : null}
+        </div>
         <BoilPhaseBox
           title="Post-boil"
           flag={postBoilFlag}
@@ -5840,6 +7110,51 @@ function PrintStyles() {
             grid-template-columns: 1fr 1fr;
             gap: 12px;
           }
+          /* Flanking variant — single row: phase boxes flank a center column
+             holding the predictor cards. Each card row in the center has an
+             arrow glyph pointing at its corresponding phase box. The center
+             column is sized to the cards' natural width so the side phase
+             boxes claim the remaining space — no wasted column padding. */
+          .hs-print-area .hs-boil-phase-grid-flanking {
+            grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+            align-items: start;
+          }
+          .hs-print-area .hs-boil-phase-center-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+          }
+          .hs-print-area .hs-boil-phase-card-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            /* Each row sizes to its own content (arrow + card). Anchored to
+               the left edge of the center column for pre-boil so the arrow
+               points outward at the pre-boil box. */
+            width: fit-content;
+            align-self: flex-start;
+          }
+          .hs-print-area .hs-boil-phase-card-row-right {
+            /* Post-boil row anchors to the right edge of the center column;
+               row-reverse puts the card on the left and the arrow on the
+               right pointing at the post-boil box. */
+            flex-direction: row-reverse;
+            align-self: flex-end;
+          }
+          .hs-print-area .hs-boil-phase-card-slot {
+            display: flex;
+          }
+          /* Predictor side container — fills its grid cell so the inner card
+             can stretch to match the paired phase box height. */
+          .hs-print-area .hs-boil-phase-side {
+            min-width: 0;
+            display: flex;
+          }
+          .hs-print-area .hs-boil-phase-side > * {
+            flex: 1;
+            min-width: 0;
+          }
           .hs-print-area .hs-boil-phase {
             border: 1.5px solid color-mix(in oklch, currentColor 75%, transparent);
             border-radius: 10px;
@@ -6475,9 +7790,17 @@ function PrintStyles() {
                mobile (they sit side-by-side on desktop via the grid above).
                Tighten the metric row's column widths so the target value
                (e.g. "22.4 L · 5.92 gal") fits without wrapping. */
-            .hs-print-area .hs-boil-phase-grid {
+            .hs-print-area .hs-boil-phase-grid,
+            .hs-print-area .hs-boil-phase-grid-flanking {
               grid-template-columns: 1fr !important;
               gap: 10px !important;
+            }
+            .hs-print-area .hs-boil-phase-card-row {
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+            .hs-print-area .hs-boil-phase-card-row-right {
+              flex-direction: column !important;
             }
             .hs-print-area .hs-boil-metric {
               grid-template-columns: minmax(0, max-content) 1fr 84px !important;
