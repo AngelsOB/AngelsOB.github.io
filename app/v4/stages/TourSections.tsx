@@ -85,6 +85,44 @@ export function StageIntro({ recipeCount }: { recipeCount: number }) {
   );
 }
 
+export function StageOpening() {
+  const s = STAGES.opening;
+  const last = s.sentences.length - 1;
+  return (
+    <section data-v4-stage="opening" style={sectionStyle(82)}>
+      {s.sentences.map((sentence, i) => (
+        <p
+          key={i}
+          style={{
+            fontFamily: hsTokens.display,
+            fontStyle: "italic",
+            fontSize:
+              i === last ? "clamp(22px, 2.6vw, 34px)" : "clamp(18px, 2.1vw, 26px)",
+            lineHeight: 1.42,
+            letterSpacing: "-0.02em",
+            color: i === last ? hsTokens.ink : hsTokens.muted,
+            margin: i === 0 ? "0 0 22px" : 0,
+            maxWidth: 560,
+          }}
+        >
+          {sentence}
+        </p>
+      ))}
+    </section>
+  );
+}
+
+export function StageGrains() {
+  const s = STAGES.grains;
+  return (
+    <section data-v4-stage="grains" style={sectionStyle(96)}>
+      <p style={eyebrowStyle}>{s.h2}</p>
+      <h2 style={leadStyle}>{s.lead}</h2>
+      <p style={bodyStyle}>{s.body}</p>
+    </section>
+  );
+}
+
 export function StageHops() {
   const s = STAGES.hops;
   return (
@@ -103,7 +141,7 @@ export function StageHops() {
 export function StageBrewSheet() {
   const s = STAGES.brewSheet;
   return (
-    <section data-v4-stage="brewsheet" style={sectionStyle(72)}>
+    <section data-v4-stage="brewsheet" style={sectionStyle(120)}>
       <p style={{ ...eyebrowStyle, color: hsTokens.roast }}>{s.h2}</p>
       <h2 style={leadStyle}>{s.lead}</h2>
       {s.paragraphs.map((p, i) => (
