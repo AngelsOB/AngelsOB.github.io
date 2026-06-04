@@ -25,6 +25,11 @@ import UnsavedChangesModal from "@/modules/beta-builder/presentation/components/
 import { useUnsavedChangesGuard } from "@/modules/beta-builder/presentation/hooks/useUnsavedChangesGuard";
 import BJCPStyleRail from "./BJCPStyleRail";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import {
+  BEER_STYLE_TARGETS,
+  COMMON_WATER_PROFILES,
+  getWaterTargetForBjcpStyle,
+} from "@/modules/beta-builder/domain/services/WaterChemistryService";
 import type {
   SessionActuals,
   SessionStatus,
@@ -1385,7 +1390,31 @@ export default function HopSkipBuilder({
       <StyleSelectorModal
         isOpen={isStyleModalOpen}
         onClose={() => setIsStyleModalOpen(false)}
-        onSelect={(style: string) => updateRecipe({ style: style || undefined })}
+        onSelect={(style: string) => {
+          const newStyle = style || undefined;
+          const wc = currentRecipe.waterChemistry;
+          // Pin the BJCP-mapped water target only when nothing is set, so an
+          // explicit or customized target isn't overwritten on style change.
+          const waterTargetUnselected =
+            !wc?.targetStyleName && !wc?.customTargetProfile;
+          if (newStyle && waterTargetUnselected) {
+            const bjcpKey = getWaterTargetForBjcpStyle(newStyle);
+            if (BEER_STYLE_TARGETS[bjcpKey]) {
+              updateRecipe({
+                style: newStyle,
+                waterChemistry: {
+                  sourceProfile: wc?.sourceProfile ?? COMMON_WATER_PROFILES.RO,
+                  saltAdditions: wc?.saltAdditions ?? {},
+                  sourceProfileName: wc?.sourceProfileName ?? "RO",
+                  targetStyleName: bjcpKey,
+                  customTargetProfile: undefined,
+                },
+              });
+              return;
+            }
+          }
+          updateRecipe({ style: newStyle });
+        }}
       />
 
       {/* Unsaved-changes confirmation — opens when the guard intercepts a nav
