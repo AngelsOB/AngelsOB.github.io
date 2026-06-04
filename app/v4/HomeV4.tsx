@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,7 +9,14 @@ import type { CommunityRecipeCard } from "../_home/lib/communityCard";
 import { useReducedMotion } from "./lib/useReducedMotion";
 import { useLenis } from "./lib/scroll";
 import { V4Mock, type TabKey } from "./mock/V4Mock";
-import { StageIntro, StageHops, StageBrewSheet } from "./stages/TourSections";
+import { GRAIN_STEP_LEVELS } from "./mock/TabSections";
+import {
+  StageIntro,
+  StageOpening,
+  StageGrains,
+  StageHops,
+  StageBrewSheet,
+} from "./stages/TourSections";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -37,13 +44,19 @@ export default function HomeV4({ recipeCount }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
-  // Lenis smooth scroll (Phase 1). Also powers the auto-advance through the
-  // pinned brewsheet beat so it animates itself in.
-  const lenisRef = useLenis(!reducedMotion);
-  const autoPlayedRef = useRef(false);
+  // Lenis smooth scroll — smooth wheel for the whole tour + the scrub feel on
+  // the hops collapse. No longer drives an auto-advance: every beat now plays on
+  // enter or follows scroll, so nothing hijacks the scroll position.
+  useLenis(!reducedMotion);
   // Which builder tab the mock is showing. React owns section visibility; the
   // tour switches it per beat, and the tab bar lets the user switch it at rest.
-  const [activeTab, setActiveTab] = useState<TabKey>("hops");
+  // Starts on the grain bill — the hero/opening/grains stages are all the
+  // recipe overview, before the Hops beat switches it.
+  const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
+  // Grains "live math" beat: 0 = empty bill / all vitals at 0, 1 = full recipe.
+  // Driven by the grains scroll (clear then build); the stats, style gauges,
+  // and grain bill all interpolate by it.
+  const [grainFill, setGrainFill] = useState(1);
 
   useGSAP(
     () => {
@@ -147,197 +160,297 @@ export default function HomeV4({ recipeCount }: Props) {
         gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
         ScrollTrigger.addEventListener("refreshInit", measure);
 
-        // ── Hops beat: intro → grow → linger → quick tuck-back ──────────
-        // Timeline total duration is exactly 1, so a tween's position == the
-        // scroll fraction it fires at. Four phases (the knobs to tune feel):
-        //   0.00–INTRO  intro: the hop bill sits IN the mock (radar home,
-        //               mock at rest) so you read it in context first.
-        //   INTRO–GROW  radar pulls out + grows; mock recedes + dims.
-        //   GROW–CLOSE  HELD fully exploded — the money shot lingers.
-        //   CLOSE–1.00  quick tuck-back, offset so the mock leads home and the
-        //               radar shrinks into its slot LAST, landing at the seam.
-        const HOPS_INTRO = 0.2; // radar starts growing here
-        const HOPS_GROW = 0.4; // radar fully exploded here
-        const HOPS_CLOSE = 0.8; // tuck-back starts here
-        const hops = gsap.timeline({
-          scrollTrigger: {
-            trigger: '[data-v4-stage="hops"]',
-            start: "top 45%",
-            end: "bottom 45%",
-            scrub: true,
-            invalidateOnRefresh: true,
-            markers: DEV_MARKERS,
-            onToggle: (self) => {
-              if (self.isActive) setActiveTab("hops");
-            },
-          },
-        });
-        const growDur = HOPS_GROW - HOPS_INTRO;
-        hops
-          // intro spacer — reserve real scroll time with the hop bill sitting
-          // IN the mock (radar at home) before the pull-out. GSAP trims a
-          // LEADING gap from a timeline's duration, so without this empty
-          // tween the grow would start at scroll 0 instead of at HOPS_INTRO.
-          .to({}, { duration: HOPS_INTRO }, 0)
-          // ── GROW (INTRO → GROW) ───────────────────────────────────────
-          // the WHOLE mock (outline + chrome) scales down + slides left, like
-          // the brew sheet beat. The radar is a child, so its own scale is
-          // bumped to stay large against the receding card.
+        // ── Hops beat — HYBRID: grow plays once on enter, collapse follows
+        //    scroll. The radar pull-out is a showcase (play-once-on-enter, like
+        //    the grains build); the tuck-back stays SCROLL-driven so it tracks
+        //    the reader leaving toward the brew sheet. Two paused timelines +
+        //    two triggers. Why two: the grow can't be a scrub-linked tween (it
+        //    would fight the collapse), and the collapse can't be a normal scrub
+        //    tween either — a scrub tween hold-renders its `from` (exploded)
+        //    whenever scroll is before its start, stomping the grow every frame.
+        //    So the collapse is a PAUSED timeline scrubbed MANUALLY via
+        //    progress() inside its trigger's active range, untouched before it.
+        const HOPS_LEAD = 0.35; // beat to read the hop bill before it pulls out
+        const HOPS_GROW = 0.85; // radar pull-out duration
+
+        // GROW (play once on enter): mock recedes + dims, radar pulls out + grows.
+        // immediateRender:false so the paused timeline doesn't apply its `from`
+        // (or flash) on mount — inert until restart().
+        const hopsGrowTl = gsap.timeline({ paused: true });
+        hopsGrowTl
+          .to({}, { duration: HOPS_LEAD }, 0)
           .fromTo(
             '[data-v4="mock"]',
             { scale: 1, xPercent: 0 },
-            { scale: 0.84, xPercent: -12, duration: growDur, ease: "none" },
-            HOPS_INTRO,
+            { scale: 0.84, xPercent: -12, duration: HOPS_GROW * 0.9, ease: "power2.inOut", immediateRender: false },
+            HOPS_LEAD,
           )
           .fromTo(
             '[data-v4="radar"]',
             { x: () => home.x, y: () => home.y, scale: () => home.scale },
-            {
-              x: () => exploded.x,
-              y: () => exploded.y,
-              scale: () => exploded.scale,
-              duration: growDur,
-              ease: "power2.out",
-            },
-            HOPS_INTRO,
+            { x: () => exploded.x, y: () => exploded.y, scale: () => exploded.scale, duration: HOPS_GROW, ease: "power2.out", immediateRender: false },
+            HOPS_LEAD,
           )
           // soft drop shadow via FILTER so the chunky offset boxShadow (the
           // brand backdrop) stays put — both shadows show at once, no swap.
           .fromTo(
             '[data-v4="radar"] > div',
             { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
-            {
-              filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))",
-              duration: growDur,
-              ease: "none",
-            },
-            HOPS_INTRO,
+            { filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))", duration: HOPS_GROW, ease: "none", immediateRender: false },
+            HOPS_LEAD,
           )
-          // the rest of the builder also dims to emphasize the visualizer
+          // the rest of the builder dims to emphasize the visualizer
           .fromTo(
             ".v4-dim",
             { opacity: 1 },
-            { opacity: 0.4, duration: growDur, ease: "none" },
-            HOPS_INTRO,
-          )
-          // ── HELD fully exploded (GROW → CLOSE), no tweens ─────────────
-          // ── CLOSE (CLOSE → 1.00) — offset: mock leads home, radar last ─
-          .to(
-            '[data-v4="mock"]',
-            { scale: 1, xPercent: 0, duration: 0.13, ease: "power2.out" },
-            HOPS_CLOSE,
-          )
-          .to(".v4-dim", { opacity: 1, duration: 0.13, ease: "none" }, HOPS_CLOSE)
-          .to(
-            '[data-v4="radar"]',
-            {
-              x: () => home.x,
-              y: () => home.y,
-              scale: () => home.scale,
-              duration: 0.16,
-              ease: "power2.in",
-            },
-            HOPS_CLOSE + 0.04,
-          )
-          .to(
-            '[data-v4="radar"] > div',
-            { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.14, ease: "none" },
-            HOPS_CLOSE + 0.06,
+            { opacity: 0.4, duration: HOPS_GROW * 0.85, ease: "none", immediateRender: false },
+            HOPS_LEAD,
           );
 
-        // ── Brewsheet beat: hard-pin the text column; mock recedes, the
-        //    brew-sheet panel rises and its rows stagger in ──────────────
-        // Auto-advance: when the brewsheet pin is reached, Lenis smoothly
-        // scrolls through the pinned range so the brew sheet animates itself
-        // in (the "this feels like an anim" beat). User input interrupts it
-        // (lock: false); it replays on re-entry from above.
-        // autoPlay reads the timeline (self.animation) + its "shown" label —
-        // the scroll point where the brew sheet is fully revealed.
-        const autoPlay = (self: ScrollTrigger) => {
-          const lenis = lenisRef.current;
-          const tl = self.animation as gsap.core.Timeline | undefined;
-          if (!lenis || autoPlayedRef.current || !tl) return;
-          autoPlayedRef.current = true;
-          const total = tl.totalDuration();
-          const shownFrac = total ? (tl.labels.shown ?? total) / total : 1;
-          const target = self.start + shownFrac * (self.end - self.start);
-          lenis.scrollTo(target, {
-            duration: 1.9,
-            force: true,
-            lock: true, // reliably land on the fully-shown brew sheet
-            easing: (t) =>
-              t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
-          });
+        // COLLAPSE (scroll-driven): exploded → home. Offset so the mock leads
+        // home and the radar tucks into its slot LAST, landing at the seam.
+        const hopsCollapseTl = gsap.timeline({ paused: true });
+        hopsCollapseTl
+          .fromTo(
+            '[data-v4="mock"]',
+            { scale: 0.84, xPercent: -12 },
+            { scale: 1, xPercent: 0, duration: 0.8, ease: "power2.out", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            ".v4-dim",
+            { opacity: 0.4 },
+            { opacity: 1, duration: 0.8, ease: "none", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="radar"]',
+            { x: () => exploded.x, y: () => exploded.y, scale: () => exploded.scale },
+            { x: () => home.x, y: () => home.y, scale: () => home.scale, duration: 1, ease: "power2.in", immediateRender: false },
+            0.18,
+          )
+          .fromTo(
+            '[data-v4="radar"] > div',
+            { filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))" },
+            { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.85, ease: "none", immediateRender: false },
+            0.18,
+          );
+
+        // Re-read measured home/exploded after a refresh (resize / font settle);
+        // the timelines use function-based values, which GSAP caches until
+        // invalidated. (Replaces the old scrub's invalidateOnRefresh.)
+        const invalidateHops = () => {
+          hopsGrowTl.invalidate();
+          hopsCollapseTl.invalidate();
         };
-        const bs = gsap.timeline({
-          scrollTrigger: {
-            trigger: '[data-v4-stage="brewsheet"]',
-            start: "top 16%",
-            end: "+=150%",
-            pin: '[data-v4-stage="brewsheet"]',
-            pinSpacing: true,
-            scrub: true,
-            invalidateOnRefresh: true,
-            markers: DEV_MARKERS,
-            onToggle: (self) => {
-              if (self.isActive) setActiveTab("brewsheet");
-            },
-            onEnter: (self) => autoPlay(self),
-            onLeaveBack: () => {
-              autoPlayedRef.current = false;
-            },
+        ScrollTrigger.addEventListener("refreshInit", invalidateHops);
+
+        // Grow trigger — play once on a downward enter; reset on a scroll-up
+        // exit so a fresh downward approach replays it. Its active range spans
+        // the whole beat so activeTab stays "hops" across the collapse too.
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="hops"]',
+          start: "top 45%",
+          end: "bottom 30%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("hops");
+          },
+          onEnter: () => hopsGrowTl.restart(),
+          onLeaveBack: () => {
+            hopsGrowTl.pause(0);
+            hopsCollapseTl.pause(0);
+            gsap.set('[data-v4="mock"]', { scale: 1, xPercent: 0 });
+            gsap.set(".v4-dim", { opacity: 1 });
+            gsap.set('[data-v4="radar"]', { x: home.x, y: home.y, scale: home.scale });
+            gsap.set('[data-v4="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
           },
         });
-        bs
-          // mock chrome (header/stats/tabs/hops body) scales DOWN + slides
-          // LEFT and dims as the brew sheet — now the active tab — pulls out
+
+        // Collapse trigger — scrub the tuck-back over the LATER part of the hops
+        // scroll (after the grow + a hold). Manual progress() on the paused
+        // timeline; before this range it's untouched, so the radar stays
+        // exploded where the grow left it. start/end are the hold-length knobs.
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="hops"]',
+          start: "bottom 78%",
+          end: "bottom 38%",
+          markers: DEV_MARKERS,
+          onUpdate: (self) => {
+            // If a very fast scroll opens the collapse range while the grow is
+            // still playing, snap the grow done first so they don't fight over
+            // the radar (collapse then scrubs cleanly from the exploded state).
+            if (hopsGrowTl.isActive()) hopsGrowTl.progress(1);
+            hopsCollapseTl.progress(self.progress);
+          },
+          onLeave: () => hopsCollapseTl.progress(1),
+          onLeaveBack: () => hopsCollapseTl.progress(0),
+        });
+
+        // ── Grains "live math" beat — animation-driven (plays once on enter).
+        //    The recipe builds ITSELF: on enter the bill quick-CLEARS to 0, then
+        //    grains are added one at a time as a STAIRCASE (each drops in, the
+        //    vitals jump, then a hesitation) on GSAP's own clock. NOT scrub-
+        //    driven: it plays at a deliberate pace no matter the scroll speed and
+        //    never stalls if the reader pauses (the play-once-on-enter spirit of
+        //    the SplitText reveals). grainFill still drives the same plumbing
+        //    (stats / BJCP gauges / SRM / grain reveal interpolate off it) — only
+        //    the shape of its motion changed (linear ramp → stepped).
+        const grainProxy = { fill: 1 };
+        const applyGrainFill = () => setGrainFill(grainProxy.fill);
+        // STEPPED build (a staircase, NOT a linear ramp): clear the bill, then
+        // add the grains ONE AT A TIME — each grain drops in and the vitals jump
+        // by ITS contribution, then a HESITATION before the next. The rise
+        // targets are GRAIN_STEP_LEVELS (cumulative weight fraction), so the base
+        // malt makes a big jump and the specialty malts small bumps; the reveal
+        // in FermentablesSection keys off the same levels, so the grain and its
+        // numbers step together. immediateRender:false so the paused timeline
+        // doesn't apply a `from` (or flash an empty bill) on mount — inert until
+        // restart().
+        const GRAIN_RISE = 0.4; // a grain drops in + its numbers jump
+        const GRAIN_HOLD = 0.55; // hesitation before the next grain
+        const grainFromLevels = [0, ...GRAIN_STEP_LEVELS]; // [0, L0, L1, …]
+        const grainsTl = gsap.timeline({ paused: true });
+        grainsTl
+          // clear the bill to a blank canvas, then a beat before building
+          .fromTo(
+            grainProxy,
+            { fill: 1 },
+            { fill: 0, duration: 0.45, ease: "power2.in", immediateRender: false, onUpdate: applyGrainFill },
+          )
+          .to({}, { duration: 0.25 });
+        GRAIN_STEP_LEVELS.forEach((level, i) => {
+          grainsTl.fromTo(
+            grainProxy,
+            { fill: grainFromLevels[i] },
+            { fill: level, duration: GRAIN_RISE, ease: "power2.out", immediateRender: false, onUpdate: applyGrainFill },
+          );
+          // hesitate before the next grain — but not after the LAST one (the
+          // beat just holds on the finished bill).
+          if (i < GRAIN_STEP_LEVELS.length - 1) grainsTl.to({}, { duration: GRAIN_HOLD });
+        });
+
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="grains"]',
+          start: "top 60%",
+          end: "bottom 35%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("fermentables");
+          },
+          // Play once when the beat scrolls into view; replay on a fresh
+          // approach from above (scroll up past it, then back down). Scrolling
+          // up INTO it from below (from hops) doesn't replay — the bill is
+          // already full there.
+          onEnter: () => grainsTl.restart(),
+          onLeaveBack: () => {
+            grainsTl.pause(0);
+            grainProxy.fill = 1;
+            setGrainFill(1);
+          },
+        });
+
+        // ── Brewsheet beat — play-once-on-enter (NO pin, NO scroll-jack). On
+        //    enter the mock recedes and the brew sheet (the active-tab section)
+        //    GROWS out of its body slot to a big centred reveal — its box height
+        //    expands to the full content while it lifts + scales to fit the
+        //    viewport, and the "Brew sheet" tab nub lifts out above it. The mock
+        //    is CSS-sticky, so the grown sheet holds in view while the stage
+        //    scrolls past. (Was a hard pin + Lenis auto-advance that scrubbed and
+        //    hijacked the scroll for ~2s; the user wanted it to just play in,
+        //    like the hops grow + grains build.)
+        const bsGrowTl = gsap.timeline({ paused: true });
+        bsGrowTl
+          // mock chrome scales DOWN + slides LEFT and dims as the sheet pulls out
           .fromTo(
             '[data-v4="mock"]',
             { opacity: 1, scale: 1, xPercent: 0 },
-            { opacity: 0.32, scale: 0.82, xPercent: -14, ease: "none" },
+            { opacity: 0.32, scale: 0.82, xPercent: -14, duration: 1.0, ease: "power2.inOut", immediateRender: false },
             0,
           )
-          // the brew sheet (the whole active-tab section) grows OUT of its
-          // body slot (home) to the big centred reveal (exploded). Opacity is
-          // React-driven by the tab switch; GSAP only moves + scales it.
+          // the whole section grows OUT of its body slot (home) to the big
+          // centred reveal (exploded). Opacity is React-driven by the tab
+          // switch; GSAP only moves + scales it. Function-based measured values,
+          // invalidated on refresh.
           .fromTo(
             '[data-v4="brewsheet"]',
             { x: () => bsHome.x, y: () => bsHome.y, scale: 1 },
-            {
-              x: () => bsExploded.x,
-              y: () => bsExploded.y,
-              scale: () => bsExploded.scale,
-              ease: "power2.out",
-            },
-            0.05,
+            { x: () => bsExploded.x, y: () => bsExploded.y, scale: () => bsExploded.scale, duration: 1.2, ease: "power2.out", immediateRender: false },
+            0.1,
           )
           .fromTo(
             '[data-v4="bs-box"]',
             { height: () => bsHome.h },
-            { height: () => bsExploded.h, ease: "power2.out" },
-            0.05,
+            { height: () => bsExploded.h, duration: 1.2, ease: "power2.out", immediateRender: false },
+            0.1,
           )
+          // the "Brew sheet" tab nub lifts out above the box
           .fromTo(
             '[data-v4="bs-nub"]',
             { opacity: 0 },
-            { opacity: 1, ease: "none" },
-            0.2,
-          )
-          // brew sheet fully shown — the auto-advance lands here
-          .addLabel("shown")
-          // hold it fully shown for a beat before the pin releases
-          .to({}, { duration: 0.9 });
+            { opacity: 1, duration: 0.5, ease: "none", immediateRender: false },
+            0.5,
+          );
 
-        return () => ScrollTrigger.removeEventListener("refreshInit", measure);
+        // Re-read measured bsHome/bsExploded after a refresh (resize/font settle);
+        // the timeline uses function-based values, cached until invalidated.
+        const invalidateBs = () => bsGrowTl.invalidate();
+        ScrollTrigger.addEventListener("refreshInit", invalidateBs);
+
+        // Play once on a downward enter; reset on a scroll-up exit so a fresh
+        // approach replays it. Dwell on the big sheet = the brewsheet stage
+        // height (no pin now), so make that stage tall.
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="brewsheet"]',
+          start: "top 50%",
+          end: "bottom 35%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("brewsheet");
+          },
+          onEnter: () => bsGrowTl.restart(),
+          onLeaveBack: () => {
+            bsGrowTl.pause(0);
+            gsap.set('[data-v4="mock"]', { opacity: 1, scale: 1, xPercent: 0 });
+            gsap.set('[data-v4="brewsheet"]', { x: bsHome.x, y: bsHome.y, scale: 1 });
+            gsap.set('[data-v4="bs-box"]', { height: bsHome.h });
+            gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
+          },
+        });
+
+        return () => {
+          ScrollTrigger.removeEventListener("refreshInit", measure);
+          ScrollTrigger.removeEventListener("refreshInit", invalidateHops);
+          ScrollTrigger.removeEventListener("refreshInit", invalidateBs);
+        };
       });
 
-      // Custom fonts (Archivo Black / Space Grotesk) load late and shift
-      // layout; pins computed before that land at the wrong scroll spot.
+      // Custom fonts (Archivo Black / Space Grotesk) load late and shift layout;
+      // measured positions (radar/brewsheet home + exploded) computed before
+      // that settle land wrong, so refresh once fonts are ready.
       if (typeof document !== "undefined" && "fonts" in document) {
         document.fonts.ready.then(() => ScrollTrigger.refresh());
       }
     },
     { scope: rootRef, dependencies: [reducedMotion] },
+  );
+
+  // The left column (tour text) is memoized so it does NOT re-render when
+  // `activeTab` / `grainFill` change — it's a heavy text column and nothing in
+  // it depends on those. (Historically this was REQUIRED to dodge the pin+React
+  // removeChild crash when the brewsheet stage was GSAP-pinned; no beat pins
+  // anymore, so it's now purely a perf win — but still worth keeping.)
+  const leftColumn = useMemo(
+    () => (
+      <div className="v4-tour-left" style={{ minWidth: 0 }}>
+        <StageIntro recipeCount={recipeCount} />
+        <StageOpening />
+        <StageGrains />
+        <StageHops />
+        <StageBrewSheet />
+      </div>
+    ),
+    [recipeCount],
   );
 
   return (
@@ -373,11 +486,7 @@ export default function HomeV4({ recipeCount }: Props) {
           // across the whole tour (and across the injected pin spacing).
         }}
       >
-        <div className="v4-tour-left" style={{ minWidth: 0 }}>
-          <StageIntro recipeCount={recipeCount} />
-          <StageHops />
-          <StageBrewSheet />
-        </div>
+        {leftColumn}
 
         <div className="v4-tour-right" style={{ position: "relative", minWidth: 0 }}>
           <div
@@ -387,7 +496,11 @@ export default function HomeV4({ recipeCount }: Props) {
               top: "clamp(112px, calc(50vh - 290px), 280px)",
             }}
           >
-            <V4Mock activeTab={activeTab} onSelectTab={setActiveTab} />
+            <V4Mock
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              grainFill={grainFill}
+            />
           </div>
         </div>
       </div>

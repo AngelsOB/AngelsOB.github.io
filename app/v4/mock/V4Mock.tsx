@@ -4,6 +4,8 @@ import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { HopFlavorRadar } from "./HopFlavorRadar";
 import BrewSheetPanelV4 from "./BrewSheetPanelV4";
+import { TabSection, SectionHead } from "./TabSections";
+import { StyleGuidelines } from "./StyleGuidelines";
 
 // A simplified version of the real recipe builder. Clickable tabs switch the
 // body to that section (the mock is usable at rest). The tour then drives the
@@ -37,7 +39,7 @@ interface TabDef {
 
 // Mirrors the real builder's tab set + order.
 const TABS: TabDef[] = [
-  { key: "fermentables", label: "Fermentables", color: hsTokens.malt, count: 4 },
+  { key: "fermentables", label: "Grain", color: hsTokens.malt, count: 4 },
   { key: "hops", label: "Hops", color: hsTokens.hops, count: 3 },
   { key: "mash", label: "Mash", color: hsTokens.roast, count: 1 },
   { key: "water", label: "Water", color: hsTokens.water },
@@ -50,12 +52,14 @@ const BREWSHEET_TAB: TabDef = {
   color: hsTokens.ink,
 };
 
+// base = the value at an empty bill (gravities sit at 1.000, the rest at 0);
+// target = the full-recipe value. The grains beat interpolates between them.
 const STATS = [
-  { label: "OG", value: "1.062" },
-  { label: "FG", value: "1.012" },
-  { label: "ABV", value: "6.6%" },
-  { label: "IBU", value: "52" },
-  { label: "CAL", value: "198" },
+  { label: "OG", base: 1, target: 1.062, accent: hsTokens.malt, fmt: (n: number) => n.toFixed(3) },
+  { label: "FG", base: 1, target: 1.012, accent: hsTokens.malt, fmt: (n: number) => n.toFixed(3) },
+  { label: "ABV", base: 0, target: 6.6, accent: hsTokens.honey, fmt: (n: number) => `${n.toFixed(1)}%` },
+  { label: "IBU", base: 0, target: 52, accent: hsTokens.hops, fmt: (n: number) => `${Math.round(n)}` },
+  { label: "CAL", base: 0, target: 198, accent: hsTokens.roast, fmt: (n: number) => `${Math.round(n)}` },
 ];
 
 const HOPS = [
@@ -67,9 +71,12 @@ const HOPS = [
 interface Props {
   activeTab: TabKey;
   onSelectTab: (key: TabKey) => void;
+  /** 0 = empty bill / all vitals at 0, 1 = full recipe. Drives the grains
+   *  "live math" beat (stat count-ups, gauge + grain-bill animation). */
+  grainFill?: number;
 }
 
-export function V4Mock({ activeTab, onSelectTab }: Props) {
+export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
   const otherActive = !hopsActive && !brewsheetActive;
@@ -94,7 +101,10 @@ export function V4Mock({ activeTab, onSelectTab }: Props) {
           <MockHeader />
         </div>
         <div className="v4-dim">
-          <MockStats />
+          <MockStats grainFill={grainFill} />
+        </div>
+        <div className="v4-dim">
+          <StyleGuidelines grainFill={grainFill} />
         </div>
         <div className="v4-dim">
           <MockTabBar active={activeTab} onSelect={onSelectTab} />
@@ -131,7 +141,10 @@ export function V4Mock({ activeTab, onSelectTab }: Props) {
               pointerEvents: hopsActive ? "auto" : "none",
             }}
           >
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div className="v4-dim">
+              <SectionHead title="Hops." meta="3 in the bill · aroma" underline={hsTokens.hops} />
+            </div>
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginTop: 8 }}>
               <div className="v4-dim" style={{ flex: 1, minWidth: 0 }}>
                 <HopBillTable />
               </div>
@@ -143,7 +156,7 @@ export function V4Mock({ activeTab, onSelectTab }: Props) {
           </div>
 
           {/* Other sections (fermentables / mash / water / yeast / fermentation)
-              — simplified placeholder so the tabs are usable at rest. */}
+              — real at-rest content so the tabs are usable. */}
           <div
             style={{
               position: "absolute",
@@ -153,7 +166,7 @@ export function V4Mock({ activeTab, onSelectTab }: Props) {
               pointerEvents: otherActive ? "auto" : "none",
             }}
           >
-            <SectionPlaceholder active={activeTab} />
+            <TabSection active={activeTab} grainFill={grainFill} />
           </div>
         </div>
       </div>
@@ -203,6 +216,10 @@ export function V4Mock({ activeTab, onSelectTab }: Props) {
           transition: "opacity 0.25s ease",
           transformOrigin: "0 0",
           willChange: "transform, opacity",
+          // Display-only (scroll/GSAP-driven). Never intercept clicks — the
+          // invisible box + nub otherwise overlay the tab bar + body and block
+          // the tabs / interactive salts underneath.
+          pointerEvents: "none",
         }}
       >
         {/* The "Brew sheet" tab nub — sticks out above the box and lifts with
@@ -319,8 +336,8 @@ function MockHeader() {
       <h2
         style={{
           fontFamily: hsTokens.display,
-          fontSize: "clamp(28px, 3.4vw, 40px)",
-          letterSpacing: "-0.03em",
+          fontSize: "clamp(26px, 3vw, 34px)",
+          letterSpacing: "-0.035em",
           color: hsTokens.ink,
           margin: "14px 0 10px",
           lineHeight: 0.95,
@@ -330,101 +347,108 @@ function MockHeader() {
       </h2>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        <PaperPill label="STYLE" value="American IPA · 21A ▾" color={hsTokens.malt} />
-        <PaperPill label="BATCH" value="5 gal · 60 min ▾" color={hsTokens.water} />
-        <PaperPill label="" value="Profile · BIAB ▾" color={hsTokens.roast} />
+        <PaperPill label="STYLE" value="American IPA · 21A ▾" />
+        <PaperPill label="BATCH" value="5 gal · 60 min ▾" />
+        <GhostPill>Profile · BIAB ▾</GhostPill>
+        <GhostPill subdued>Advanced</GhostPill>
       </div>
     </div>
   );
 }
 
-function PaperPill({
-  label,
-  value,
-  color,
+function PaperPill({ label, value }: { label: string; value: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 12px 5px 10px",
+        background: hsTokens.paper,
+        border: `2px solid ${hsTokens.ink}`,
+        borderRadius: 999,
+        fontFamily: hsTokens.body,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: hsTokens.muted,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 12, fontWeight: 600, color: hsTokens.ink }}>{value}</span>
+    </span>
+  );
+}
+
+function GhostPill({
+  children,
+  subdued = false,
 }: {
-  label: string;
-  value: string;
-  color: string;
+  children: React.ReactNode;
+  subdued?: boolean;
 }) {
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
-        padding: "8px 14px 8px 10px",
-        background: hsTokens.paper,
-        border: `2px solid ${hsTokens.ink}`,
+        gap: 6,
+        padding: subdued ? "4px 11px" : "5px 13px",
+        background: "transparent",
+        border: `1.5px solid color-mix(in oklch, ${hsTokens.ink} 35%, transparent)`,
         borderRadius: 999,
-        boxShadow: "2px 2px 0 var(--hs-ink)",
         fontFamily: hsTokens.body,
-        fontSize: 12,
-        color: hsTokens.muted,
+        fontSize: subdued ? 9 : 12,
+        fontWeight: subdued ? 800 : 600,
+        color: subdued ? hsTokens.muted : hsTokens.ink,
+        letterSpacing: subdued ? "0.14em" : "0.01em",
+        textTransform: subdued ? "uppercase" : "none",
         whiteSpace: "nowrap",
       }}
     >
-      <span
-        aria-hidden
-        style={{
-          width: 8,
-          height: 8,
-          background: color,
-          border: `1.5px solid ${hsTokens.ink}`,
-          borderRadius: 2,
-          flexShrink: 0,
-        }}
-      />
-      {label ? (
-        <span
-          style={{
-            fontWeight: 800,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            fontSize: 9,
-          }}
-        >
-          {label}
-        </span>
-      ) : null}
-      <span
-        style={{
-          fontFamily: hsTokens.display,
-          fontSize: 13,
-          color: hsTokens.ink,
-          letterSpacing: "-0.02em",
-        }}
-      >
-        {value}
-      </span>
+      {children}
     </span>
   );
 }
 
-function MockStats() {
-  const srm = 6.2;
-  const srmColor = srmToRgb(srm);
+function MockStats({ grainFill = 1 }: { grainFill?: number }) {
+  const srm = 6.2 * grainFill;
+  const srmColor = srmToRgb(Math.max(0.1, srm));
   return (
     <div
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(5, minmax(0, 1fr)) auto",
-        gap: 8,
-        marginTop: 14,
+        gap: 6,
+        marginTop: 12,
       }}
     >
       {STATS.map((s) => (
         <div
           key={s.label}
           style={{
+            position: "relative",
             background: hsTokens.paper,
             border: `2px solid ${hsTokens.ink}`,
             borderRadius: 8,
             boxShadow: "2px 2px 0 var(--hs-ink)",
-            padding: "10px 12px 12px",
+            padding: "8px 6px 7px",
+            textAlign: "center",
             minWidth: 0,
+            overflow: "hidden",
           }}
         >
+          <span
+            aria-hidden
+            style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: s.accent }}
+          />
           <div
             style={{
               fontFamily: hsTokens.body,
@@ -440,30 +464,39 @@ function MockStats() {
           <div
             style={{
               fontFamily: hsTokens.display,
-              fontSize: 24,
-              letterSpacing: "-0.03em",
+              fontSize: 18,
+              letterSpacing: "-0.035em",
               color: hsTokens.ink,
-              marginTop: 2,
+              marginTop: 1,
               fontVariantNumeric: "tabular-nums",
+              lineHeight: 1,
             }}
           >
-            {s.value}
+            {s.fmt(s.base + (s.target - s.base) * grainFill)}
           </div>
         </div>
       ))}
       <div
         style={{
+          position: "relative",
           background: hsTokens.paper,
           border: `2px solid ${hsTokens.ink}`,
           borderRadius: 8,
           boxShadow: "2px 2px 0 var(--hs-ink)",
-          padding: "10px 14px 12px",
+          padding: "6px 10px 7px",
           minWidth: 0,
+          textAlign: "center",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
+          alignItems: "center",
+          gap: 1,
+          overflow: "hidden",
         }}
       >
+        <span
+          aria-hidden
+          style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: srmColor }}
+        />
         <div
           style={{
             fontFamily: hsTokens.body,
@@ -476,31 +509,53 @@ function MockStats() {
         >
           SRM
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-          <span
-            aria-hidden
-            style={{
-              width: 16,
-              height: 16,
-              background: srmColor,
-              border: `1.5px solid ${hsTokens.ink}`,
-              borderRadius: 3,
-            }}
-          />
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <BeerGlass color={srmColor} />
           <span
             style={{
               fontFamily: hsTokens.display,
-              fontSize: 24,
-              letterSpacing: "-0.03em",
+              fontSize: 16,
+              letterSpacing: "-0.035em",
               color: hsTokens.ink,
               fontVariantNumeric: "tabular-nums",
+              lineHeight: 1,
             }}
           >
-            {srm}
+            {srm.toFixed(1)}
           </span>
         </div>
       </div>
     </div>
+  );
+}
+
+function BeerGlass({ color }: { color: string }) {
+  return (
+    <svg width={16} height={20} viewBox="0 0 22 26" aria-hidden>
+      <defs>
+        <clipPath id="v4-glass-clip">
+          <path d="M 3 2 L 19 2 L 17 24 L 5 24 Z" />
+        </clipPath>
+      </defs>
+      <path
+        d="M 3 2 L 19 2 L 17 24 L 5 24 Z"
+        fill={hsTokens.paper}
+        stroke={hsTokens.ink}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <rect x={3} y={6} width={16} height={18} fill={color} clipPath="url(#v4-glass-clip)" />
+      <ellipse
+        cx={11}
+        cy={5}
+        rx={7}
+        ry={2}
+        fill="#fff8e2"
+        stroke={hsTokens.ink}
+        strokeWidth={1}
+        clipPath="url(#v4-glass-clip)"
+      />
+    </svg>
   );
 }
 
@@ -604,51 +659,6 @@ function TabButton({
         </span>
       ) : null}
     </button>
-  );
-}
-
-// Minimal stand-in for the not-yet-built sections, so the tabs are usable.
-function SectionPlaceholder({ active }: { active: TabKey }) {
-  const label =
-    TABS.find((t) => t.key === active)?.label ??
-    BREWSHEET_TAB.label;
-  return (
-    <div
-      style={{
-        height: "100%",
-        minHeight: 150,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        background: `color-mix(in oklch, ${hsTokens.ink} 3%, transparent)`,
-        border: `2px dashed color-mix(in oklch, ${hsTokens.ink} 22%, transparent)`,
-        borderRadius: 12,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: hsTokens.display,
-          fontSize: 22,
-          letterSpacing: "-0.02em",
-          color: hsTokens.ink,
-        }}
-      >
-        {label}.
-      </div>
-      <div
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 11,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: hsTokens.muted,
-        }}
-      >
-        section
-      </div>
-    </div>
   );
 }
 
