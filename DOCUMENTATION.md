@@ -975,7 +975,7 @@ The app includes an extensive grain database (`presets.generated.grains.json`) w
 - **Sugars**: Candi syrup, table sugar, honey, maple syrup
 
 Each grain includes:
-- **Name** and vendor
+- **Name** (full "Vendor - Product"), plus split **producer** + **productName** fields
 - **Color** (°Lovibond)
 - **Potential** (GU/PPG)
 - **Type** (grain/adjunct/extract/sugar)
@@ -983,18 +983,16 @@ Each grain includes:
 
 ### Hop Presets
 
-144 hop varieties with detailed profiles including:
-- **Alpha acid %** (typical)
+224 hop varieties (`presets.generated.hops.json`) with:
+- **Alpha & beta acid %**, **total oil**, **cohumulone**, **origin** — facts from kasperg3's HopDatabase (MIT), which aggregates grower specs
+- **Flavor profile** (9-axis 0–5 radar): Citrus, Tropical Fruit, Stone Fruit, Berry, Floral, Grassy, Herbal, Spice, Resin/Pine — 65 hand-curated, the rest derived from grower aroma data and reconciled against BeerMaverick (provenance per hop via `flavorSource` / `flavorConfidence`)
 - **Category** (US, Noble, NZ, Australian, English, German)
-- **Flavor profile** (9-axis radar data)
-  - Citrus, Tropical Fruit, Stone Fruit, Berry
-  - Floral, Grassy, Herbal, Spice, Resin/Pine
 
 Popular varieties: Cascade, Citra, Mosaic, Simcoe, Galaxy, Nelson Sauvin, Saaz, Hallertau Mittelfrüh, etc.
 
 ### Yeast Presets
 
-200+ yeast strains from 7 major laboratories:
+143 yeast strains from major laboratories (thin fields today — structured enrichment planned, see docs/ingredient-data-plan.md):
 - **Escarpment Labs**: 40+ strains
 - **Wyeast**: 30+ strains
 - **Fermentis**: SafAle, SafLager, SafBrew series

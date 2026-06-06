@@ -53,6 +53,8 @@ export default tseslint.config([
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/no-static-element-interactions': 'warn',
       'jsx-a11y/no-noninteractive-element-interactions': 'warn',
+      // Focusable cards (role + tabIndex + key handler) are an intentional pattern here
+      'jsx-a11y/no-noninteractive-tabindex': 'warn',
       // autoFocus can be appropriate in modals for UX; warn rather than error
       'jsx-a11y/no-autofocus': 'warn',
 

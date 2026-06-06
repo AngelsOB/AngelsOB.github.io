@@ -12,6 +12,8 @@ export type FermentablePreset = {
   type: "grain" | "adjunct_mashable" | "extract" | "sugar";
   originCode?: string; // ISO-3166-1 alpha-2 (e.g., US, DE, GB)
   fermentability?: number; // 0-1, override for non-standard ingredients
+  producer?: string; // maltster/vendor, parsed from "Vendor - Product" names
+  productName?: string; // product name without the vendor prefix, for display
 };
 
 // Hop flavor keys in radar order
