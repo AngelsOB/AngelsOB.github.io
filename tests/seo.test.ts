@@ -80,25 +80,13 @@ describe('SEO: PWA icon assets', () => {
   })
 })
 
-// ── Seed recipe ID consistency ──────────────────────────────────────────
+// ── Sitemap recipe inclusion ────────────────────────────────────────────
 
-describe('SEO: sitemap seed IDs match seed-recipes data', () => {
-  test('hardcoded sitemap IDs equal actual SEED_RECIPES IDs', async () => {
-    const { SEED_RECIPES } = await import('../src/data/seed-recipes')
-    const actualIds = SEED_RECIPES.map((r) => r.id)
-
-    // Extract the hardcoded array from sitemap.ts source
-    const sitemapSource = readFileSync(
-      resolve(appDir, 'sitemap.ts'),
-      'utf-8'
-    )
-    const match = sitemapSource.match(/seedRecipeIds\s*=\s*\[([^\]]+)\]/)
-    expect(match).not.toBeNull()
-
-    const sitemapIds = match![1]
-      .match(/'([^']+)'/g)!
-      .map((s) => s.replace(/'/g, ''))
-
-    expect(sitemapIds).toEqual(actualIds)
+// Seed recipes are now published into Firestore and emitted dynamically by
+// the sitemap (from the publicRecipeIndex collection), not a hardcoded array.
+describe('SEO: sitemap includes published recipes dynamically', () => {
+  test('sitemap sources published recipes from Firestore', () => {
+    const sitemapSource = readFileSync(resolve(appDir, 'sitemap.ts'), 'utf-8')
+    expect(sitemapSource).toContain('publicRecipeIndex')
   })
 })

@@ -13,6 +13,8 @@ export type GrainPreset = {
   potentialGu: number; // GU/PPG at 100% conversion (as-is)
   type?: "grain" | "adjunct_mashable" | "extract" | "sugar"; // optional; default to grain
   originCode?: string; // ISO-3166-1 alpha-2 (e.g., US, DE, GB)
+  producer?: string; // maltster/vendor, parsed from "Vendor - Product" names
+  productName?: string; // product name without the vendor prefix, for display
 };
 
 export type HopPreset = {
@@ -779,7 +781,7 @@ export function getGrainPresetsGroupedByVendor(): Array<{
 
   for (const p of getGrainPresets()) {
     const group = inferGrainGroup(p);
-    const vendor = inferVendorFromName(p.name) || "Generic";
+    const vendor = p.producer || inferVendorFromName(p.name) || "Generic";
     add(group, vendor, p);
   }
 

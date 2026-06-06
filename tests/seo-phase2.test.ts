@@ -243,24 +243,11 @@ describe('SEO Phase 2: auth-gated pages have noindex', () => {
 
 // ── Seed recipe page metadata ──────────────────────────────────────────
 
-describe('SEO Phase 2: seed recipe pages', () => {
-  test('seed page is a server component (no "use client")', () => {
-    const source = readFileSync(
-      resolve(appDir, 'r', 'seed', '[id]', 'page.tsx'),
-      'utf-8',
-    )
-    expect(source).not.toContain("'use client'")
-    expect(source).not.toContain('"use client"')
-  })
-
-  test('seed page has generateMetadata export', () => {
-    const source = readFileSync(
-      resolve(appDir, 'r', 'seed', '[id]', 'page.tsx'),
-      'utf-8',
-    )
-    expect(source).toContain('generateMetadata')
-  })
-
+// Seed recipes are now published into Firestore as regular public recipes
+// (served by /r/[slug] — see scripts/publish-seeds.ts). The old static
+// /r/seed/[id] route was removed; its server-component / generateMetadata
+// coverage now lives in the /r/[slug] suite below. We still validate the data.
+describe('SEO Phase 2: seed recipes', () => {
   test('all seed recipes produce valid calculations', async () => {
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
@@ -287,7 +274,12 @@ describe('SEO Phase 2: OG image', () => {
   })
 
   test('exports alt, size, and contentType constants', () => {
-    const source = readFileSync(ogImagePath, 'utf-8')
+    // /r/[slug] re-exports these from the betabuilder OG image, where the
+    // constants are actually defined.
+    const source = readFileSync(
+      resolve(appDir, 'betabuilder', 'r', '[slug]', 'opengraph-image.tsx'),
+      'utf-8',
+    )
     expect(source).toContain('export const alt')
     expect(source).toContain('export const size')
     expect(source).toContain('export const contentType')

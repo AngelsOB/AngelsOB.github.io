@@ -250,17 +250,18 @@ function rebalanceLastRow(rows: BottleEntry[], batchML: number): BottleEntry[] {
 export default function PackagingSection() {
   const { currentRecipe, updateRecipe } = useRecipeStore();
 
+  // Hook must run unconditionally — keep it above the early return below.
+  const styleSuggestion = useMemo(() => {
+    if (!currentRecipe?.style) return null;
+    return calc.styleCo2Range(currentRecipe.style);
+  }, [currentRecipe?.style]);
+
   if (!currentRecipe) return null;
 
   const pkg = currentRecipe.packaging;
 
   const highTemp = calc.highestFermTemp(currentRecipe.fermentationSteps);
   const residual = calc.residualCo2(highTemp);
-
-  const styleSuggestion = useMemo(() => {
-    if (!currentRecipe.style) return null;
-    return calc.styleCo2Range(currentRecipe.style);
-  }, [currentRecipe.style]);
 
   // Derived calculations
   const primingSugarG = pkg

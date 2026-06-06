@@ -75,7 +75,6 @@ export function buildRecipeJsonLd(
 
   // Build recipeInstructions from mash + fermentation steps
   const instructions: { '@type': string; name: string; text: string }[] = []
-  let stepIndex = 1
 
   if (recipe.mashSteps?.length) {
     for (const step of recipe.mashSteps) {
@@ -84,7 +83,6 @@ export function buildRecipeJsonLd(
         name: `Mash: ${step.name}`,
         text: `${step.name} at ${step.temperatureC}°C for ${step.durationMinutes} minutes.`,
       })
-      stepIndex++
     }
   }
 
@@ -97,14 +95,12 @@ export function buildRecipeJsonLd(
       name: 'Boil',
       text: `Boil for ${boilTime} minutes. Hop additions: ${hopList}.`,
     })
-    stepIndex++
   } else {
     instructions.push({
       '@type': 'HowToStep',
       name: 'Boil',
       text: `Boil for ${boilTime} minutes.`,
     })
-    stepIndex++
   }
 
   if (recipe.fermentationSteps?.length) {
@@ -117,7 +113,6 @@ export function buildRecipeJsonLd(
         name: `Fermentation: ${step.name || step.type}`,
         text: `${parts.join(' ')}.`,
       })
-      stepIndex++
     }
   }
 
