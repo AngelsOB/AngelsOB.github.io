@@ -4,6 +4,7 @@ import { useState } from "react";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import type { TabKey } from "./V4Mock";
+import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 
 // At-rest content for the mock's non-hops, non-brewsheet tabs. The mock is a
 // usable mini builder, so clicking Fermentables / Mash / Water / Yeast /
@@ -26,19 +27,18 @@ const YEAST = hsTokens.yeast;
 const HONEY = hsTokens.honey;
 const HOPS = hsTokens.hops;
 
-export function TabSection({ active, grainFill = 1 }: { active: TabKey; grainFill?: number }) {
+export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive = false, data }: { active: TabKey; grainFill?: number; tempShift?: number; honestActive?: boolean; data?: V4MockData }) {
   switch (active) {
     case "fermentables":
-      return <FermentablesSection grainFill={grainFill} />;
+      return <FermentablesSection grainFill={grainFill} data={data} />;
     case "mash":
-      return <MashSection />;
-    case "water":
-      return <WaterSection />;
+      return <MashSection tempShift={tempShift} honestActive={honestActive} data={data} />;
     case "yeast":
-      return <YeastSection />;
+      return <YeastSection data={data} />;
     case "fermentation":
-      return <FermentationSection />;
+      return <FermentationSection data={data} />;
     default:
+      // water is a scene-level pop-out (rendered by V4Mock), not in-body.
       return null;
   }
 }
@@ -122,33 +122,39 @@ export const GRAIN_STEP_LEVELS = (() => {
   return GRAINS.map((g) => (acc += g.lb) / GRAIN_TOTAL);
 })();
 
-function FermentablesSection({ grainFill = 1 }: { grainFill?: number }) {
-  // Each grain reveals during ITS step of the staircase build: grain i fills in
-  // as grainFill rises from the previous step level to its own, so grains appear
-  // one at a time, in lockstep with the number jumps (see GRAIN_STEP_LEVELS).
+function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data?: V4MockData }) {
+  // Sample uses the hardcoded GRAINS + staircase; data mode (signed-in hero)
+  // uses the recipe's grain bill. grainFill is 1 in data mode, so every grain
+  // reveals fully. Cumulative weight fractions are computed from whichever bill.
+  const grainsList = data ? data.grains : GRAINS;
+  const total = (data ? data.grainTotalLb : GRAIN_TOTAL) || 1;
+  const cum = (() => {
+    let acc = 0;
+    return grainsList.map((g) => (acc += g.lb) / total);
+  })();
   const reveal = (i: number) => {
-    const lo = i === 0 ? 0 : GRAIN_STEP_LEVELS[i - 1];
-    const hi = GRAIN_STEP_LEVELS[i];
-    return Math.max(0, Math.min(1, (grainFill - lo) / (hi - lo)));
+    const lo = i === 0 ? 0 : cum[i - 1];
+    const hi = cum[i];
+    return Math.max(0, Math.min(1, (grainFill - lo) / (hi - lo || 1)));
   };
-  const revealedLb = GRAINS.reduce((s, g, i) => s + g.lb * reveal(i), 0);
-  const revealedCount = GRAINS.filter((_, i) => reveal(i) > 0.5).length;
+  const revealedLb = grainsList.reduce((s, g, i) => s + g.lb * reveal(i), 0);
+  const revealedCount = grainsList.filter((_, i) => reveal(i) > 0.5).length;
   return (
     <SectionBody gap={7}>
       <SectionHead title="Grain." meta={`${revealedCount} in the bill · ${revealedLb.toFixed(1)} lb`} underline={MALT} />
       {/* bill stack — each segment grows in with its grain */}
       <div style={{ height: 11, background: hsTokens.cream2, border: `1.5px solid ${INK}`, borderRadius: 999, overflow: "hidden", display: "flex" }}>
-        {GRAINS.map((g, i) => (
-          <div key={g.name} style={{ width: `${(g.lb / GRAIN_TOTAL) * 100 * reveal(i)}%`, background: srmToRgb(g.srm) }} />
+        {grainsList.map((g, i) => (
+          <div key={`${g.name}-${i}`} style={{ width: `${(g.lb / total) * 100 * reveal(i)}%`, background: srmToRgb(g.srm) }} />
         ))}
       </div>
       {/* ledger rows — fade + slide in as each grain is added */}
       <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
-        {GRAINS.map((g, i) => {
+        {grainsList.map((g, i) => {
           const r = reveal(i);
           return (
           <div
-            key={g.name}
+            key={`${g.name}-${i}`}
             style={{ display: "flex", alignItems: "center", gap: 9, padding: "5px 9px", background: hsTokens.cream, border: `2px solid ${INK}`, borderRadius: 9, boxShadow: "2px 2px 0 var(--hs-ink)", opacity: r, transform: `translateY(${(1 - r) * 6}px)` }}
           >
             <span
@@ -180,7 +186,7 @@ function FermentablesSection({ grainFill = 1 }: { grainFill?: number }) {
             </div>
             <Chip minWidth={56}>{g.weight}</Chip>
             <span style={{ fontFamily: hsTokens.mono, fontSize: 11, fontWeight: 700, color: hsTokens.muted, minWidth: 38, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-              {Math.round((g.lb / GRAIN_TOTAL) * 100)}%
+              {Math.round((g.lb / total) * 100)}%
             </span>
           </div>
           );
@@ -192,37 +198,75 @@ function FermentablesSection({ grainFill = 1 }: { grainFill?: number }) {
 
 // ─── Mash — numbered steps + pH gauge ────────────────────────────────────────
 
-function MashSection() {
+function MashSection({ tempShift = 0, honestActive = false, data }: { tempShift?: number; honestActive?: boolean; data?: V4MockData }) {
+  const m = data?.mash ?? null;
+  // Sample: the honest-numbers beat sweeps the mash temp (tempShift); FG follows
+  // it with a lag. Data mode: show the recipe's mash step (tempShift is 0).
+  const mashTempF = m ? m.tempF : Math.round(152 + 4 * tempShift);
+  const stepName = m?.stepName ?? "Saccharification rest";
+  const timeMin = m?.timeMin ?? 60;
+  const strike = m?.strikeF ?? "164°F";
+  const mashWater = m?.mashWater ?? "4.0 gal";
+  const sparge = m?.sparge ?? "3.5 gal";
+  const ph = m ? m.phValue : 5.38;
+  const phText = ph != null ? ph.toFixed(2) : "—";
+  const phPos = ph != null ? Math.max(0, Math.min(1, (ph - 5.0) / 0.8)) * 100 : 50;
+  const phInRange = ph != null && ph >= 5.2 && ph <= 5.6;
+  // Honest-numbers beat: dim the rest of the mash section so the (full, grown)
+  // temp chip clearly reads as the thing being changed. 1 outside the beat / hero.
+  // The step-row card's FRAME fades via colour (not opacity) so the chip inside it
+  // stays full — opacity on the card would dim the chip too.
+  const dim = honestActive ? 0.4 : 1;
+  const dimTr = "opacity 0.4s ease";
+  const dimBorder = honestActive ? `color-mix(in oklch, ${INK} 40%, transparent)` : INK;
+  const dimShadow = honestActive
+    ? "2px 2px 0 color-mix(in oklch, var(--hs-ink) 40%, transparent)"
+    : "2px 2px 0 var(--hs-ink)";
   return (
     <SectionBody>
-      <SectionHead title="Mash." meta="single infusion · BIAB" underline={ROAST} />
-      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 11px", background: hsTokens.cream, border: `2px solid ${INK}`, borderRadius: 10, boxShadow: "2px 2px 0 var(--hs-ink)" }}>
-        <span aria-hidden style={{ width: 32, height: 32, background: `color-mix(in oklch, ${ROAST} 40%, ${hsTokens.cream})`, border: `1.5px solid ${INK}`, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: hsTokens.display, fontSize: 15, color: INK, fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ opacity: dim, transition: dimTr }}>
+        <SectionHead title="Mash." meta={data ? "single infusion" : "single infusion · BIAB"} underline={ROAST} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 11px", background: hsTokens.cream, border: `2px solid ${dimBorder}`, borderRadius: 10, boxShadow: dimShadow, transition: "border-color 0.4s ease, box-shadow 0.4s ease" }}>
+        <span aria-hidden style={{ width: 32, height: 32, background: `color-mix(in oklch, ${ROAST} 40%, ${hsTokens.cream})`, border: `1.5px solid ${INK}`, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: hsTokens.display, fontSize: 15, color: INK, fontVariantNumeric: "tabular-nums", opacity: dim, transition: dimTr }}>
           1
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: hsTokens.body, fontSize: 13, fontWeight: 700, color: INK }}>Saccharification rest</div>
+        <div style={{ flex: 1, minWidth: 0, opacity: dim, transition: dimTr }}>
+          <div style={{ fontFamily: hsTokens.body, fontSize: 13, fontWeight: 700, color: INK }}>{stepName}</div>
           <div style={{ fontFamily: hsTokens.body, fontSize: 9.5, fontWeight: 600, color: hsTokens.muted, letterSpacing: "0.04em", marginTop: 2 }}>hold mash temperature</div>
         </div>
-        <Chip>152°F</Chip>
-        <span style={{ fontFamily: hsTokens.mono, fontSize: 11, fontWeight: 700, color: hsTokens.muted, minWidth: 52, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>60 min</span>
+        <span
+          style={{
+            display: "inline-block",
+            position: "relative",
+            zIndex: honestActive ? 6 : undefined,
+            transform: `scale(${honestActive ? 1.6 : 1})`,
+            transformOrigin: "center",
+            filter: honestActive ? "drop-shadow(0 8px 14px rgba(0,0,0,0.2))" : "none",
+            transition:
+              "transform 0.45s cubic-bezier(0.34,1.56,0.64,1), filter 0.45s ease",
+          }}
+        >
+          <Chip>{mashTempF}°F</Chip>
+        </span>
+        <span style={{ fontFamily: hsTokens.mono, fontSize: 11, fontWeight: 700, color: hsTokens.muted, minWidth: 52, textAlign: "right", fontVariantNumeric: "tabular-nums", opacity: dim, transition: dimTr }}>{timeMin} min</span>
       </div>
       {/* strike / volumes strip */}
-      <div style={{ display: "flex", gap: 6 }}>
-        <MiniStat label="Strike" value="164°F" />
-        <MiniStat label="Mash water" value="4.0 gal" />
-        <MiniStat label="Sparge" value="3.5 gal" />
+      <div style={{ display: "flex", gap: 6, opacity: dim, transition: dimTr }}>
+        <MiniStat label="Strike" value={strike} />
+        <MiniStat label="Mash water" value={mashWater} />
+        <MiniStat label="Sparge" value={sparge} />
       </div>
       {/* pH gauge */}
-      <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", background: hsTokens.cream2, border: `1.5px solid ${INK}`, borderRadius: 8 }}>
+      <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", background: hsTokens.cream2, border: `1.5px solid ${INK}`, borderRadius: 8, opacity: dim, transition: dimTr }}>
         <span style={{ fontFamily: hsTokens.body, fontSize: 8.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted }}>Mash pH</span>
         <div style={{ position: "relative", flex: 1, height: 8, background: hsTokens.paper, border: `1.5px solid ${INK}`, borderRadius: 999, overflow: "hidden" }}>
           {/* ideal band 5.2-5.6 across a 5.0-5.8 track */}
           <span aria-hidden style={{ position: "absolute", top: 0, bottom: 0, left: "25%", width: "50%", background: `color-mix(in oklch, ${HOPS} 28%, transparent)` }} />
-          <span aria-hidden style={{ position: "absolute", top: -3, bottom: -3, left: `${((5.38 - 5.0) / 0.8) * 100}%`, transform: "translateX(-50%)", width: 2.5, background: INK, borderRadius: 1 }} />
+          <span aria-hidden style={{ position: "absolute", top: -3, bottom: -3, left: `${phPos}%`, transform: "translateX(-50%)", width: 2.5, background: INK, borderRadius: 1 }} />
         </div>
-        <span style={{ fontFamily: hsTokens.display, fontSize: 15, color: INK, fontVariantNumeric: "tabular-nums" }}>5.38</span>
-        <span aria-hidden style={{ width: 7, height: 7, background: HOPS, border: `1px solid ${INK}`, borderRadius: 999 }} title="in range" />
+        <span style={{ fontFamily: hsTokens.display, fontSize: 15, color: INK, fontVariantNumeric: "tabular-nums" }}>{phText}</span>
+        <span aria-hidden style={{ width: 7, height: 7, background: phInRange ? HOPS : ROAST, border: `1px solid ${INK}`, borderRadius: 999 }} title={phInRange ? "in range" : "out of range"} />
       </div>
     </SectionBody>
   );
@@ -262,48 +306,82 @@ const ION_META: IonMeta[] = [
   { key: "HCO3", label: "HCO₃", color: hsTokens.muted, max: 150, tMin: 0, tMax: 60 },
 ];
 
-function WaterSection() {
+export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data?: V4MockData["water"] }) {
   const [salts, setSalts] = useState<number[]>(SALT_DEFAULTS);
+  const autoCalc = () => setSalts(SALT_DEFAULTS);
+  // Sample/tour: the salts animate up to SALT_DEFAULTS on the solve beat, and the
+  // ion bars recompute from them. Data mode (signed-in hero): show the recipe's
+  // own salts + final ion profile, read-only.
+  const solving = !data && waterFill < 1;
+  const readOnly = !!data;
+  const displayed = data
+    ? data.salts.map((s) => s.grams)
+    : solving
+      ? SALT_DEFAULTS.map((s) => s * waterFill)
+      : salts;
   const bump = (i: number, d: number) =>
     setSalts((prev) => prev.map((g, j) => (j === i ? Math.max(0, Math.round((g + d) * 10) / 10) : g)));
-  const ions: Record<string, number> = { ...SOURCE_IONS };
-  SALT_DEFS.forEach((def, i) => {
-    for (const [ion, ppm] of Object.entries(def.contributes)) ions[ion] += salts[i] * ppm;
-  });
+  let ions: Record<string, number>;
+  if (data) {
+    ions = data.ions;
+  } else {
+    ions = { ...SOURCE_IONS };
+    SALT_DEFS.forEach((def, i) => {
+      for (const [ion, ppm] of Object.entries(def.contributes)) ions[ion] += displayed[i] * ppm;
+    });
+  }
+  const sourceName = data ? data.sourceName : "RO";
+  const targetLabel = data ? `${data.targetName} ▾` : "BJCP · Hoppy ▾";
+  const meta = data
+    ? `target · ${data.targetName}`
+    : solving
+      ? "auto-calc solving…"
+      : "target · American IPA";
   return (
     <SectionBody gap={7}>
-      <SectionHead title="Water." meta="target · American IPA" underline={WATER} />
-      {/* source -> target */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* header RECEDES with the mock on the beat (it's not a breakout piece) */}
+      <div data-v4="water-header" style={{ transformOrigin: "left center", willChange: "transform" }}>
+        <SectionHead title="Water." meta={meta} underline={WATER} />
+      </div>
+      {/* source -> target + Auto-Calc — lifts above on the beat */}
+      <div data-v4="water-controls" style={{ display: "flex", alignItems: "center", gap: 6, transformOrigin: "center center", willChange: "transform" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: hsTokens.paper, border: `2px solid ${INK}`, borderRadius: 999, fontFamily: hsTokens.body, fontSize: 10.5, fontWeight: 600, color: INK }}>
           <span style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted }}>Source</span>
-          RO
+          {sourceName}
         </span>
         <span style={{ color: hsTokens.muted, fontSize: 12 }}>→</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: WATER, border: `2px solid ${INK}`, borderRadius: 999, fontFamily: hsTokens.body, fontSize: 10.5, fontWeight: 700, color: "#fff", boxShadow: "2px 2px 0 var(--hs-ink)" }}>
-          BJCP · Hoppy ▾
+          {targetLabel}
         </span>
+        <button
+          type="button"
+          data-v4="water-autocalc"
+          onClick={readOnly ? undefined : autoCalc}
+          style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", background: HONEY, border: `2px solid ${INK}`, borderRadius: 999, boxShadow: "2px 2px 0 var(--hs-ink)", fontFamily: hsTokens.body, fontSize: 11, fontWeight: 800, color: INK, cursor: readOnly ? "default" : "pointer", whiteSpace: "nowrap", transformOrigin: "center center" }}
+        >
+          <span aria-hidden style={{ fontSize: 12 }}>⚡</span> Auto-Calc
+        </button>
       </div>
       {/* 2-col: interactive salts | ion bars */}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.05fr)", gap: 9, flex: 1, minHeight: 0 }}>
-        {/* salts — +/- recompute the profile */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {/* salts — +/- recompute the profile (pops LEFT + grows on the beat) */}
+        <div data-v4="water-salts" style={{ display: "flex", flexDirection: "column", gap: 4, transformOrigin: "right center", willChange: "transform" }}>
           {SALT_DEFS.map((s, i) => (
             <div key={s.short} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 6, padding: "4px 6px 4px 8px", background: hsTokens.cream, border: `1.5px solid ${INK}`, borderRadius: 8 }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: hsTokens.body, fontSize: 10, fontWeight: 800, color: INK, letterSpacing: "0.02em", lineHeight: 1 }}>{s.short}</div>
                 <div style={{ fontSize: 7.5, color: hsTokens.muted, fontWeight: 600, lineHeight: 1.1, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
               </div>
-              <span style={{ fontFamily: hsTokens.mono, fontSize: 12, fontWeight: 700, color: INK, fontVariantNumeric: "tabular-nums", minWidth: 26, textAlign: "right" }}>{salts[i].toFixed(1)}</span>
-              <span style={{ display: "flex", gap: 3 }}>
+              <span style={{ fontFamily: hsTokens.mono, fontSize: 12, fontWeight: 700, color: INK, fontVariantNumeric: "tabular-nums", minWidth: 26, textAlign: "right" }}>{(displayed[i] ?? 0).toFixed(1)}</span>
+              <span style={{ display: "flex", gap: 3, opacity: solving || readOnly ? 0.25 : 1, pointerEvents: solving || readOnly ? "none" : "auto", transition: "opacity 0.3s ease" }}>
                 <SaltBtn label="−" onClick={() => bump(i, -0.1)} />
                 <SaltBtn label="+" onClick={() => bump(i, 0.1)} />
               </span>
             </div>
           ))}
         </div>
-        {/* ion bars */}
-        <div style={{ background: hsTokens.cream2, border: `2px solid ${INK}`, borderRadius: 10, padding: "7px 9px 8px", boxShadow: "2px 2px 0 var(--hs-ink)", display: "flex", flexDirection: "column" }}>
+        {/* ion bars (pops RIGHT + grows on the beat) */}
+        <div data-v4="water-ions" style={{ background: hsTokens.cream2, border: `2px solid ${INK}`, borderRadius: 10, padding: "7px 9px 8px", boxShadow: "2px 2px 0 var(--hs-ink)", display: "flex", flexDirection: "column", transformOrigin: "left center", willChange: "transform" }}>
           <div style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted, marginBottom: 4 }}>Profile · ppm</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, justifyContent: "center" }}>
             {ION_META.map((m) => (
@@ -347,35 +425,47 @@ function IonBar({ label, value, color, max, tMin, tMax }: { label: string; value
 
 // ─── Yeast — strain card + starter ───────────────────────────────────────────
 
-function YeastSection() {
+function YeastSection({ data }: { data?: V4MockData }) {
+  const y = data?.yeast ?? null;
+  const name = y?.name ?? "WLP001 · California Ale";
+  const sub = y ? `${y.lab} · Liquid` : "White Labs · Liquid · 1 vial = 100 B cells";
+  const atten = y ? `${y.attenPct}%` : "79%";
+  const temp = y?.tempF ?? "68°F";
+  const flocc = y?.flocc ?? "Med";
+  const meta = data ? (y?.starter ? "needs a starter" : "ready to pitch") : "needs a starter";
+  const starterTitle = y ? (y.starter ? y.starter.sizeText : "Pitch directly") : "2.0 L · stir plate";
+  const starterRight1 = y ? (y.starter ? y.starter.pitchText : "1 pack") : "100 B → 210 B";
+  const starterRight2 = y ? "" : "target 217 B";
   return (
     <SectionBody>
-      <SectionHead title="Yeast." meta="needs a starter" underline={YEAST} />
+      <SectionHead title="Yeast." meta={meta} underline={YEAST} />
       {/* strain card */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: hsTokens.cream, border: `2px solid ${INK}`, borderRadius: 12, boxShadow: "3px 3px 0 var(--hs-ink)" }}>
         <span aria-hidden style={{ width: 44, height: 44, background: YEAST, border: `2px solid ${INK}`, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: hsTokens.display, fontSize: 19, color: INK, boxShadow: "2px 2px 0 var(--hs-ink)" }}>
           ✿
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: hsTokens.display, fontSize: 18, letterSpacing: "-0.03em", color: INK, lineHeight: 1 }}>WLP001 · California Ale</div>
-          <div style={{ fontSize: 10, color: hsTokens.muted, marginTop: 3, fontWeight: 600 }}>White Labs · Liquid · 1 vial = 100 B cells</div>
+          <div style={{ fontFamily: hsTokens.display, fontSize: 18, letterSpacing: "-0.03em", color: INK, lineHeight: 1 }}>{name}</div>
+          <div style={{ fontSize: 10, color: hsTokens.muted, marginTop: 3, fontWeight: 600 }}>{sub}</div>
           <div style={{ display: "flex", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
-            <StatChip label="ATTEN" value="79%" />
-            <StatChip label="TEMP" value="68°F" />
-            <StatChip label="FLOCC" value="Med" />
+            <StatChip label="ATTEN" value={atten} />
+            <StatChip label="TEMP" value={temp} />
+            <StatChip label="FLOCC" value={flocc} />
           </div>
         </div>
       </div>
-      {/* starter — needed because 1 vial (100 B) is short of the pitch target */}
+      {/* starter */}
       <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 11, padding: "9px 12px", background: hsTokens.cream2, border: `2px solid ${INK}`, borderRadius: 10, boxShadow: "2px 2px 0 var(--hs-ink)" }}>
         <FlaskGlyph />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted }}>Starter</div>
-          <div style={{ fontFamily: hsTokens.display, fontSize: 15, letterSpacing: "-0.02em", color: INK, marginTop: 1 }}>2.0 L · stir plate</div>
+          <div style={{ fontFamily: hsTokens.display, fontSize: 15, letterSpacing: "-0.02em", color: INK, marginTop: 1 }}>{starterTitle}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontFamily: hsTokens.mono, fontSize: 11, fontWeight: 700, color: INK, fontVariantNumeric: "tabular-nums" }}>100 B → 210 B</div>
-          <div style={{ fontFamily: hsTokens.body, fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: hsTokens.muted, marginTop: 2 }}>target 217 B</div>
+          <div style={{ fontFamily: hsTokens.mono, fontSize: 11, fontWeight: 700, color: INK, fontVariantNumeric: "tabular-nums" }}>{starterRight1}</div>
+          {starterRight2 ? (
+            <div style={{ fontFamily: hsTokens.body, fontSize: 8, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: hsTokens.muted, marginTop: 2 }}>{starterRight2}</div>
+          ) : null}
         </div>
       </div>
     </SectionBody>
@@ -414,28 +504,31 @@ const FERM_STEPS = [
   { label: "Cold crash", temp: "34°F", days: 3, color: "#7faec9", dark: false, carb: false },
   { label: "Keg", temp: "12 PSI", days: 7, color: HONEY, dark: false, carb: true },
 ];
-const FERM_TOTAL = FERM_STEPS.reduce((s, st) => s + st.days, 0);
-const FERM_PACKAGE_DAY = FERM_STEPS.filter((s) => !s.carb).reduce((s, st) => s + st.days, 0);
+// Totals are computed per-render from the active step list (sample or recipe),
+// so no module-level totals here.
 // Carb segments get a faint diagonal stripe, signalling "estimated" — same as
 // the real JourneySegment.
 const CARB_STRIPE = "repeating-linear-gradient(135deg, transparent 0 6px, rgba(0,0,0,0.06) 6px 7px)";
 
-function FermentationSection() {
+function FermentationSection({ data }: { data?: V4MockData }) {
+  const steps = data && data.fermentation.length ? data.fermentation : FERM_STEPS;
+  const total = steps.reduce((s, st) => s + st.days, 0) || 1;
+  const packageDay = steps.filter((s) => !s.carb).reduce((s, st) => s + st.days, 0);
   return (
     <SectionBody gap={6}>
-      <SectionHead title="Fermentation." meta={`${FERM_TOTAL} days to glass`} underline={HONEY} />
+      <SectionHead title="Fermentation." meta={`${total} days to glass`} underline={HONEY} />
       {/* date pills */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <DatePill label="brew" date="Jun 4" />
-        <DatePill label="keg ready" date="Jun 30" right />
+        <DatePill label="brew" date={data ? "day 1" : "Jun 4"} />
+        <DatePill label={data ? "ready" : "keg ready"} date={data ? `day ${total}` : "Jun 30"} right />
       </div>
       {/* journey bar — flex by days, solid step color, label inside (≥12%) */}
       <div style={{ display: "flex", height: 32, background: hsTokens.paper, border: `1.5px solid ${INK}`, borderRadius: 8, overflow: "hidden", boxShadow: "2px 2px 0 var(--hs-ink)" }}>
-        {FERM_STEPS.map((s, i) => {
-          const pct = (s.days / FERM_TOTAL) * 100;
+        {steps.map((s, i) => {
+          const pct = (s.days / total) * 100;
           return (
             <div
-              key={s.label}
+              key={`${s.label}-${i}`}
               style={{
                 flex: `${s.days} 0 0`,
                 minWidth: 6,
@@ -460,15 +553,15 @@ function FermentationSection() {
       {/* day axis */}
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, fontFamily: hsTokens.mono, fontSize: 9, color: hsTokens.muted }}>
         <span aria-hidden style={{ flex: 1, borderTop: `1px dotted color-mix(in oklch, ${INK} 30%, transparent)`, position: "relative", top: -3 }} />
-        <span style={{ whiteSpace: "nowrap" }}>ferment {FERM_PACKAGE_DAY}d · carb {FERM_TOTAL - FERM_PACKAGE_DAY}d</span>
+        <span style={{ whiteSpace: "nowrap" }}>ferment {packageDay}d · carb {total - packageDay}d</span>
         <span aria-hidden style={{ flex: 1, borderTop: `1px dotted color-mix(in oklch, ${INK} 30%, transparent)`, position: "relative", top: -3 }} />
       </div>
       {/* per-step tiles — match the real StatTile: eyebrow label, big value,
           sub, accent top stripe, light border. */}
       <div style={{ display: "flex", gap: 6, flex: 1 }}>
-        {FERM_STEPS.map((s) => (
+        {steps.map((s, i) => (
           <div
-            key={s.label}
+            key={`${s.label}-${i}`}
             style={{
               flex: 1,
               minWidth: 0,

@@ -1,7 +1,8 @@
 "use client";
 
+import HSButton from "@/modules/hopskip/components/HSButton";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { STAGES } from "../data";
+import { CTA, STAGES } from "../data";
 
 // Left-column text blocks for the Phase 0 spike (Hero intro + Hops +
 // Brewsheet). Pure scrolling DOM. The Brewsheet block is the one GSAP
@@ -48,7 +49,7 @@ function sectionStyle(minVh: number): React.CSSProperties {
   };
 }
 
-export function StageIntro({ recipeCount }: { recipeCount: number }) {
+export function StageIntro() {
   const s = STAGES.hero;
   return (
     <section style={{ ...sectionStyle(72), justifyContent: "flex-end" }}>
@@ -63,24 +64,39 @@ export function StageIntro({ recipeCount }: { recipeCount: number }) {
           margin: "16px 0 18px",
         }}
       >
-        A recipe builder that{" "}
-        <span style={{ color: hsTokens.roast }}>thinks ahead.</span>
+        {s.headline.pre}
+        <span style={{ color: hsTokens.roast }}>{s.headline.accent}</span>
       </h1>
       <p style={{ ...bodyStyle, maxWidth: 560 }}>{s.subhead}</p>
-      <p style={{ ...eyebrowStyle, color: hsTokens.muted, marginTop: 10 }}>
-        {recipeCount.toLocaleString()} community recipes and counting
-      </p>
-      <p
+      <div
         style={{
-          fontFamily: hsTokens.body,
-          fontSize: 13,
-          color: hsTokens.muted,
-          marginTop: 28,
-          opacity: 0.7,
+          marginTop: 26,
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          flexWrap: "wrap",
         }}
       >
-        ↓ scroll
-      </p>
+        <HSButton
+          href={CTA.hero.href}
+          variant="ink"
+          color={hsTokens.roast}
+          size="lg"
+          arrow
+        >
+          {CTA.hero.label}
+        </HSButton>
+        <span
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 13,
+            color: hsTokens.muted,
+            fontStyle: "italic",
+          }}
+        >
+          {CTA.hero.note}
+        </span>
+      </div>
     </section>
   );
 }
@@ -127,6 +143,36 @@ export function StageHops() {
   const s = STAGES.hops;
   return (
     <section data-v4-stage="hops" style={sectionStyle(108)}>
+      <p style={eyebrowStyle}>{s.h2}</p>
+      <h2 style={leadStyle}>{s.lead}</h2>
+      {s.paragraphs.map((p, i) => (
+        <p key={i} style={bodyStyle}>
+          {p}
+        </p>
+      ))}
+    </section>
+  );
+}
+
+export function StageWater() {
+  const s = STAGES.water;
+  return (
+    <section data-v4-stage="water" style={sectionStyle(108)}>
+      <p style={eyebrowStyle}>{s.h2}</p>
+      <h2 style={leadStyle}>{s.lead}</h2>
+      {s.paragraphs.map((p, i) => (
+        <p key={i} style={bodyStyle}>
+          {p}
+        </p>
+      ))}
+    </section>
+  );
+}
+
+export function StageHonestNumbers() {
+  const s = STAGES.honestNumbers;
+  return (
+    <section data-v4-stage="honest" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
       <h2 style={leadStyle}>{s.lead}</h2>
       {s.paragraphs.map((p, i) => (

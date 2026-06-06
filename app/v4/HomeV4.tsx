@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,8 +15,21 @@ import {
   StageOpening,
   StageGrains,
   StageHops,
+  StageWater,
+  StageHonestNumbers,
   StageBrewSheet,
 } from "./stages/TourSections";
+import {
+  StageCompare,
+  StageLibraryCommunity,
+  StageWhatElse,
+  StageLearn,
+  StageFAQ,
+  StageClose,
+} from "./stages/PostTourSections";
+import { useAuthStore } from "@/modules/auth/authStore";
+import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
+import SignedInHeroV4 from "./SignedInHeroV4";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -40,7 +53,42 @@ const DEV_MARKERS = false;
  * The make-or-break question this spike answers: does the CSS-sticky mock
  * stay glued through the sibling text column's GSAP pin enter/release?
  */
-export default function HomeV4({ recipeCount }: Props) {
+// Auth-aware entry. Signed-out users (and the SSR/first-paint state, which keeps
+// the marketing tour indexable) get the hardcoded scroll tour. Signed-in users
+// get a personalized page: their recipes (hero) + community + learn + faq. The
+// tour itself is never data-driven — user recipes do not flow through the beats.
+export default function HomeV4({ recipes }: Props) {
+  const user = useAuthStore((s) => s.user);
+  const recipesLoaded = useRecipeStore((s) => s.recipesLoaded);
+  const loadRecipes = useRecipeStore((s) => s.loadRecipes);
+
+  useEffect(() => {
+    if (user && !recipesLoaded) loadRecipes();
+  }, [user, recipesLoaded, loadRecipes]);
+
+  // Stay on the tour until auth + recipes resolve (matches SSR, avoids a hydration
+  // mismatch), then swap signed-in users to their personalized page.
+  if (user && recipesLoaded) {
+    return <HomeV4SignedIn recipes={recipes} />;
+  }
+  return <HomeV4Tour recipes={recipes} />;
+}
+
+// Signed-in homepage: their recipes in the v4 mock + community + learn + faq.
+// No marketing tour. Reveal elements render at rest (no GSAP batch here), which
+// is fine — they're visible by default.
+function HomeV4SignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
+  return (
+    <div style={{ background: hsTokens.cream, overflowX: "hidden" }}>
+      <SignedInHeroV4 />
+      <StageLibraryCommunity recipes={recipes} />
+      <StageLearn />
+      <StageFAQ />
+    </div>
+  );
+}
+
+function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
@@ -54,9 +102,23 @@ export default function HomeV4({ recipeCount }: Props) {
   // recipe overview, before the Hops beat switches it.
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
   // Grains "live math" beat: 0 = empty bill / all vitals at 0, 1 = full recipe.
-  // Driven by the grains scroll (clear then build); the stats, style gauges,
+  // Driven by the grains beat's play-once staircase; the stats, style gauges,
   // and grain bill all interpolate by it.
   const [grainFill, setGrainFill] = useState(1);
+  // Water "solve" beat: 0 = blank RO water, 1 = solved (salts at their targets,
+  // ion bars filled into their bands). Driven by the water beat's play-once solve.
+  const [waterFill, setWaterFill] = useState(1);
+  // Honest-numbers beat: a mash-temp sweep that moves FG + ABV in the stat strip
+  // and the mash step temperature (-1 is ~148F, 0 is the 152F default, +1 is
+  // ~156F). 0 at rest so no other beat is affected.
+  const [fgShift, setFgShift] = useState(0);
+  // Mash temp leads the honest-numbers beat; FG/ABV (+ gauges) follow it with a
+  // short lag so the cause→effect reads. tempShift drives the temp, fgShift the
+  // lagged followers.
+  const [tempShift, setTempShift] = useState(0);
+  // While the honest-numbers beat is in view, ONLY the mash-temp chip grows —
+  // it's the input being turned. false everywhere else.
+  const [honestActive, setHonestActive] = useState(false);
 
   useGSAP(
     () => {
@@ -88,10 +150,17 @@ export default function HomeV4({ recipeCount }: Props) {
         const bodyEl = rootRef.current?.querySelector(
           '[data-v4="mock-body"]',
         ) as HTMLElement | null;
+        const waterEl = rootRef.current?.querySelector(
+          '[data-v4="water"]',
+        ) as HTMLElement | null;
+        const waterSlotEl = rootRef.current?.querySelector(
+          '[data-v4="water-slot"]',
+        ) as HTMLElement | null;
         const home = { x: 0, y: 0, scale: 1 };
         const exploded = { x: 0, y: 0, scale: 2.6 };
         const bsHome = { x: 0, y: 0, w: 0, h: 0 };
         const bsExploded = { x: 0, y: 0, scale: 1.04, h: 0 };
+        const waterHome = { x: 0, y: 0, scale: 1 };
         const offsetWithin = (el: HTMLElement, anc: HTMLElement) => {
           let x = 0;
           let y = 0;
@@ -143,6 +212,21 @@ export default function HomeV4({ recipeCount }: Props) {
             bsExploded.x = (scene.offsetWidth - bodyW * fitScale) / 2;
             bsExploded.y = 12;
             bsExploded.h = fullH + 6; // border-box buffer so all content + bottom border show
+          }
+          // Water: position the (transparent) layer over the body slot, so at
+          // rest it overlays the section area framed by the body border. The
+          // layer itself does NOT move on the beat — its inner pieces spread out.
+          if (waterEl && waterSlotEl) {
+            const wo = offsetWithin(waterSlotEl, scene);
+            const sw = waterSlotEl.offsetWidth;
+            // size the layer to the body slot so it overlays it 1:1 — body-width,
+            // natural proportions like the other sections (NOT scaled up to fill
+            // the wide column, which was making everything oversized + too tall).
+            waterEl.style.width = `${sw}px`;
+            waterHome.x = wo.x;
+            waterHome.y = wo.y;
+            waterHome.scale = 1;
+            gsap.set('[data-v4="water"]', { x: wo.x, y: wo.y, scale: 1 });
           }
         };
         measure();
@@ -350,6 +434,233 @@ export default function HomeV4({ recipeCount }: Props) {
           },
         });
 
+        // ── Water "solve" beat — the section BREAKS OUT (spread + grow). At
+        //    rest it's integrated in the mock (the [data-v4="water"] layer is
+        //    transparent over the body, framed by the body border). On enter the
+        //    mock recedes + dims and the three INNER pieces spread apart and grow
+        //    INDIVIDUALLY — controls lift above, salts pull left, ion-viz pulls
+        //    right — like the hops radar, but each component pops. The Auto-Calc
+        //    button gets PRESSED, then the salts + ion bars solve (waterFill 0→1).
+        //    It HOLDS spread (the big salt +/- are interactive — the "flex"); the
+        //    tuck-back is scroll-driven. The piece transforms are relative
+        //    constants (no measured values), so no invalidate needed here.
+        const waterProxy = { fill: 1 };
+        const applyWaterFill = () => setWaterFill(waterProxy.fill);
+        const WATER_LEAD = 0.25; // pieces sit spread + blank before Auto-Calc fires
+
+        // GROW (play once): mock recedes + dims; the 3 pieces spread + grow
+        // (staggered); Auto-Calc press; then the solve. The piece x/y/scale below
+        // are the spread "feel" knobs.
+        const waterGrowTl = gsap.timeline({ paused: true });
+        waterGrowTl
+          .fromTo(
+            '[data-v4="mock"]',
+            { scale: 1, xPercent: 0 },
+            { scale: 0.84, xPercent: -10, duration: 0.7, ease: "power2.inOut", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            ".v4-dim",
+            { opacity: 1 },
+            { opacity: 0.35, duration: 0.7, ease: "none", immediateRender: false },
+            0,
+          )
+          // the "Water." header RECEDES with the mock (fades + shrinks back), so
+          // only the data pieces come to the forefront.
+          .fromTo(
+            '[data-v4="water-header"]',
+            { x: 0, scale: 1, opacity: 1 },
+            { x: -16, scale: 0.9, opacity: 0.25, duration: 0.6, ease: "power2.inOut", immediateRender: false },
+            0,
+          )
+          // pieces come FORWARD as a cohesive group — they lift UP together
+          // (uniform y, no horizontal spread) + a small scale + a drop-shadow for
+          // depth, growing from their INNER edges (transformOrigin on the salts/
+          // ion panels) so adjacent panels can't overlap. They stay centred, not
+          // scattered. (Was pushing controls up + panels down → dispersed.)
+          .fromTo(
+            '[data-v4="water-controls"]',
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 9px 16px rgba(0,0,0,0.16))", duration: 0.5, ease: "power2.out", immediateRender: false },
+            0.08,
+          )
+          .fromTo(
+            '[data-v4="water-salts"]',
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false },
+            0.14,
+          )
+          .fromTo(
+            '[data-v4="water-ions"]',
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false },
+            0.2,
+          )
+          // Auto-Calc "press" once the pieces are out — squash, then spring back.
+          .to('[data-v4="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.86 + WATER_LEAD)
+          .to('[data-v4="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.96 + WATER_LEAD)
+          // the solve: salts count up + ion bars fill as the button springs back
+          .fromTo(
+            waterProxy,
+            { fill: 0 },
+            { fill: 1, duration: 1.1, ease: "power2.out", immediateRender: false, onUpdate: applyWaterFill },
+            1.05 + WATER_LEAD,
+          );
+
+        // COLLAPSE (scroll-driven): the pieces return home, mock returns.
+        const waterCollapseTl = gsap.timeline({ paused: true });
+        waterCollapseTl
+          .fromTo(
+            '[data-v4="mock"]',
+            { scale: 0.84, xPercent: -10 },
+            { scale: 1, xPercent: 0, duration: 0.8, ease: "power2.out", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            ".v4-dim",
+            { opacity: 0.35 },
+            { opacity: 1, duration: 0.8, ease: "none", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="water-header"]',
+            { x: -16, scale: 0.9, opacity: 0.25 },
+            { x: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="water-controls"]',
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 9px 16px rgba(0,0,0,0.16))" },
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="water-salts"]',
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))" },
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="water-ions"]',
+            { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))" },
+            { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
+            0,
+          );
+
+        // Grow trigger — play once on enter; blank the salts FIRST so the pieces
+        // spread out empty, then press Auto-Calc + solve. Reset on a scroll-up
+        // exit so a fresh downward approach replays.
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="water"]',
+          start: "top 45%",
+          end: "bottom 30%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("water");
+          },
+          onEnter: () => {
+            waterProxy.fill = 0;
+            setWaterFill(0);
+            waterGrowTl.restart();
+          },
+          onLeaveBack: () => {
+            waterGrowTl.pause(0);
+            waterCollapseTl.pause(0);
+            waterProxy.fill = 1;
+            setWaterFill(1);
+            gsap.set('[data-v4="mock"]', { scale: 1, xPercent: 0 });
+            gsap.set(".v4-dim", { opacity: 1 });
+            gsap.set('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 });
+            gsap.set('[data-v4="water-controls"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-v4="water-salts"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-v4="water-ions"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-v4="water-autocalc"]', { scale: 1 });
+          },
+        });
+
+        // Collapse trigger — scrub the tuck-back over the later part of the water
+        // scroll. Manual progress() on the paused timeline (same reason as hops:
+        // a scrub-linked tween would hold-render its spread `from` during grow).
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="water"]',
+          start: "bottom 78%",
+          end: "bottom 38%",
+          markers: DEV_MARKERS,
+          onUpdate: (self) => {
+            if (waterGrowTl.isActive()) waterGrowTl.progress(1);
+            waterCollapseTl.progress(self.progress);
+          },
+          onLeave: () => waterCollapseTl.progress(1),
+          onLeaveBack: () => waterCollapseTl.progress(0),
+        });
+
+        // ── Honest-numbers beat — FG responds to a mash-temp sweep so the
+        //    "148 vs 156" claim is visible, not just asserted. The mock sits on
+        //    the mash tab; the sweep nudges the mash step temp + FG/ABV in the
+        //    stat strip (152 to 156 to 148, then back). Play-once-on-enter, like
+        //    the grains build. fgProxy drives a single React scalar (fgShift).
+        // Mash temp LEADS the beat; FG/ABV FOLLOW with a short lag so the
+        // cause→effect reads ("I move the temp, the numbers respond") instead of
+        // everything changing at once. tempProxy drives the temp; fgFollow eases
+        // toward it each frame and drives FG/ABV (+ the gauges). The loop
+        // oscillates 152→156→148→… with HOLD-tween settles (which repeat reliably;
+        // repeatRefresh flows 156↔148 with no jump), during which FG catches up.
+        const tempProxy = { v: 0 };
+        const fgFollow = { v: 0 };
+        const applyHonest = () => {
+          fgFollow.v += (tempProxy.v - fgFollow.v) * 0.12;
+          setTempShift(tempProxy.v);
+          setFgShift(fgFollow.v);
+        };
+        const honestTl = gsap.timeline({
+          paused: true,
+          repeat: -1,
+          repeatRefresh: true,
+        });
+        honestTl
+          .to(tempProxy, { v: 1, duration: 1.0, ease: "sine.inOut", onUpdate: applyHonest })
+          .to(tempProxy, { v: 1, duration: 1.0, onUpdate: applyHonest })
+          .to(tempProxy, { v: -1, duration: 1.3, ease: "sine.inOut", onUpdate: applyHonest })
+          .to(tempProxy, { v: -1, duration: 1.0, onUpdate: applyHonest });
+
+        // Switch to the mash tab on entry (onToggle below), but WAIT before the
+        // temp starts growing + the loop runs — otherwise the water recede + the
+        // tab cross-fade are still finishing and the chip is already big by the
+        // time you land on the mash tab. The delayedCall is cancelled if you
+        // scroll away before it fires.
+        let honestDelay: ReturnType<typeof gsap.delayedCall> | null = null;
+        const honestStart = () => {
+          honestDelay?.kill();
+          honestDelay = gsap.delayedCall(0.7, () => {
+            setHonestActive(true);
+            honestTl.restart();
+          });
+        };
+        const honestStop = () => {
+          honestDelay?.kill();
+          honestTl.pause();
+          tempProxy.v = 0;
+          fgFollow.v = 0;
+          setTempShift(0);
+          setFgShift(0);
+          setHonestActive(false);
+        };
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="honest"]',
+          start: "top 55%",
+          end: "bottom 40%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("mash");
+          },
+          // Grow + loop while in view; stop + shrink + reset to 152 when it leaves
+          // in either direction, so nothing keeps running on other beats.
+          onEnter: honestStart,
+          onEnterBack: honestStart,
+          onLeave: honestStop,
+          onLeaveBack: honestStop,
+        });
+
         // ── Brewsheet beat — play-once-on-enter (NO pin, NO scroll-jack). On
         //    enter the mock recedes and the brew sheet (the active-tab section)
         //    GROWS out of its body slot to a big centred reveal — its box height
@@ -422,8 +733,395 @@ export default function HomeV4({ recipeCount }: Props) {
           ScrollTrigger.removeEventListener("refreshInit", measure);
           ScrollTrigger.removeEventListener("refreshInit", invalidateHops);
           ScrollTrigger.removeEventListener("refreshInit", invalidateBs);
+          honestDelay?.kill();
         };
       });
+
+      // ── Mobile (≤1024px) — the mock is pinned at the top and the narrative
+      //    scrolls under it. NO pull-outs: every scene-level layer (radar / water
+      //    / brew sheet) sits at its rest "home" in the body slot (same approach
+      //    as the signed-in hero). Scrolling each stage just switches the active
+      //    tab so the mock morphs section-by-section. (Fill beats land next.)
+      mm.add("(max-width: 1024px)", () => {
+        const scene = rootRef.current?.querySelector(
+          ".v4-scene",
+        ) as HTMLElement | null;
+        if (!scene) return;
+        const q = (sel: string) =>
+          rootRef.current?.querySelector(sel) as HTMLElement | null;
+        const radar = q('[data-v4="radar"]');
+        const slot = q('[data-v4="radar-slot"]');
+        const bodyEl = q('[data-v4="mock-body"]');
+        const bsEl = q('[data-v4="brewsheet"]');
+        const waterEl = q('[data-v4="water"]');
+        const waterSlot = q('[data-v4="water-slot"]');
+        const offsetWithin = (el: HTMLElement, anc: HTMLElement) => {
+          let x = 0;
+          let y = 0;
+          let n: HTMLElement | null = el;
+          while (n && n !== anc) {
+            x += n.offsetLeft;
+            y += n.offsetTop;
+            n = n.offsetParent as HTMLElement | null;
+          }
+          return { x, y };
+        };
+        // Park the scene-level layers in their body-slot "home" AND measure the
+        // "grown" targets (radar centred + scaled, brew sheet at full height) for
+        // the reveal beats below.
+        const radarHome = { x: 0, y: 0, scale: 1 };
+        const radarExploded = { x: 0, y: 0, scale: 2.6 };
+        const bsHomeH = { v: 0 };
+        const bsFullH = { v: 0 };
+        const bsHome = { y: 0 };
+        const bsExploded = { y: -40 };
+        const place = () => {
+          if (radar && slot) {
+            const o = offsetWithin(slot, scene);
+            const rw = radar.offsetWidth || 112;
+            const rh = radar.offsetHeight || 112;
+            radarHome.x = o.x;
+            radarHome.y = o.y;
+            radarHome.scale = slot.offsetWidth / rw;
+            const ES = 2.6;
+            radarExploded.x = (scene.offsetWidth - rw * ES) / 2;
+            radarExploded.y = Math.max(8, (scene.offsetHeight - rh * ES) / 2 - 16);
+            radarExploded.scale = ES;
+            gsap.set(radar, {
+              x: radarHome.x,
+              y: radarHome.y,
+              scale: radarHome.scale,
+            });
+          }
+          if (bsEl && bodyEl) {
+            const bo = offsetWithin(bodyEl, scene);
+            const bsBox = bsEl.querySelector(
+              '[data-v4="bs-box"]',
+            ) as HTMLElement | null;
+            const inner = bsEl.querySelector(
+              '[data-v4="bs-inner"]',
+            ) as HTMLElement | null;
+            bsHomeH.v = bodyEl.offsetHeight;
+            bsFullH.v = inner ? inner.offsetHeight * 0.82 + 6 : bodyEl.offsetHeight;
+            bsHome.y = bo.y;
+            bsExploded.y = -40; // lifts up past the top of the scene on its beat
+            if (bsBox) {
+              bsBox.style.width = `${bodyEl.offsetWidth}px`;
+              gsap.set(bsBox, { height: bsHomeH.v });
+            }
+            gsap.set(bsEl, { x: bo.x, y: bo.y, scale: 1 });
+            const nub = bsEl.querySelector(
+              '[data-v4="bs-nub"]',
+            ) as HTMLElement | null;
+            if (nub) gsap.set(nub, { opacity: 0 });
+            // Publish the LIFTED sheet's on-screen bottom (scene px × the mock's
+            // render scale) so the brew-sheet copy can be padded clear of it.
+            if (bsBox && bsBox.offsetHeight) {
+              const renderScale =
+                bsBox.getBoundingClientRect().height / bsBox.offsetHeight;
+              rootRef.current?.style.setProperty(
+                "--v4-bs-grown-h",
+                `${Math.round((bsExploded.y + bsFullH.v) * renderScale)}px`,
+              );
+            }
+          }
+          if (waterEl && waterSlot) {
+            const wo = offsetWithin(waterSlot, scene);
+            waterEl.style.width = `${waterSlot.offsetWidth}px`;
+            gsap.set(waterEl, { x: wo.x, y: wo.y, scale: 1 });
+          }
+        };
+        place();
+        ScrollTrigger.addEventListener("refreshInit", place);
+
+        // ── Reveal beats: the hops radar grows out of its slot to centre (the
+        //    rest of the mock dims behind it), and the brew sheet box grows from
+        //    the body slot to its FULL height (un-clipping it) with its tab nub.
+        //    Play-once on enter; reset on leave. Function-based targets are
+        //    invalidate()d on refresh.
+        const radarGrowTl = gsap.timeline({ paused: true });
+        radarGrowTl
+          .to({}, { duration: 0.3 })
+          .fromTo(
+            radar,
+            { x: () => radarHome.x, y: () => radarHome.y, scale: () => radarHome.scale },
+            { x: () => radarExploded.x, y: () => radarExploded.y, scale: () => radarExploded.scale, duration: 0.8, ease: "power2.out", immediateRender: false },
+            0.3,
+          )
+          .fromTo(
+            '[data-v4="radar"] > div',
+            { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
+            { filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.22))", duration: 0.8, ease: "none", immediateRender: false },
+            0.3,
+          )
+          .fromTo(
+            ".v4-dim",
+            { opacity: 1 },
+            { opacity: 0.4, duration: 0.55, ease: "none", immediateRender: false },
+            0.3,
+          );
+        const resetRadar = () => {
+          radarGrowTl.pause(0);
+          gsap.set(radar, { x: radarHome.x, y: radarHome.y, scale: radarHome.scale });
+          gsap.set('[data-v4="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set(".v4-dim", { opacity: 1 });
+        };
+
+        const bsGrowTl = gsap.timeline({ paused: true });
+        bsGrowTl
+          // the mock fades back AND slides left as the brew sheet disconnects...
+          .fromTo(
+            '[data-v4="mock"]',
+            { opacity: 1, xPercent: 0 },
+            { opacity: 0.32, xPercent: -12, duration: 0.7, ease: "power2.inOut", immediateRender: false },
+            0,
+          )
+          // ...and rises (y up) while growing to its full height.
+          .fromTo(
+            '[data-v4="brewsheet"]',
+            { y: () => bsHome.y },
+            { y: () => bsExploded.y, duration: 0.9, ease: "power2.out", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="bs-box"]',
+            { height: () => bsHomeH.v },
+            { height: () => bsFullH.v, duration: 0.9, ease: "power2.out", immediateRender: false },
+            0,
+          )
+          .fromTo(
+            '[data-v4="bs-nub"]',
+            { opacity: 0 },
+            { opacity: 1, duration: 0.4, ease: "none", immediateRender: false },
+            0.35,
+          );
+        const resetBs = () => {
+          bsGrowTl.pause(0);
+          gsap.set('[data-v4="mock"]', { opacity: 1, xPercent: 0 });
+          gsap.set('[data-v4="brewsheet"]', { y: bsHome.y });
+          gsap.set('[data-v4="bs-box"]', { height: bsHomeH.v });
+          gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
+        };
+
+        const invalidateReveals = () => {
+          radarGrowTl.invalidate();
+          bsGrowTl.invalidate();
+        };
+        ScrollTrigger.addEventListener("refreshInit", invalidateReveals);
+
+        // ── Fill beats (play-once-on-enter, like the showy desktop builds, but
+        //    WITHOUT the pull-outs — the mock stays put and animates in place).
+        //    Same scalars the desktop drives.
+
+        // Grains: the bill builds itself as a staircase (clear, then add each
+        // grain so the vitals jump one contribution at a time).
+        const grainProxy = { fill: 1 };
+        const applyGrain = () => setGrainFill(grainProxy.fill);
+        const grainFrom = [0, ...GRAIN_STEP_LEVELS];
+        const grainsTl = gsap.timeline({ paused: true });
+        grainsTl
+          .fromTo(
+            grainProxy,
+            { fill: 1 },
+            { fill: 0, duration: 0.45, ease: "power2.in", immediateRender: false, onUpdate: applyGrain },
+          )
+          .to({}, { duration: 0.25 });
+        GRAIN_STEP_LEVELS.forEach((level, i) => {
+          grainsTl.fromTo(
+            grainProxy,
+            { fill: grainFrom[i] },
+            { fill: level, duration: 0.4, ease: "power2.out", immediateRender: false, onUpdate: applyGrain },
+          );
+          if (i < GRAIN_STEP_LEVELS.length - 1) grainsTl.to({}, { duration: 0.55 });
+        });
+
+        // Water: the section "grows out" like desktop — the header recedes and
+        // the data pieces (controls / salts / ion bars) lift FORWARD as a group
+        // (up + scale + drop-shadow) while the rest of the mock dims; then
+        // Auto-Calc is "pressed" and the salts + ion bars solve (0→1). The clip
+        // is lifted on enter (so the pieces can rise out) and restored on reset.
+        const waterProxy = { fill: 1 };
+        const applyWater = () => setWaterFill(waterProxy.fill);
+        const WLIFT = -40;
+        const waterTl = gsap.timeline({ paused: true });
+        waterTl
+          .fromTo(".v4-dim", { opacity: 1 }, { opacity: 0.4, duration: 0.5, ease: "none", immediateRender: false }, 0)
+          .fromTo('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 }, { x: -8, scale: 0.92, opacity: 0.3, duration: 0.5, ease: "power2.inOut", immediateRender: false }, 0)
+          .fromTo('[data-v4="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 8px 15px rgba(0,0,0,0.16))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.06)
+          .fromTo('[data-v4="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.12)
+          .fromTo('[data-v4="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.18)
+          .to('[data-v4="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.66)
+          .to('[data-v4="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.76)
+          .fromTo(
+            waterProxy,
+            { fill: 0 },
+            { fill: 1, duration: 1.1, ease: "power2.out", immediateRender: false, onUpdate: applyWater },
+            0.88,
+          );
+        const resetWater = () => {
+          waterTl.pause(0);
+          waterProxy.fill = 1;
+          setWaterFill(1);
+          if (waterEl) gsap.set(waterEl, { overflow: "hidden" });
+          gsap.set('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 });
+          gsap.set('[data-v4="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-v4="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-v4="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-v4="water-autocalc"]', { scale: 1 });
+          gsap.set(".v4-dim", { opacity: 1 });
+        };
+
+        // Honest numbers: mash temp sweeps, FG/ABV lag it, the temp chip grows.
+        // Loops while in view; a short delay lets the tab cross-fade land first.
+        const tempProxy = { v: 0 };
+        const fgFollow = { v: 0 };
+        const applyHonest = () => {
+          fgFollow.v += (tempProxy.v - fgFollow.v) * 0.12;
+          setTempShift(tempProxy.v);
+          setFgShift(fgFollow.v);
+        };
+        const honestTl = gsap.timeline({ paused: true, repeat: -1, repeatRefresh: true });
+        honestTl
+          .to(tempProxy, { v: 1, duration: 1.0, ease: "sine.inOut", onUpdate: applyHonest })
+          .to(tempProxy, { v: 1, duration: 1.0, onUpdate: applyHonest })
+          .to(tempProxy, { v: -1, duration: 1.3, ease: "sine.inOut", onUpdate: applyHonest })
+          .to(tempProxy, { v: -1, duration: 1.0, onUpdate: applyHonest });
+        let honestDelay: ReturnType<typeof gsap.delayedCall> | null = null;
+        const honestStart = () => {
+          honestDelay?.kill();
+          honestDelay = gsap.delayedCall(0.35, () => {
+            setHonestActive(true);
+            honestTl.restart();
+          });
+        };
+        const honestStop = () => {
+          honestDelay?.kill();
+          honestTl.pause();
+          tempProxy.v = 0;
+          fgFollow.v = 0;
+          setTempShift(0);
+          setFgShift(0);
+          setHonestActive(false);
+        };
+
+        // Per-stage triggers: switch the tab + drive that section's beat.
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="grains"]',
+          start: "top 60%",
+          end: "bottom 40%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("fermentables");
+          },
+          onEnter: () => grainsTl.restart(),
+          onLeaveBack: () => {
+            grainsTl.pause(0);
+            grainProxy.fill = 1;
+            setGrainFill(1);
+          },
+        });
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="hops"]',
+          start: "top 55%",
+          end: "bottom 35%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("hops");
+          },
+          onEnter: () => radarGrowTl.restart(),
+          onEnterBack: () => radarGrowTl.restart(),
+          onLeave: resetRadar,
+          onLeaveBack: resetRadar,
+        });
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="water"]',
+          start: "top 55%",
+          end: "bottom 35%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("water");
+          },
+          onEnter: () => {
+            if (waterEl) gsap.set(waterEl, { overflow: "visible" });
+            waterProxy.fill = 0;
+            setWaterFill(0);
+            waterTl.restart();
+          },
+          onEnterBack: () => {
+            if (waterEl) gsap.set(waterEl, { overflow: "visible" });
+            waterProxy.fill = 0;
+            setWaterFill(0);
+            waterTl.restart();
+          },
+          onLeave: resetWater,
+          onLeaveBack: resetWater,
+        });
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="honest"]',
+          start: "top 55%",
+          end: "bottom 40%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("mash");
+          },
+          onEnter: honestStart,
+          onEnterBack: honestStart,
+          onLeave: honestStop,
+          onLeaveBack: honestStop,
+        });
+        ScrollTrigger.create({
+          trigger: '[data-v4-stage="brewsheet"]',
+          start: "top 55%",
+          end: "bottom 35%",
+          markers: DEV_MARKERS,
+          onToggle: (self) => {
+            if (self.isActive) setActiveTab("brewsheet");
+          },
+          onEnter: () => bsGrowTl.restart(),
+          onEnterBack: () => bsGrowTl.restart(),
+          onLeave: resetBs,
+          onLeaveBack: resetBs,
+        });
+
+        return () => {
+          ScrollTrigger.removeEventListener("refreshInit", place);
+          ScrollTrigger.removeEventListener("refreshInit", invalidateReveals);
+          honestDelay?.kill();
+        };
+      });
+
+      // Post-tour stages — single play-once fade-up on enter for any
+      // `[data-v4-reveal]` block. Light: no scrub, no scroll-jack. Fires on every
+      // viewport (the post-tour grid is full-width on mobile + desktop), so it
+      // lives OUTSIDE the desktop `mm.add` above. Reduced-motion users skip this
+      // path entirely via the early-return above, so elements stay at their
+      // natural CSS opacity 1 (no invisibility trap).
+      const reveals = gsap.utils.toArray<HTMLElement>("[data-v4-reveal]");
+      if (reveals.length) {
+        gsap.set(reveals, { opacity: 0, y: 16 });
+        ScrollTrigger.batch(reveals, {
+          start: "top 88%",
+          onEnter: (els) =>
+            gsap.to(els, {
+              opacity: 1,
+              y: 0,
+              duration: 0.7,
+              ease: "power2.out",
+              stagger: 0.06,
+              overwrite: true,
+            }),
+        });
+      }
+
+      // Scroll cue (hero) fades out over the first ~200px of scroll, then is gone.
+      const cueEl = rootRef.current?.querySelector('[data-v4="scrollcue"]');
+      if (cueEl) {
+        gsap.to(cueEl, {
+          opacity: 0,
+          ease: "none",
+          scrollTrigger: { trigger: rootRef.current, start: "top top", end: "+=200", scrub: true },
+        });
+      }
 
       // Custom fonts (Archivo Black / Space Grotesk) load late and shift layout;
       // measured positions (radar/brewsheet home + exploded) computed before
@@ -435,22 +1133,70 @@ export default function HomeV4({ recipeCount }: Props) {
     { scope: rootRef, dependencies: [reducedMotion] },
   );
 
+  // Mobile mock scale: publish the mock's natural (unscaled) height so the CSS
+  // can reclaim exactly the space `transform: scale` frees (see .v4-mock-scale).
+  // offsetHeight ignores the transform, so it's the true layout height; a
+  // ResizeObserver keeps it fresh as the active tab's content changes.
+  useEffect(() => {
+    const el = rootRef.current?.querySelector(
+      ".v4-mock-scale",
+    ) as HTMLElement | null;
+    if (!el) return;
+    const publish = () =>
+      rootRef.current?.style.setProperty(
+        "--v4-mock-natural-h",
+        `${el.offsetHeight}px`,
+      );
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // The left column (tour text) is memoized so it does NOT re-render when
   // `activeTab` / `grainFill` change — it's a heavy text column and nothing in
   // it depends on those. (Historically this was REQUIRED to dodge the pin+React
   // removeChild crash when the brewsheet stage was GSAP-pinned; no beat pins
   // anymore, so it's now purely a perf win — but still worth keeping.)
-  const leftColumn = useMemo(
+  // Split into hero + the rest so mobile can place the mock BETWEEN them: the
+  // hero stays full-width on top (row 1), then the mock and the remaining
+  // narrative share row 2 (overlapping) so the mock can stick to the top of the
+  // viewport while the narrative scrolls underneath it (see the mobile CSS).
+  // On desktop both live in column 1 (hero row 1, narrative row 2) and the mock
+  // spans column 2 — i.e. the original two-column tour, unchanged. Memoized so
+  // it does NOT re-render on activeTab / grainFill / … changes.
+  const tourText = useMemo(
     () => (
-      <div className="v4-tour-left" style={{ minWidth: 0 }}>
-        <StageIntro recipeCount={recipeCount} />
-        <StageOpening />
-        <StageGrains />
-        <StageHops />
-        <StageBrewSheet />
-      </div>
+      <>
+        <div
+          className="v4-hero-col"
+          style={{ minWidth: 0, gridColumn: 1, gridRow: 1 }}
+        >
+          <StageIntro />
+        </div>
+        {/* Opening (the chaos) sits ABOVE the mock — full-width, no mock yet. */}
+        <div
+          className="v4-intro-col"
+          style={{ minWidth: 0, gridColumn: 1, gridRow: 2 }}
+        >
+          <StageOpening />
+        </div>
+        {/* The mock joins HERE (grains onward) and goes sticky. On mobile it
+            overlaps this block (row 3); on desktop the mock column spans every
+            row, so it's present from the top as before. */}
+        <div
+          className="v4-narr-col"
+          style={{ minWidth: 0, gridColumn: 1, gridRow: 3 }}
+        >
+          <StageGrains />
+          <StageHops />
+          <StageWater />
+          <StageHonestNumbers />
+          <StageBrewSheet />
+        </div>
+      </>
     ),
-    [recipeCount],
+    [],
   );
 
   return (
@@ -468,6 +1214,7 @@ export default function HomeV4({ recipeCount }: Props) {
       }}
     >
       <AmbientBlobs />
+      <ScrollCue reduced={reducedMotion} />
 
       <div
         className="v4-tour"
@@ -478,7 +1225,10 @@ export default function HomeV4({ recipeCount }: Props) {
             "clamp(36px, 4.5vw, 64px) clamp(20px, 4vw, 56px) clamp(48px, 6vw, 84px)",
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.1fr)",
-          gap: 48,
+          // column gap only — hero (row 1) and narrative (row 2) sit in column 1
+          // and must stay flush vertically (no row gap) so desktop is unchanged.
+          columnGap: 48,
+          rowGap: 0,
           position: "relative",
           zIndex: 2,
           // alignItems left at default `stretch` so the right column grows
@@ -486,9 +1236,17 @@ export default function HomeV4({ recipeCount }: Props) {
           // across the whole tour (and across the injected pin spacing).
         }}
       >
-        {leftColumn}
+        {tourText}
 
-        <div className="v4-tour-right" style={{ position: "relative", minWidth: 0 }}>
+        <div
+          className="v4-tour-right v4-mock-col"
+          style={{
+            position: "relative",
+            minWidth: 0,
+            gridColumn: 2,
+            gridRow: "1 / span 3",
+          }}
+        >
           <div
             className="v4-sticky-mock"
             style={{
@@ -496,40 +1254,40 @@ export default function HomeV4({ recipeCount }: Props) {
               top: "clamp(112px, calc(50vh - 290px), 280px)",
             }}
           >
-            <V4Mock
-              activeTab={activeTab}
-              onSelectTab={setActiveTab}
-              grainFill={grainFill}
-            />
+            {/* Mobile only (CSS): a full-width page-colored band behind the mock
+                so the narrative scrolls cleanly UNDER it (no text spilling beside
+                the card), with a soft fade at its bottom edge so text fades out
+                rather than hard-cutting. */}
+            <div className="v4-mock-band" aria-hidden />
+            {/* Scale wrapper — a no-op on desktop (scale 1); mobile shrinks the
+                whole mock to fit a phone (see CSS). transform:scale keeps the
+                offsetLeft/Top measurements transform-independent. */}
+            <div className="v4-mock-scale">
+              <V4Mock
+                activeTab={activeTab}
+                onSelectTab={setActiveTab}
+                grainFill={grainFill}
+                waterFill={waterFill}
+                fgShift={fgShift}
+                tempShift={tempShift}
+                honestActive={honestActive}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Tail spacer so the brewsheet pin has room to release into and the
-          page doesn't end mid-pin. */}
-      <div
-        style={{
-          height: "60vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: hsTokens.body,
-            fontSize: 13,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-            opacity: 0.6,
-          }}
-        >
-          end of phase 0 slice
-        </span>
-      </div>
+      {/* Below the tour — full-width stages, no sticky mock. The brewsheet beat
+          plays-once-on-enter (no pin anymore), so the page can end right after
+          these without leaving a pin mid-release. (BrewedAgain folded into the
+          brew sheet stage — version-history belongs with the brew sheet that
+          produces each version.) */}
+      <StageCompare />
+      <StageLibraryCommunity recipes={recipes} />
+      <StageWhatElse />
+      <StageLearn />
+      <StageFAQ />
+      <StageClose />
 
       <style>{`
         /* Lenis smooth-scroll recommended baseline */
@@ -538,17 +1296,211 @@ export default function HomeV4({ recipeCount }: Props) {
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: clip; }
 
+        @keyframes v4-scrollcue {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(6px); }
+        }
+
+        /* The mock band is mobile-only (the desktop tour has the radar/water beats). */
+        .v4-mock-band { display: none; }
+
         @media (max-width: 1024px) {
           .v4-tour {
             grid-template-columns: 1fr !important;
-            gap: 36px !important;
+            grid-template-rows: auto auto auto !important;
+            gap: 0 !important;
+            max-width: 620px !important;
+            /* Tighter side padding so the left-pinned mock hugs the screen edge. */
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            /* Mock sizing knobs. The mock RENDERS at design-w (wide enough that
+               the 7-tab bar fits properly), then scales down by scale. Both feed
+               the mock AND the narrative's left offset so they stay aligned.
+               Smaller scale = smaller mock + wider text. */
+            --v4-mock-design-w: 520px;
+            --v4-mock-scale: 0.37;
+          }
+          /* Mobile single column: the mock and narrative share row 2 (overlapping)
+             so the mock can stick at the top while the FULL-WIDTH narrative scrolls
+             up behind it (covered only where the mock card sits — no mask). Row 2's
+             height = the narrative height (the tall block the sticky mock tracks
+             across). pointer-events:none on the (full-width, mostly-transparent)
+             column so touches reach the scrolling narrative; only the mock card
+             re-enables them, over its visual area. */
+          .v4-mock-col {
+            grid-column: 1 !important;
+            /* Row 3 = grains onward, so the mock only appears + sticks once the
+               reader passes the hero (row 1) and the opening (row 2). */
+            grid-row: 3 !important;
+            z-index: 3;
+            pointer-events: none;
+          }
+          /* Soft frosted halo behind the mock (mobile only). Sized to the mock's
+             visual box + a feather, centred on it, with a radial mask so the blur
+             fades out at the edges — text scrolling under blurs/fades near the
+             card rather than hard-cutting. Sits behind the mock card (DOM order). */
+          .v4-mock-band {
+            display: block;
+            position: absolute;
+            left: 50%;
+            /* Extend well ABOVE the mock too (behind the header) so text scrolling
+               up stays masked instead of re-revealing above the card; plus a short
+               tail below it. Full page width so nothing spills beside the card. */
+            top: -200px;
+            width: 100vw;
+            height: calc(var(--v4-mock-natural-h, 600px) * var(--v4-mock-scale) + 260px);
+            transform: translateX(-50%);
+            pointer-events: none;
+            background: ${hsTokens.cream};
+            /* One simple opacity gradient: fully opaque (1.0) up toward the top of
+               the page, then slowly fading to transparent on the way down — so
+               text dissolves out gently as it scrolls up toward the top. */
+            -webkit-mask-image: linear-gradient(
+              to bottom,
+              #000 0%,
+              #000 32%,
+              transparent 100%
+            );
+            mask-image: linear-gradient(
+              to bottom,
+              #000 0%,
+              #000 32%,
+              transparent 100%
+            );
+          }
+          .v4-mock-col [data-v4="mock"] {
+            pointer-events: auto;
+          }
+          /* Pin the body to a constant height so the mock (and therefore the
+             masking band, which is sized from the mock's height) doesn't jump as
+             the active tab — and its content height — changes on scroll. Sized to
+             fit the tallest section (water) so nothing bleeds past it. */
+          .v4-mock-col [data-v4="mock-body"] {
+            height: 200px !important;
+            min-height: 0 !important;
+          }
+          /* The water section is a SCENE-LEVEL layer (not inside the body's
+             overflow), so on mobile — where there's no break-out — clip it to
+             itself so it can't bleed below the mock card. */
+          .v4-mock-col [data-v4="water"] {
+            overflow: hidden;
+          }
+          .v4-narr-col {
+            z-index: 1;
+          }
+          /* Opening sits ABOVE the mock band (which extends upward), so the band
+             never covers the opening copy as the mock spawns past it. */
+          .v4-intro-col {
+            z-index: 5;
           }
           .v4-sticky-mock {
-            position: relative !important;
-            top: 0 !important;
+            position: sticky !important;
+            /* Stick a little below the top (padding from the page edge), just
+               under the (collapsing) header — when it hides on scroll,
+               --hs-header-peek goes 0 and the mock rises to this offset. */
+            top: 40px !important;
+            transform: translateY(var(--hs-header-peek, 0px));
+            transition: transform 0.28s ease;
+            /* No mask/background: only the mock CARD (its own opaque fill) covers
+               the text directly behind it; the rest of the narrative scrolls past
+               in the open column. */
+          }
+          /* Shrink the whole mock. The negative margin reclaims the layout space
+             the scale frees (natural height × (scale − 1)), derived from the
+             JS-measured natural height so the sticky element hugs the visual mock
+             exactly (no tall empty gap) at any scale. */
+          .v4-mock-scale {
+            /* Render at a FIXED design width (wide enough for the 7-tab bar to
+               sit properly), THEN scale down — rather than rendering at the narrow
+               column width, where the tabs overflowed the card. */
+            width: var(--v4-mock-design-w, 520px);
+            transform: scale(var(--v4-mock-scale));
+            transform-origin: top center;
+            /* Centre the (wider-than-column) box so the scaled mock sits centred
+               in the single column; the overflow past the column is clipped by
+               the root. */
+            position: relative;
+            left: calc((100% - var(--v4-mock-design-w, 520px)) / 2);
+            /* Reclaim the vertical space the scale frees so the footprint equals
+               the visual height. */
+            margin-bottom: calc(
+              var(--v4-mock-natural-h, 600px) * (var(--v4-mock-scale) - 1)
+            );
+          }
+          /* Single column: full-width narrative that scrolls UP and passes behind
+             the top-stuck mock (covered only where the mock card sits).
+             (Trigger timing keys off these section heights in the mobile GSAP
+             branch.) */
+          .v4-narr-col section {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            min-height: 72vh !important;
+            justify-content: center !important;
+            padding-top: 4vh !important;
+            padding-bottom: 4vh !important;
+          }
+          /* First narrative block (grains): clear the mock's height + a gap so the
+             mock spawns in the space between the opening and the grains copy
+             instead of landing on top of it. */
+          .v4-narr-col section:first-child {
+            padding-top: calc(
+              var(--v4-mock-natural-h, 600px) * var(--v4-mock-scale) + 80px
+            ) !important;
+          }
+          /* Last narrative block (brew sheet): the sheet grows tall on its beat,
+             so push its copy clear of the grown sheet (measured height + a gap)
+             so they don't overlap. */
+          .v4-narr-col section:last-child {
+            justify-content: flex-start !important;
+            padding-top: calc(var(--v4-bs-grown-h, 480px) + 56px) !important;
+            min-height: 124vh !important;
+          }
+          /* The narrative is full-width now, but keep the big tour type a notch
+             down on mobile so headlines stay tidy. */
+          .v4-narr-col section h2 {
+            font-size: clamp(19px, 5.6vw, 25px) !important;
+            line-height: 1.12 !important;
           }
         }
       `}</style>
+    </div>
+  );
+}
+
+// Minimal scroll affordance. A gently bouncing chevron at the bottom-center of
+// the first viewport. No text; scrolls away with the page (absolute, not fixed).
+function ScrollCue({ reduced }: { reduced: boolean }) {
+  if (reduced) return null;
+  return (
+    <div
+      data-v4="scrollcue"
+      aria-hidden
+      style={{
+        position: "fixed",
+        bottom: 24,
+        // Viewport-center lands on the mock's left edge (two-column tour), so sit
+        // it under the text column instead — a bit left of center.
+        left: "45%",
+        transform: "translateX(-50%)",
+        zIndex: 20,
+        pointerEvents: "none",
+        color: hsTokens.ink,
+        opacity: 0.6,
+      }}
+    >
+      {/* Inner element bounces (translateY); the outer keeps the centering
+          transform + the GSAP-driven fade, so the two never fight. */}
+      <div style={{ animation: "v4-scrollcue 1.7s ease-in-out infinite" }}>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 9l6 6 6-6"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
     </div>
   );
 }

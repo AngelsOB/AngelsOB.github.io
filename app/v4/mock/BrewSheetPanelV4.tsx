@@ -3,6 +3,7 @@
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { STAGES } from "../data";
+import type { V4BrewSheetData } from "../lib/mapRecipeToV4Mock";
 
 // Small-scale, presentational mirror of the live builder's brew sheet
 // (src/modules/hopskip/components/builder/HSBrewSheetSection.tsx). It copies
@@ -20,11 +21,26 @@ import { STAGES } from "../data";
 export default function BrewSheetPanelV4({
   compact = false,
   framed = true,
+  data,
 }: {
   compact?: boolean;
   framed?: boolean;
+  data?: V4BrewSheetData;
 }) {
-  const { panel } = STAGES.brewSheet;
+  // Sample/tour uses the hardcoded panel (with the scripted pre-boil miss). Data
+  // mode (signed-in hero) renders the recipe's real brew sheet and drops the miss.
+  const samplePanel = STAGES.brewSheet.panel;
+  const panel: V4BrewSheetData = data ?? {
+    title: samplePanel.title,
+    status: samplePanel.status,
+    brewData: samplePanel.brewData.map((r) => ({ ...r })),
+    targets: samplePanel.targets.map((r) => ({ ...r })),
+    yeast: samplePanel.yeast.map((r) => ({ ...r })),
+    grains: samplePanel.grains.map((g) => ({ ...g })),
+    hops: samplePanel.hops.map((h) => ({ ...h })),
+    water: { ...samplePanel.water },
+    mash: samplePanel.mash,
+  };
 
   return (
     <div
@@ -157,7 +173,9 @@ export default function BrewSheetPanelV4({
             </Section>
           </div>
 
-          {/* ── 04 Boil — the highlighted moment ──────────────────────── */}
+          {/* ── 04 Boil — the scripted pre-boil miss. Sample/tour only; a real
+              recipe (data mode) has no contrived miss, so this is omitted. ── */}
+          {!data ? (
           <div className="bs-reveal">
             <Section number="04" name="Boil" accent={hsTokens.roast}>
               <div
@@ -183,7 +201,7 @@ export default function BrewSheetPanelV4({
                       marginRight: 2,
                     }}
                   >
-                    {panel.preBoilLabel}
+                    {samplePanel.preBoilLabel}
                   </span>
                   <span
                     style={{
@@ -193,7 +211,7 @@ export default function BrewSheetPanelV4({
                       color: hsTokens.roast,
                     }}
                   >
-                    {panel.preBoilPredicted}
+                    {samplePanel.preBoilPredicted}
                   </span>
                   <span style={{ color: hsTokens.muted, fontSize: 11 }}>→</span>
                   <span
@@ -204,7 +222,7 @@ export default function BrewSheetPanelV4({
                       color: hsTokens.ink,
                     }}
                   >
-                    {panel.preBoilTarget}
+                    {samplePanel.preBoilTarget}
                   </span>
                   <span
                     style={{ color: hsTokens.muted, fontSize: 9, marginLeft: 4 }}
@@ -218,12 +236,13 @@ export default function BrewSheetPanelV4({
                     warning-triangle + uppercase problem label header with a
                     script reasoning aside, then the fix options. */}
                 <RecoveryCard
-                  options={panel.options}
-                  warning={panel.warning}
+                  options={samplePanel.options}
+                  warning={samplePanel.warning}
                 />
               </div>
             </Section>
           </div>
+          ) : null}
         </>
       ) : null}
 

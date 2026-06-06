@@ -203,6 +203,10 @@ export class RecipeCalculationService {
    * composition, not time or temp, and controlled experiments (Brulosophy)
    * found no measurable attenuation difference from decoction with modern malts.
    */
+  getEffectiveAttenuation(recipe: Recipe): number {
+    return this.computeEffectiveAttenuation(recipe);
+  }
+
   private computeEffectiveAttenuation(recipe: Recipe): number {
     const baseAtt = recipe.yeasts.length > 0
       ? recipe.yeasts[0].attenuation

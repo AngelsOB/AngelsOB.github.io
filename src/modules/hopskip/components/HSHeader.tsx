@@ -234,6 +234,74 @@ export default function HSHeader() {
     };
   }, [activeIdx]);
 
+  // ── Mobile collapse-on-scroll ─────────────────────────────────────────
+  // On small screens the sticky header eats scarce vertical space, so hide it
+  // on scroll-down and reveal it on scroll-up (a standard mobile pattern).
+  // Also publishes its occupied height to --hs-header-peek (0 while hidden) so
+  // sticky page content — e.g. the v4 tour mock — can sit just below it and
+  // rise into the freed space when it collapses. No-op above 1024px (the
+  // header stays put on desktop, where there's room).
+  const headerRef = useRef<HTMLElement | null>(null);
+  const hiddenRef = useRef(false);
+  const [hidden, setHidden] = useState(false);
+  // The homepage tour pins a mock just under the header, so a mid-page scroll-up
+  // that reveals the header would shove it around. There the header shows ONLY
+  // near the top; everywhere else keeps the standard reveal-on-scroll-up feel.
+  const tourHeader = pathname === "/v4";
+  useEffect(() => {
+    const COLLAPSE_MAX = 1024;
+    let lastY = window.scrollY;
+    let ticking = false;
+    const publishPeek = () => {
+      const h = hiddenRef.current ? 0 : headerRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty("--hs-header-peek", `${h}px`);
+    };
+    const setHiddenSafe = (v: boolean) => {
+      if (hiddenRef.current === v) return;
+      hiddenRef.current = v;
+      setHidden(v);
+      publishPeek();
+    };
+    const update = () => {
+      ticking = false;
+      const y = Math.max(0, window.scrollY);
+      if (window.innerWidth > COLLAPSE_MAX) {
+        setHiddenSafe(false);
+        lastY = y;
+        return;
+      }
+      if (tourHeader) {
+        // Pinned-mock pages: show only near the top so a scroll-up doesn't reveal
+        // the header mid-page and shove the mock around.
+        setHiddenSafe(y > 80);
+        lastY = y;
+        return;
+      }
+      // Everywhere else: hide once past the header, reveal on any upward scroll.
+      const dy = y - lastY;
+      if (Math.abs(dy) < 4) return;
+      if (dy > 0 && y > 72) setHiddenSafe(true);
+      else if (dy < 0) setHiddenSafe(false);
+      lastY = y;
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+    const onResize = () => {
+      publishPeek();
+      onScroll();
+    };
+    publishPeek();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [tourHeader]);
+
   const caption = useMemo(() => {
     if (pathname === "/") return undefined;
     if (pathname.startsWith("/recipes/new")) return "/ recipes / new";
@@ -251,6 +319,7 @@ export default function HSHeader() {
 
   return (
     <header
+      ref={headerRef}
       style={{
         display: "flex",
         alignItems: "center",
@@ -263,6 +332,11 @@ export default function HSHeader() {
         position: "sticky",
         top: 0,
         zIndex: 30,
+        // Mobile collapse-on-scroll (see effect above); a no-op on desktop where
+        // `hidden` never flips true.
+        transform: hidden ? "translateY(-100%)" : "translateY(0)",
+        transition: "transform 0.28s ease",
+        willChange: "transform",
       }}
       className="hs-header"
     >
@@ -424,19 +498,40 @@ export default function HSHeader() {
       </div>
       <style>{`
         @media (max-width: 720px) {
+          /* Compact single row instead of the two-row stack: tighter padding,
+             logo-only brand (drop the wordmark to save width), and a nav that
+             scrolls horizontally if the links don't fit. Pairs with the
+             collapse-on-scroll above to keep the header off the small screen. */
           .hs-header {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 14px 20px;
+            padding: 8px 16px !important;
+            gap: 10px !important;
+            flex-wrap: nowrap !important;
           }
+          .hs-brandmark-word {
+            display: none;
+          }
+          /* Keep brand · nav · auth all on ONE row — the nav shrinks (and
+             scrolls) so the Sign-in button never wraps to a second line. */
           .hs-header-right {
-            width: 100%;
-            justify-content: space-between;
+            flex: 1 1 auto;
+            min-width: 0;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: nowrap;
           }
-          .hs-header-right > nav {
-            flex: 1;
-            justify-content: flex-start;
+          .hs-nav-shell {
+            min-width: 0;
+            flex-shrink: 1;
+          }
+          .hs-header-right > :last-child {
+            flex-shrink: 0;
+          }
+          .hs-nav-shell nav {
             overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .hs-nav-shell nav::-webkit-scrollbar {
+            display: none;
           }
         }
         /* Gooey vertical squash on each route change — ported from the old

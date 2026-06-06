@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
@@ -13,11 +13,28 @@ import {
   springTrack,
   tweenStandard,
 } from "../../motion";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import FermentablePresetModal from "../modals/FermentablePresetModal";
 import CustomFermentableModal from "../modals/CustomFermentableModal";
-import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
 
 // All bill-stack property animations (segment widths shifting as
 // percentages change, new segment growing on add, hover-expand, color
@@ -36,6 +53,7 @@ import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recip
 import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
 import { toast } from "@/stores/toastStore";
 import { fermentableCalculationService } from "@/modules/beta-builder/domain/services/FermentableCalculationService";
+import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
 import type { Fermentable } from "@/modules/beta-builder/domain/models/Recipe";
 import type { FermentablePreset } from "@/modules/beta-builder/domain/models/Presets";
 import { getFermentability } from "@/modules/beta-builder/data/fermentablePresets";
@@ -88,6 +106,7 @@ export default function FermentableSection() {
   const addFermentable = useRecipeStore((s) => s.addFermentable);
   const updateFermentable = useRecipeStore((s) => s.updateFermentable);
   const removeFermentable = useRecipeStore((s) => s.removeFermentable);
+  const reorderFermentables = useRecipeStore((s) => s.reorderFermentables);
 
   const fermentablePresetsGrouped = usePresetStore((s) => s.fermentablePresetsGrouped);
   const loadFermentablePresets = usePresetStore((s) => s.loadFermentablePresets);
@@ -100,6 +119,39 @@ export default function FermentableSection() {
   const [mode, setMode] = useState<Mode>("amount");
   const [targetABV, setTargetABV] = useState(5.0);
   const [percentById, setPercentById] = useState<Record<string, number>>({});
+
+  const handleModeChange = useCallback((m: Mode) => {
+    setMode(m);
+  }, []);
+
+  // Back-calculate grain weights from percents + target ABV.
+  // Called only from explicit user input — never from an effect — so it
+  // cannot silently mutate weights on mode toggle.
+  const recalcWeightsFromPercents = useCallback(
+    (percents: Record<string, number>, abv: number) => {
+      if (!currentRecipe) return;
+      const updated = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
+        currentRecipe.fermentables,
+        percents,
+        abv,
+        currentRecipe.batchVolumeL,
+        currentRecipe.equipment.mashEfficiencyPercent || 75,
+        recipeCalculationService.getEffectiveAttenuation(currentRecipe)
+      );
+      updated.forEach((f) => {
+        const cur = currentRecipe.fermentables.find((cf) => cf.id === f.id);
+        if (cur && Math.abs(f.weightKg - cur.weightKg) > 0.001) {
+          updateFermentable(f.id, { weightKg: f.weightKg });
+        }
+      });
+    },
+    [currentRecipe, updateFermentable]
+  );
+
+  const handleTargetABVChange = useCallback((v: number) => {
+    setTargetABV(v);
+    recalcWeightsFromPercents(percentById, v);
+  }, [percentById, recalcWeightsFromPercents]);
 
   useEffect(() => {
     loadFermentablePresets();
@@ -161,23 +213,17 @@ export default function FermentableSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, currentRecipe?.fermentables]);
 
+  // Seed targetABV from the recipe's actual ABV when entering % mode.
+  // Depends only on [mode] — not [currentRecipe] — so it never re-fires
+  // while the user is working in % mode. Sets only local state; never
+  // touches stored grain weights.
   useEffect(() => {
     if (mode !== "percent" || !currentRecipe) return;
-    const updated = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
-      currentRecipe.fermentables,
-      percentById,
-      targetABV,
-      currentRecipe.batchVolumeL,
-      currentRecipe.equipment.mashEfficiencyPercent || 75,
-      currentRecipe.yeasts?.[0]?.attenuation || 0.75
-    );
-    updated.forEach((f) => {
-      const current = currentRecipe.fermentables.find((cf) => cf.id === f.id);
-      if (current && Math.abs(f.weightKg - current.weightKg) > 0.001) {
-        updateFermentable(f.id, { weightKg: f.weightKg });
-      }
-    });
-  }, [mode, currentRecipe, percentById, targetABV, updateFermentable]);
+    const og = recipeCalculationService.calculateOG(currentRecipe);
+    const fg = recipeCalculationService.calculateFG(currentRecipe);
+    setTargetABV(parseFloat(recipeCalculationService.calculateABV(og, fg).toFixed(1)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const totalPercent = useMemo(() => {
     if (mode !== "percent" || !currentRecipe) return 0;
@@ -210,50 +256,47 @@ export default function FermentableSection() {
     <section className="hs-ferm-section" style={sectionFrameStyle}>
       <FermentableSectionStyles />
 
-      <SectionTitle />
-
       {fermentables.length === 0 ? (
-        <EmptyState onAdd={handleAddNew} />
+        <>
+          <SectionTitle />
+          <EmptyState onAdd={handleAddNew} />
+        </>
       ) : (
-        <div className="hs-ferm-grid">
-          {/* Row 1 (desktop): ledger header on left, empty on right. The
-              sidebar aside starts in row 2 so it aligns with the top of
-              the ledger table, not the header buttons. */}
-          <div className="hs-ferm-grid-lhead">
-            <LedgerHeaderRow
-              entryCount={fermentables.length}
-              mode={mode}
-              onModeChange={setMode}
-              targetABV={targetABV}
-              onTargetABVChange={setTargetABV}
-              totalPercent={totalPercent}
-              onAdd={handleAddNew}
-            />
-          </div>
+        <>
+          <FermControls
+            entryCount={fermentables.length}
+            totalGrainKg={totalGrainKg}
+            mode={mode}
+            onModeChange={handleModeChange}
+            targetABV={targetABV}
+            onTargetABVChange={handleTargetABVChange}
+            totalPercent={totalPercent}
+            onAdd={handleAddNew}
+          />
 
-          <div className="hs-ferm-grid-ltable">
-            <Ledger
-              rows={rows}
-              mode={mode}
-              percentById={percentById}
-              totalGrainKg={totalGrainKg}
-              totalPercent={totalPercent}
-              onWeightChange={(id, v) =>
-                updateFermentable(id, { weightKg: Math.max(0, v) })
-              }
-              onPercentChange={(id, v) =>
-                setPercentById((prev) => ({
-                  ...prev,
-                  [id]: Math.max(0, Math.min(100, v)),
-                }))
-              }
-              onSwap={handleSwapFermentable}
-              onRemove={removeFermentable}
-              onAdd={handleAddNew}
-            />
-          </div>
-
-        </div>
+          <GrainList
+            rows={rows}
+            mode={mode}
+            percentById={percentById}
+            totalGrainKg={totalGrainKg}
+            totalPercent={totalPercent}
+            onWeightChange={(id, v) =>
+              updateFermentable(id, { weightKg: Math.max(0, v) })
+            }
+            onPercentChange={(id, v) => {
+              const next = {
+                ...percentById,
+                [id]: Math.max(0, Math.min(100, v)),
+              };
+              setPercentById(next);
+              recalcWeightsFromPercents(next, targetABV);
+            }}
+            onSwap={handleSwapFermentable}
+            onRemove={removeFermentable}
+            onReorder={reorderFermentables}
+            onAdd={handleAddNew}
+          />
+        </>
       )}
 
       <FermentablePresetModal
@@ -892,10 +935,17 @@ function BillStack({
   );
 }
 
-// ─── Ledger header row — eyebrow + entries + toggle + ABV + add ──
+// ─── Section controls — bill meta + drag hint + mode/ABV/add ─────
+//
+// Rendered as a <div>, NOT a <header>: the builder hoists each section's
+// title into the shared BuilderTitleBar (spanning both grid columns) and
+// hides the section's own first <header> via overrides.css. The
+// "Fermentables." title + malt rule therefore come from BuilderTitleBar;
+// this row only carries the meta + controls (the old LedgerHeaderRow's job).
 
-function LedgerHeaderRow({
+function FermControls({
   entryCount,
+  totalGrainKg,
   mode,
   onModeChange,
   targetABV,
@@ -904,6 +954,7 @@ function LedgerHeaderRow({
   onAdd,
 }: {
   entryCount: number;
+  totalGrainKg: number;
   mode: Mode;
   onModeChange: (m: Mode) => void;
   targetABV: number;
@@ -913,29 +964,40 @@ function LedgerHeaderRow({
 }) {
   return (
     <div
-      className="hs-ferm-ledger-head"
+      className="hs-ferm-controls"
       style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
         flexWrap: "wrap",
-        paddingTop: 2,
       }}
     >
-      <Eyebrow size={11}>The grain ledger</Eyebrow>
+      <span
+        style={{
+          fontFamily: hsTokens.body,
+          fontWeight: 800,
+          fontSize: 11,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: hsTokens.muted,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {entryCount} in the bill · {totalGrainKg.toFixed(2)} kg
+      </span>
+      <HSScriptNote color={hsTokens.muted} size={15} rotate={-3}>
+        drag to reorder
+      </HSScriptNote>
       <span
         aria-hidden
         style={{
           flex: 1,
-          minWidth: 20,
+          minWidth: 12,
           height: 1,
           background: hsTokens.ink,
           opacity: 0.22,
         }}
       />
-      <HSScriptNote color={hsTokens.muted} size={16} rotate={-3}>
-        {entryCount} entr{entryCount === 1 ? "y" : "ies"}
-      </HSScriptNote>
       {mode === "percent" ? (
         <TargetABVPill
           value={targetABV}
@@ -1068,11 +1130,9 @@ function TargetABVPill({
   );
 }
 
-// ─── Ledger (paper card with header + rows + total) ──────────────
+// ─── Grain list — draggable per-grain cards + total ──────────────
 
-const LEDGER_COLS = "62px minmax(0, 1.7fr) 140px 86px 32px";
-
-function Ledger({
+function GrainList({
   rows,
   mode,
   percentById,
@@ -1082,6 +1142,7 @@ function Ledger({
   onPercentChange,
   onSwap,
   onRemove,
+  onReorder,
   onAdd,
 }: {
   rows: RowData[];
@@ -1093,45 +1154,78 @@ function Ledger({
   onPercentChange: (id: string, v: number) => void;
   onSwap: (id: string) => void;
   onRemove: (id: string) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
   onAdd: () => void;
 }) {
   const totalEbc = Math.round(srmFromGrainBill(rows) * 1.97);
+  const ids = rows.map((r) => r.f.id);
+
+  // The whole card is the drag surface (no handle), so activation has to
+  // coexist with clicking the inner controls and — on touch — scrolling the
+  // list. Mouse: require 8px of travel before a drag starts, so a click on
+  // the name / value / × still registers as a click. Touch: require a 180ms
+  // press-and-hold, so a finger swipe scrolls the page and only a deliberate
+  // hold begins a drag. Keyboard sensor keeps reordering accessible.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 180, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
+  };
+
   return (
-    <div
-      className="hs-ferm-ledger"
-      style={{
-        background: hsTokens.paper,
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 14,
-        boxShadow: hsTokens.sh3,
-        overflow: "hidden",
-      }}
-    >
-      <LedgerHead mode={mode} />
-      <LedgerRowsAnimated>
-        {rows.map((r, i) => (
-          <LedgerRowMotion key={r.f.id}>
-            <LedgerRow
-              row={r}
-              isLast={i === rows.length - 1}
-              mode={mode}
-              percentValue={percentById[r.f.id] ?? r.pct}
-              onWeightChange={(v) => onWeightChange(r.f.id, v)}
-              onPercentChange={(v) => onPercentChange(r.f.id, v)}
-              onSwap={() => onSwap(r.f.id)}
-              onRemove={() => onRemove(r.f.id)}
-            />
-          </LedgerRowMotion>
-        ))}
-      </LedgerRowsAnimated>
-      <LedgerTotal
+    <div className="hs-ferm-list-wrap">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <ul
+            className="hs-ferm-cards"
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {rows.map((r) => (
+              <GrainCard
+                key={r.f.id}
+                row={r}
+                mode={mode}
+                percentValue={percentById[r.f.id] ?? r.pct}
+                onWeightChange={(v) => onWeightChange(r.f.id, v)}
+                onPercentChange={(v) => onPercentChange(r.f.id, v)}
+                onSwap={() => onSwap(r.f.id)}
+                onRemove={() => onRemove(r.f.id)}
+              />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
+
+      <GrainTotal
         mode={mode}
         totalGrainKg={totalGrainKg}
         totalPercent={totalPercent}
         totalEbc={totalEbc}
       />
-      {/* Dashed empty-row CTA — mobile only. Saves a scroll-up to reach
-          the Add button in the (now offscreen) ledger header row. */}
+
+      {/* Dashed empty-row CTA — mobile only. Saves a scroll-up to reach the
+          Add button in the (now offscreen) header. */}
       <MobileAddRow onAdd={onAdd} />
     </div>
   );
@@ -1226,62 +1320,10 @@ function MobileAddRow({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function LedgerHead({ mode }: { mode: Mode }) {
-  return (
-    <div
-      className="hs-ferm-ledger-row hs-ferm-ledger-head-row"
-      style={{
-        display: "grid",
-        gridTemplateColumns: LEDGER_COLS,
-        padding: "10px 18px",
-        // Section-tinted ledger head: ~7% malt mixed into cream so each
-        // section's main table band feels distinct while staying in harmony.
-        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-malt))",
-        borderBottom: `2px solid ${hsTokens.ink}`,
-        alignItems: "center",
-        gap: 14,
-      }}
-    >
-      <Eyebrow size={9} style={{ display: "block", textAlign: "center" }}>
-        °L · PPG
-      </Eyebrow>
-      <Eyebrow size={10}>
-        Grain
-        <span
-          style={{
-            color: hsTokens.ink,
-            opacity: 0.4,
-            marginLeft: 8,
-            fontWeight: 600,
-            textTransform: "none",
-            letterSpacing: "0.04em",
-            fontSize: 10,
-          }}
-        >
-          click name to swap
-        </span>
-      </Eyebrow>
-      {/* Editable + computed columns: center the header above the (also-
-          centered) value cell. The 28px paddingRight on the editable
-          header compensates for the EditableCell's stepper padding so
-          the header centers over the visible glyphs, not the button bbox. */}
-      <Eyebrow
-        size={10}
-        style={{ display: "block", textAlign: "center", paddingRight: 28 }}
-      >
-        {mode === "amount" ? "Weight" : "Percent"}
-      </Eyebrow>
-      <Eyebrow size={10} style={{ display: "block", textAlign: "center" }}>
-        {mode === "amount" ? "Share" : "Weight"}
-      </Eyebrow>
-      <span />
-    </div>
-  );
-}
+// ─── Grain card (sortable, draggable by the grip handle) ─────────
 
-function LedgerRow({
+function GrainCard({
   row,
-  isLast,
   mode,
   percentValue,
   onWeightChange,
@@ -1290,7 +1332,6 @@ function LedgerRow({
   onRemove,
 }: {
   row: RowData;
-  isLast: boolean;
   mode: Mode;
   percentValue: number;
   onWeightChange: (v: number) => void;
@@ -1299,29 +1340,50 @@ function LedgerRow({
   onRemove: () => void;
 }) {
   const { f, pct, srmColor, category } = row;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: f.id });
+
   const editableValue = mode === "amount" ? f.weightKg : percentValue;
   const computedDisplay =
-    mode === "amount" ? `${pct.toFixed(1)}` : `${f.weightKg.toFixed(2)}`;
+    mode === "amount" ? pct.toFixed(1) : f.weightKg.toFixed(2);
   const computedSuffix = mode === "amount" ? "%" : "kg";
   const step = mode === "amount" ? 0.5 : 1;
   const editPrecision = mode === "amount" ? 2 : 1;
   const editSuffix = mode === "amount" ? "kg" : "%";
+
   return (
-    <div
-      className="hs-ferm-ledger-row hs-ferm-data-row"
+    <li
+      ref={setNodeRef}
+      className="hs-ferm-card"
+      // The whole card is the drag surface — attributes + listeners are spread
+      // here, not on a handle. The inner name / value / × controls stay usable
+      // because the sensors only start a drag after a small mouse travel or a
+      // touch press-and-hold (see GrainList).
       style={{
-        display: "grid",
-        gridTemplateColumns: LEDGER_COLS,
-        padding: "14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
-        alignItems: "center",
-        gap: 14,
+        transform: CSS.Transform.toString(transform),
+        transition,
+        position: "relative",
+        zIndex: isDragging ? 5 : undefined,
+        opacity: isDragging ? 0.92 : 1,
+        // While dragging, lift the card off the page. At rest, leave boxShadow
+        // unset so the .hs-ferm-card base + :hover shadows (stylesheet) apply.
+        boxShadow: isDragging ? hsTokens.sh3 : undefined,
+        cursor: isDragging ? "grabbing" : "grab",
       }}
+      {...attributes}
+      {...listeners}
     >
       {/* Swatch + PPG */}
       <div
         className="hs-ferm-swatch-cell"
         style={{
+          gridArea: "swatch",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -1331,31 +1393,26 @@ function LedgerRow({
         <Swatch color={srmColor} L={f.colorLovibond} ppg={f.ppg} />
       </div>
 
-      {/* Grain — click name to swap */}
-      <button
-        type="button"
-        className="hs-ferm-name-btn"
-        onClick={onSwap}
-        aria-label={`Swap ${f.name}`}
-        style={{
-          background: "transparent",
-          border: "none",
-          padding: 0,
-          textAlign: "left",
-          cursor: "pointer",
-          minWidth: 0,
-          color: "inherit",
-          fontFamily: "inherit",
-          width: "100%",
-        }}
-      >
-        <div
+      {/* Name (click to swap) + category pill, stacked */}
+      <div style={{ gridArea: "name", minWidth: 0 }}>
+        <button
+          type="button"
+          className="hs-ferm-name-btn"
+          onClick={onSwap}
+          aria-label={`Swap ${f.name}`}
           style={{
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            textAlign: "left",
+            cursor: "pointer",
+            minWidth: 0,
+            color: "inherit",
+            fontFamily: "inherit",
+            width: "100%",
             display: "flex",
             alignItems: "center",
             gap: 8,
-            flexWrap: "wrap",
-            minWidth: 0,
           }}
         >
           <span
@@ -1383,12 +1440,17 @@ function LedgerRow({
               {getCountryFlag(f.originCode)}
             </span>
           ) : null}
+        </button>
+        <div style={{ marginTop: 5 }}>
           <CategoryPill category={category} />
         </div>
-      </button>
+      </div>
 
-      {/* Editable value (Weight in amount mode, % in percent mode) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Boxed editable value (Weight in amount mode, % in percent mode) */}
+      <div
+        className="hs-ferm-edit-cell"
+        style={{ gridArea: "editable", display: "flex", justifyContent: "flex-end" }}
+      >
         <EditableCell
           value={editableValue}
           step={step}
@@ -1405,42 +1467,44 @@ function LedgerRow({
         />
       </div>
 
-      {/* Computed value (Share in amount mode, kg in percent mode) — read-only. */}
-      <div
+      {/* Computed value — plain number on the side (Share / kg) */}
+      <span
+        className="hs-ferm-side"
         style={{
-          textAlign: "center",
-          fontFamily: hsTokens.body,
+          gridArea: "side",
+          display: "inline-flex",
+          alignItems: "baseline",
+          justifyContent: "flex-end",
+          gap: 2,
+          minWidth: 50,
           fontVariantNumeric: "tabular-nums",
         }}
       >
         <span
           style={{
+            fontFamily: hsTokens.mono,
             fontWeight: 700,
-            fontSize: 15,
-            color: hsTokens.ink,
+            fontSize: 13,
+            color: hsTokens.muted,
           }}
         >
           {computedDisplay}
         </span>
         <span
-          style={{
-            fontFamily: hsTokens.mono,
-            fontSize: 11,
-            color: hsTokens.muted,
-            marginLeft: 2,
-          }}
+          style={{ fontFamily: hsTokens.mono, fontSize: 10, color: hsTokens.muted }}
         >
           {computedSuffix}
         </span>
-      </div>
+      </span>
 
-      {/* Remove — ghost × that fades in on row hover. */}
+      {/* Remove — ghost × that fades in on card hover. */}
       <button
         type="button"
         className="hs-ferm-remove-btn"
         onClick={onRemove}
         aria-label={`Remove ${f.name}`}
         style={{
+          gridArea: "remove",
           width: 28,
           height: 28,
           padding: 0,
@@ -1468,11 +1532,13 @@ function LedgerRow({
           <path d="m6 6 12 12" />
         </svg>
       </button>
-    </div>
+    </li>
   );
 }
 
-function LedgerTotal({
+// ─── Grain total — clean footer line below the cards ─────────────
+
+function GrainTotal({
   mode,
   totalGrainKg,
   totalPercent,
@@ -1485,46 +1551,38 @@ function LedgerTotal({
 }) {
   return (
     <div
-      className="hs-ferm-ledger-row hs-ferm-total-row"
+      className="hs-ferm-total"
       style={{
-        display: "grid",
-        gridTemplateColumns: LEDGER_COLS,
-        padding: "14px 18px",
-        // Section-tinted total band — same 7% malt mix as the ledger head.
-        background: "color-mix(in srgb, var(--hs-cream-2) 96%, var(--hs-malt))",
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "space-between",
+        gap: 12,
+        marginTop: 14,
+        paddingTop: 14,
         borderTop: `2px solid ${hsTokens.ink}`,
-        alignItems: "center",
-        gap: 14,
       }}
     >
       <span
         style={{
-          fontFamily: hsTokens.mono,
-          fontSize: 10,
-          color: hsTokens.muted,
-          textAlign: "center",
-        }}
-      >
-        ~{totalEbc} EBC
-      </span>
-      <span
-        style={{
           fontFamily: hsTokens.display,
-          fontSize: 16,
+          fontSize: 18,
           letterSpacing: "-0.01em",
           color: hsTokens.ink,
         }}
       >
         Total grain bill
       </span>
-      <div
-        style={{ display: "flex", justifyContent: "center", paddingRight: 28 }}
-      >
+      <span style={{ display: "inline-flex", alignItems: "baseline", gap: 10 }}>
+        <span
+          style={{ fontFamily: hsTokens.mono, fontSize: 10, color: hsTokens.muted }}
+        >
+          ~{totalEbc} EBC
+        </span>
         <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
           <span
             style={{
               fontFamily: hsTokens.display,
-              fontSize: 20,
+              fontSize: 22,
               fontVariantNumeric: "tabular-nums",
               letterSpacing: "-0.01em",
               color: hsTokens.ink,
@@ -1533,30 +1591,12 @@ function LedgerTotal({
             {mode === "amount" ? totalGrainKg.toFixed(2) : totalPercent.toFixed(1)}
           </span>
           <span
-            style={{
-              fontFamily: hsTokens.mono,
-              fontSize: 11,
-              color: hsTokens.muted,
-            }}
+            style={{ fontFamily: hsTokens.mono, fontSize: 11, color: hsTokens.muted }}
           >
             {mode === "amount" ? "kg" : "%"}
           </span>
         </span>
-      </div>
-      <span
-        style={{
-          display: "block",
-          textAlign: "center",
-          fontFamily: hsTokens.display,
-          fontSize: 16,
-          letterSpacing: "-0.01em",
-          color: hsTokens.ink,
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {mode === "amount" ? "100%" : `${totalGrainKg.toFixed(2)} kg`}
       </span>
-      <span />
     </div>
   );
 }
@@ -1766,25 +1806,29 @@ function EditableCell({
           if (e.key === "Enter") commit();
           else if (e.key === "Escape") cancel();
         }}
+        // Swallow drag-start so selecting digits inside the field never grabs
+        // the card (the whole card is the drag surface).
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         step={step}
         min={min}
         max={max}
         aria-label={ariaLabel}
         style={{
-          width: "100%",
+          width: 96,
           background: hsTokens.cream,
           border: `1.5px solid ${hsTokens.malt}`,
           outline: "none",
           fontFamily: hsTokens.script,
           fontWeight: 500,
-          fontSize: 28,
+          fontSize: 23,
           color: hsTokens.ink,
           fontVariantNumeric: "tabular-nums",
           textAlign: "left",
-          padding: "2px 8px",
+          padding: "4px 9px",
           margin: 0,
           appearance: "textfield",
-          borderRadius: 6,
+          borderRadius: 7,
         }}
       />
     );
@@ -1793,10 +1837,14 @@ function EditableCell({
   return (
     // Presentational wrapper for hover-stepper visibility. The interactive
     // children (edit button + stepper buttons) handle all keyboard/touch input.
+    // onMouseDown/onTouchStart stop propagation so clicking — or click-and-
+    // holding — the chip or its steppers never starts a card drag.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
       style={{ position: "relative", display: "inline-flex" }}
     >
       <button
@@ -1805,10 +1853,9 @@ function EditableCell({
         aria-label={`Edit ${format(value)}${suffix ?? ""}`}
         className="hs-ferm-edit-btn"
         style={{
-          background: "transparent",
-          border: "none",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
-          padding: "2px 30px 2px 6px",
+          background: hsTokens.paper,
+          border: `1.5px solid ${hsTokens.ink}`,
+          padding: "3px 32px 3px 11px",
           margin: 0,
           cursor: "text",
           display: "inline-flex",
@@ -1816,16 +1863,20 @@ function EditableCell({
           gap: 5,
           color: "inherit",
           fontFamily: "inherit",
-          borderRadius: 0,
-          transition: "background 90ms ease, border-bottom-style 90ms ease",
+          borderRadius: 7,
+          // Hard offset shadow (matches the hops section's editable chip).
+          boxShadow: hsTokens.sh1,
+          transition: "background 90ms ease, box-shadow 90ms ease",
         }}
       >
+        {/* Handwritten (script) numerals in a defined box — matches the hops
+            section's editable cell. */}
         <span
           style={{
             fontFamily: hsTokens.script,
             fontWeight: 500,
-            fontSize: 30,
-            lineHeight: 1,
+            fontSize: 25,
+            lineHeight: 1.05,
             color: hsTokens.ink,
           }}
         >
@@ -2117,41 +2168,40 @@ function InlineNumberValue({
 function FermentableSectionStyles() {
   return (
     <style>{`
-      /* Single-column layout — the aside (bill + notes) has been hoisted
-         to the parent HopSkipBuilder grid so it can morph between tabs. */
-      .hs-ferm-section .hs-ferm-grid {
-        display: flex;
-        flex-direction: column;
-        row-gap: 16px;
-        min-width: 0;
-      }
-      .hs-ferm-section .hs-ferm-grid-lhead { min-width: 0; }
-      .hs-ferm-section .hs-ferm-grid-ltable { min-width: 0; }
+      .hs-ferm-section .hs-ferm-list-wrap { min-width: 0; }
 
-      @media (max-width: 900px) {
-        .hs-ferm-section .hs-ferm-grid {
-          row-gap: 12px;
-        }
+      /* Per-grain card — swatch | name | boxed value | side % | ×. The whole
+         card is draggable (no handle), so inner controls set their own cursor
+         to override the card's grab cursor on hover. */
+      .hs-ferm-section .hs-ferm-card {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+        grid-template-areas: "swatch name editable side remove";
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 8px;
+        padding: 10px 12px;
+        background: var(--hs-cream);
+        border: 2px solid var(--hs-ink);
+        border-radius: 10px;
+        box-shadow: 2px 2px 0 var(--hs-ink);
       }
 
-      /* Desktop hover — subtle cream-2 tint across the ledger row,
-         plus fades in the ghost × remove button. */
-      @media (min-width: 641px) and (hover: hover) {
-        .hs-ferm-section .hs-ferm-data-row {
-          transition: background 90ms ease;
+      /* Desktop hover — lift the card toward its shadow, reveal the ghost ×. */
+      @media (min-width: 561px) and (hover: hover) {
+        .hs-ferm-section .hs-ferm-card {
+          transition: box-shadow 110ms ease, transform 110ms ease, background 110ms ease;
         }
-        .hs-ferm-section .hs-ferm-data-row:hover {
-          /* Section-tinted hover: ~2% malt mixed into a paper/cream-2 base —
-             lighter overall than pure cream-2 so the hover lifts. */
-          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-malt));
+        .hs-ferm-section .hs-ferm-card:hover {
+          background: color-mix(in srgb, var(--hs-cream) 92%, var(--hs-paper));
+          box-shadow: 3px 3px 0 var(--hs-ink);
+          transform: translate(-1px, -1px);
         }
         .hs-ferm-section .hs-ferm-remove-btn {
           opacity: 0.32;
           transition: opacity 90ms ease, background 90ms ease;
         }
-        .hs-ferm-section .hs-ferm-data-row:hover .hs-ferm-remove-btn {
-          opacity: 1;
-        }
+        .hs-ferm-section .hs-ferm-card:hover .hs-ferm-remove-btn { opacity: 1; }
         .hs-ferm-section .hs-ferm-remove-btn:hover {
           background: rgba(212, 69, 44, 0.12);
         }
@@ -2162,126 +2212,33 @@ function FermentableSectionStyles() {
         }
         .hs-ferm-section .hs-ferm-edit-btn:hover {
           background: ${hsTokens.cream2};
-          border-bottom-style: solid !important;
         }
       }
 
-      /* Mobile (≤640px) — collapse ledger into per-grain cards,
-         always-visible steppers, no per-cell hover tints. */
-      @media (max-width: 640px) {
-        /* Mobile-only: show dashed "add another" row at the bottom of
-           the ledger so brewers don't have to scroll up to the header. */
-        .hs-ferm-section .hs-ferm-mobile-add {
-          display: flex !important;
+      /* Mobile (≤560px) — two-row card, always-visible steppers + ×. */
+      @media (max-width: 560px) {
+        .hs-ferm-section .hs-ferm-mobile-add { display: flex !important; }
+
+        .hs-ferm-section .hs-ferm-card {
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          grid-template-areas:
+            "swatch name     remove"
+            "swatch editable side";
+          row-gap: 10px;
         }
+        .hs-ferm-section .hs-ferm-edit-cell { justify-content: flex-start !important; }
 
         /* Always-visible bare steppers (touch can't hover). */
         .hs-ferm-section .hs-ferm-steppers {
           opacity: 1 !important;
           pointer-events: auto !important;
           gap: 2px !important;
-          right: 0 !important;
+          right: 2px !important;
         }
-        .hs-ferm-section .hs-ferm-steppers button {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          width: 26px !important;
-          height: 22px !important;
-          color: ${hsTokens.muted} !important;
-        }
-        .hs-ferm-section .hs-ferm-steppers button svg {
-          width: 14px !important;
-          height: 9px !important;
-          stroke-width: 2 !important;
-        }
-        .hs-ferm-section .hs-ferm-remove-btn {
-          opacity: 1 !important;
-        }
-        /* Always show the remove button on mobile (no hover).
-           Reveal layout: each grain becomes a stacked card. */
-        .hs-ferm-section .hs-ferm-ledger {
-          border: none !important;
-          box-shadow: none !important;
-          background: transparent !important;
-          border-radius: 0 !important;
-          overflow: visible !important;
-        }
-        .hs-ferm-section .hs-ferm-ledger-head-row {
-          display: none !important;
-        }
-        .hs-ferm-section .hs-ferm-data-row {
-          display: grid !important;
-          grid-template-columns: 56px minmax(0, 1fr) auto !important;
-          grid-template-areas:
-            "swatch name remove"
-            "swatch info  info"
-            "value  value value" !important;
-          column-gap: 14px !important;
-          row-gap: 10px !important;
-          padding: 16px 0 !important;
-          border-bottom: 1px solid ${hsTokens.ink} !important;
-          background: transparent !important;
-        }
-        .hs-ferm-section .hs-ferm-data-row:last-of-type {
-          border-bottom: none !important;
-        }
-        .hs-ferm-section .hs-ferm-data-row > :nth-child(1) {
-          grid-area: swatch;
-        }
-        .hs-ferm-section .hs-ferm-data-row > :nth-child(2) {
-          grid-area: name;
-        }
-        /* Editable + computed both in the bottom row, side-by-side. */
-        .hs-ferm-section .hs-ferm-data-row > :nth-child(3) {
-          grid-area: value;
-          display: flex !important;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 12px;
-        }
-        .hs-ferm-section .hs-ferm-data-row > :nth-child(4) {
-          grid-area: info;
-          text-align: left !important;
-          font-size: 13px !important;
-        }
-        .hs-ferm-section .hs-ferm-data-row > :nth-child(5) {
-          grid-area: remove;
-          justify-self: end;
-        }
-        .hs-ferm-section .hs-ferm-edit-btn {
-          padding: 4px 38px 4px 8px !important;
-        }
-        .hs-ferm-section .hs-ferm-edit-btn > span:first-child {
-          font-size: 34px !important;
-        }
-        /* Total row: simple label-on-left, value-on-right flex. */
-        .hs-ferm-section .hs-ferm-total-row {
-          display: flex !important;
-          justify-content: space-between !important;
-          align-items: baseline !important;
-          padding: 16px 0 !important;
-          border-top: 2px solid ${hsTokens.ink} !important;
-          background: transparent !important;
-        }
-        .hs-ferm-section .hs-ferm-total-row > * {
-          padding: 0 !important;
-        }
-        .hs-ferm-section .hs-ferm-total-row > :nth-child(1),
-        .hs-ferm-section .hs-ferm-total-row > :nth-child(4),
-        .hs-ferm-section .hs-ferm-total-row > :nth-child(5) {
-          display: none !important;
-        }
-        /* Section frame: tighter on mobile. */
-        .hs-ferm-section {
-          padding: 18px 14px !important;
-        }
-        .hs-ferm-bill-stack {
-          padding: 12px !important;
-        }
-        .hs-ferm-ledger-head {
-          flex-wrap: wrap;
-        }
+        .hs-ferm-section .hs-ferm-remove-btn { opacity: 1 !important; }
+
+        .hs-ferm-section { padding: 18px 14px !important; }
+        .hs-ferm-bill-stack { padding: 12px !important; }
       }
     `}</style>
   );

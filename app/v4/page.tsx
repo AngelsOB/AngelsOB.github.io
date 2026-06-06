@@ -1,5 +1,6 @@
 import type { CommunityRecipeCard } from "../_home/lib/communityCard";
 import HomeV4 from "./HomeV4";
+import { STAGES } from "./data";
 
 // Ported from app/v3/page.tsx — identical server fetch. Production swap
 // (Phase 9) points app/page.tsx at this same data + HomeV4.
@@ -48,8 +49,32 @@ async function getCommunityData(): Promise<{
   }
 }
 
+// schema.org FAQPage JSON-LD generated from STAGES.faq.items. Inlined into the
+// server-rendered HTML so it's indexable on first paint. Mirrors the on-page
+// accordion (StageFAQ) 1:1.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: STAGES.faq.items.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
+  })),
+};
+
 export default async function HomeV4Page() {
   const { recipes, total } = await getCommunityData();
   const recipeCount = total > 0 ? total : 247;
-  return <HomeV4 recipes={recipes} recipeCount={recipeCount} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <HomeV4 recipes={recipes} recipeCount={recipeCount} />
+    </>
+  );
 }

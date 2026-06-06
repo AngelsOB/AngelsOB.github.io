@@ -14,85 +14,91 @@ export const EASE = {
   springy: [0.34, 1.56, 0.64, 1] as const,
 } as const;
 
-// Shared CTA shape. Used by hero (stage 1) and final CTA (stage 12).
+// Shared CTA shapes. The hero CTA invites a no-friction start; the close CTA
+// reflects that the visitor has read the whole pitch.
 export const CTA = {
-  primary: { label: "Start a recipe", href: "/recipes/new" },
-  secondary: [
-    { label: "Sign in to your library", href: "/recipes" },
-    { label: "Browse recipes", href: "/browse" },
-  ],
-  trust: "Free. Save locally without an account. Sign in to sync across devices.",
+  hero: {
+    label: "Start a recipe",
+    href: "/recipes/new",
+    note: "no signup. saves to your browser.",
+  },
+  close: { label: "Build your first recipe", href: "/recipes/new" },
 } as const;
 
 export const STAGES = {
   // ── Stage 1: Hero ──────────────────────────────────────────────────────
+  // Leads with the outcome (idea → glass). The subhead carries the three
+  // pillars (flavor · real numbers · holds on brew day) + the connected spine.
   hero: {
-    kicker: "built by a brewer tired of forgetting things on brew day —",
-    // Words pulled out so each animates in independently (PRD 7, stage 1).
-    // "thinks ahead" gets the subtle roast color shift (no highlighter).
-    headlineWords: [
-      { text: "A", color: null, accent: false, breakAfter: false },
-      { text: "recipe", color: null, accent: false, breakAfter: false },
-      { text: "builder", color: null, accent: false, breakAfter: true },
-      { text: "that", color: null, accent: false, breakAfter: false },
-      { text: "thinks", color: "roast", accent: true, breakAfter: false },
-      { text: "ahead.", color: "roast", accent: true, breakAfter: false },
-    ],
+    kicker: "one beer, six tabs, a spreadsheet, and a notebook on the floor —",
+    headline: {
+      pre: "The beer's already in your head. This gets it ",
+      accent: "in the glass.",
+    },
     subhead:
-      "Recipes, water chemistry, mash pH, priming sugar, starter calcs, keg PSI. Everything where you need it.",
+      "Design it down to the flavor, with numbers that are actually real. Then hold onto it when brew day doesn't cooperate. One connected recipe, from the idea in your head to the beer in your hand.",
   },
 
-  // ── Stage 2: Opening ───────────────────────────────────────────────────
-  // Sentences split for sentence-by-sentence reveal (PRD 7, stage 2).
-  // Final sentence gets a longer reveal as the closing beat.
+  // ── Stage 2: Opening (the chaos) ───────────────────────────────────────
+  // Sentence-by-sentence reveal. Condensed; the final line hands off to the
+  // connected-recipe spine.
   opening: {
     sentences: [
-      "Wort's boiling. The starter isn't going. I can't remember the keg PSI for the bitter I'm planning to keg next week. I'm one tab over googling priming sugar, one tab back on a spreadsheet, the notebook's somewhere on the floor.",
-      "I made this so I'd never forget things and find myself there again.",
+      "Wort's boiling. The starter isn't going. I can't remember the keg PSI for the bitter I'm kegging next week. One tab's on priming sugar, one's on a spreadsheet, the notebook's somewhere on the floor.",
+      "That's the brew day I built this to never have again. One place. Every number wired to the next. Nothing guessed.",
     ],
   },
 
-  // ── Stage 3: Grains — live math ────────────────────────────────────────
+  // ── Beat 1: The live builder (auto-play "watch" demo) ──────────────────
   grains: {
-    h2: "Homebrew recipe builder",
-    lead: "So I made the math run as you build.",
-    body: "Add Munich, OG ticks up. Drop a late hop, IBU shifts. Change the equipment, boil-off recalculates. Nothing is a static field. Every number is connected to every other number.",
+    h2: "The live builder",
+    lead: "Watch one change ripple out.",
+    body: "A grain drops into the bill and the OG climbs, the color deepens, the gauges slide toward the style you picked, right inside the BJCP range for it. This is the builder itself, live on the page. Not a screenshot, and the same one you'll design in. Every number is already watching every other number.",
   },
 
-  // ── Stage 4: Hops — dial in flavors ────────────────────────────────────
+  // ── Beat 2: Flavor — the timing-aware estimate ─────────────────────────
   hops: {
-    h2: "Hop flavor visualizer",
-    lead: "I added the hop flavor visualizer because I didn't want to keep googling hop profiles mid-recipe.",
+    h2: "Hop flavor, estimated",
+    lead: "Now shape how it tastes.",
     paragraphs: [
-      "Pick three hops, see the flavor land. Citrus, tropical, stone fruit, dank. Swap one out, watch it shift.",
-      "Timings shape the flavor too. Early additions land as bitter, late ones hold aroma. The math weighs both.",
-      "It's a recipe builder and a way to dial in your flavors without opening a different tab.",
+      "Numbers are half of it. Here's the other half. Pick your hops and watch the flavor land: citrus, tropical, pine, dank.",
+      "And it's drawn from when they go in, not just what you add. The same hops bittering at 60 minutes versus dropped in a whirlpool land in completely different places, and the picture moves as you shuffle the timing.",
+      "I haven't found another builder that estimates flavor like this. I built it because I got tired of opening a tab to remember what Mosaic tastes like.",
     ],
   },
 
-  // ── Stage 5: Water — salts solve themselves ────────────────────────────
+  // ── Beat 3: Water — the lead exhibit (the spine proven) ────────────────
   water: {
     h2: "Water chemistry and mash pH",
-    lead: "Water chemistry was the worst spreadsheet I had. So I made the salts solve themselves.",
+    lead: "Change the grain bill, and the water keeps up.",
     paragraphs: [
-      "You pick a style. The target loads from BJCP. A bounded least-squares solver fits gypsum, calcium chloride, epsom, and salt. Chloride and sulfate are weighted heaviest. They drive flavor balance.",
-      "You get the rest for free. Mash pH calculated from the grain bill. A lactic acid suggestion when pH is off. Salts split between strike and sparge so you dose at the right step.",
-      "Close as you need to be. Tinker if you want.",
+      "This is the part nobody else really does. Most software hands you three salt sliders to nudge by hand, or a serious water engine buried in a screen from 2009.",
+      "Mine's a real optimizer. One click dials your salts to the chloride-to-sulfate balance you're after, and it's fed by your grain bill and your mash pH, feeding everything downstream.",
+      "Not a separate calculator you copy numbers out of. Part of the same recipe.",
     ],
     // Callout that slides in SPRINGY pointing at the mash pH row.
     callout: "+ 2.3 mL lactic acid to hit pH 5.4.",
   },
 
-  // ── Stage 6: Brew sheet — adjust on the fly (breakout) ─────────────────
+  // ── Beat 4: Honest numbers (credibility) ───────────────────────────────
+  honestNumbers: {
+    h2: "Honest numbers",
+    lead: "And the hard numbers aren't guessed.",
+    paragraphs: [
+      "Most calculators score dry hops at zero IBU. That's just wrong, so this one counts the bitterness they actually add.",
+      "Your final gravity comes from what your mash temp does to the enzymes, the real gap between 148 and 156, not a fixed number you type in and hope.",
+      "I'm not promising my numbers are perfect. I'm promising none of them are made up, and the Learn page shows exactly how I got each one.",
+    ],
+  },
+
+  // ── Beat 5: Brew sheet — the climax (pays off the hero) ────────────────
   brewSheet: {
     h2: "Brew-day adjustments",
-    lead: "And when brew day doesn't go to plan, the brew sheet is ready.",
+    lead: "Then brew day happens. It keeps you on the beer you set out to make.",
     paragraphs: [
-      "Pre-boil gravity at 1.040 instead of 1.044? It suggests 60g of DME at flameout. Or 8 minutes more boil to concentrate. It calculates both and shows them side by side. If your whirlpool hops are still in the kettle, it warns you they'll over-extract on the extra boil and suggests pulling them with a filter first.",
-      "Pre-boil gravity too high? Dilution math at flameout, with a check for whether you'd overfill the kettle.",
-      "Hot hydrometer reading? Correction calc, right there.",
-      "Recorded OG and FG? It tracks expected vs actual and shows your apparent attenuation.",
-      "The recipe is a living thing during brew day. The math stays current with what's actually happening.",
+      "Pre-boil gravity in at 1.040 instead of 1.044? It lays both fixes side by side. About 60g of DME at flameout, or eight more minutes of boil. And it warns you if your whirlpool hops will over-extract on the longer one, so you pull them first.",
+      "Log your real OG and FG and it works out your actual efficiency for next time.",
+      "The plan doesn't break the second reality shows up. It bends, and stays pointed at the beer you imagined.",
     ],
     // Small-scale faithful mock of HSBrewSheetSection. Title block, 3-col
     // stat strip, numbered sections, with the Pre-Boil OG correction as the
@@ -157,65 +163,31 @@ export const STAGES = {
     },
   },
 
-  // ── Stage 7: Brewed again ──────────────────────────────────────────────
-  brewedAgain: {
-    body: "Every brew gets saved as a version. So six months from now when you brew that same beer again, you can see what you did differently this time. Different water profile? Different yeast viability on the starter? A pre-boil gravity that drifted? It's all there. The recipe is a record, not just a plan.",
-    // Brewed Versions panel content (mock).
-    versions: [
-      {
-        date: "2026-04-12",
-        og: "1.062",
-        fg: "1.012",
-        abv: "6.5%",
-        note: "different water profile",
-      },
-      {
-        date: "2026-01-08",
-        og: "1.059",
-        fg: "1.014",
-        abv: "5.9%",
-        note: "yeast pack was older",
-      },
-      {
-        date: "2025-09-21",
-        og: "1.061",
-        fg: "1.013",
-        abv: "6.3%",
-        note: "first run",
-      },
+  // ── Beat 6: Compare (differentiator + the friends angle) ───────────────
+  compare: {
+    h2: "Compare",
+    lead: "Put two beers side by side.",
+    paragraphs: [
+      "Last batch next to this one. Vitals, water, hops, even the flavor maps, so you can see what changed and why the last one drank better.",
+      "And because none of it's intimidating, you can hand it to a friend who doesn't brew, let them find a beer they'd actually want, and make it together.",
     ],
   },
 
-  // ── Stage 8: Community + Compare ───────────────────────────────────────
-  community: {
-    h2: "Community recipes",
-    intro: "Other brewers publish their recipes too. Browse what they've poured.",
-    compareIntro:
-      "Pick a few. Put them side by side. The comparison view shows the actual differences: water profiles, hop schedules, mash temps, vitals. There's even an average across the set, in case you're trying to figure out what most American IPAs land at.",
-    closer: "When you find one that fits, fork it and make it yours.",
+  // ── Beat 7: Your library + community ───────────────────────────────────
+  library: {
+    h2: "Your library",
+    intro: "Everything you brew lives here.",
+    body: "Save your recipes, log your brew days, keep your notes and your real numbers batch to batch. Browse what other brewers are pouring and fork any of it. Every recipe opens in the same builder, so you can take it apart and see how it's made.",
+    browseLabel: "Browse all recipes",
   },
 
-  // ── Stage 9: What else it does ─────────────────────────────────────────
+  // ── What else (table stakes, framed) ───────────────────────────────────
+  // The spine beats carry the pitch; this is just "yes, the basics are here
+  // too" so they're never the reason someone reaches for another tool.
   whatElse: {
-    h2: "Also in the recipe builder",
-    tiles: [
-      {
-        title: "BeerXML",
-        body: "Import any recipe. Export to share or print.",
-      },
-      {
-        title: "Equipment profiles",
-        body: "Boil-off, deadspace, absorption. Set once. Applied to every recipe.",
-      },
-      {
-        title: "Mash schedule",
-        body: "Single infusion, step mash, decoction. Strike temps calculate.",
-      },
-      {
-        title: "Fermentation steps",
-        body: "Primary, secondary, diacetyl rest, cold crash. With temps and days.",
-      },
-    ],
+    h2: "Also in the builder",
+    lead: "The basics are all here too.",
+    body: "BeerXML in and out, recipe versions, mash schedules, equipment profiles, and a full set of standalone calculators. Table stakes, handled, so they're never the reason you reach for something else.",
   },
 
   // ── Stage 10: Learn (Path B) ───────────────────────────────────────────
@@ -269,8 +241,10 @@ export const STAGES = {
     ],
   },
 
-  // ── Stage 12: Final CTA ────────────────────────────────────────────────
-  finalCta: {
-    headline: "Start a recipe.",
+  // ── Close (price + data ownership) ─────────────────────────────────────
+  close: {
+    h2: "Free to start. Cheap to keep.",
+    body: "The whole builder works right now. No account, no card. Free covers it, plus five saved recipes. Unlimited is $1.99 a month, or $19.99 for the year, less than a sack of base malt. Everything exports to BeerXML and markdown whenever you want. Your recipes are yours, not hostages.",
+    footer: "made with malt & love.",
   },
 } as const;

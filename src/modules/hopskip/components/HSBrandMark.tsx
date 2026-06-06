@@ -55,6 +55,7 @@ export default function HSBrandMark({ caption, href = "/" }: Props) {
     <>
       {mark}
       <span
+        className="hs-brandmark-word"
         style={{
           fontFamily: hsTokens.display,
           fontSize: 22,

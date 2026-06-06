@@ -1,11 +1,11 @@
 "use client";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { HopFlavorRadar } from "./HopFlavorRadar";
 import BrewSheetPanelV4 from "./BrewSheetPanelV4";
-import { TabSection, SectionHead } from "./TabSections";
+import { TabSection, SectionHead, WaterSection } from "./TabSections";
 import { StyleGuidelines } from "./StyleGuidelines";
+import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 
 // A simplified version of the real recipe builder. Clickable tabs switch the
 // body to that section (the mock is usable at rest). The tour then drives the
@@ -74,12 +74,29 @@ interface Props {
   /** 0 = empty bill / all vitals at 0, 1 = full recipe. Drives the grains
    *  "live math" beat (stat count-ups, gauge + grain-bill animation). */
   grainFill?: number;
+  /** 0 = blank RO water, 1 = solved. Drives the water "solve" beat (the salts
+   *  count up + the ion bars climb into their target bands). */
+  waterFill?: number;
+  /** Mash-temp sweep for the honest-numbers beat. -1 is ~148F (lower FG, higher
+   *  ABV), 0 is the 152F default, +1 is ~156F (higher FG, lower ABV). Moves FG +
+   *  ABV in the stat strip and the mash step temperature. */
+  fgShift?: number;
+  /** Mash-temp lead value for the honest-numbers beat. Drives the mash step
+   *  temperature; FG/ABV use fgShift, which lags this. */
+  tempShift?: number;
+  /** While true (honest-numbers beat in view), only the mash-temp chip grows. */
+  honestActive?: boolean;
+  /** When set, the mock renders THIS recipe instead of the hardcoded sample
+   *  (the signed-in hero). The tour leaves it undefined, so the beats keep
+   *  using the sample and are unaffected. */
+  data?: V4MockData;
 }
 
-export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
+export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
-  const otherActive = !hopsActive && !brewsheetActive;
+  const waterActive = activeTab === "water";
+  const otherActive = !hopsActive && !brewsheetActive && !waterActive;
 
   return (
     <div className="v4-scene" style={{ position: "relative", width: "100%" }}>
@@ -98,16 +115,16 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
         }}
       >
         <div className="v4-dim">
-          <MockHeader />
+          <MockHeader data={data} />
         </div>
         <div className="v4-dim">
-          <MockStats grainFill={grainFill} />
+          <MockStats grainFill={grainFill} fgShift={fgShift} data={data} />
         </div>
         <div className="v4-dim">
-          <StyleGuidelines grainFill={grainFill} />
+          <StyleGuidelines grainFill={grainFill} fgShift={fgShift} data={data} />
         </div>
         <div className="v4-dim">
-          <MockTabBar active={activeTab} onSelect={onSelectTab} />
+          <MockTabBar active={activeTab} onSelect={onSelectTab} data={data} />
         </div>
 
         {/* Body — shows the active section. Sections are stacked; React
@@ -142,11 +159,15 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
             }}
           >
             <div className="v4-dim">
-              <SectionHead title="Hops." meta="3 in the bill · aroma" underline={hsTokens.hops} />
+              <SectionHead
+                title="Hops."
+                meta={`${data ? data.hops.length : 3} in the bill`}
+                underline={hsTokens.hops}
+              />
             </div>
             <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginTop: 8 }}>
               <div className="v4-dim" style={{ flex: 1, minWidth: 0 }}>
-                <HopBillTable />
+                <HopBillTable data={data} />
               </div>
               <div
                 data-v4="radar-slot"
@@ -155,8 +176,25 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
             </div>
           </div>
 
-          {/* Other sections (fermentables / mash / water / yeast / fermentation)
-              — real at-rest content so the tabs are usable. */}
+          {/* Water: a scene-level [data-v4="water"] pop-out group renders the
+              card over this slot (like the hops radar). The slot just marks the
+              body area for measuring; the body drops its border when water-active
+              so the popped card's own border shows. */}
+          <div
+            data-v4="section-water"
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: waterActive ? 1 : 0,
+              transition: "opacity 0.25s ease",
+              pointerEvents: "none",
+            }}
+          >
+            <div data-v4="water-slot" style={{ position: "absolute", inset: 0 }} />
+          </div>
+
+          {/* Other sections (fermentables / mash / yeast / fermentation) — real
+              at-rest content so the tabs are usable. */}
           <div
             style={{
               position: "absolute",
@@ -166,7 +204,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
               pointerEvents: otherActive ? "auto" : "none",
             }}
           >
-            <TabSection active={activeTab} grainFill={grainFill} />
+            <TabSection active={activeTab} grainFill={grainFill} tempShift={tempShift} honestActive={honestActive} data={data} />
           </div>
         </div>
       </div>
@@ -200,6 +238,32 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
           >
             <HopFlavorRadar size={96} variant="full" />
           </div>
+        </div>
+      </div>
+
+      {/* Water — scene-level layer over the body slot, TRANSPARENT: the body's
+          own border frames it, so at rest it reads as an integrated section (not
+          a floating card). On the beat the mock recedes and the INNER pieces
+          (controls / salts / ion-viz) spread apart + grow individually — like the
+          hops radar, but EACH component pops. It's scene-level (not inside the
+          mock) so the pieces aren't clipped by the body + don't recede with it.
+          pointer-events auto so the big salt +/- stay clickable (the "flex"). */}
+      <div
+        data-v4="water"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: 6,
+          opacity: waterActive ? 1 : 0,
+          transition: "opacity 0.25s ease",
+          transformOrigin: "0 0",
+          willChange: "transform",
+          pointerEvents: waterActive ? "auto" : "none",
+        }}
+      >
+        <div style={{ height: 196 }}>
+          <WaterSection waterFill={waterFill} data={data?.water} />
         </div>
       </div>
 
@@ -281,7 +345,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
               transformOrigin: "0 0",
             }}
           >
-            <BrewSheetPanelV4 framed={false} />
+            <BrewSheetPanelV4 framed={false} data={data?.brewSheet} />
           </div>
         </div>
       </div>
@@ -291,7 +355,11 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1 }: Props) {
 
 // ─── mock chrome ─────────────────────────────────────────────────────────
 
-function MockHeader() {
+function MockHeader({ data }: { data?: V4MockData }) {
+  const name = data?.name ?? "Citra Mosaic IPA";
+  const style = data?.style ?? "American IPA · 21A";
+  const batch = data?.batch ?? "5 gal · 60 min";
+  const profile = data?.profile ?? "BIAB";
   return (
     <div>
       <div
@@ -343,13 +411,13 @@ function MockHeader() {
           lineHeight: 0.95,
         }}
       >
-        Citra Mosaic IPA
+        {name}
       </h2>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        <PaperPill label="STYLE" value="American IPA · 21A ▾" />
-        <PaperPill label="BATCH" value="5 gal · 60 min ▾" />
-        <GhostPill>Profile · BIAB ▾</GhostPill>
+        <PaperPill label="STYLE" value={`${style} ▾`} />
+        <PaperPill label="BATCH" value={`${batch} ▾`} />
+        <GhostPill>Profile · {profile} ▾</GhostPill>
         <GhostPill subdued>Advanced</GhostPill>
       </div>
     </div>
@@ -418,14 +486,35 @@ function GhostPill({
   );
 }
 
-function MockStats({ grainFill = 1 }: { grainFill?: number }) {
-  const srm = 6.2 * grainFill;
-  const srmColor = srmToRgb(Math.max(0.1, srm));
+function MockStats({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: V4MockData }) {
+  // SRM isn't a stat cell here — the color lives in the Style Guidelines bar.
+  // FG (and therefore ABV) respond to the honest-numbers beat's mash-temp sweep:
+  // higher mash temp means less fermentable wort, so FG rises and ABV falls.
+  // In data mode (signed-in hero) grainFill is 1 and fgShift 0, so the displayed
+  // values equal the recipe's stats.
+  const ogT = data ? data.stats.og : 1.062;
+  const fgT = data ? data.stats.fg : 1.012;
+  const og = 1 + (ogT - 1) * grainFill;
+  const fg = 1 + (fgT - 1) * grainFill + 0.003 * fgShift * grainFill;
+  const abv = (og - fg) * 131.25;
+  const valueFor = (label: string, base: number, target: number) => {
+    if (label === "FG") return fg;
+    if (label === "ABV") return abv;
+    if (label === "OG") return og;
+    const t = data
+      ? label === "IBU"
+        ? data.stats.ibu
+        : label === "CAL"
+          ? data.stats.cal
+          : target
+      : target;
+    return base + (t - base) * grainFill;
+  };
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(5, minmax(0, 1fr)) auto",
+        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
         gap: 6,
         marginTop: 12,
       }}
@@ -472,106 +561,46 @@ function MockStats({ grainFill = 1 }: { grainFill?: number }) {
               lineHeight: 1,
             }}
           >
-            {s.fmt(s.base + (s.target - s.base) * grainFill)}
+            {s.fmt(valueFor(s.label, s.base, s.target))}
           </div>
         </div>
       ))}
-      <div
-        style={{
-          position: "relative",
-          background: hsTokens.paper,
-          border: `2px solid ${hsTokens.ink}`,
-          borderRadius: 8,
-          boxShadow: "2px 2px 0 var(--hs-ink)",
-          padding: "6px 10px 7px",
-          minWidth: 0,
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1,
-          overflow: "hidden",
-        }}
-      >
-        <span
-          aria-hidden
-          style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: srmColor }}
-        />
-        <div
-          style={{
-            fontFamily: hsTokens.body,
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-          }}
-        >
-          SRM
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <BeerGlass color={srmColor} />
-          <span
-            style={{
-              fontFamily: hsTokens.display,
-              fontSize: 16,
-              letterSpacing: "-0.035em",
-              color: hsTokens.ink,
-              fontVariantNumeric: "tabular-nums",
-              lineHeight: 1,
-            }}
-          >
-            {srm.toFixed(1)}
-          </span>
-        </div>
-      </div>
     </div>
-  );
-}
-
-function BeerGlass({ color }: { color: string }) {
-  return (
-    <svg width={16} height={20} viewBox="0 0 22 26" aria-hidden>
-      <defs>
-        <clipPath id="v4-glass-clip">
-          <path d="M 3 2 L 19 2 L 17 24 L 5 24 Z" />
-        </clipPath>
-      </defs>
-      <path
-        d="M 3 2 L 19 2 L 17 24 L 5 24 Z"
-        fill={hsTokens.paper}
-        stroke={hsTokens.ink}
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-      />
-      <rect x={3} y={6} width={16} height={18} fill={color} clipPath="url(#v4-glass-clip)" />
-      <ellipse
-        cx={11}
-        cy={5}
-        rx={7}
-        ry={2}
-        fill="#fff8e2"
-        stroke={hsTokens.ink}
-        strokeWidth={1}
-        clipPath="url(#v4-glass-clip)"
-      />
-    </svg>
   );
 }
 
 function MockTabBar({
   active,
   onSelect,
+  data,
 }: {
   active: TabKey;
   onSelect: (key: TabKey) => void;
+  data?: V4MockData;
 }) {
+  const countFor = (key: TabKey, fallback?: number): number | undefined => {
+    if (!data) return fallback;
+    switch (key) {
+      case "fermentables":
+        return data.grains.length;
+      case "hops":
+        return data.hops.length;
+      case "mash":
+        return data.mash ? 1 : 0;
+      case "yeast":
+        return data.yeast ? 1 : 0;
+      case "fermentation":
+        return data.fermentation.length;
+      default:
+        return fallback;
+    }
+  };
   return (
     <div
       style={{
         display: "flex",
         alignItems: "flex-end",
-        gap: 2,
+        gap: 1,
         marginTop: 16,
         borderBottom: `2px solid ${hsTokens.ink}`,
         paddingLeft: 2,
@@ -580,7 +609,7 @@ function MockTabBar({
       {TABS.map((tab) => (
         <TabButton
           key={tab.key}
-          tab={tab}
+          tab={{ ...tab, count: countFor(tab.key, tab.count) }}
           isActive={tab.key === active}
           onSelect={onSelect}
         />
@@ -616,7 +645,7 @@ function TabButton({
         display: "inline-flex",
         alignItems: "center",
         gap: 4,
-        padding: "5px 7px",
+        padding: "5px 5px",
         fontFamily: hsTokens.body,
         fontSize: 10.5,
         fontWeight: isActive ? 700 : 600,
@@ -662,7 +691,17 @@ function TabButton({
   );
 }
 
-function HopBillTable() {
+function HopBillTable({ data }: { data?: V4MockData }) {
+  const rows = data
+    ? data.hops.map((h) => ({
+        name: h.name,
+        amount: h.amount,
+        use: h.use,
+        purpose: h.purpose,
+        ibu: h.ibu,
+        aa: h.aa,
+      }))
+    : HOPS.map((h) => ({ ...h, aa: "13.2% AA" }));
   return (
     <div
       style={{
@@ -695,7 +734,7 @@ function HopBillTable() {
         <div style={{ textAlign: "right" }}>Weight</div>
         <div style={{ textAlign: "right" }}>IBU</div>
       </div>
-      {HOPS.map((hop, i) => (
+      {rows.map((hop, i) => (
         <div
           key={`${hop.name}-${i}`}
           style={{
@@ -734,7 +773,7 @@ function HopBillTable() {
                 marginTop: 1,
               }}
             >
-              {hop.purpose} · 13.2% AA
+              {hop.purpose} · {hop.aa}
             </div>
           </div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>

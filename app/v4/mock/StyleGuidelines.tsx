@@ -2,6 +2,7 @@
 
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 
 // Compact mock of the real builder's BJCPStyleRail: a row of vitals gauges
 // (value vs BJCP style range, marker goes roast when out of range) + an SRM
@@ -56,7 +57,50 @@ function eyebrow(size = 8.5): React.CSSProperties {
   return { fontFamily: hsTokens.body, fontSize: size, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted };
 }
 
-export function StyleGuidelines({ grainFill = 1 }: { grainFill?: number }) {
+export function StyleGuidelines({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: V4MockData }) {
+  // Sample uses the hardcoded 21A GAUGES. Data mode (signed-in hero) builds the
+  // gauges from the recipe's stats + its BJCP style spec. If the style has no
+  // spec (custom style), fall back to a tight band around the value so the gauge
+  // still renders sensibly.
+  const mk = (
+    label: string,
+    base: number,
+    value: number,
+    range: [number, number] | undefined,
+    fmt: (n: number) => string,
+  ): Gauge => {
+    const [lo, hi] = range ?? [value, value];
+    return { label, base, value, lo, hi, fmt };
+  };
+  const baseGauges: Gauge[] = data
+    ? [
+        mk("OG", 1, data.stats.og, data.ranges?.og, (n) => n.toFixed(3)),
+        mk("FG", 1, data.stats.fg, data.ranges?.fg, (n) => n.toFixed(3)),
+        mk("ABV", 0, data.stats.abv, data.ranges?.abv, (n) => `${n.toFixed(1)}%`),
+        mk("IBU", 0, data.stats.ibu, data.ranges?.ibu, (n) => `${Math.round(n)}`),
+      ]
+    : GAUGES;
+  // Honest-numbers sweep: nudge FG (and the dependent ABV) so these gauges move
+  // in lockstep with the stat strip above. fgShift is 0 outside that beat and in
+  // the data-mode hero, so this is a no-op there.
+  const ogVal = baseGauges.find((g) => g.label === "OG")?.value ?? 1.062;
+  const fgVal =
+    (baseGauges.find((g) => g.label === "FG")?.value ?? 1.012) + 0.003 * fgShift;
+  const gauges: Gauge[] =
+    fgShift !== 0
+      ? baseGauges.map((g) =>
+          g.label === "FG"
+            ? { ...g, value: fgVal }
+            : g.label === "ABV"
+              ? { ...g, value: (ogVal - fgVal) * 131.25 }
+              : g,
+        )
+      : baseGauges;
+  const srmValue = data ? data.stats.srm : SRM_VALUE;
+  const srmRange: [number, number] = data
+    ? data.ranges?.srm ?? [Math.max(0, data.stats.srm - 1), data.stats.srm + 1]
+    : SRM_RANGE;
+  const styleLabel = data ? data.style : "American IPA · 21A";
   return (
     <div
       style={{
@@ -74,16 +118,16 @@ export function StyleGuidelines({ grainFill = 1 }: { grainFill?: number }) {
           <span aria-hidden style={{ width: 8, height: 8, background: HOPS, border: `1.5px solid ${INK}`, borderRadius: 2 }} />
           Style guidelines
         </span>
-        <span style={{ fontFamily: hsTokens.mono, fontSize: 10, color: hsTokens.muted }}>American IPA · 21A ⇄</span>
+        <span style={{ fontFamily: hsTokens.mono, fontSize: 10, color: hsTokens.muted }}>{styleLabel} ⇄</span>
       </div>
       {/* vitals gauges */}
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${GAUGES.length}, minmax(0, 1fr))` }}>
-        {GAUGES.map((g, i) => (
-          <GaugeCell key={g.label} g={g} grainFill={grainFill} isFirst={i === 0} isLast={i === GAUGES.length - 1} />
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${gauges.length}, minmax(0, 1fr))` }}>
+        {gauges.map((g, i) => (
+          <GaugeCell key={g.label} g={g} grainFill={grainFill} isFirst={i === 0} isLast={i === gauges.length - 1} />
         ))}
       </div>
       {/* SRM color visualizer */}
-      <SrmVisualizer grainFill={grainFill} />
+      <SrmVisualizer grainFill={grainFill} value={srmValue} range={srmRange} />
     </div>
   );
 }
@@ -135,9 +179,9 @@ function GaugeCell({ g, grainFill, isFirst, isLast }: { g: Gauge; grainFill: num
   );
 }
 
-function SrmVisualizer({ grainFill = 1 }: { grainFill?: number }) {
-  const [lo, hi] = SRM_RANGE;
-  const cur = SRM_VALUE * grainFill; // animates 0 -> 6.2 as the bill builds
+function SrmVisualizer({ grainFill = 1, value = SRM_VALUE, range = SRM_RANGE }: { grainFill?: number; value?: number; range?: [number, number] }) {
+  const [lo, hi] = range;
+  const cur = value * grainFill; // animates 0 -> value as the bill builds
   const loP = srmPctNum(lo);
   const hiP = srmPctNum(hi);
   const curP = srmPctNum(cur);

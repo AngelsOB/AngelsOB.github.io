@@ -313,20 +313,9 @@ export default function YeastSection() {
 
       <div className="hs-yeast-grid">
         <div className="hs-yeast-grid-lhead">
-          <BlockEyebrow
-            label="The yeast strain"
-            meta={
-              strainRows.length > 0
-                ? `${strainRows.length} ${strainRows.length === 1 ? "strain" : "strains"} · ${strainRows[0].attenuationPct}% att`
-                : null
-            }
-            right={
-              strainRows.length > 0 ? (
-                <HSButton onClick={handleAddStrain} color={hsTokens.yeast} size="sm">
-                  + Pick strain
-                </HSButton>
-              ) : null
-            }
+          <StrainBlockHeader
+            hasStrains={strainRows.length > 0}
+            onAdd={handleAddStrain}
           />
         </div>
 
@@ -604,21 +593,7 @@ function StrainEmptyState({
   );
 }
 
-// ─── Strain ledger ───────────────────────────────────────────────
-
-// Strain row groups two clusters separated by an obvious gap:
-//   yeast identity  →  [badge | strain | atten]   (anchored LEFT)
-//   pitch source    →                              [type · packs · mfg]   (anchored RIGHT)
-//
-// Col 2 (strain) uses `auto` width so it sizes to its content and lets
-// atten sit immediately to its right. Col 4 (source) is `1fr` so it
-// absorbs all remaining horizontal slack; the source cluster inside
-// uses `justifyContent: flex-end` to push the items to the right edge,
-// right up against the actions column. Result: a single horizontal
-// row that reads as "identity left, source right" instead of "evenly
-// distributed across the row".
-const STRAIN_LEDGER_COLS =
-  "44px minmax(140px, auto) 72px minmax(330px, 1fr) 64px";
+// ─── Strain cards ────────────────────────────────────────────────
 
 function StrainLedger({
   rows,
@@ -653,57 +628,73 @@ function StrainLedger({
 }) {
   return (
     <div
-      className="hs-yeast-ledger hs-yeast-strain-ledger"
-      style={{
-        background: hsTokens.paper,
-        border: `2px solid ${hsTokens.ink}`,
-        borderRadius: 14,
-        boxShadow: hsTokens.sh3,
-        // Visible (not hidden) so the per-row Type ▾ HSActionMenu can
-        // extend below the ledger without being clipped. The head row
-        // owns its own top-corner radius below to keep the cream-bg
-        // header inside the rounded outline.
-        overflow: "visible",
-      }}
+      className="hs-yeast-strain-list-wrap"
+      style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}
     >
-      <StrainLedgerHead />
-      <LedgerRowsAnimated>
-        {rows.map((r, i) => (
-          <LedgerRowMotion key={r.yeast.id}>
-            <StrainLedgerRow
-              row={r}
-              index={i}
-              isOnlyOne={rows.length === 1}
-              isLast={i === rows.length - 1}
-              yeastType={yeastType}
-              packs={packs}
-              slurryLiters={slurryLiters}
-              mfgDate={mfgDate}
-              onSwap={() => onSwap(r.yeast.id)}
-              onRemove={() => onRemove(r.yeast.id)}
-              onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}
-              onAttenuationNudge={(dir) =>
-                onAttenuationNudge(r.yeast.id, r.attenuationPct, dir)
-              }
-              onPacksChange={(v) => onPacksChange(r.yeast.id, v)}
-              onPacksNudge={(dir) => {
-                const current = yeastType === "slurry" ? slurryLiters : packs;
-                onPacksNudge(r.yeast.id, current, dir);
-              }}
-              onTypeChange={onTypeChange}
-              onMfgDateChange={onMfgDateChange}
-            />
-          </LedgerRowMotion>
-        ))}
-      </LedgerRowsAnimated>
+      <div
+        className="hs-yeast-strain-cards"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        <LedgerRowsAnimated>
+          {rows.map((r, i) => (
+            <LedgerRowMotion key={r.yeast.id}>
+              <StrainCard
+                row={r}
+                index={i}
+                isOnlyOne={rows.length === 1}
+                yeastType={yeastType}
+                packs={packs}
+                slurryLiters={slurryLiters}
+                mfgDate={mfgDate}
+                onSwap={() => onSwap(r.yeast.id)}
+                onRemove={() => onRemove(r.yeast.id)}
+                onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}
+                onAttenuationNudge={(dir) =>
+                  onAttenuationNudge(r.yeast.id, r.attenuationPct, dir)
+                }
+                onPacksChange={(v) => onPacksChange(r.yeast.id, v)}
+                onPacksNudge={(dir) => {
+                  const current = yeastType === "slurry" ? slurryLiters : packs;
+                  onPacksNudge(r.yeast.id, current, dir);
+                }}
+                onTypeChange={onTypeChange}
+                onMfgDateChange={onMfgDateChange}
+              />
+            </LedgerRowMotion>
+          ))}
+        </LedgerRowsAnimated>
+      </div>
       <MobileAddRow onAdd={onAdd} label="+ Add another strain" />
     </div>
   );
 }
 
-function StrainLedgerHead() {
-  const cellStyle: CSSProperties = {
-    display: "block",
+/**
+ * Strain-block header — section-style row (left-aligned title + hairline
+ * running through it) with column labels punching paper-bg "windows" in
+ * the line above their respective card columns. The title doubles as
+ * the STRAIN column label so we don't duplicate it. ATTENUATION sits
+ * over the atten chip; SOURCE centres over the packs cell via the same
+ * right-flushed spacer pattern the card uses. The "+ Pick strain"
+ * button parks on the right end of the line, also with a paper window
+ * so the hairline ends cleanly into it. Empty state strips down to a
+ * plain eyebrow.
+ */
+function StrainBlockHeader({
+  hasStrains,
+  onAdd,
+}: {
+  hasStrains: boolean;
+  onAdd: () => void;
+}) {
+  if (!hasStrains) {
+    return <BlockEyebrow label="The yeast strain" meta={null} right={null} />;
+  }
+  const labelStyle: CSSProperties = {
     fontFamily: hsTokens.body,
     fontWeight: 700,
     fontSize: 10,
@@ -712,57 +703,112 @@ function StrainLedgerHead() {
     color: hsTokens.muted,
     lineHeight: 1,
   };
+  // Inline span around each label punches a paper-bg "window" so the
+  // continuous hairline behind the row visually breaks around the text.
+  const punchStyle: CSSProperties = {
+    background: hsTokens.paper,
+    padding: "0 10px",
+    position: "relative",
+    zIndex: 1,
+  };
   return (
     <div
-      className="hs-yeast-ledger-head-row"
+      className="hs-yeast-strain-block-header"
       style={{
+        position: "relative",
         display: "grid",
-        gridTemplateColumns: STRAIN_LEDGER_COLS,
-        padding: "10px 18px 8px",
-        borderBottom: `2px solid ${hsTokens.ink}`,
-        // Section-tinted ledger head: ~7% yeast mixed into cream.
-        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-yeast))",
-        gap: 14,
+        gridTemplateColumns:
+          "44px minmax(140px, 1fr) 100px minmax(330px, auto) 56px",
         alignItems: "center",
-        // Round only the top corners so the cream-bg head sits inside
-        // the ledger's rounded outline (parent has overflow:visible).
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
+        columnGap: 12,
+        padding: "2px 0 0",
+        minHeight: 24,
       }}
     >
-      <span aria-hidden style={cellStyle} />
-      <span style={cellStyle}>Strain</span>
-      <span style={cellStyle}>Atten</span>
-      {/* Source header mirrors the body cluster's flex-end layout so
-          the label sits directly above the leftmost (Type ▾) chip. The
-          SOURCE label takes a slot the same width as the chip with text
-          centered inside, so the *center* of "SOURCE" lines up with the
-          *center* of the chip — not just its right edge. Invisible
-          spacers stand in for the packs cell + mfg date pill widths. */}
+      {/* Continuous hairline behind the row — section-divider style. */}
       <span
+        aria-hidden
+        className="hs-yeast-strain-block-rule"
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          height: 1.5,
+          background: hsTokens.ink,
+          opacity: 0.18,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Title spans badge + identity columns so it anchors to the
+          section's left edge, not the badge column. */}
+      <div
+        className="hs-yeast-strain-block-title"
+        style={{ gridColumn: "1 / 3" }}
+      >
+        <span style={{ ...punchStyle, paddingLeft: 0 }}>
+          <Eyebrow size={11} style={{ whiteSpace: "nowrap" }}>
+            The yeast strain
+          </Eyebrow>
+        </span>
+      </div>
+
+      <div className="hs-yeast-strain-block-col-label">
+        <span style={{ ...labelStyle, ...punchStyle, display: "inline-block" }}>
+          Attenuation
+        </span>
+      </div>
+
+      <div
+        className="hs-yeast-strain-block-col-label"
         style={{
           display: "flex",
-          justifyContent: "flex-end",
           alignItems: "center",
+          justifyContent: "flex-end",
           gap: 8,
         }}
       >
-        <span style={{ ...cellStyle, minWidth: 116, textAlign: "center" }}>
+        <span aria-hidden style={{ display: "block", width: 100, height: 1 }} />
+        <span
+          style={{
+            ...labelStyle,
+            ...punchStyle,
+            display: "inline-block",
+            textAlign: "center",
+          }}
+        >
           Source
         </span>
-        <span aria-hidden style={{ width: 80, height: 1, visibility: "hidden" }} />
-        <span aria-hidden style={{ width: 95, height: 1, visibility: "hidden" }} />
-      </span>
-      <span style={{ ...cellStyle, textAlign: "right" }}>—</span>
+        <span aria-hidden style={{ display: "block", width: 80, height: 1 }} />
+      </div>
+
+      {/* Button parks at the right end of the rule, with its own paper
+          window so the line meets it cleanly. */}
+      <div
+        className="hs-yeast-strain-block-header-action"
+        style={{
+          gridColumn: 5,
+          justifySelf: "end",
+          background: hsTokens.paper,
+          paddingLeft: 10,
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <HSButton onClick={onAdd} color={hsTokens.yeast} size="sm">
+          + Pick strain
+        </HSButton>
+      </div>
     </div>
   );
 }
 
-function StrainLedgerRow({
+function StrainCard({
   row,
   index,
   isOnlyOne,
-  isLast,
   yeastType,
   packs,
   slurryLiters,
@@ -779,7 +825,6 @@ function StrainLedgerRow({
   row: StrainRowData;
   index: number;
   isOnlyOne: boolean;
-  isLast: boolean;
   yeastType: YeastType;
   packs: number;
   slurryLiters: number;
@@ -807,27 +852,26 @@ function StrainLedgerRow({
   const packsStep = yeastType === "slurry" ? 0.1 : 1;
 
   return (
-    <div
-      className="hs-yeast-ledger-row hs-yeast-data-row"
-      style={{
-        display: "grid",
-        gridTemplateColumns: STRAIN_LEDGER_COLS,
-        padding: "14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
-        alignItems: "center",
-        gap: 14,
-      }}
-    >
-      {/* Lab favicon badge (click → swap strain) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+    <div className="hs-yeast-strain-card">
+      {/* Lab favicon badge (click → swap strain) — enlarged from 36→44
+          to match the card scale. */}
+      <div
+        className="hs-yeast-badge-cell"
+        style={{
+          gridArea: "badge",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <button
           type="button"
           onClick={onSwap}
           aria-label={`Swap ${row.yeast.name}`}
           className="hs-yeast-badge-btn"
           style={{
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             borderRadius: 10,
             background: hsTokens.cream,
             border: `2px solid ${hsTokens.ink}`,
@@ -843,9 +887,8 @@ function StrainLedgerRow({
         </button>
       </div>
 
-      {/* Strain identity — strain name on top (bold, click → swap), lab
-          caption below (muted script). Pitch metadata lives in col 4. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+      {/* Strain identity — name + lab caption. */}
+      <div style={{ gridArea: "identity", minWidth: 0 }}>
         <button
           type="button"
           onClick={onSwap}
@@ -868,6 +911,7 @@ function StrainLedgerRow({
             alignItems: "center",
             gap: 8,
             minWidth: 0,
+            width: "100%",
           }}
         >
           <span
@@ -884,6 +928,8 @@ function StrainLedgerRow({
         {row.yeast.laboratory ? (
           <span
             style={{
+              display: "block",
+              marginTop: 3,
               fontFamily: hsTokens.script,
               fontSize: 14,
               color: hsTokens.muted,
@@ -898,11 +944,11 @@ function StrainLedgerRow({
         ) : null}
       </div>
 
-      {/* Attenuation (editable) — left-aligned inside a narrow col so
-          the percentage sits up against the strain cell on the left and
-          opens a clear gap before the source cluster on the right. The
-          eye reads strain + atten as a single yeast-identity group. */}
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      {/* Attenuation chip */}
+      <div
+        className="hs-yeast-edit-cell"
+        style={{ gridArea: "atten", display: "flex", justifyContent: "flex-start" }}
+      >
         <EditableCell
           value={row.attenuationPct}
           step={1}
@@ -919,18 +965,11 @@ function StrainLedgerRow({
       {/* Source cluster — Type ▾ + Packs editable + Mfg date picker.
           Three pitch-metadata fields packed horizontally so they read as
           a single group, distinct from the yeast-identity group on the
-          left. Right-aligned inside col 4 so the items sit up against
-          the actions cell; this opens a clear horizontal gap between
-          atten (left, identity group) and source (right, pitch group).
-          The SOURCE head label is left-aligned for readability — header
-          and body anchored to opposite edges is intentional: the eye
-          reads "Source" as the section name and the cluster as the
-          editable content. nowrap keeps the three items on one line at
-          desktop width; the mobile reflow CSS drops them to their own
-          row at ≤640px. Slurry/dry hide the mfg picker (irrelevant —
-          dry yeast has no per-pack viability decay). */}
+          left. Right-aligned inside the cell. Slurry/dry hide the mfg
+          picker (irrelevant — dry yeast has no per-pack viability decay). */}
       <div
         style={{
+          gridArea: "source",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
@@ -991,6 +1030,7 @@ function StrainLedgerRow({
       {/* Actions: swap pencil + remove × */}
       <div
         style={{
+          gridArea: "actions",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
@@ -1029,7 +1069,7 @@ function StrainLedgerRow({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -1196,11 +1236,11 @@ function LabBadgeInner({ laboratory }: { laboratory?: string }) {
       <img
         src={favicon}
         alt={laboratory || "Yeast lab"}
-        width={24}
-        height={24}
+        width={28}
+        height={28}
         style={{
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           objectFit: "contain",
           display: "block",
         }}
@@ -1212,7 +1252,7 @@ function LabBadgeInner({ laboratory }: { laboratory?: string }) {
       aria-hidden
       style={{
         fontFamily: hsTokens.display,
-        fontSize: 14,
+        fontSize: 18,
         color: hsTokens.yeast,
         lineHeight: 1,
       }}
@@ -1452,10 +1492,11 @@ function StarterPromptSubtle({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-// 6 cols — added a DME column (computed read-only) so each step shows
-// its own DME contribution inline, matching the per-row IBU pattern in
-// HopSection. Aggregate total DME moved into the BlockEyebrow meta.
-const STARTER_LEDGER_COLS = "44px minmax(0, 1.5fr) 110px 110px 90px 64px";
+// ─── Starter ledger (Hop-style — echoes the mash ledger so the two
+// step-based blocks share a visual language). 6 cols: # / label /
+// size / gravity / DME (read-only tinted stripe) / × ──────────────
+
+const STARTER_LEDGER_COLS = "44px minmax(0, 1.5fr) 132px 150px 100px 64px";
 
 function StarterLedger({
   steps,
@@ -1470,7 +1511,7 @@ function StarterLedger({
 }) {
   return (
     <div
-      className="hs-yeast-ledger"
+      className="hs-yeast-ledger hs-yeast-starter-ledger"
       style={{
         background: hsTokens.paper,
         border: `2px solid ${hsTokens.ink}`,
@@ -1488,7 +1529,6 @@ function StarterLedger({
             step={s}
             index={i}
             isLast={i === steps.length - 1}
-            isOnlyOne={steps.length === 1}
             dmeGrams={res?.dmeGrams ?? null}
             onSizeChange={(v) => onUpdate(s.id, { liters: Math.max(0.1, v) })}
             onSizeNudge={(dir) =>
@@ -1537,8 +1577,8 @@ function StarterLedgerHead() {
     >
       <span style={{ ...cellStyle, textAlign: "center" }}>#</span>
       <span style={cellStyle}>Step</span>
-      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 28 }}>Size</span>
-      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 28 }}>Gravity</span>
+      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 32 }}>Size</span>
+      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 32 }}>Gravity</span>
       <span style={{ ...cellStyle, textAlign: "center" }}>DME</span>
       <span style={{ ...cellStyle, textAlign: "right" }}>—</span>
     </div>
@@ -1549,7 +1589,6 @@ function StarterLedgerRow({
   step,
   index,
   isLast,
-  isOnlyOne,
   dmeGrams,
   onSizeChange,
   onSizeNudge,
@@ -1560,7 +1599,6 @@ function StarterLedgerRow({
   step: StarterStep;
   index: number;
   isLast: boolean;
-  isOnlyOne: boolean;
   dmeGrams: number | null;
   onSizeChange: (v: number) => void;
   onSizeNudge: (dir: 1 | -1) => void;
@@ -1585,8 +1623,8 @@ function StarterLedgerRow({
         <span
           aria-hidden
           style={{
-            width: 28,
-            height: 28,
+            width: 30,
+            height: 30,
             borderRadius: 999,
             background: hsTokens.yeast,
             border: `2px solid ${hsTokens.ink}`,
@@ -1595,7 +1633,7 @@ function StarterLedgerRow({
             alignItems: "center",
             justifyContent: "center",
             fontFamily: hsTokens.display,
-            fontSize: 13,
+            fontSize: 14,
             color: hsTokens.ink,
             lineHeight: 1,
           }}
@@ -1620,8 +1658,8 @@ function StarterLedgerRow({
         </span>
       </div>
 
-      {/* Size L (editable) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Size chip */}
+      <div className="hs-yeast-edit-cell" style={{ display: "flex", justifyContent: "center" }}>
         <EditableCell
           value={step.liters}
           step={0.5}
@@ -1635,8 +1673,8 @@ function StarterLedgerRow({
         />
       </div>
 
-      {/* Gravity (editable) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Gravity chip */}
+      <div className="hs-yeast-edit-cell" style={{ display: "flex", justifyContent: "center" }}>
         <EditableCell
           value={step.gravity}
           step={0.002}
@@ -1650,21 +1688,18 @@ function StarterLedgerRow({
         />
       </div>
 
-      {/* DME (computed, read-only) — mirrors the per-hop IBU column in
-          HopSection: tinted ink/paper background extends edge-to-edge
-          across the cell (the negative margin cancels the row's 14×18
-          padding) so the column reads as a distinct read-only stripe. */}
+      {/* DME (computed, read-only) — yeast-tinted stripe that extends
+          edge-to-edge across the cell. Negative vertical margin cancels
+          the row's 14px padding so the stripe meets the row's top and
+          bottom borders. Mirrors the hops IBU column pattern. */}
       <div
         className="hs-yeast-dme-cell"
         style={{
           alignSelf: "stretch",
           display: "flex",
-          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
           gap: 4,
-          // Section-tinted DME stripe: ~4% yeast layered onto the ink-on-paper
-          // base so the column reads as "this section's read-only column".
           background:
             "color-mix(in srgb, color-mix(in srgb, var(--hs-ink) 5%, var(--hs-paper)) 96%, var(--hs-yeast))",
           padding: "14px 12px",
@@ -1707,7 +1742,6 @@ function StarterLedgerRow({
         <IconBtn
           ariaLabel={`Remove starter step ${index + 1}`}
           onClick={onRemove}
-          disabled={isOnlyOne && false}
           className="hs-yeast-remove-btn"
           danger
         >
@@ -1730,7 +1764,7 @@ function StarterLedgerRow({
   );
 }
 
-// ─── Editable cell (Mash pattern: onCommit + onNudge) ────────────
+// ─── Editable chip — paper bg, script numerals, yeast-bordered input ─
 
 function EditableCell({
   value,
@@ -1804,20 +1838,20 @@ function EditableCell({
         max={max}
         aria-label={ariaLabel}
         style={{
-          width: "100%",
+          width: 96,
           background: hsTokens.cream,
           border: `1.5px solid ${hsTokens.yeast}`,
           outline: "none",
           fontFamily: hsTokens.script,
           fontWeight: 500,
-          fontSize: 28,
+          fontSize: 23,
           color: hsTokens.ink,
           fontVariantNumeric: "tabular-nums",
-          textAlign: "right",
-          padding: "2px 8px",
+          textAlign: "left",
+          padding: "4px 9px",
           margin: 0,
           appearance: "textfield",
-          borderRadius: 6,
+          borderRadius: 7,
         }}
       />
     );
@@ -1833,13 +1867,12 @@ function EditableCell({
       <button
         type="button"
         onClick={enterEdit}
-        aria-label={`Edit ${format(value)} ${suffix ?? ""}`}
+        aria-label={`Edit ${format(value)}${suffix ?? ""}`}
         className="hs-yeast-edit-btn"
         style={{
-          background: "transparent",
-          border: "none",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
-          padding: "2px 28px 2px 6px",
+          background: hsTokens.paper,
+          border: `1.5px solid ${hsTokens.ink}`,
+          padding: "3px 32px 3px 11px",
           margin: 0,
           cursor: "text",
           display: "inline-flex",
@@ -1847,16 +1880,17 @@ function EditableCell({
           gap: 5,
           color: "inherit",
           fontFamily: "inherit",
-          borderRadius: 0,
-          transition: "background 90ms ease, border-bottom-style 90ms ease",
+          borderRadius: 7,
+          boxShadow: hsTokens.sh1,
+          transition: "background 90ms ease, box-shadow 90ms ease",
         }}
       >
         <span
           style={{
             fontFamily: hsTokens.script,
             fontWeight: 500,
-            fontSize: 28,
-            lineHeight: 1,
+            fontSize: 25,
+            lineHeight: 1.05,
             color: hsTokens.ink,
           }}
         >
@@ -2282,9 +2316,6 @@ function MobileAddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
 function YeastSectionStyles() {
   return (
     <style>{`
-      /* Single-column layout — the aside (pitch readout + notes) has been
-         hoisted to the parent HopSkipBuilder grid so it can morph between
-         tabs. */
       .hs-yeast-section .hs-yeast-grid {
         display: flex;
         flex-direction: column;
@@ -2303,32 +2334,70 @@ function YeastSectionStyles() {
         flex-direction: column;
         gap: 14px;
       }
+      .hs-yeast-section .hs-yeast-strain-list-wrap { min-width: 0; }
 
-      @media (max-width: 900px) {
-        .hs-yeast-section .hs-yeast-grid {
-          row-gap: 14px;
-        }
+      /* The LedgerRowMotion wrapper sets overflow:hidden inline so the
+         exit animation can collapse height to 0. That clips the strain
+         card's 2px hard shadow. Override here so the shadow renders the
+         same way it does in FermentableSection (which has no motion
+         wrapper). During exit the height still animates to 0 — fading
+         opacity hides the brief overflow. */
+      .hs-yeast-section .hs-yeast-strain-cards > div {
+        overflow: visible !important;
       }
 
-      /* Strain ledger uses overflow:visible (so the per-row Type ▾
-         dropdown can extend below). Round the bottom corners on the
-         last data row so hover-bg stays inside the ledger outline.
-         Use :last-of-type, not :last-child — MobileAddRow is the true
-         last child (display:none on desktop, still counts positionally),
-         so :last-child would match it instead of the last data row. */
-      .hs-yeast-section .hs-yeast-strain-ledger > .hs-yeast-data-row:last-of-type {
+      @media (max-width: 900px) {
+        .hs-yeast-section .hs-yeast-grid { row-gap: 14px; }
+      }
+
+      /* Strain card — badge | identity | atten | source | actions.
+         Resting body carries a gentle yeast wash at the same intensity
+         as the starter ledger head (~4%) so the two yeast surfaces
+         read at matching strength. Fixed-pixel columns (not auto) so
+         the labels in StrainBlockHeader can line up deterministically. */
+      .hs-yeast-section .hs-yeast-strain-card {
+        display: grid;
+        grid-template-columns: 44px minmax(140px, 1fr) 100px minmax(330px, auto) 56px;
+        grid-template-areas: "badge identity atten source actions";
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 8px;
+        padding: 10px 12px;
+        background: color-mix(in srgb, var(--hs-cream) 96%, var(--hs-yeast));
+        border: 2px solid var(--hs-ink);
+        border-radius: 10px;
+        box-shadow: 2px 2px 0 var(--hs-ink);
+      }
+
+      /* Starter ledger — Hop-style connected table inside a paper-bg
+         frame. Last data row gets bottom-corner radius so the
+         hover-tinted background stays inside the rounded outline. */
+      .hs-yeast-section .hs-yeast-starter-ledger > .hs-yeast-data-row:last-of-type {
         border-bottom-left-radius: 12px;
         border-bottom-right-radius: 12px;
       }
 
-      @media (min-width: 641px) and (hover: hover) {
-        .hs-yeast-section .hs-yeast-data-row {
-          transition: background 90ms ease;
+      /* Desktop hover — strain cards lift; starter rows just tint. */
+      @media (min-width: 561px) and (hover: hover) {
+        .hs-yeast-section .hs-yeast-strain-card {
+          transition: box-shadow 110ms ease, transform 110ms ease, background 110ms ease;
         }
-        .hs-yeast-section .hs-yeast-data-row:hover {
-          /* Section-tinted hover: ~2% yeast mixed into a paper/cream-2 base —
-             lighter overall than pure cream-2 so the hover lifts. */
-          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-yeast));
+        .hs-yeast-section .hs-yeast-strain-card:hover {
+          background: color-mix(in srgb, var(--hs-cream) 88%, var(--hs-yeast));
+          box-shadow: 3px 3px 0 var(--hs-ink);
+          transform: translate(-1px, -1px);
+        }
+        .hs-yeast-section .hs-yeast-remove-btn,
+        .hs-yeast-section .hs-yeast-swap-btn {
+          opacity: 0.32;
+          transition: opacity 90ms ease, background 90ms ease;
+        }
+        .hs-yeast-section .hs-yeast-strain-card:hover .hs-yeast-remove-btn,
+        .hs-yeast-section .hs-yeast-strain-card:hover .hs-yeast-swap-btn {
+          opacity: 1;
+        }
+        .hs-yeast-section .hs-yeast-remove-btn:hover {
+          background: rgba(212, 69, 44, 0.12);
         }
         .hs-yeast-section .hs-yeast-name-btn:hover .hs-yeast-name {
           text-decoration: underline;
@@ -2337,7 +2406,6 @@ function YeastSectionStyles() {
         }
         .hs-yeast-section .hs-yeast-edit-btn:hover {
           background: ${hsTokens.cream2};
-          border-bottom-style: solid !important;
         }
         .hs-yeast-section .hs-yeast-gen-card:hover {
           transform: translate(-1px, -1px);
@@ -2353,18 +2421,77 @@ function YeastSectionStyles() {
         }
       }
 
-      @media (max-width: 640px) {
-        .hs-yeast-section .hs-yeast-mobile-add {
+      @media (min-width: 641px) and (hover: hover) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row {
+          transition: background 90ms ease;
+        }
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row:hover {
+          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-yeast));
+        }
+      }
+
+      /* Mobile (≤560px) — strain reflows to 3-row card layout. Strain
+         block header drops column labels and rule, falls back to a
+         plain flex row (eyebrow + flex-rule + button) like the original
+         BlockEyebrow since the labels can't correspond to card columns
+         after reflow. */
+      @media (max-width: 560px) {
+        .hs-yeast-section .hs-yeast-mobile-add { display: flex !important; }
+        .hs-yeast-section .hs-yeast-strain-block-header {
           display: flex !important;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          padding: 2px 0 0 !important;
+        }
+        .hs-yeast-section .hs-yeast-strain-block-rule,
+        .hs-yeast-section .hs-yeast-strain-block-col-label {
+          display: none !important;
+        }
+        .hs-yeast-section .hs-yeast-strain-block-title {
+          grid-column: auto !important;
+        }
+        .hs-yeast-section .hs-yeast-strain-block-header-action {
+          margin-left: auto;
+          padding-left: 0 !important;
+          grid-column: auto !important;
         }
 
+        .hs-yeast-section .hs-yeast-strain-card {
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          grid-template-areas:
+            "badge identity actions"
+            "atten atten    atten"
+            "source source  source";
+          row-gap: 10px;
+        }
+        .hs-yeast-section .hs-yeast-strain-card .hs-yeast-edit-cell {
+          justify-content: flex-start !important;
+        }
+
+        /* Always-visible bare steppers + actions (touch can't hover). */
         .hs-yeast-section .hs-yeast-steppers {
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          gap: 2px !important;
+          right: 2px !important;
+        }
+        .hs-yeast-section .hs-yeast-swap-btn,
+        .hs-yeast-section .hs-yeast-remove-btn { opacity: 1 !important; }
+
+        .hs-yeast-section { padding: 18px 14px !important; }
+      }
+
+      /* Mobile (≤640px) — starter ledger collapses to stacked rows
+         like the mash ledger does. */
+      @media (max-width: 640px) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-steppers {
           opacity: 1 !important;
           pointer-events: auto !important;
           gap: 2px !important;
           right: 0 !important;
         }
-        .hs-yeast-section .hs-yeast-steppers button {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-steppers button {
           background: transparent !important;
           border: none !important;
           box-shadow: none !important;
@@ -2372,69 +2499,25 @@ function YeastSectionStyles() {
           height: 22px !important;
           color: ${hsTokens.muted} !important;
         }
-        .hs-yeast-section .hs-yeast-steppers button svg {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-steppers button svg {
           width: 14px !important;
           height: 9px !important;
           stroke-width: 2 !important;
         }
-        .hs-yeast-section .hs-yeast-swap-btn,
-        .hs-yeast-section .hs-yeast-remove-btn {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-remove-btn {
           opacity: 1 !important;
         }
-        .hs-yeast-section .hs-yeast-ledger {
+        .hs-yeast-section .hs-yeast-starter-ledger {
           border: none !important;
           box-shadow: none !important;
           background: transparent !important;
           border-radius: 0 !important;
           overflow: visible !important;
         }
-        .hs-yeast-section .hs-yeast-ledger-head-row {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-ledger-head-row {
           display: none !important;
         }
-        /* Strain row reflow — 5 cells, 3-row mobile layout.
-           Scoped to strain-ledger only so the 6-col starter row keeps
-           its desktop grid (and adds its own mobile rules below). */
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row {
-          display: grid !important;
-          grid-template-columns: 44px minmax(0, 1fr) auto !important;
-          grid-template-areas:
-            "badge identity actions"
-            "atten atten    atten"
-            "source source  source" !important;
-          column-gap: 12px !important;
-          row-gap: 10px !important;
-          padding: 16px 0 !important;
-          border-bottom: 1px solid ${hsTokens.ink} !important;
-          background: transparent !important;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row:last-of-type {
-          border-bottom: none !important;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row > :nth-child(1) {
-          grid-area: badge;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row > :nth-child(2) {
-          grid-area: identity;
-          min-width: 0;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row > :nth-child(3) {
-          grid-area: atten !important;
-          justify-self: start !important;
-          justify-content: flex-start;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row > :nth-child(4) {
-          grid-area: source !important;
-          justify-self: stretch !important;
-          justify-content: flex-start;
-        }
-        .hs-yeast-section .hs-yeast-strain-ledger .hs-yeast-data-row > :nth-child(5) {
-          grid-area: actions;
-          justify-self: end;
-        }
-
-        /* Starter row reflow — 6 cells (# / step / size / gravity / DME / ×).
-           Stack into 2 rows: label on top, values on bottom. */
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row {
           display: grid !important;
           grid-template-columns: 44px minmax(0, 1fr) auto !important;
           grid-template-areas:
@@ -2446,59 +2529,35 @@ function YeastSectionStyles() {
           border-bottom: 1px solid ${hsTokens.ink} !important;
           background: transparent !important;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row:last-of-type {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row:last-of-type {
           border-bottom: none !important;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(1) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(1) {
           grid-area: badge;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(2) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(2) {
           grid-area: label;
           min-width: 0;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(3) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(3) {
           grid-area: size !important;
           justify-self: start !important;
           justify-content: flex-start;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(4) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(4) {
           grid-area: gravity !important;
           justify-self: center !important;
           justify-content: center;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(5) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(5) {
           grid-area: dme !important;
           justify-self: end !important;
           justify-content: flex-end;
+          margin: 0 !important;
         }
-        .hs-yeast-section .hs-yeast-ledger:not(.hs-yeast-strain-ledger) .hs-yeast-data-row > :nth-child(6) {
+        .hs-yeast-section .hs-yeast-starter-ledger .hs-yeast-data-row > :nth-child(6) {
           grid-area: actions;
           justify-self: end;
-        }
-        .hs-yeast-section .hs-yeast-edit-btn {
-          padding: 4px 36px 4px 8px !important;
-        }
-        .hs-yeast-section .hs-yeast-edit-btn > span:first-child {
-          font-size: 32px !important;
-        }
-        .hs-yeast-section .hs-yeast-total-row {
-          display: flex !important;
-          justify-content: space-between !important;
-          align-items: baseline !important;
-          padding: 16px 0 !important;
-          border-top: 2px solid ${hsTokens.ink} !important;
-          background: transparent !important;
-        }
-        .hs-yeast-section .hs-yeast-total-row > * {
-          padding: 0 !important;
-        }
-        .hs-yeast-section .hs-yeast-total-row > :nth-child(1),
-        .hs-yeast-section .hs-yeast-total-row > :nth-child(3),
-        .hs-yeast-section .hs-yeast-total-row > :nth-child(5) {
-          display: none !important;
-        }
-        .hs-yeast-section {
-          padding: 18px 14px !important;
         }
       }
     `}</style>
