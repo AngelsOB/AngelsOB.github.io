@@ -30,6 +30,7 @@ const footerSections = [
     links: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
+      { href: "/credits", label: "Credits" },
     ],
   },
 ] as const;
