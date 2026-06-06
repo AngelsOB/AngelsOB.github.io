@@ -18,14 +18,29 @@ import HSAuthButton from "./HSAuthButton";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useUnsavedChangesStore } from "@/modules/beta-builder/presentation/stores/unsavedChangesStore";
 
-interface NavLink {
+interface NavChild {
   href: string;
   label: string;
 }
 
+interface NavLink {
+  href: string;
+  label: string;
+  /** When present the link becomes a dropdown trigger instead of a plain
+   *  link — hover (mouse) or tap (touch) opens a menu of these destinations. */
+  children?: NavChild[];
+}
+
 const LINKS: NavLink[] = [
   { href: "/", label: "Home" },
-  { href: "/recipes", label: "Recipes" },
+  {
+    href: "/recipes",
+    label: "Recipes",
+    children: [
+      { href: "/recipes", label: "My Recipes" },
+      { href: "/browse", label: "Browse All" },
+    ],
+  },
   { href: "/calculators", label: "Calculators" },
   { href: "/learn", label: "Learn" },
 ];
@@ -71,9 +86,14 @@ export default function HSHeader() {
   // ordering (left vs right) to decide the sign of the magnetic offset —
   // hovering a link to the right of the active link pulls the pill right;
   // a link to the left pulls left.
-  const activeIdx = LINKS.findIndex((l) =>
-    l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)
-  );
+  // A link is "active" when the route matches it OR (for dropdown links) any
+  // of its children — so "Recipes" stays lit on /browse too.
+  const isLinkActive = (l: NavLink) =>
+    l.href === "/"
+      ? pathname === "/"
+      : pathname.startsWith(l.href) ||
+        (l.children?.some((c) => pathname.startsWith(c.href)) ?? false);
+  const activeIdx = LINKS.findIndex(isLinkActive);
   const hoveredIdx = hoveredHref ? LINKS.findIndex((l) => l.href === hoveredHref) : -1;
   // Direction of the magnetic pull, or "none" if there's nothing to pull
   // toward. The skin element's `transform-origin` keys off this so the
@@ -174,7 +194,7 @@ export default function HSHeader() {
   // a single persistent element and measuring nav-relative coordinates,
   // the page scroll position never enters the equation.
   const navRef = useRef<HTMLElement | null>(null);
-  const linkRefs = useRef<Array<HTMLAnchorElement | null>>(
+  const linkRefs = useRef<Array<HTMLElement | null>>(
     Array(LINKS.length).fill(null)
   );
   const [pillTarget, setPillTarget] = useState<{
@@ -233,6 +253,101 @@ export default function HSHeader() {
       observer?.disconnect();
     };
   }, [activeIdx]);
+
+  // ── Recipes dropdown menu ─────────────────────────────────────────────
+  // A nav link may carry `children`; its trigger opens a small menu of
+  // sub-destinations. The panel renders at the nav-SHELL level (a sibling of
+  // <nav>, NOT inside it) so the mobile nav's `overflow-x: auto` — which the
+  // CSS spec also makes clip overflow-y — can't cut it off; we measure the
+  // trigger's x to position it. Mouse: hover opens, a short close-delay lets
+  // the cursor cross the gap into the panel without dismissing. Touch: tap
+  // toggles. Escape / outside-press / scroll / resize / route-change close it.
+  const navShellRef = useRef<HTMLDivElement | null>(null);
+  const menuPanelRef = useRef<HTMLDivElement | null>(null);
+  const openTriggerRef = useRef<HTMLElement | null>(null);
+  const closeTimer = useRef<number | null>(null);
+  const [openHref, setOpenHref] = useState<string | null>(null);
+  const [menuLeft, setMenuLeft] = useState(0);
+  const MENU_W = 220;
+
+  const cancelClose = () => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+  const closeMenu = () => {
+    cancelClose();
+    setOpenHref(null);
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setOpenHref(null), 140);
+  };
+  const openMenu = (href: string, el: HTMLElement | null) => {
+    cancelClose();
+    const shell = navShellRef.current;
+    if (el && shell) {
+      const r = el.getBoundingClientRect();
+      const s = shell.getBoundingClientRect();
+      // Clamp so a near-right-edge trigger (mobile) doesn't push the panel
+      // off-screen; otherwise left-align the panel under the trigger.
+      let left = r.left;
+      const maxLeft = window.innerWidth - 12 - MENU_W;
+      if (left > maxLeft) left = Math.max(12, maxLeft);
+      setMenuLeft(left - s.left);
+    }
+    openTriggerRef.current = el;
+    setOpenHref(href);
+  };
+  const toggleMenu = (href: string, el: HTMLElement | null) => {
+    if (openHref === href) closeMenu();
+    else openMenu(href, el);
+  };
+
+  // Close on route change.
+  useEffect(() => {
+    setOpenHref(null);
+  }, [pathname]);
+
+  // While open: dismiss on Escape, an outside press, or any scroll/resize.
+  useEffect(() => {
+    if (!openHref) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpenHref(null);
+        openTriggerRef.current?.focus();
+      }
+    };
+    const onDown = (e: Event) => {
+      const t = e.target as Node;
+      if (
+        openTriggerRef.current?.contains(t) ||
+        menuPanelRef.current?.contains(t)
+      )
+        return;
+      setOpenHref(null);
+    };
+    const onMove = () => setOpenHref(null);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("scroll", onMove, { passive: true, capture: true });
+    window.addEventListener("resize", onMove);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
+    };
+  }, [openHref]);
+
+  // Clear a pending close timer on unmount.
+  useEffect(
+    () => () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    },
+    []
+  );
 
   // ── Mobile collapse-on-scroll ─────────────────────────────────────────
   // On small screens the sticky header eats scarce vertical space, so hide it
@@ -352,6 +467,7 @@ export default function HSHeader() {
         }}
       >
         <div
+          ref={navShellRef}
           className="hs-nav-shell"
           style={{
             // Shell wraps both the visible frame OVERLAY and the actual
@@ -454,7 +570,69 @@ export default function HSHeader() {
             </motion.div>
           )}
           {LINKS.map((l, i) => {
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+            const active = isLinkActive(l);
+            if (l.children) {
+              const open = openHref === l.href;
+              return (
+                <button
+                  type="button"
+                  ref={(el) => {
+                    linkRefs.current[i] = el;
+                  }}
+                  key={l.href}
+                  aria-haspopup="menu"
+                  aria-expanded={open}
+                  onClick={(e) => toggleMenu(l.href, e.currentTarget)}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === "mouse") openMenu(l.href, e.currentTarget);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === "mouse") scheduleClose();
+                  }}
+                  onMouseEnter={() => setHoveredHref(l.href)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    margin: 0,
+                    padding: "6px 14px",
+                    background: "transparent",
+                    border: "2px solid transparent",
+                    borderRadius: 999,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    color: active || open ? hsTokens.ink : hsTokens.muted,
+                    fontFamily: hsTokens.body,
+                    cursor: "pointer",
+                    transition: reduceMotion ? "none" : "color 180ms ease",
+                  }}
+                >
+                  {l.label}
+                  <svg
+                    aria-hidden
+                    width="9"
+                    height="9"
+                    viewBox="0 0 10 10"
+                    style={{
+                      transition: reduceMotion ? "none" : "transform 180ms ease",
+                      transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                    }}
+                  >
+                    <path
+                      d="M2 3.5 L5 6.5 L8 3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              );
+            }
             return (
               <Link
                 ref={(el) => {
@@ -493,6 +671,81 @@ export default function HSHeader() {
             );
           })}
         </nav>
+        {openHref &&
+          (() => {
+            const openLink = LINKS.find((l) => l.href === openHref);
+            if (!openLink?.children) return null;
+            return (
+              <div
+                ref={menuPanelRef}
+                role="menu"
+                aria-label={openLink.label}
+                className="hs-nav-menu"
+                onPointerEnter={(e) => {
+                  if (e.pointerType === "mouse") cancelClose();
+                }}
+                onPointerLeave={(e) => {
+                  if (e.pointerType === "mouse") scheduleClose();
+                }}
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: menuLeft,
+                  width: MENU_W,
+                  background: hsTokens.paper,
+                  border: `2px solid ${hsTokens.ink}`,
+                  borderRadius: 12,
+                  boxShadow: hsTokens.sh3,
+                  zIndex: 40,
+                  overflow: "hidden",
+                  fontFamily: hsTokens.body,
+                }}
+              >
+                {openLink.children.map((c, ci) => {
+                  const childActive =
+                    pathname === c.href || pathname.startsWith(c.href + "/");
+                  return (
+                    <Link
+                      key={c.href}
+                      href={c.href}
+                      role="menuitem"
+                      onClick={(e) => {
+                        handleNavLinkClick(c.href)(e);
+                        closeMenu();
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = hsTokens.cream2;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = childActive
+                          ? hsTokens.cream2
+                          : "transparent";
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "11px 16px",
+                        fontFamily: hsTokens.body,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: "0.01em",
+                        color: hsTokens.ink,
+                        textDecoration: "none",
+                        background: childActive ? hsTokens.cream2 : "transparent",
+                        boxShadow: childActive
+                          ? `inset 3px 0 0 ${hsTokens.malt}`
+                          : "none",
+                        borderTop:
+                          ci > 0 ? `1px solid ${hsTokens.cream2}` : "none",
+                      }}
+                    >
+                      {c.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
         <HSAuthButton />
       </div>
@@ -583,6 +836,18 @@ export default function HSHeader() {
           .hs-nav-pill-skin {
             transition: none;
           }
+        }
+        /* Recipes dropdown panel — a quick rise+fade on open. */
+        .hs-nav-menu {
+          transform-origin: top left;
+          animation: hs-nav-menu-in 150ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes hs-nav-menu-in {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hs-nav-menu { animation: none; }
         }
       `}</style>
     </header>
