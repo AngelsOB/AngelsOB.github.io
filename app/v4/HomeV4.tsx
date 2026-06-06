@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import type { CommunityRecipeCard } from "../_home/lib/communityCard";
 import { useReducedMotion } from "./lib/useReducedMotion";
@@ -31,7 +32,7 @@ import { useAuthStore } from "@/modules/auth/authStore";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import SignedInHeroV4 from "./SignedInHeroV4";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
 interface Props {
   recipes: CommunityRecipeCard[];
@@ -101,6 +102,19 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   // Starts on the grain bill — the hero/opening/grains stages are all the
   // recipe overview, before the Hops beat switches it.
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
+  // Auto-cycle the mock tabs through the bar (Fermentables → Hops → Mash →
+  // Water → Yeast → Fermentation → loop) while the user is in the hero/opening.
+  // Mirrors the live homepage HeroBuilderCard's auto-rotate. Stops on (a) user
+  // click in the mock tab bar, or (b) the first scroll-driven stage trigger
+  // firing — once the tour is "engaged", scroll position is the source of truth.
+  const [tourCycling, setTourCycling] = useState(true);
+  // setActiveTab + stop the cycle in one call — for the tab bar's onSelectTab
+  // and every scroll-trigger onToggle below. Stable identity; the useGSAP
+  // callbacks captured at mount still hit it.
+  const setActiveTabAndStop = useCallback((tab: TabKey) => {
+    setActiveTab(tab);
+    setTourCycling(false);
+  }, []);
   // Grains "live math" beat: 0 = empty bill / all vitals at 0, 1 = full recipe.
   // Driven by the grains beat's play-once staircase; the stats, style gauges,
   // and grain bill all interpolate by it.
@@ -119,6 +133,37 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   // While the honest-numbers beat is in view, ONLY the mash-temp chip grows —
   // it's the input being turned. false everywhere else.
   const [honestActive, setHonestActive] = useState(false);
+
+  // Auto-cycle effect — first switch ~2.1s after mount, then every ~2.65s in
+  // tab-bar order (matches the live homepage HeroBuilderCard timings). Skips
+  // the brewsheet tab (the climax — we don't want to spoil it by auto-rotating
+  // into it). Reduced-motion users get a static mock — the effect early-returns,
+  // so the timer never starts.
+  useEffect(() => {
+    if (reducedMotion || !tourCycling) return;
+    const order: TabKey[] = [
+      "fermentables",
+      "hops",
+      "mash",
+      "water",
+      "yeast",
+      "fermentation",
+    ];
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const advance = () =>
+      setActiveTab((prev) => {
+        const i = order.indexOf(prev);
+        return order[(i + 1) % order.length];
+      });
+    const startId = setTimeout(() => {
+      advance();
+      intervalId = setInterval(advance, 2650);
+    }, 2150);
+    return () => {
+      clearTimeout(startId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [reducedMotion, tourCycling]);
 
   useGSAP(
     () => {
@@ -338,7 +383,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 30%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("hops");
+            if (self.isActive) setActiveTabAndStop("hops");
           },
           onEnter: () => hopsGrowTl.restart(),
           onLeaveBack: () => {
@@ -420,7 +465,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 35%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("fermentables");
+            if (self.isActive) setActiveTabAndStop("fermentables");
           },
           // Play once when the beat scrolls into view; replay on a fresh
           // approach from above (scroll up past it, then back down). Scrolling
@@ -556,7 +601,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 30%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("water");
+            if (self.isActive) setActiveTabAndStop("water");
           },
           onEnter: () => {
             waterProxy.fill = 0;
@@ -651,7 +696,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 40%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("mash");
+            if (self.isActive) setActiveTabAndStop("mash");
           },
           // Grow + loop while in view; stop + shrink + reset to 152 when it leaves
           // in either direction, so nothing keeps running on other beats.
@@ -717,7 +762,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 35%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("brewsheet");
+            if (self.isActive) setActiveTabAndStop("brewsheet");
           },
           onEnter: () => bsGrowTl.restart(),
           onLeaveBack: () => {
@@ -1011,7 +1056,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 40%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("fermentables");
+            if (self.isActive) setActiveTabAndStop("fermentables");
           },
           onEnter: () => grainsTl.restart(),
           onLeaveBack: () => {
@@ -1026,7 +1071,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 35%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("hops");
+            if (self.isActive) setActiveTabAndStop("hops");
           },
           onEnter: () => radarGrowTl.restart(),
           onEnterBack: () => radarGrowTl.restart(),
@@ -1039,7 +1084,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 35%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("water");
+            if (self.isActive) setActiveTabAndStop("water");
           },
           onEnter: () => {
             if (waterEl) gsap.set(waterEl, { overflow: "visible" });
@@ -1062,7 +1107,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 40%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("mash");
+            if (self.isActive) setActiveTabAndStop("mash");
           },
           onEnter: honestStart,
           onEnterBack: honestStart,
@@ -1075,7 +1120,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           end: "bottom 35%",
           markers: DEV_MARKERS,
           onToggle: (self) => {
-            if (self.isActive) setActiveTab("brewsheet");
+            if (self.isActive) setActiveTabAndStop("brewsheet");
           },
           onEnter: () => bsGrowTl.restart(),
           onEnterBack: () => bsGrowTl.restart(),
@@ -1113,6 +1158,58 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         });
       }
 
+      // ── Per-section SplitText reveals on the tour copy — words for short
+      //    heads (hero h1, stage leads), lines for paragraphs (subhead,
+      //    opening sentences, stage bodies). "Introduce → show off": the
+      //    copy rises into place as the reader enters each stage, play-once
+      //    so scrolling back doesn't re-trigger it. The post-tour batch
+      //    above stays a coarse block fade-up — this is just the tour copy.
+      //    mask: "lines" wraps each line in overflow:hidden so words/lines
+      //    rise from below the line baseline with no clip artifacts.
+      //    autoSplit re-splits on resize / when the display font settles
+      //    (line wrapping shifts); the per-element `revealed` flag holds
+      //    the final state on re-splits so a resize past the section never
+      //    re-fires the animation.
+      const splitTargets = gsap.utils.toArray<HTMLElement>(
+        "[data-v4-split-reveal]",
+      );
+      const splitInstances: SplitText[] = [];
+      splitTargets.forEach((el) => {
+        const mode = el.dataset.v4SplitMode === "words" ? "words" : "lines";
+        let revealed = false;
+        const instance = SplitText.create(el, {
+          type: mode === "words" ? "words,lines" : "lines",
+          mask: "lines",
+          linesClass: "v4-split-line",
+          wordsClass: "v4-split-word",
+          autoSplit: true,
+          onSplit: (self) => {
+            const tgs = mode === "words" ? self.words : self.lines;
+            if (revealed) {
+              gsap.set(tgs, { yPercent: 0, opacity: 1 });
+              return undefined;
+            }
+            gsap.set(tgs, { yPercent: 110, opacity: 0 });
+            return gsap.to(tgs, {
+              yPercent: 0,
+              opacity: 1,
+              duration: 0.7,
+              ease: "power2.out",
+              stagger: mode === "words" ? 0.025 : 0.07,
+              scrollTrigger: {
+                trigger: el,
+                start: "top 88%",
+                once: true,
+                onEnter: () => {
+                  revealed = true;
+                },
+              },
+            });
+          },
+        });
+        splitInstances.push(instance);
+      });
+
       // Scroll cue (hero) fades out over the first ~200px of scroll, then is gone.
       const cueEl = rootRef.current?.querySelector('[data-v4="scrollcue"]');
       if (cueEl) {
@@ -1129,6 +1226,14 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       if (typeof document !== "undefined" && "fonts" in document) {
         document.fonts.ready.then(() => ScrollTrigger.refresh());
       }
+
+      // SplitText DOM mutations aren't tracked by gsap.context (which
+      // useGSAP scopes everything through), so they need an explicit revert
+      // on dependency change / unmount — otherwise the wrapper spans would
+      // leak across remounts.
+      return () => {
+        splitInstances.forEach((s) => s.revert());
+      };
     },
     { scope: rootRef, dependencies: [reducedMotion] },
   );
@@ -1265,7 +1370,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             <div className="v4-mock-scale">
               <V4Mock
                 activeTab={activeTab}
-                onSelectTab={setActiveTab}
+                onSelectTab={setActiveTabAndStop}
                 grainFill={grainFill}
                 waterFill={waterFill}
                 fgShift={fgShift}
@@ -1299,6 +1404,15 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         @keyframes v4-scrollcue {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(6px); }
+        }
+
+        /* SplitText "lines" wrappers (mask: lines) get a touch of bottom
+           padding so descenders ('g', 'y', 'p') don't get clipped on the
+           tight-leading display heads (lineHeight: 0.96 on the hero h1).
+           Negative margin neutralizes it so the visual layout is unchanged. */
+        .v4-split-line {
+          padding-bottom: 0.18em;
+          margin-bottom: -0.18em;
         }
 
         /* The mock band is mobile-only (the desktop tour has the radar/water beats). */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { hsTokens } from "@/modules/hopskip/tokens";
@@ -179,6 +180,7 @@ export default function SignedInHeroV4() {
                 key={r.id}
                 recipe={r}
                 active={r.id === (selected?.id ?? "")}
+                openHref={`/recipes/${r.id}`}
                 onSelect={() => setSelectedId(r.id)}
               />
             ))}
@@ -210,7 +212,12 @@ export default function SignedInHeroV4() {
 
         {/* Right — the v4 mock, static, showing the selected recipe */}
         <div style={{ position: "relative", minWidth: 0 }}>
-          <V4Mock activeTab={activeTab} onSelectTab={setActiveTab} data={data} />
+          <V4Mock
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            data={data}
+            openHref={`/recipes/${selected.id}`}
+          />
         </div>
       </div>
       <style>{`
@@ -225,21 +232,37 @@ export default function SignedInHeroV4() {
 function RecipeRow({
   recipe,
   active,
+  openHref,
   onSelect,
 }: {
   recipe: Recipe;
   active: boolean;
+  openHref: string;
   onSelect: () => void;
 }) {
+  const router = useRouter();
   const calc = useMemo(
     () => recipeCalculationService.calculate(recipe),
     [recipe],
   );
   const srmColor = srmToRgb(Math.max(0.1, calc.srm));
+  // Same affordance as the live homepage SignedInHero: a non-active row is
+  // a select (drives the right-side mock); an already-active row is the
+  // "Open" action (router.push to /recipes/{id}). Pairs with the "Open →"
+  // pill that appears on the active row.
+  const handleClick = () => {
+    if (active) router.push(openHref);
+    else onSelect();
+  };
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={handleClick}
+      aria-label={
+        active
+          ? `Open ${recipe.name || "recipe"} in the builder`
+          : `Select ${recipe.name || "recipe"}`
+      }
       style={{
         display: "flex",
         alignItems: "center",
@@ -312,6 +335,43 @@ function RecipeRow({
       >
         {calc.abv.toFixed(1)}% · {Math.round(calc.ibu)} IBU
       </span>
+      {active ? (
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "4px 9px",
+            background: hsTokens.hops,
+            border: `1.5px solid ${hsTokens.ink}`,
+            borderRadius: 999,
+            fontFamily: hsTokens.body,
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: hsTokens.cream,
+            boxShadow: "2px 2px 0 var(--hs-ink)",
+            flexShrink: 0,
+            marginLeft: 4,
+          }}
+        >
+          Open →
+        </span>
+      ) : (
+        <span
+          aria-hidden
+          style={{
+            color: hsTokens.muted,
+            fontSize: 14,
+            flexShrink: 0,
+            marginLeft: 2,
+          }}
+        >
+          →
+        </span>
+      )}
     </button>
   );
 }

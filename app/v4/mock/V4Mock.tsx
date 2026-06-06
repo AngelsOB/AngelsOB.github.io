@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { HopFlavorRadar } from "./HopFlavorRadar";
 import BrewSheetPanelV4 from "./BrewSheetPanelV4";
@@ -90,9 +91,13 @@ interface Props {
    *  (the signed-in hero). The tour leaves it undefined, so the beats keep
    *  using the sample and are unaffected. */
   data?: V4MockData;
+  /** When set, the chrome's right-hand pill becomes an "Open recipe →" Link
+   *  to this href (matches the live homepage HeroBuilderCard). When unset
+   *  the chrome shows the decorative "Save recipe →" pill (the tour). */
+  openHref?: string;
 }
 
-export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data }: Props) {
+export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
   const waterActive = activeTab === "water";
@@ -115,7 +120,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
         }}
       >
         <div className="v4-dim">
-          <MockHeader data={data} />
+          <MockHeader data={data} openHref={openHref} />
         </div>
         <div className="v4-dim">
           <MockStats grainFill={grainFill} fgShift={fgShift} data={data} />
@@ -136,7 +141,17 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
           data-v4="mock-body"
           style={{
             position: "relative",
-            minHeight: 176,
+            // FIXED height (not minHeight): TabSections is designed for a
+            // ~544x228 body, and every other section is `position: absolute,
+            // inset: 0` — so the body's height drives its rendered height. If
+            // we let the body's natural flow take over (only section-hops is
+            // in-flow), the body shrinks/grows with the hop count — which
+            // makes the Grain/Mash/Yeast/Fermentation/Water sections appear
+            // SMALLER for recipes with fewer hops (the signed-in mock bug).
+            // Fixed height = consistent rendered area across recipes + tabs.
+            // Section internals (the hop bill, grain ledger) handle their own
+            // overflow via overflowY:auto + minHeight:0 in the flex chain.
+            height: 240,
             // When the brew sheet is active it provides its own box outline,
             // so drop the body border here to avoid a double outline.
             borderLeft: brewsheetActive ? "none" : `2px solid ${hsTokens.ink}`,
@@ -148,14 +163,27 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
           }}
         >
           {/* Hops section: hop bill shares a row with the flavor visualizer.
-              The radar lives in the scene-level explode layer over its slot. */}
+              The radar lives in the scene-level explode layer over its slot.
+              `position: absolute, inset: 0` to match the other sections —
+              the body's height is the source of truth, not the hop count.
+              The section is a flex column: header at top, then a flex-1 row
+              with the (scrollable) bill on the left and the (fixed) radar
+              slot on the right — so recipes with many hops scroll the bill
+              without moving the slot (which the scene-level radar overlays). */}
           <div
             data-v4="section-hops"
             style={{
-              padding: 10,
+              position: "absolute",
+              inset: 0,
+              // No bottom padding so the last row card reaches the body's
+              // bottom border (overflow:hidden on the body clips the rounded
+              // corner cleanly).
+              padding: "10px 10px 0",
               opacity: hopsActive ? 1 : 0,
               transition: "opacity 0.25s ease",
               pointerEvents: hopsActive ? "auto" : "none",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <div className="v4-dim">
@@ -165,8 +193,35 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
                 underline={hsTokens.hops}
               />
             </div>
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginTop: 8 }}>
-              <div className="v4-dim" style={{ flex: 1, minWidth: 0 }}>
+            {/* Row: scrollable bill on the left, fixed radar slot on the
+                right. NO `alignItems` override — the default `stretch` is
+                what makes the bill div fill the row's height so its
+                overflowY:auto can scroll. The radar slot has explicit
+                112×112 so it stays put. */}
+            <div
+              style={{
+                display: "flex",
+                gap: 14,
+                marginTop: 8,
+                flex: 1,
+                minHeight: 0,
+              }}
+            >
+              <div
+                className="v4-dim"
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  minHeight: 0,
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  // 10px of bottom padding INSIDE the scroll container, so
+                  // when the user scrolls to the end the last row card has
+                  // breathing room above the body border (same gap as the
+                  // non-scrolling sections).
+                  paddingBottom: 10,
+                }}
+              >
                 <HopBillTable data={data} />
               </div>
               <div
@@ -355,11 +410,45 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
 
 // ─── mock chrome ─────────────────────────────────────────────────────────
 
-function MockHeader({ data }: { data?: V4MockData }) {
+function MockHeader({
+  data,
+  openHref,
+}: {
+  data?: V4MockData;
+  openHref?: string;
+}) {
   const name = data?.name ?? "Citra Mosaic IPA";
   const style = data?.style ?? "American IPA · 21A";
   const batch = data?.batch ?? "5 gal · 60 min";
   const profile = data?.profile ?? "BIAB";
+  // Pill style is shared — link variant adds hover via Next Link styling.
+  const pillStyle: React.CSSProperties = {
+    background: hsTokens.hops,
+    color: hsTokens.cream,
+    border: `2px solid ${hsTokens.ink}`,
+    borderRadius: 999,
+    padding: "8px 16px",
+    fontFamily: hsTokens.body,
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: "0.06em",
+    boxShadow: "2px 2px 0 var(--hs-ink)",
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+  };
+  // Back-link: a real Link to /recipes when openHref is set (signed-in mock),
+  // decorative span otherwise (the tour — no real navigation context).
+  const backStyle: React.CSSProperties = {
+    fontFamily: hsTokens.body,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.16em",
+    textTransform: "uppercase",
+    color: hsTokens.muted,
+    textDecoration: "none",
+  };
   return (
     <div>
       <div
@@ -371,34 +460,20 @@ function MockHeader({ data }: { data?: V4MockData }) {
           borderBottom: `1.5px dashed color-mix(in oklch, ${hsTokens.ink} 20%, transparent)`,
         }}
       >
-        <span
-          style={{
-            fontFamily: hsTokens.body,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: hsTokens.muted,
-          }}
-        >
-          ← Back to recipes
-        </span>
-        <span
-          style={{
-            background: hsTokens.hops,
-            color: hsTokens.cream,
-            border: `2px solid ${hsTokens.ink}`,
-            borderRadius: 999,
-            padding: "8px 16px",
-            fontFamily: hsTokens.body,
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: "0.06em",
-            boxShadow: "2px 2px 0 var(--hs-ink)",
-          }}
-        >
-          Save recipe →
-        </span>
+        {openHref ? (
+          <Link href="/recipes" style={backStyle}>
+            ← Back to recipes
+          </Link>
+        ) : (
+          <span style={backStyle}>← Back to recipes</span>
+        )}
+        {openHref ? (
+          <Link href={openHref} style={pillStyle}>
+            Open recipe →
+          </Link>
+        ) : (
+          <span style={pillStyle}>Save recipe →</span>
+        )}
       </div>
 
       <h2

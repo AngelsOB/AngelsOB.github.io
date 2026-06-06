@@ -190,9 +190,10 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
   const spec = getBjcpStyleSpec(code);
   const styleDisplay = recipe.style?.trim() || "Custom style";
 
-  // ── Grains ──
+  // ── Grains ── (every fermentable; the mock body scrolls its grain ledger
+  // so long bills aren't truncated — see TabSections FermentablesSection)
   const totalGrainKg = recipe.fermentables.reduce((s, f) => s + f.weightKg, 0);
-  const grains: V4MockGrain[] = recipe.fermentables.slice(0, 4).map((f) => ({
+  const grains: V4MockGrain[] = recipe.fermentables.map((f) => ({
     name: f.name,
     category: classifyGrain(f.colorLovibond, f.name),
     weight: fmtLb(f.weightKg),
@@ -200,9 +201,10 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
     srm: Math.round(f.colorLovibond),
   }));
 
-  // ── Hops ── (distribute computed total IBU by weight × time × alpha proxy)
+  // ── Hops ── (every hop; the mock body scrolls the hop bill — see V4Mock
+  // section-hops. Distribute computed total IBU by weight × time × alpha proxy.)
   const totalIbu = Math.max(0, calc.ibu);
-  const hopsArr = recipe.hops.slice(0, 4);
+  const hopsArr = recipe.hops;
   const weights = hopsArr.map(
     (h) => h.grams * (h.alphaAcid / 100) * ((h.timeMinutes ?? 5) + 1),
   );

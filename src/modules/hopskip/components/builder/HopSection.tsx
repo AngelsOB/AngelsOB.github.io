@@ -105,6 +105,23 @@ function purposeOf(alphaAcid: number): "aroma" | "dual" | "bittering" {
 
 type GroupMode = "use-time" | "variety";
 
+const GROUP_MODE_DEFAULT: GroupMode = "variety";
+const GROUP_MODE_STORAGE_KEY = "hopskip:group-mode";
+
+/** Read the persisted grouping mode (defaults to variety). Only touches
+ *  storage on the client; the grouping UI is client-only so reading it in the
+ *  initial state can't cause an SSR hydration mismatch. */
+function readGroupMode(): GroupMode {
+  if (typeof window === "undefined") return GROUP_MODE_DEFAULT;
+  try {
+    const saved = window.localStorage.getItem(GROUP_MODE_STORAGE_KEY);
+    if (saved === "use-time" || saved === "variety") return saved;
+  } catch {
+    // storage blocked (private mode) — fall through to the default.
+  }
+  return GROUP_MODE_DEFAULT;
+}
+
 /** Idle delay before a hop re-settles into its live section after an edit.
  *  Keeps a row from hopping between boxes on every stepper click while the
  *  user dials in a time (e.g. 15 → 20 → … → 60 min). */
@@ -344,7 +361,19 @@ export default function HopSection() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [groupMode, setGroupMode] = useState<GroupMode>("use-time");
+  // Defaults to variety; persisted so the choice survives leaving and
+  // re-entering the hop section (and page reloads).
+  const [groupMode, setGroupMode] = useState<GroupMode>(readGroupMode);
+  const handleGroupModeChange = (m: GroupMode) => {
+    setGroupMode(m);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(GROUP_MODE_STORAGE_KEY, m);
+      } catch {
+        // ignore (storage blocked)
+      }
+    }
+  };
 
   // Debounced section assignments. While a row is actively edited, its hop
   // keeps its prior section (frozen here) so it doesn't jump boxes on every
@@ -600,7 +629,7 @@ export default function HopSection() {
               entryCount={hops.length}
               ibu={calculations?.ibu ?? 0}
               groupMode={groupMode}
-              onGroupModeChange={setGroupMode}
+              onGroupModeChange={handleGroupModeChange}
               onAdd={handleAddNew}
             />
           </div>

@@ -716,16 +716,10 @@ function StrainBlockHeader({
       className="hs-yeast-strain-block-header"
       style={{
         position: "relative",
-        display: "grid",
-        gridTemplateColumns:
-          "44px minmax(140px, 1fr) 100px minmax(330px, auto) 56px",
-        alignItems: "center",
-        columnGap: 12,
-        padding: "2px 0 0",
-        minHeight: 24,
+        minHeight: 28,
       }}
     >
-      {/* Continuous hairline behind the row — section-divider style. */}
+      {/* Continuous hairline behind everything — section-divider style. */}
       <span
         aria-hidden
         className="hs-yeast-strain-block-rule"
@@ -742,11 +736,18 @@ function StrainBlockHeader({
         }}
       />
 
-      {/* Title spans badge + identity columns so it anchors to the
-          section's left edge, not the badge column. */}
+      {/* Title at the section's left edge — absolutely positioned so
+          it doesn't claim a grid column (which would force the column
+          labels out of alignment with the card content beneath). */}
       <div
         className="hs-yeast-strain-block-title"
-        style={{ gridColumn: "1 / 3" }}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
+          zIndex: 2,
+        }}
       >
         <span style={{ ...punchStyle, paddingLeft: 0 }}>
           <Eyebrow size={11} style={{ whiteSpace: "nowrap" }}>
@@ -755,45 +756,72 @@ function StrainBlockHeader({
         </span>
       </div>
 
-      <div className="hs-yeast-strain-block-col-label">
-        <span style={{ ...labelStyle, ...punchStyle, display: "inline-block" }}>
-          Attenuation
-        </span>
-      </div>
-
+      {/* Column labels live in a grid whose template + horizontal
+          padding match the StrainCard exactly, so labels sit directly
+          above their respective card cells. Padding is 14px (not 12px)
+          because the card has a 2px border outside its own 12px padding
+          — the grid needs to clear both to land columns over chips. */}
       <div
-        className="hs-yeast-strain-block-col-label"
+        className="hs-yeast-strain-block-cols"
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns:
+            "44px minmax(140px, 1fr) 100px minmax(330px, auto) 28px",
           alignItems: "center",
-          justifyContent: "flex-end",
-          gap: 8,
+          columnGap: 12,
+          padding: "0 14px",
+          minHeight: 28,
         }}
       >
-        <span aria-hidden style={{ display: "block", width: 100, height: 1 }} />
-        <span
+        <span aria-hidden />
+        <span aria-hidden />
+        <div className="hs-yeast-strain-block-col-label">
+          <span
+            style={{ ...labelStyle, ...punchStyle, display: "inline-block" }}
+          >
+            Attenuation
+          </span>
+        </div>
+        <div
+          className="hs-yeast-strain-block-col-label"
           style={{
-            ...labelStyle,
-            ...punchStyle,
-            display: "inline-block",
-            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 8,
           }}
         >
-          Source
-        </span>
-        <span aria-hidden style={{ display: "block", width: 80, height: 1 }} />
+          <span
+            aria-hidden
+            style={{ display: "block", width: 100, height: 1 }}
+          />
+          <span
+            style={{
+              ...labelStyle,
+              ...punchStyle,
+              display: "inline-block",
+              textAlign: "center",
+            }}
+          >
+            Source
+          </span>
+          <span aria-hidden style={{ display: "block", width: 80, height: 1 }} />
+        </div>
+        <span aria-hidden />
       </div>
 
-      {/* Button parks at the right end of the rule, with its own paper
-          window so the line meets it cleanly. */}
+      {/* Button parks at the right end of the rule. A paper-bg sliver
+          before the button cuts the hairline cleanly so it doesn't
+          read as "continuing under the button". */}
       <div
         className="hs-yeast-strain-block-header-action"
         style={{
-          gridColumn: 5,
-          justifySelf: "end",
+          position: "absolute",
+          right: 0,
+          top: "50%",
+          transform: "translateY(-50%)",
           background: hsTokens.paper,
-          paddingLeft: 10,
-          position: "relative",
+          paddingLeft: 12,
           zIndex: 2,
         }}
       >
@@ -1027,7 +1055,8 @@ function StrainCard({
         )}
       </div>
 
-      {/* Actions: swap pencil + remove × */}
+      {/* Actions: remove ×. (Swap handled by clicking the strain name
+          or the lab badge, so a dedicated pencil button is redundant.) */}
       <div
         style={{
           gridArea: "actions",
@@ -1037,25 +1066,6 @@ function StrainCard({
           gap: 2,
         }}
       >
-        <IconBtn
-          ariaLabel={`Swap ${row.yeast.name}`}
-          onClick={onSwap}
-          className="hs-yeast-swap-btn"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-            <path d="m15 5 4 4" />
-          </svg>
-        </IconBtn>
         <IconBtn
           ariaLabel={`Remove ${row.yeast.name}`}
           onClick={onRemove}
@@ -2357,7 +2367,7 @@ function YeastSectionStyles() {
          the labels in StrainBlockHeader can line up deterministically. */
       .hs-yeast-section .hs-yeast-strain-card {
         display: grid;
-        grid-template-columns: 44px minmax(140px, 1fr) 100px minmax(330px, auto) 56px;
+        grid-template-columns: 44px minmax(140px, 1fr) 100px minmax(330px, auto) 28px;
         grid-template-areas: "badge identity atten source actions";
         align-items: center;
         column-gap: 12px;
@@ -2387,13 +2397,11 @@ function YeastSectionStyles() {
           box-shadow: 3px 3px 0 var(--hs-ink);
           transform: translate(-1px, -1px);
         }
-        .hs-yeast-section .hs-yeast-remove-btn,
-        .hs-yeast-section .hs-yeast-swap-btn {
+        .hs-yeast-section .hs-yeast-remove-btn {
           opacity: 0.32;
           transition: opacity 90ms ease, background 90ms ease;
         }
-        .hs-yeast-section .hs-yeast-strain-card:hover .hs-yeast-remove-btn,
-        .hs-yeast-section .hs-yeast-strain-card:hover .hs-yeast-swap-btn {
+        .hs-yeast-section .hs-yeast-strain-card:hover .hs-yeast-remove-btn {
           opacity: 1;
         }
         .hs-yeast-section .hs-yeast-remove-btn:hover {
@@ -2431,30 +2439,28 @@ function YeastSectionStyles() {
       }
 
       /* Mobile (≤560px) — strain reflows to 3-row card layout. Strain
-         block header drops column labels and rule, falls back to a
-         plain flex row (eyebrow + flex-rule + button) like the original
-         BlockEyebrow since the labels can't correspond to card columns
-         after reflow. */
+         block header drops column labels (cards' grid is different
+         under reflow). Title + button stay, plus the section rule
+         between them. */
       @media (max-width: 560px) {
         .hs-yeast-section .hs-yeast-mobile-add { display: flex !important; }
-        .hs-yeast-section .hs-yeast-strain-block-header {
-          display: flex !important;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 10px;
-          padding: 2px 0 0 !important;
-        }
-        .hs-yeast-section .hs-yeast-strain-block-rule,
-        .hs-yeast-section .hs-yeast-strain-block-col-label {
+        .hs-yeast-section .hs-yeast-strain-block-cols {
           display: none !important;
         }
         .hs-yeast-section .hs-yeast-strain-block-title {
-          grid-column: auto !important;
+          position: static !important;
+          transform: none !important;
+        }
+        .hs-yeast-section .hs-yeast-strain-block-header {
+          display: flex !important;
+          align-items: center;
+          gap: 10px;
+          min-height: 28px;
         }
         .hs-yeast-section .hs-yeast-strain-block-header-action {
+          position: static !important;
+          transform: none !important;
           margin-left: auto;
-          padding-left: 0 !important;
-          grid-column: auto !important;
         }
 
         .hs-yeast-section .hs-yeast-strain-card {
@@ -2476,7 +2482,6 @@ function YeastSectionStyles() {
           gap: 2px !important;
           right: 2px !important;
         }
-        .hs-yeast-section .hs-yeast-swap-btn,
         .hs-yeast-section .hs-yeast-remove-btn { opacity: 1 !important; }
 
         .hs-yeast-section { padding: 18px 14px !important; }

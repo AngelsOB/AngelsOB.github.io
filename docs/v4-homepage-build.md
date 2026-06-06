@@ -64,9 +64,10 @@ constants (no measured exploded → no invalidate).
 
 ## The stack
 
-- `gsap` (ScrollTrigger: `pin` + `scrub`), `@gsap/react` `useGSAP`, `lenis`.
-  GSAP is fully free (3.13+). Lenis ↔ ScrollTrigger wiring in `lib/scroll.ts`
-  (drive `ScrollTrigger.update` off lenis scroll, run lenis off `gsap.ticker`,
+- `gsap` (ScrollTrigger: `pin` + `scrub`; `SplitText` for the tour-copy reveals,
+  `mask: "lines"` + `autoSplit: true`), `@gsap/react` `useGSAP`, `lenis`. GSAP is
+  fully free (3.13+). Lenis ↔ ScrollTrigger wiring in `lib/scroll.ts` (drive
+  `ScrollTrigger.update` off lenis scroll, run lenis off `gsap.ticker`,
   `lagSmoothing(0)`).
 
 ## Built so far
@@ -84,6 +85,21 @@ elements (no scrub, no scroll-jack). The left column is **memoized** in `HomeV4`
 `fgShift` / `tempShift` / `honestActive` changes — a perf win (and it historically dodged the pin+React removeChild crash
 back when the brew sheet pinned; no beat pins now). The mock defaults to the
 **Grain** tab (recipe overview); each beat's `onToggle` drives `activeTab`.
+
+**Mock-tab auto-cycle (hero / opening only):** before the first scroll-driven
+trigger fires, the mock cycles `activeTab` through the tab-bar order
+(`fermentables → hops → mash → water → yeast → fermentation`, loops, skips
+`brewsheet` to not spoil the climax). First switch ~2.1s after mount, then
+every ~2.65s — same timings as the live homepage `HeroBuilderCard` auto-rotate.
+A single `tourCycling` state gates a `useEffect` (cleanup clears the timer);
+the cycle stops when EITHER (a) the user clicks a tab in the mock — every
+`onSelectTab` route through `setActiveTabAndStop` which calls `setTourCycling
+(false)` — or (b) any stage `ScrollTrigger`'s `onToggle` fires `setActiveTab
+AndStop("…")` (same wrapper). So once the reader is actively scrolling, scroll
+position is the source of truth and the cycle is done. Reduced-motion users
+get a static mock: the effect early-returns on `reducedMotion`, same as the
+GSAP work. The cycle uses raw `setActiveTab` internally (functional update
+form) so its own ticks don't self-stop.
 
 **The mock sections are all real now** (no placeholders). They mirror the LIVE
 homepage mock (`app/_home/components/HeroBuilderCard.tsx`) and the real builder
@@ -216,6 +232,31 @@ boxed + out-of-range hatched, colored pin).
   `honestStop` (onLeave/onLeaveBack) kills the delayedCall, pauses the loop, and
   resets temp/FG to centre. Feel knobs: the `0.7` delay, the `* 0.12` lag rate,
   the hold-tween/ramp durations, the chip `scale(1.6)`.
+
+**Tour copy SplitText reveals (parallel to the beats, per-stage play-once):**
+the headings + paragraphs in the left column are tagged
+`data-v4-split-reveal` with a mode (`words` for short heads — hero `<h1>`, stage
+`<h2>` leads; `lines` for paragraphs — subhead, opening sentences, stage
+bodies). A single block at the bottom of `HomeV4Tour`'s `useGSAP` (after the
+post-tour `[data-v4-reveal]` batch) walks the matched elements and calls
+`SplitText.create(el, { type, mask: "lines", autoSplit: true, onSplit })` per
+element. `onSplit` is the play-once: words/lines start `yPercent: 110 / opacity:
+0` and rise to rest on a `ScrollTrigger { start: "top 88%", once: true }`
+(stagger 0.025 words / 0.07 lines, dur 0.7, `power2.out`). A per-element
+`revealed` closure flag flips `true` on the trigger's `onEnter`; on a re-split
+(font settle / resize) `onSplit` SHORT-CIRCUITS to `gsap.set(tgs, { yPercent: 0,
+opacity: 1 })` so a resize past an already-seen section does NOT replay the
+rise. Cleanup at the top-level `useGSAP` return calls `s.revert()` on every
+instance (SplitText DOM mutations aren't tracked by `gsap.context`). Eyebrows
++ the hero CTA are deliberately NOT split — they're small "labels" that read
+naturally without a reveal. CSS: `.v4-split-line { padding-bottom: 0.18em;
+margin-bottom: -0.18em }` so descenders ('g', 'y', 'p') clear the line mask on
+the tight-leading display heads (lineHeight 0.96 on the hero). Reduced-motion
+users skip everything via the existing early-return — copy stays at natural
+opacity 1. Signed-in `HomeV4SignedIn` doesn't render the tour, so no targets,
+no work. Mobile: works as-is — the reveal trigger fires on copy that's clear
+of the pinned mock band, so words rise in the readable area, then scroll up
+into the mock zone and get masked normally.
 
 **Tried and REVERTED — do not re-tread:** a 3-tier hops explosion (mock recedes
 → hop SECTION grows out as a scene-level panel → radar grows out of the panel,
@@ -364,8 +405,26 @@ below are the landed design (knobs called out).
   (pointer-events auto when active, holds `WaterSection`), and the brew sheet
   group. Takes `grainFill` + `waterFill` + `fgShift`/`tempShift`/`honestActive`
   (honest beat) + optional `data?: V4MockData` (the signed-in mock — renders a real
-  recipe instead of the sample); `waterActive`/`brewsheetActive` drop the body
-  border so the breakout/box frames itself.
+  recipe instead of the sample) + optional `openHref` (chrome's right pill
+  becomes a Next `<Link>` "Open recipe →" + the back-link becomes a real link
+  to `/recipes`; tour leaves it undefined → decorative "Save recipe →" stays);
+  `waterActive`/`brewsheetActive` drop the body border so the breakout/box
+  frames itself. **Body has a fixed `height: 240`** (was `minHeight: 176` — see
+  the gotcha below for why the fix), so every tab renders into a consistent
+  area regardless of which recipe is loaded; the mobile branch's
+  `height: 200px !important` rule still wins on small screens. Every section
+  (`section-hops` / `section-water` / `section-other`) is `position: absolute,
+  inset: 0` so the body's height is the source of truth, not the in-flow
+  content of any one section. **Section internals scroll on overflow:**
+  `section-hops` is a flex column with a flex:1 row holding a scrollable
+  bill (overflowY:auto + minHeight:0) on the left and the fixed 112×112
+  radar slot on the right — so recipes with many hops scroll the bill
+  without the slot moving (the scene-level radar overlays the slot).
+  `FermentablesSection`'s ledger rows container has the same
+  overflowY:auto + minHeight:0 pair so long grain bills scroll while the
+  SectionHead + bill-stack stay pinned at the top of the section. Mash /
+  Yeast / Fermentation are fixed-layout (single step / strain / timeline
+  bar) and don't need a scroll.
 - `mock/TabSections.tsx` — real at-rest content for Grain / Mash / Yeast /
   Fermentation in the in-body `TabSection`; **`WaterSection` is exported** and
   rendered by V4Mock's breakout layer (NOT in `TabSection`), with its pieces
@@ -455,6 +514,32 @@ below are the landed design (knobs called out).
   is not defined", "leftColumn is not defined", removeChild) — usually from the
   broken instant between two sequential edits. For a clean read, RESTART the
   server (fresh buffer) and check on a cold load; zero errors there = code is fine.
+- **Mock body needs a FIXED height, not minHeight.** The `TabSections` are
+  designed for a ~228px-tall body slot. Earlier the body used `minHeight: 176`
+  + `section-hops` was the only in-flow section, so the body's height was
+  driven by the hop bill's row count. The tour didn't notice because the
+  sample data is fixed; but the signed-in mock (a per-recipe `data` prop)
+  showed it loud: pick a recipe with fewer hops → the table is shorter →
+  the body shrinks → every other section (which sizes to the body via
+  `inset: 0`) appears smaller too. Fix: `mock-body` is now `height: 240`
+  (fixed), and `section-hops` is `position: absolute, inset: 0` like the
+  other sections — the body is the source of truth, no section drives it.
+  Mobile's `height: 200px !important` already worked this way; this brings
+  desktop in line. Long content (many hops / grains in the signed-in mock)
+  scrolls inside the section — see the V4Mock entry in "Key files" for the
+  per-section overflow setup (flex:1 row + minHeight:0 + overflowY:auto on
+  just the list area, keeping the SectionHead pinned).
+- **SplitText + autoSplit needs a `revealed` flag to survive scroll-past
+  resizes.** `autoSplit: true` re-splits on resize / font load. The naïve
+  `onSplit → return gsap.from(...)` pattern then re-fires the rise every
+  re-split — so a user who scrolls past the hero, resizes the window, sees the
+  hero "rise" again. Fix: a per-element `let revealed = false` closure outside
+  `onSplit`, flipped on the trigger's `onEnter`; on subsequent splits when
+  `revealed === true`, short-circuit to `gsap.set(tgs, { yPercent: 0, opacity:
+  1 })` instead of returning an animation. Also: SplitText's DOM mutations
+  aren't tracked by `useGSAP`'s `gsap.context`, so collect instances and
+  `s.revert()` them in a top-level `useGSAP` cleanup return — otherwise the
+  wrapper spans leak on dependency change / unmount.
 
 ## Remaining / trajectory
 
@@ -489,6 +574,18 @@ without the tour. User recipes never flow through the tour beats (they stay
 hardcoded). The old `_home` `HeroBuilderCard` + `mapRecipeToMock` are no longer
 used by v4.
 
+**Signed-in recipe-open (mirrors the live homepage):** the `SignedInHeroV4`
+recent-recipes list is a two-stage affordance — a non-active row click just
+*selects* (drives the right-side mock); the **already-active** row click is the
+"Open" — `router.push("/recipes/{id}")`. The active row carries an "Open →"
+hops-color pill so the action is visible, plus an `aria-label` that swaps
+between "Select …" and "Open … in the builder". And the **mock chrome itself**
+gets a real link: `V4Mock` accepts an optional `openHref` that turns the
+decorative "Save recipe →" pill into a Next `<Link>` "Open recipe →" + makes
+"← Back to recipes" a real link to `/recipes`. The tour passes no `openHref`,
+so the chrome stays decorative there. Same pattern as `_home/SectionHero`'s
+`RecipeListCard` + `HeroBuilderCard`.
+
 Recent work: real content for all tab sections (matching the live mock + real
 builder), the colorized stat strip + STYLE GUIDELINES panel + SRM visualizer, and
 a sweep that moved the showy beats onto the **play-once-on-enter** pattern (no
@@ -522,11 +619,14 @@ single-column tour with tab-switch + all fill + reveal beats, a compact collapsi
 site header, and the footer horizontal-scroll fix. Full writeup in "Mobile tour
 (≤1024px)" above.
 
+**SplitText tour-copy reveals (2026-06):** every tour stage's lead `<h2>` and
+body `<p>` (plus the hero `<h1>` + subhead + opening sentences) now rises into
+place on scroll-enter — words for heads (stagger 0.025), lines for paragraphs
+(stagger 0.07), play-once. Full mechanics + the autoSplit `revealed`-flag
+pattern in "Tour copy SplitText reveals" above + the gotcha note.
+
 See the Beats notes above. Open items:
 
-- **SplitText** text reveals per tour section ("introduce → show off",
-  play-once). The post-tour batch is a coarse fade-up; the tour copy could
-  benefit from word/line-level reveals.
 - **Responsive — DONE** (see "Mobile tour (≤1024px)" above): the full mobile fork
   is built — pinned mock + masking band, single-column tab-switch tour, all fill
   beats + the radar/water/brew-sheet reveals, compact collapsing header, footer
@@ -540,9 +640,6 @@ See the Beats notes above. Open items:
 - **Optional polish:** a hero/opening trigger so the mock resets to the Grain tab
   at the very top (it currently holds the last tab if you jump straight up past
   grains; a normal scroll-up resets via the grains trigger).
-- **Build blocker (not v4):** `src/modules/hopskip/components/builder/
-  HopSection.tsx` has two TS errors (unused `useDraggable` import + a `draggable`
-  prop) that fail `npm run build` — unrelated to v4, but clear it before building.
 - **Production swap:** `app/page.tsx` → `HomeV4`; retire `app/_home` + `app/v3`.
   Also update `HSHeader`'s `tourHeader` check (currently `=== "/v4"`) to include
   `/`, and the header collapse + mobile band assume the homepage route.
