@@ -1,4 +1,4 @@
-# v4 Homepage — GSAP Pinned Tour (current build)
+# v4 Homepage — GSAP Scroll Tour (current build)
 
 Pickup guide for the in-progress homepage rebuild at `/v4`. Supersedes the
 v3 motion implementation. Read this + skim `app/v4/HomeV4.tsx` and
@@ -37,14 +37,19 @@ abstract demo — a usable mini builder:
 ### Pull-out model (the key idea)
 
 Focal content lives in the mock; for a beat it is "pulled out" to a
-scene-level **explode layer** and grows/explodes while the mock recedes —
-**without reparenting any DOM** (that's what crashed v3 with pins). The radar
-(hops) pulls out one piece; the brew sheet pulls out the whole section.
+scene-level layer and grows/lifts while the mock recedes — **without reparenting
+any DOM** (that's what crashed v3 with pins). Three flavors now: the radar
+(hops) pulls out ONE piece; the brew sheet grows the WHOLE section as a box; the
+water section breaks out **per-component** (header recedes, the controls / salts
+/ profile lift forward together).
 
-Each pulled-out element has a measured **home** (its slot in the mock body)
-and **exploded** (big/centred) state. Measured via `offsetLeft/Top` chains
-(transform-independent), recomputed on `ScrollTrigger.refresh()`
-(`invalidateOnRefresh: true` + `document.fonts.ready`).
+Pulled-out pieces have a measured **home** (their slot in the mock body) and a
+target state. Measured via `offsetLeft/Top` chains (transform-independent),
+recomputed on `ScrollTrigger.refresh()` + `document.fonts.ready`. Two patterns:
+hops/brewsheet animate to a *measured* exploded transform (function-based
+values, `invalidate()`d on refresh); water positions a transparent layer over
+the body slot (sized 1:1, scale 1) and animates its inner pieces by *relative*
+constants (no measured exploded → no invalidate).
 
 ### GSAP + React ownership split (avoids the fights)
 
@@ -66,13 +71,19 @@ and **exploded** (big/centred) state. Measured via `offsetLeft/Top` chains
 
 ## Built so far
 
-**Tour structure (left column):** Intro (hero) → Opening ("I made this…") →
-Grains (live-math beat) → Hops → Brew sheet. Stages live in
-`stages/TourSections.tsx`. The left column is **memoized** in `HomeV4`
-(`useMemo`) so it does NOT re-render on `activeTab`/`grainFill` changes —
-critical because the brew-sheet stage is GSAP-pinned (see Gotchas: the pin+React
-removeChild crash). The mock defaults to the **Grain** tab (recipe overview);
-each beat's `onToggle` drives `activeTab`.
+**Tour structure (left column):** Intro (hero) → Opening (the chaos) →
+Grains (live-builder "watch" beat) → Hops (flavor) → Water (lead exhibit) →
+Honest numbers (animated: mash temp leads, FG/ABV follow it with a lag — see
+Beats) → Brew sheet. Stages live in `stages/TourSections.tsx`. Below the sticky-mock tour the page
+continues full-width with the **post-tour stages** (`stages/PostTourSections.tsx`):
+Compare → Library+Community → What-else (trimmed to a framed table-stakes line)
+→ Learn → FAQ → Close (price + data ownership). They
+fade-up on enter via a single `ScrollTrigger.batch` on `[data-v4-reveal]`
+elements (no scrub, no scroll-jack). The left column is **memoized** in `HomeV4`
+(`useMemo`) so it does NOT re-render on `activeTab` / `grainFill` / `waterFill` /
+`fgShift` / `tempShift` / `honestActive` changes — a perf win (and it historically dodged the pin+React removeChild crash
+back when the brew sheet pinned; no beat pins now). The mock defaults to the
+**Grain** tab (recipe overview); each beat's `onToggle` drives `activeTab`.
 
 **The mock sections are all real now** (no placeholders). They mirror the LIVE
 homepage mock (`app/_home/components/HeroBuilderCard.tsx`) and the real builder
@@ -80,8 +91,11 @@ homepage mock (`app/_home/components/HeroBuilderCard.tsx`) and the real builder
 visualizers, NOT invented abstractions (the user rejected two from-scratch
 rounds; see memory `feedback-mock-match-real-builder`). In `mock/TabSections.tsx`:
 - **Grain** — bill stack + ledger rows (SRM swatch w/ °L, category pill, weight, % bill).
-- **Water** — Source→Target pills + **interactive** salts (+/- recompute the ion
-  profile) | ion-bar visualizer (per-ion target band + fill + value).
+- **Water** — Source→Target pills + an **Auto-Calc** button + **interactive**
+  salts (+/- recompute the ion profile) | ion-bar visualizer (per-ion target band
+  + fill + value). On its beat the whole section breaks out per-component (see
+  Beats); it's rendered scene-level (a transparent breakout layer), NOT in the
+  in-body `TabSection`.
 - **Mash** — numbered step + temp/time chips + pH gauge (NO temp graph — user didn't want one).
 - **Yeast** — strain card (badge + lab + ATTEN/TEMP/FLOCC chips) + a **starter**
   card (liquid strain = 100 B/vial so a starter is shown).
@@ -92,7 +106,8 @@ rounds; see memory `feedback-mock-match-real-builder`). In `mock/TabSections.tsx
 
 **Mock chrome** (above the tabs, matches the live builder): title + PaperPill
 (STYLE/BATCH) + GhostPill (Profile/Advanced) meta; a compact stat strip
-(OG/FG/ABV/IBU/CAL with colored accent top-bars + a **beer-glass SRM** cell);
+(OG/FG/ABV/IBU/CAL with colored accent top-bars — **SRM is NOT a stat cell**; its
+color lives in the Style Guidelines bar below);
 and a **STYLE GUIDELINES** panel (`mock/StyleGuidelines.tsx`, a compact mock of
 the real `BJCPStyleRail`): OG/FG/ABV/IBU range gauges (marker goes roast when
 out of range) + an **SRM color visualizer** (sampled gradient bar, style range
@@ -163,12 +178,157 @@ boxed + out-of-range hatched, colored pin).
   here too, instead of scroll-jacking".) Structure: `[data-v4="brewsheet"]`
   (wrapper, `pointer-events:none`) › `bs-nub` + `bs-box` (border +
   `overflow:hidden`, height animated) › `bs-inner` (0.82) › `BrewSheetPanelV4`.
+- **Water "solve" (per-component breakout — grow play-once, collapse scroll):**
+  the one beat where the section stays INTEGRATED in the mock. The
+  `[data-v4="water"]` layer is **transparent** and sized 1:1 over the body slot
+  (`measure()` sets its width = slot width, scale 1), so the body's own border
+  frames it — NOT a floating card. On enter the mock recedes + dims, the
+  **"Water." header recedes** with it, and the three data pieces (`water-controls`
+  / `water-salts` / `water-ions`, tagged in `WaterSection`) lift FORWARD together
+  (up + a small scale + a drop-shadow for depth) as a cohesive group — they come
+  to the forefront; they do NOT blow up huge (not the radar's 2.6×) or scatter /
+  spread / drift down (the user tuned this hard). Then the **Auto-Calc button
+  "gets pressed"** (squash + spring) and the salts/ion bars SOLVE — `waterFill`
+  animates 0→1 (salts count up from blank RO, ion bars climb into their BJCP
+  bands, out-of-range roast → in-range ink). It HOLDS broken-out (the big salt +/-
+  are **interactive** — the "flex"); the tuck-back is a SCROLL-driven collapse
+  like hops (a 2nd trigger scrubs a paused `waterCollapseTl` via `progress()`).
+  Pieces animate by **relative constants** (no measured exploded) → no invalidate.
+  Feel knobs: per-piece lift `y` / `scale` / `transformOrigin`, `WATER_LEAD`, the
+  collapse window. Salts stay solved-to-`SALT_DEFAULTS` during the beat regardless
+  of tinkering; Auto-Calc at rest re-solves.
+
+- **Honest numbers (cause→effect demo — loops while in view):** the section copy
+  is static, but the mock plays a live mash-temp/FG demo. On enter the tab
+  switches to **Mash** (`onToggle`), then a `gsap.delayedCall(0.7)` waits for the
+  water recede + tab cross-fade to settle before the demo starts — otherwise the
+  chip is already grown on arrival (the bug that motivated the delay). TWO scalars
+  so the cause leads the effect: `tempProxy` (→ `tempShift`) sweeps the mash step
+  temp; `fgFollow` eases toward it each frame (→ `fgShift`) so **FG + ABV + the
+  BJCP gauges LAG the temp** (reads as "turn the temp, the numbers respond", not
+  everything-at-once). The timeline loops (`repeat:-1`, `repeatRefresh:true`) with
+  HOLD-tween settles, oscillating 152→156→148→… — `repeatRefresh` re-reads each
+  tween's start so it flows 156↔148 with no jump and never snaps back to centre;
+  FG catches up during each settle. **Only the mash-temp chip grows** (sustained,
+  via `honestActive` + a CSS transition) — it's the input being turned; FG/ABV
+  stay regular size. (A scale-pop on FG and a cream-scrim dim of the rest were
+  both tried and REVERTED as too much — the lead/lag + chip grow carries it.)
+  `honestStop` (onLeave/onLeaveBack) kills the delayedCall, pauses the loop, and
+  resets temp/FG to centre. Feel knobs: the `0.7` delay, the `* 0.12` lag rate,
+  the hold-tween/ramp durations, the chip `scale(1.6)`.
 
 **Tried and REVERTED — do not re-tread:** a 3-tier hops explosion (mock recedes
 → hop SECTION grows out as a scene-level panel → radar grows out of the panel,
 nested + transform-composed so its final scene position matched the 2-tier).
 Worked technically but read as a card-within-a-card at rest and wasn't worth the
 polish. Reverted to the 2-tier hops beat.
+
+## Mobile tour (≤1024px) — the separate fork
+
+The desktop two-column tour is gated to `min-width:1025px`. Everything below is a
+**second `mm.add("(max-width:1024px)")` branch** in `HomeV4Tour` (+ a big block of
+mobile CSS in HomeV4's `<style>`). On mobile the mock is NOT side-by-side — it's
+**pinned near the top of the viewport and the narrative scrolls UNDER it**,
+dissolving out through a masking band. The user iterated on this HARD; the notes
+below are the landed design (knobs called out).
+
+### Layout
+
+- `tourText` (memoized) is split into THREE column blocks: `.v4-hero-col` (hero),
+  `.v4-intro-col` (the opening/"chaos"), `.v4-narr-col` (grains → brew sheet).
+  Desktop: hero row 1 / opening row 2 / narrative row 3, all in column 1; the mock
+  column spans all three rows (the original two-column tour, unchanged). **Mobile:
+  single column; the mock shares ROW 3 (grains onward) with the narrative,
+  overlapping it** — so the mock spawns + sticks only AFTER the hero + opening,
+  not from the very top (a deliberate "read the problem, then the builder appears"
+  reveal). `.v4-narr-col section:first-child` (grains) gets a big top pad so the
+  mock spawns in the gap between the opening and grains, not on top of the copy.
+- **Render-wide-then-scale:** the mock renders at a FIXED design width
+  (`--v4-mock-design-w: 520px`, wide enough that the 7-tab bar fits) and is scaled
+  down by `--v4-mock-scale` (~0.37, the size knob) via `transform` on
+  `.v4-mock-scale`, centered (`left: calc((100% − design-w)/2)`,
+  `transform-origin: top center`). The negative `margin-bottom`
+  (`natural-h × (scale − 1)`, with `natural-h` JS-measured into
+  `--v4-mock-natural-h` by a ResizeObserver) reclaims the freed layout height.
+  Rendering at the narrow column width instead made the tabs overflow — that was
+  the bug. The body is pinned to a **constant height**
+  (`[data-v4="mock-body"] { height: 200px }`) so the mock — and the band sized
+  from it — doesn't jump as the active tab's content height changes.
+- **The masking band** (`.v4-mock-band`, a div before `.v4-mock-scale` in
+  `.v4-sticky-mock`): a full-PAGE-width (`100vw`), page-colored (`cream`) chunk
+  behind the mock card whose `mask-image` is a SINGLE vertical opacity gradient
+  (`linear-gradient(to bottom, #000 0%, #000 32%, transparent 100%)`) — solid at
+  the top, slowly fading to nothing on the way down. So narrative scrolling UP
+  dissolves gently as it nears the top; it is NOT a feathered card edge (the user
+  rejected several feather/blur takes — it's one opacity-gradient chunk). The mock
+  card's own opaque fill masks directly behind it; the band covers the full width
+  + above. `.v4-intro-col { z-index: 5 }` keeps the opening ABOVE the band (which
+  extends upward) so the band never paints over it on spawn.
+- The **water layer is clipped** on mobile (`[data-v4="water"] { overflow:
+  hidden }`) — it's scene-level so the body's own overflow doesn't catch it, and
+  it would otherwise bleed below the card.
+- The mock sticks at `top: 40px` (a little gap from the top). It clears the header
+  on its own (centered/high enough), so the header-peek offset that desktop-mobile
+  used was dropped — see Chrome below.
+
+### Beats (the `mm.add("(max-width:1024px)")` branch)
+
+- `place()` parks every scene-level layer (radar / water / brew sheet) at its
+  body-slot "home" (same technique as `SignedInHeroV4`) AND measures the "grown"
+  targets: radar centred (scale 2.6), brew-sheet full height (`bsFullH`) + lift
+  (`bsExploded.y`, **negative** so it rises past the scene top), and publishes the
+  lifted on-screen bottom to `--v4-bs-grown-h` (so the brew-sheet copy can clear
+  it). Re-runs on `refreshInit`.
+- **Tab-switch on scroll:** per-stage `ScrollTrigger`s, `onToggle → setActiveTab`,
+  so the mock morphs grain bill → hops → water → mash → brew sheet.
+- **Fill beats** (reused from desktop, no pull-outs, drive the same scalars):
+  grains STAIRCASE build, water SOLVE, honest-numbers loop.
+- **Reveal beats** (the "grows" — adapted, since the mock can't recede sideways
+  like desktop except on the brew sheet):
+  - **Hops radar** grows out of its slot to centre (scale 2.6) + drop-shadow while
+    the rest of the mock dims (`.v4-dim → 0.4`). Play-once on enter, reset on leave.
+  - **Water** grows out PER-COMPONENT like desktop: the "Water." header recedes,
+    the controls/salts/ions lift forward as a group (`y` up + `scale 1.13` +
+    drop-shadow), `.v4-dim` dims, then Auto-Calc "press" + the solve. The water
+    clip is **lifted on enter** (`overflow: visible`, so the pieces can rise out)
+    and restored on reset. Knob: `WLIFT` (how far they rise — they go UP over the
+    chrome since the mock can't recede).
+  - **Brew sheet** DISCONNECTS + rises: the mock fades (`opacity 0.32`) AND slides
+    left (`xPercent: -12`), the brew-sheet layer lifts up (`y → bsExploded.y`,
+    above the scene top) + the box grows to full height + the tab nub fades in.
+    Its copy (`.v4-narr-col section:last-child`) is padded clear via
+    `--v4-bs-grown-h`. Knobs: `bsExploded.y` (lift height), the fade depth, the
+    copy gap.
+- All reveal timelines use `immediateRender:false` + are `invalidate()`d on
+  refresh (function-based measured targets), same as desktop.
+
+### Chrome changes (global, `HSHeader` / `HSFooter` / `index.css`)
+
+- **`HSHeader`** — compact single row on ≤720px (logo-only brand via
+  `.hs-brandmark-word { display:none }`, nav scrolls horizontally, no two-row
+  stack; `.hs-header-right { flex-wrap: nowrap }` so the Sign-in button can't wrap
+  to a second line). **Collapse-on-scroll** ≤1024px: publishes its height to
+  `--hs-header-peek` (0 when hidden). On the homepage only (`tourHeader =
+  pathname === "/v4"` — UPDATE THIS to include `/` after the production swap) it
+  shows ONLY near the top, because a mid-page scroll-up reveal was shoving the
+  pinned mock around; **every other page keeps hide-on-down / reveal-on-up**.
+- **`HSFooter`** — was the cause of the site-wide horizontal scroll: its
+  `grid-template-columns` (`minmax(260px, …)`) was set INLINE, so the responsive
+  media queries (lower specificity than inline) never collapsed it on narrow
+  screens. Fix: moved the base columns into the footer's `<style>` block so the
+  queries win.
+- **`src/index.css`** — `html, body { overflow-x: clip }` as a belt-and-suspenders
+  site-wide horizontal-scroll guard (`clip`, NOT `hidden`, to keep `sticky`
+  working on descendants).
+
+### Mobile gotchas
+
+- Mock height MUST stay constant across tabs (fixed body height) or the band —
+  sized from `--v4-mock-natural-h` — jumps on every tab change.
+- Scene-level layers (radar/water/brew sheet) don't sit in the body's overflow, so
+  on mobile they each need explicit containment (water clip; brew sheet box height).
+- The beats only fire on REAL scroll — the preview harness can't script-fire
+  ScrollTriggers, so the mobile tour must be verified by scrolling a phone by hand.
 
 ## Make-or-break, validated
 
@@ -178,33 +338,67 @@ polish. Reverted to the 2-tier hops beat.
   a GSAP-pinned sibling text column CAN coexist is kept here in case a pin ever
   returns.)
 - Driver: per-section ScrollTriggers + `onToggle` for `activeTab`. Mix of modes:
-  grains + hops-grow + brewsheet are play-once paused timelines (`onEnter`
-  `.restart()`); hops-collapse is a paused timeline scrubbed manually (`onUpdate`
-  → `progress()`). Nothing scrubs a *linked* timeline or pins now. (A single
-  master scrubbed timeline remains an option if continuity gets fiddly.)
+  grains + hops-grow + water-grow + brewsheet are play-once paused timelines
+  (`onEnter` `.restart()`); hops-collapse + water-collapse are paused timelines
+  scrubbed manually (`onUpdate` → `progress()`). Nothing scrubs a *linked*
+  timeline or pins now. (A single master scrubbed timeline remains an option if
+  continuity gets fiddly.)
 
 ## Key files (`app/v4/`)
 
-- `HomeV4.tsx` — client shell + ALL GSAP setup: `measure()` (home/exploded per
-  element), the hops + grains + brewsheet triggers, Lenis, `activeTab` +
-  `grainFill` state, the **memoized left column**, layout (overflow:clip, sticky
-  grid). The file you tune.
-- `mock/V4Mock.tsx` — the scene: mock card + chrome (`MockHeader` w/
-  PaperPill/GhostPill, `MockStats` w/ accent bars + `BeerGlass`, `StyleGuidelines`,
-  `MockTabBar`), bordered body, `section-hops`, the `TabSection` layer for the
-  other tabs, the scene-level explode layer (radar), the brew sheet group. Takes
-  `grainFill` and threads it to MockStats / StyleGuidelines / TabSection.
-- `mock/TabSections.tsx` — real at-rest content for Grain / Mash / Water / Yeast /
-  Fermentation (mirrors the live mock + real builder). `FermentablesSection`
-  takes `grainFill` (grain reveal); Water salts are interactive.
+- `HomeV4.tsx` — the auth brancher (`HomeV4` → `HomeV4Tour` | `HomeV4SignedIn`)
+  PLUS the tour's client shell + ALL GSAP setup (in `HomeV4Tour`): `measure()`
+  (home/exploded per element + sizes the water layer to the body slot), the hops +
+  grains + water + **honest** + brewsheet triggers, Lenis, `activeTab` +
+  `grainFill` + `waterFill` + `fgShift` + `tempShift` + `honestActive` state, the
+  `ScrollCue` (fixed bouncing chevron, bottom of viewport, GSAP-faded over the
+  first scroll; null for reduced-motion), the **memoized left column**, layout
+  (overflow:clip, sticky grid). ALSO holds the **mobile `mm.add("(max-width:
+  1024px)")` branch** (`place()` + tab-switch + fill + reveal beats) and the big
+  mobile `<style>` block — see "Mobile tour (≤1024px)". The file you tune.
+- `mock/V4Mock.tsx` — the scene: mock card + chrome (`MockHeader`, `MockStats`
+  w/ accent bars [OG/FG/ABV/IBU/CAL — no SRM cell], `StyleGuidelines`,
+  `MockTabBar`), bordered body, `section-hops` + radar-slot, `section-water` +
+  `water-slot`, the `TabSection` layer for the other tabs, the scene-level explode
+  layer (radar), the **transparent `[data-v4="water"]` breakout layer**
+  (pointer-events auto when active, holds `WaterSection`), and the brew sheet
+  group. Takes `grainFill` + `waterFill` + `fgShift`/`tempShift`/`honestActive`
+  (honest beat) + optional `data?: V4MockData` (the signed-in mock — renders a real
+  recipe instead of the sample); `waterActive`/`brewsheetActive` drop the body
+  border so the breakout/box frames itself.
+- `mock/TabSections.tsx` — real at-rest content for Grain / Mash / Yeast /
+  Fermentation in the in-body `TabSection`; **`WaterSection` is exported** and
+  rendered by V4Mock's breakout layer (NOT in `TabSection`), with its pieces
+  tagged `water-header` / `water-controls` / `water-salts` / `water-ions` + a
+  `water-autocalc` button. Also exports `GRAIN_STEP_LEVELS` (grains staircase).
+  Every section takes an optional `data` (real recipe; defaults to the hardcoded
+  sample so the tour is unchanged). `FermentablesSection` takes `grainFill`;
+  `MashSection` takes `tempShift` (honest sweep) + `honestActive` (chip grow);
+  `WaterSection` takes `waterFill` (the solve) and stays interactive (salts +/-).
 - `mock/StyleGuidelines.tsx` — compact mock of `BJCPStyleRail`: OG/FG/ABV/IBU
-  gauges + SRM gradient visualizer. Takes `grainFill` (gauges/pin interpolate).
-- `mock/BrewSheetPanelV4.tsx` — framer-stripped brew sheet content (`framed` prop).
+  gauges + SRM gradient visualizer. Takes `grainFill` (gauges/pin interpolate),
+  `fgShift` (FG/ABV gauges follow the honest beat), + optional `data` (real ranges
+  via `getBjcpStyleSpec`).
+- `mock/BrewSheetPanelV4.tsx` — brew sheet content (`framed` prop; optional `data`
+  for a real recipe, which drops the scripted pre-boil-miss section).
 - `mock/HopFlavorRadar.tsx` — pure SVG radar, lifted from v3.
 - `lib/scroll.ts` — `useLenis` (Lenis + ScrollTrigger wiring + teardown).
+- `lib/mapRecipeToV4Mock.ts` — maps a real `Recipe` → `V4MockData` for the
+  signed-in mock (reuses `recipeCalculationService`, `waterChemistryService`,
+  `getBjcpStyleSpec`).
+- `SignedInHeroV4.tsx` — the signed-in hero: recent-recipes list + a STATIC v4
+  mock of the selected recipe. Runs a small `useGSAP` that positions the
+  scene-level layers (radar / water / brew sheet) at their rest "home" (the
+  rest half of the tour's `measure()`) so every tab renders right without the tour.
 - `lib/useReducedMotion.ts`, `stages/TourSections.tsx` (left-column stages:
-  Intro / Opening / Grains / Hops / BrewSheet).
-- `page.tsx` / `data.ts` — server fetch + copy, ported from v3.
+  Intro / Opening / Grains / Hops / Water / HonestNumbers / BrewSheet).
+- `stages/PostTourSections.tsx` — below-tour stages (Compare / LibraryCommunity /
+  WhatElse / Learn / FAQ / Close), full-width, no mock. Reveal-tagged with
+  `[data-v4-reveal]` — the HomeV4 batch picks them up. (Used by both the signed-out
+  tour and `HomeV4SignedIn`.)
+- `page.tsx` / `data.ts` — server fetch + copy. `page.tsx` ALSO emits a
+  schema.org FAQPage JSON-LD `<script>` generated from `STAGES.faq.items`
+  (inlined into initial HTML for SEO).
 
 **Reference for the section/chrome look** (read these when touching the mock):
 `app/_home/components/HeroBuilderCard.tsx` (live mock) and the real builder
@@ -223,6 +417,13 @@ polish. Reverted to the 2-tier hops beat.
   `immediateRender:false` on every `fromTo` (else they apply a `from` on mount —
   a flash) and be `invalidate()`d on `refreshInit` (else they reuse stale
   measurements after a resize). This is the play-once pattern used by every beat.
+  (Water is the exception: its piece transforms are *relative constants*, so no
+  invalidate — but it still needs `immediateRender:false`.)
+- **Scene-level layer sized to a slot imperatively:** the water breakout layer
+  must match the (dynamic) body width. Set `el.style.width` in `measure()` and do
+  NOT put `width` in the React `style` prop — else React resets it on every
+  re-render (e.g. each `waterFill` tick). `useGSAP` runs in a layout effect, so
+  `measure()` sizes it before first paint (no flash).
 - Tabs were shrunk to fit the mock width (7 tabs overflowed the right edge).
 - Screenshots of programmatic/scripted scroll are unreliable in the preview
   harness (blank frames); verify by measuring the live DOM.
@@ -232,11 +433,11 @@ polish. Reverted to the 2-tier hops beat.
 - **GSAP trims a LEADING empty gap** from a timeline's duration. To reserve real
   scroll time before the first tween (e.g. the hops "intro"), add an explicit
   empty spacer tween: `.to({}, { duration: INTRO }, 0)`.
-- **Pins need the `document.fonts.ready` `ScrollTrigger.refresh()` to settle.**
-  On a freshly *restarted* dev server, scripted scrolling right after a cold load
-  can race the settle — symptoms: `pinSpacerCount === 0`, scrub not applying. A
-  resize (or a human waiting a beat) triggers the refresh and fixes it; normal
-  page loads are fine. When automating, resize once to force a refresh first.
+- **Measured positions need the `document.fonts.ready` `ScrollTrigger.refresh()`
+  to settle** (custom fonts shift layout after first paint). On a freshly
+  *restarted* dev server, scripted scrolling right after a cold load can race the
+  settle — a resize (or a human waiting a beat) triggers the refresh and fixes it;
+  normal page loads are fine. When automating, resize once to force a refresh first.
 - **Pin + React removeChild crash.** Re-rendering React siblings of a
   GSAP-pinned node throws `removeChild`/`insertBefore` (the pin-spacer is a DOM
   node React doesn't know about). Fix: keep the pinned column structurally static
@@ -246,7 +447,10 @@ polish. Reverted to the 2-tier hops beat.
   box + tab nub otherwise overlay the tab bar + body and intercept real clicks
   (the "Grain tab has a tiny clickable area / water +/- don't register" bug).
   `element.click()` bypasses hit-testing, so verify clickability with
-  `document.elementFromPoint`, not programmatic clicks.
+  `document.elementFromPoint`, not programmatic clicks. (The water breakout layer
+  is the opposite — pointer-events AUTO so the big salt +/- work — but only when
+  `waterActive`; otherwise opacity 0 + pointer-events none so it doesn't intercept
+  the other tabs.)
 - **Dev console buffer keeps HMR-transient errors across reloads** ("GhostPill
   is not defined", "leftColumn is not defined", removeChild) — usually from the
   broken instant between two sequential edits. For a clean read, RESTART the
@@ -254,26 +458,91 @@ polish. Reverted to the 2-tier hops beat.
 
 ## Remaining / trajectory
 
-Recent work: real content for all 5 tab sections (matching the live mock + real
-builder), the colorized stat strip + STYLE GUIDELINES panel + SRM visualizer,
-the Opening + Grains tour stages (default Grain tab), and a sweep that moved the
-showy beats onto the play-once-on-enter pattern (no more scroll-scrubbing or
-scroll-jacking): the **grains** build is now a STEPPED staircase (grain drops in
-→ vitals jump → hesitate → repeat), the **hops** beat is a HYBRID (grow plays in
-on enter, collapse stays scroll-driven), and the **brew sheet** plays in on enter
-(pin + Lenis auto-advance removed — there are now ZERO pins on the page). See the
-Beats notes above. Open items:
+**2026-06 repositioning + copy overhaul:** the page was rewritten around the
+"one connected recipe, not a pile of calculators" spine. New hero (idea → glass),
+a new Honest-numbers beat, flavor reframed to a timing-aware estimate (no BJCP
+flavor overlay), water as the lead exhibit, and the post-tour split into Compare +
+Library+Community + a trimmed What-else + a price/data Close. It also added the
+animated **Honest-numbers beat** (mash temp leads, FG/ABV follow with a lag — see
+Beats), a fixed bottom-of-viewport **scroll-cue chevron** (`ScrollCue` in
+`HomeV4`, GSAP-faded over the first ~200px), and **removed the live SRM stat
+cell** (its color is in the Style Guidelines bar). Other beat mechanics are
+unchanged. Blueprint: `~/.claude/plans/yeah-i-mean-check-async-lamport.md`;
+positioning + copy voice rules in memory (`project-homepage-v4-positioning`,
+`feedback-copy-authenticity`).
 
-- **Remaining tour sections** below the main tour (Brewed-again,
-  Community/Compare, What-else, Learn, FAQ + JSON-LD, Final CTA): port from v3
-  with simpler in-view reveals.
-- **Water beat** (cinematic pin) + the **interactive "flex"** at its settled pin.
-  (The water salts are already interactive at rest; the pinned beat is the rest.)
-- **SplitText** text reveals per section ("introduce → show off", play-once).
-- **Responsive** (`gsap.matchMedia()` mobile stacked fork) + **reduced-motion**
-  fork (skeleton present: desktop gated to `min-width:1025px`, reduced-motion
-  early-returns).
+**Auth-aware page + data-driven mock (2026-06):** `HomeV4` now branches on auth.
+Signed-out (and SSR/first paint, for SEO) get the hardcoded marketing tour
+(`HomeV4Tour`). Signed-in users get `HomeV4SignedIn`: a personalized hero
+(`SignedInHeroV4` — their recent recipes list + the v4 mock showing the selected
+recipe) + Library/Community + Learn + FAQ (no tour). The **mock is now
+data-driven**: `V4Mock` (+ every section, `StyleGuidelines`, `BrewSheetPanelV4`)
+takes an optional `data?: V4MockData`; when absent it renders the hardcoded sample
+(so the TOUR is byte-for-byte unchanged), when present it renders the recipe.
+Mapper: `app/v4/lib/mapRecipeToV4Mock.ts` (reuses `recipeCalculationService`,
+`waterChemistryService.calculateFinalProfileFromTotalSalts`, and
+`getBjcpStyleSpec` for gauge ranges; brew sheet drops the scripted pre-boil miss).
+The signed-in mock is STATIC (no beats); `SignedInHeroV4` runs a small `useGSAP`
+that positions the scene-level layers (radar / water / brew sheet) at their rest
+"home" (the rest-state half of the tour's `measure()`) so every tab renders right
+without the tour. User recipes never flow through the tour beats (they stay
+hardcoded). The old `_home` `HeroBuilderCard` + `mapRecipeToMock` are no longer
+used by v4.
+
+Recent work: real content for all tab sections (matching the live mock + real
+builder), the colorized stat strip + STYLE GUIDELINES panel + SRM visualizer, and
+a sweep that moved the showy beats onto the **play-once-on-enter** pattern (no
+more scroll-scrubbing or scroll-jacking): **grains** = STEPPED staircase (grain
+drops in → vitals jump → hesitate → repeat), **hops** = HYBRID (grow once +
+scroll-collapse), **brew sheet** = grow in on enter (pin + Lenis auto-advance
+removed), and a new **Water** stage + beat — the section breaks out
+**per-component** (header recedes; controls/salts/profile lift forward together)
+with an **Auto-Calc press → solve**, staying interactive (the "flex"). There are
+now ZERO pins on the page.
+
+Then the **post-tour sections** were ported from v3 (`stages/PostTourSections.tsx`):
+Community/Compare (with a 3-col grid of up to 6 recent recipe cards from the
+publicRecipeIndex — SRM stripe + name + style + by/forks + tags + ABV/IBU/OG/FG
+mini-stats, each linking to `/r/{shareSlug}`; reuses HSCard + HSCardLift),
+What-else (categorized 3-column feature roster — Recipe / Brew day / Calculators
+with ~5-7 items each, accent rails per category mirroring the builder palette),
+Learn (HSScriptNote kicker + 2 CTAs), FAQ (accordion, 8 items) + **FAQPage
+JSON-LD** in `page.tsx` (server-rendered), Final CTA (HSButton + secondary links).
+The **BrewedAgain** stage was folded into the brew sheet stage — the brew sheet
+is what produces each saved version, so the "every brew saves as a version"
+beat lives there as the closer. Brew sheet copy was heavily condensed
+(5 paragraphs → 3) at the same time. Reveal motion is a single
+`ScrollTrigger.batch` over `[data-v4-reveal]` blocks — opacity 0→1, y 16→0,
+~0.7s, stagger 0.06, play-once-on-enter (no scrub). Reduced-motion users skip the
+batch entirely (the `useGSAP` block early-returns), so elements stay at natural
+opacity 1.
+
+Most recent (2026-06): the **mobile fork** (≤1024px) — pinned-mock + masking-band
+single-column tour with tab-switch + all fill + reveal beats, a compact collapsing
+site header, and the footer horizontal-scroll fix. Full writeup in "Mobile tour
+(≤1024px)" above.
+
+See the Beats notes above. Open items:
+
+- **SplitText** text reveals per tour section ("introduce → show off",
+  play-once). The post-tour batch is a coarse fade-up; the tour copy could
+  benefit from word/line-level reveals.
+- **Responsive — DONE** (see "Mobile tour (≤1024px)" above): the full mobile fork
+  is built — pinned mock + masking band, single-column tab-switch tour, all fill
+  beats + the radar/water/brew-sheet reveals, compact collapsing header, footer
+  horizontal-scroll fix. Still open underneath it:
+  - **Reduced-motion** fork — currently the whole `useGSAP` early-returns on
+    reduced motion, so a reduced-motion phone gets the mock STATIC on the Grain
+    tab (no beats). Verify that reads acceptably / give it a sensible static state.
+  - Small-phone / tablet (721–1024px) edge passes — the mobile knobs
+    (`--v4-mock-scale`, body height, band gradient, lift amounts) were tuned on a
+    normal phone.
 - **Optional polish:** a hero/opening trigger so the mock resets to the Grain tab
   at the very top (it currently holds the last tab if you jump straight up past
   grains; a normal scroll-up resets via the grains trigger).
+- **Build blocker (not v4):** `src/modules/hopskip/components/builder/
+  HopSection.tsx` has two TS errors (unused `useDraggable` import + a `draggable`
+  prop) that fail `npm run build` — unrelated to v4, but clear it before building.
 - **Production swap:** `app/page.tsx` → `HomeV4`; retire `app/_home` + `app/v3`.
+  Also update `HSHeader`'s `tourHeader` check (currently `=== "/v4"`) to include
+  `/`, and the header collapse + mobile band assume the homepage route.

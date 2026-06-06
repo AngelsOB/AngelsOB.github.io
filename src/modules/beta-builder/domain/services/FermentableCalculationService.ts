@@ -41,13 +41,13 @@ export class FermentableCalculationService {
     targetABV: number,
     batchVolumeL: number,
     mashEfficiencyPercent: number,
-    yeastAttenuation: number
+    effectiveAttenuation: number
   ): Fermentable[] {
     const galPerL = 0.264172;
     const lbsPerKg = 2.20462;
     const efficiency = Math.max(0, Math.min(1, mashEfficiencyPercent / 100));
     const volumeGal = Math.max(0, batchVolumeL * galPerL);
-    const attenuation = Math.max(0.4, Math.min(0.98, yeastAttenuation));
+    const attenuation = Math.max(0.4, Math.min(0.98, effectiveAttenuation));
 
     if (!(volumeGal > 0) || !(efficiency > 0) || !(attenuation > 0)) {
       return fermentables;
@@ -79,8 +79,7 @@ export class FermentableCalculationService {
     return fermentables.map(f => {
       const pct = Math.max(0, percentById[f.id] ?? 0) / 100;
       const nextKg = totalKg * pct;
-      const rounded = Number.isFinite(nextKg) ? Number(nextKg.toFixed(3)) : 0;
-      return { ...f, weightKg: rounded };
+      return { ...f, weightKg: Number.isFinite(nextKg) ? nextKg : 0 };
     });
   }
 

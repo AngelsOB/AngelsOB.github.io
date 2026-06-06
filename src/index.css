@@ -32,6 +32,14 @@ input[type="number"],
 /* Force dark mode to work with .dark class */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Site-wide guard: never allow horizontal scroll. `clip` (not `hidden`) doesn't
+   create a scroll container, so position: sticky on descendants (the header, the
+   v4 tour mock) keeps working while any horizontal overflow is clipped. */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* ========================================
    SQUIRCLE EXPERIMENT
    Native corne.rs-style smooth corners via CSS corner-shape.

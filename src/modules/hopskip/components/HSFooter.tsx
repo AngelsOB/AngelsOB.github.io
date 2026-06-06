@@ -70,7 +70,6 @@ export default function HSFooter() {
           margin: "0 auto",
           padding: "56px 24px 40px",
           display: "grid",
-          gridTemplateColumns: "minmax(260px, 1fr) repeat(3, minmax(0, 1fr))",
           gap: 40,
         }}
         className="hs-footer-grid"
@@ -171,6 +170,12 @@ export default function HSFooter() {
       </div>
 
       <style>{`
+        /* Base columns live HERE (not inline) so the responsive overrides below
+           actually win — an inline grid-template-columns outranks these media
+           queries and the 260px first column then overflows narrow screens. */
+        .hs-footer-grid {
+          grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(0, 1fr));
+        }
         @media (max-width: 900px) {
           .hs-footer-grid { grid-template-columns: 1fr 1fr; }
         }

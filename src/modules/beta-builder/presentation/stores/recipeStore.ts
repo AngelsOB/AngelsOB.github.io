@@ -96,6 +96,7 @@ type RecipeStore = {
   addFermentable: (fermentable: Fermentable) => void;
   updateFermentable: (id: string, updates: Partial<Fermentable>) => void;
   removeFermentable: (id: string) => void;
+  reorderFermentables: (startIndex: number, endIndex: number) => void;
   addHop: (hop: Hop) => void;
   updateHop: (id: string, updates: Partial<Hop>) => void;
   removeHop: (id: string) => void;
@@ -584,6 +585,23 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const updated = {
       ...current,
       fermentables: current.fermentables.filter((f) => f.id !== id),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentRecipe: updated });
+  },
+
+  // Reorder fermentables (for drag-and-drop of the grain bill)
+  reorderFermentables: (startIndex: number, endIndex: number) => {
+    const current = get().currentRecipe;
+    if (!current) return;
+
+    const fermentables = [...current.fermentables];
+    const [removed] = fermentables.splice(startIndex, 1);
+    fermentables.splice(endIndex, 0, removed);
+
+    const updated = {
+      ...current,
+      fermentables,
       updatedAt: new Date().toISOString(),
     };
     set({ currentRecipe: updated });

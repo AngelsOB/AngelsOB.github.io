@@ -1,8 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 import { hsTokens } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
@@ -28,7 +46,15 @@ import { HOP_FLAVOR_KEYS } from "@/modules/beta-builder/domain/models/Presets";
 
 type Usage = Hop["type"];
 
-const USAGE_ORDER: Usage[] = ["boil", "whirlpool", "dry hop", "first wort", "mash"];
+// Brew-day order: mash → first wort → boil → whirlpool → dry hop. Drives both
+// the section ordering and the use dropdown.
+const USAGE_ORDER: Usage[] = [
+  "mash",
+  "first wort",
+  "boil",
+  "whirlpool",
+  "dry hop",
+];
 
 const USAGE_LABEL: Record<Usage, string> = {
   boil: "Boil",
@@ -75,6 +101,233 @@ function purposeOf(alphaAcid: number): "aroma" | "dual" | "bittering" {
   return "bittering";
 }
 
+// ─── Grouping (use & time / variety) ──────────────────────────────
+
+type GroupMode = "use-time" | "variety";
+
+/** Idle delay before a hop re-settles into its live section after an edit.
+ *  Keeps a row from hopping between boxes on every stepper click while the
+ *  user dials in a time (e.g. 15 → 20 → … → 60 min). */
+const GROUP_SETTLE_MS = 1150;
+
+interface HopGroup {
+  /** Stable key for React reconciliation + map dedupe. */
+  key: string;
+  /** Primary label — "Boil" / "Whirlpool" / variety name. */
+  label: string;
+  /** Secondary timing label — "60 min", "from day 3" (use-time only). */
+  sublabel?: string;
+  /** Swatch color — usage color (use-time) or dominant-flavor tint (variety). */
+  accentColor: string;
+  /** Usage + scheduling time defining a use-time section — the drop target a
+   *  dragged row retimes into. */
+  usage: Usage;
+  timeKey: number;
+  usageIndex: number;
+  hops: Hop[];
+  totalGrams: number;
+  totalIbu: number;
+}
+
+/** The scheduling time that sub-splits a usage in "use & time" mode. Returns
+ *  null for uses with no timing (first wort, mash) so they form one group. */
+function timeKeyForHop(hop: Hop): number | null {
+  switch (hop.type) {
+    case "boil":
+      return hop.timeMinutes ?? 0;
+    case "whirlpool":
+      return hop.whirlpoolTimeMinutes ?? 0;
+    case "dry hop":
+      return hop.dryHopStartDay ?? 0;
+    default:
+      return null;
+  }
+}
+
+/** Human timing label for a group's sublabel. */
+function timeSublabel(hop: Hop): string | undefined {
+  switch (hop.type) {
+    case "boil":
+      return `${hop.timeMinutes ?? 0} min`;
+    case "whirlpool":
+      return `${hop.whirlpoolTimeMinutes ?? 0} min`;
+    case "dry hop": {
+      const day = hop.dryHopStartDay ?? 0;
+      return day === 0 ? "at pitch" : `on day ${day}`;
+    }
+    default:
+      return undefined;
+  }
+}
+
+/** Dominant-flavor accent color for a hop (mirrors RowMiniRadar's tint). */
+function accentForHop(hop: Hop): string {
+  const flavor =
+    hop.flavor ?? hopEnrichmentService.getFlavorByName(hop.name) ?? null;
+  if (!flavor) return hsTokens.hops;
+  let bestKey: (typeof HOP_FLAVOR_KEYS)[number] = HOP_FLAVOR_KEYS[0];
+  let bestV = -1;
+  for (const k of HOP_FLAVOR_KEYS) {
+    const v = flavor[k] ?? 0;
+    if (v > bestV) {
+      bestV = v;
+      bestKey = k;
+    }
+  }
+  return HOP_FLAVOR_COLOR[bestKey] ?? hsTokens.hops;
+}
+
+/** SSR-safe layout effect — avoids the useLayoutEffect warning during Next's
+ *  server render while still running pre-paint on the client. */
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+/** Size every input in a column (grouped by its `data-hop-input` key) to the
+ *  widest one in the section, so each column's boxes stay compact yet match
+ *  all the way down. Measured against the live DOM because the script numerals
+ *  are proportional — counting characters can't predict the pixel width. */
+function equalizeInputWidths(root: HTMLElement | null) {
+  if (!root) return;
+  const byCol = new Map<string, HTMLElement[]>();
+  for (const cell of root.querySelectorAll<HTMLElement>("[data-hop-input]")) {
+    const key = cell.dataset.hopInput || "";
+    const arr = byCol.get(key);
+    if (arr) arr.push(cell);
+    else byCol.set(key, [cell]);
+  }
+  for (const cells of byCol.values()) {
+    // Only resting cells are measurable; an editing cell holds a bare <input>
+    // with no intrinsic content width. They still receive the final width.
+    const measurable = cells.filter((el) => !el.querySelector("input"));
+    for (const el of measurable) el.style.width = "";
+    let max = 0;
+    for (const el of measurable) max = Math.max(max, el.offsetWidth);
+    if (max <= 0) continue;
+    for (const el of cells) el.style.width = `${max}px`;
+  }
+}
+
+/** A hop's section placement. Captured per hop id so it can be FROZEN while a
+ *  row is being edited (the debounced regroup) — see HopSection's settle
+ *  effect — then refreshed once edits go idle. */
+interface GroupAssignment {
+  key: string;
+  label: string;
+  sublabel?: string;
+  accentColor: string;
+  /** Sort inputs for use-time ordering (carried so order stays stable while a
+   *  frozen row's live time differs from its section). */
+  usageIndex: number;
+  timeKey: number;
+  usage: Usage;
+}
+
+/** Live section assignment for a hop under a grouping mode. */
+function computeAssignment(hop: Hop, mode: GroupMode): GroupAssignment {
+  if (mode === "variety") {
+    return {
+      key: `v:${hop.name}`,
+      label: hop.name,
+      accentColor: accentForHop(hop),
+      usageIndex: 0,
+      timeKey: 0,
+      usage: hop.type,
+    };
+  }
+  const tk = timeKeyForHop(hop);
+  return {
+    key: tk === null ? `u:${hop.type}` : `u:${hop.type}:${tk}`,
+    label: USAGE_LABEL[hop.type],
+    sublabel: timeSublabel(hop),
+    accentColor: USAGE_COLOR[hop.type],
+    usageIndex: USAGE_ORDER.indexOf(hop.type),
+    timeKey: tk ?? 0,
+    usage: hop.type,
+  };
+}
+
+/** Brew-day order for two additions: by usage (USAGE_ORDER), then by time —
+ *  boil/whirlpool longest-first (goes in earliest), dry hop earliest-day-first.
+ *  Used to order the rows inside a section (mash always leads). */
+function brewDayCompare(a: Hop, b: Hop): number {
+  const ui = USAGE_ORDER.indexOf(a.type) - USAGE_ORDER.indexOf(b.type);
+  if (ui !== 0) return ui;
+  const ta = timeKeyForHop(a) ?? 0;
+  const tb = timeKeyForHop(b) ?? 0;
+  return a.type === "dry hop" ? ta - tb : tb - ta;
+}
+
+/** Partition hops into bounded sections. "use-time" keys by usage + its
+ *  scheduling time (Boil 60, Boil 15, Whirlpool 20min, …); "variety" keys by
+ *  hop name (all Citra together). Groups carry per-group gram + IBU subtotals.
+ *
+ *  `overrides` supplies a frozen assignment per hop id so a row doesn't jump
+ *  sections mid-edit; hops absent from it (e.g. a just-added hop) fall back to
+ *  their live assignment. Subtotals always reflect live hop values. */
+function buildHopGroups(
+  hops: Hop[],
+  mode: GroupMode,
+  og: number,
+  batchVolumeGal: number,
+  overrides?: Record<string, GroupAssignment>
+): HopGroup[] {
+  const map = new Map<string, HopGroup>();
+  const order: string[] = [];
+
+  for (const h of hops) {
+    const a = overrides?.[h.id] ?? computeAssignment(h, mode);
+
+    let group = map.get(a.key);
+    if (!group) {
+      group = {
+        key: a.key,
+        label: a.label,
+        sublabel: a.sublabel,
+        accentColor: a.accentColor,
+        usageIndex: a.usageIndex,
+        timeKey: a.timeKey,
+        usage: a.usage,
+        hops: [],
+        totalGrams: 0,
+        totalIbu: 0,
+      };
+      map.set(a.key, group);
+      order.push(a.key);
+    }
+    group.hops.push(h);
+    group.totalGrams += h.grams;
+    group.totalIbu += recipeCalculationService.calculateSingleHopIBU(
+      h,
+      og,
+      batchVolumeGal
+    );
+  }
+
+  const groups = order.map((k) => map.get(k)!);
+
+  if (mode === "use-time") {
+    // Order by usage (brew order), then by time within usage. Boil/whirlpool
+    // run longest-first (early-boil additions lead); dry hop runs earliest
+    // start-day first. Reads the (possibly frozen) assignment so section order
+    // is stable while a row is mid-edit.
+    groups.sort((a, b) => {
+      const ui = a.usageIndex - b.usageIndex;
+      if (ui !== 0) return ui;
+      return a.usage === "dry hop"
+        ? a.timeKey - b.timeKey
+        : b.timeKey - a.timeKey;
+    });
+  }
+  // variety mode keeps first-seen order (matches the radar legend).
+
+  // Within every section, order the rows by brew day (no-op for use-time
+  // sections where all rows share a timing; meaningful inside a variety card
+  // whose additions span boil → whirlpool → dry hop).
+  for (const g of groups) g.hops.sort(brewDayCompare);
+
+  return groups;
+}
+
 export default function HopSection() {
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const addHop = useRecipeStore((s) => s.addHop);
@@ -91,6 +344,22 @@ export default function HopSection() {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [groupMode, setGroupMode] = useState<GroupMode>("use-time");
+
+  // Debounced section assignments. While a row is actively edited, its hop
+  // keeps its prior section (frozen here) so it doesn't jump boxes on every
+  // stepper click; the map refreshes GROUP_SETTLE_MS after edits go idle.
+  // `mode` is tracked so a mode toggle ignores the stale (other-mode) map.
+  const [groupAssign, setGroupAssign] = useState<{
+    mode: GroupMode;
+    map: Record<string, GroupAssignment>;
+  }>({ mode: groupMode, map: {} });
+  const settleTimerRef = useRef<number | null>(null);
+  const prevGroupModeRef = useRef<GroupMode>(groupMode);
+  const prevHopSigRef = useRef<string>("");
+  // Set by a drag-drop retime so the dropped row regroups immediately instead
+  // of waiting out the stepper debounce (a drop is a deliberate move).
+  const forceRegroupRef = useRef(false);
 
   // Per-row mini-radar hover preview state + imperative cursor-follow refs.
   // Mirrors the modal's preview pattern (always-mounted portal, opacity-0
@@ -176,6 +445,52 @@ export default function HopSection() {
     [currentRecipe?.hops]
   );
 
+  // Resettle sections after edits go idle. Each hop edit produces a new `hops`
+  // reference, re-running this effect and pushing the timer out, so a burst of
+  // stepper clicks collapses into a single regroup once the user pauses. Only
+  // numeric timing edits debounce: a mode toggle, a use switch, a variety swap,
+  // or an add/remove (all captured by the structural signature) regroup now, so
+  // those deliberate moves land immediately while the time stepper stays put.
+  useEffect(() => {
+    const modeChanged = prevGroupModeRef.current !== groupMode;
+    prevGroupModeRef.current = groupMode;
+
+    const sig = hops.map((h) => `${h.id}:${h.type}:${h.name}`).join("|");
+    const structuralChange = sig !== prevHopSigRef.current;
+    prevHopSigRef.current = sig;
+
+    const forced = forceRegroupRef.current;
+    forceRegroupRef.current = false;
+
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+    const snapshot = () => {
+      const map: Record<string, GroupAssignment> = {};
+      for (const h of hops) map[h.id] = computeAssignment(h, groupMode);
+      return map;
+    };
+    if (modeChanged || structuralChange || forced) {
+      setGroupAssign({ mode: groupMode, map: snapshot() });
+      return;
+    }
+    settleTimerRef.current = window.setTimeout(() => {
+      setGroupAssign({ mode: groupMode, map: snapshot() });
+    }, GROUP_SETTLE_MS);
+    return () => {
+      if (settleTimerRef.current !== null) {
+        window.clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+    };
+  }, [hops, groupMode]);
+
+  // Frozen assignments to feed the ledger. Ignored when the stored map predates
+  // a mode toggle (the effect above refreshes it on the next tick).
+  const frozenAssignments =
+    groupAssign.mode === groupMode ? groupAssign.map : undefined;
+
   const totalGrams = hops.reduce((sum, h) => sum + h.grams, 0);
 
   const handleSelectPreset = (preset: HopPreset) => {
@@ -231,6 +546,45 @@ export default function HopSection() {
     updateHop(id, { ...cleared, ...defaults });
   };
 
+  // Drop a row onto another use-time section: adopt that section's usage +
+  // scheduling time. Same-usage drops just retime; cross-usage drops retype
+  // with the new usage's defaults and then set the section's time.
+  const handleRetimeHop = (id: string, usage: Usage, timeKey: number) => {
+    const hop = hops.find((h) => h.id === id);
+    if (!hop) return;
+
+    let updates: Partial<Hop> | null = null;
+    if (hop.type === usage) {
+      // Same usage — only retime (skip a no-op drop onto the same section).
+      if (usage === "boil" && hop.timeMinutes !== timeKey)
+        updates = { timeMinutes: timeKey };
+      else if (usage === "whirlpool" && hop.whirlpoolTimeMinutes !== timeKey)
+        updates = { whirlpoolTimeMinutes: timeKey };
+      else if (usage === "dry hop" && hop.dryHopStartDay !== timeKey)
+        updates = { dryHopStartDay: timeKey };
+    } else {
+      // Different usage — retype with that usage's defaults, then set the time.
+      const cleared: Partial<Hop> = {
+        timeMinutes: undefined,
+        temperatureC: undefined,
+        whirlpoolTimeMinutes: undefined,
+        dryHopStartDay: undefined,
+        dryHopDays: undefined,
+      };
+      const next: Partial<Hop> = { ...cleared, ...defaultsForUsage(usage) };
+      if (usage === "boil") next.timeMinutes = timeKey;
+      else if (usage === "whirlpool") next.whirlpoolTimeMinutes = timeKey;
+      else if (usage === "dry hop") next.dryHopStartDay = timeKey;
+      updates = next;
+    }
+
+    if (!updates) return;
+    // Bypass the stepper debounce — a drop should land the row in its new
+    // section immediately.
+    forceRegroupRef.current = true;
+    updateHop(id, updates);
+  };
+
   return (
     <section className="hs-hops-section" style={sectionFrameStyle}>
       <HopSectionStyles />
@@ -245,6 +599,8 @@ export default function HopSection() {
             <LedgerHeaderRow
               entryCount={hops.length}
               ibu={calculations?.ibu ?? 0}
+              groupMode={groupMode}
+              onGroupModeChange={setGroupMode}
               onAdd={handleAddNew}
             />
           </div>
@@ -252,6 +608,8 @@ export default function HopSection() {
           <div className="hs-hops-grid-ltable">
             <Ledger
               hops={hops}
+              groupMode={groupMode}
+              assignments={frozenAssignments}
               totalGrams={totalGrams}
               og={calculations?.og ?? 1.05}
               batchVolumeGal={(currentRecipe?.batchVolumeL ?? 20) * 0.264172}
@@ -277,6 +635,7 @@ export default function HopSection() {
               }
               onSwap={handleSwapHop}
               onUsageChange={handleChangeUsage}
+              onRetime={handleRetimeHop}
               onRemove={removeHop}
               onAdd={handleAddNew}
               onRowHoverStart={(name, flavor) =>
@@ -413,13 +772,17 @@ function RowHoverPreviewBody({
 }
 
 /** Larger version of RowMiniRadar with axis labels — shown in the hover
- *  preview. Single-flavor 9-axis polygon at ~170px, no interactions. */
+ *  preview and the variety card's left rail. Single-flavor 9-axis polygon.
+ *  `fill` makes it size to its container's height (square, capped by width)
+ *  so the rail radar scales with the addition count. */
 function RowHoverMiniRadar({
   flavor,
   color,
+  fill = false,
 }: {
   flavor: HopFlavorProfile;
   color: string;
+  fill?: boolean;
 }) {
   const size = 170;
   const pad = 26;
@@ -453,9 +816,20 @@ function RowHoverMiniRadar({
     <svg
       viewBox={`0 0 ${size} ${size}`}
       width="100%"
-      height="auto"
+      height={fill ? "100%" : "auto"}
       preserveAspectRatio="xMidYMid meet"
-      style={{ display: "block", margin: "0 auto" }}
+      style={
+        fill
+          ? {
+              position: "absolute",
+              top: 8,
+              left: 8,
+              width: "calc(100% - 16px)",
+              height: "calc(100% - 16px)",
+              display: "block",
+            }
+          : { display: "block", margin: "0 auto" }
+      }
       aria-hidden
     >
       {[0.5, 1].map((m) => (
@@ -603,10 +977,14 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 function LedgerHeaderRow({
   entryCount,
   ibu,
+  groupMode,
+  onGroupModeChange,
   onAdd,
 }: {
   entryCount: number;
   ibu: number;
+  groupMode: GroupMode;
+  onGroupModeChange: (m: GroupMode) => void;
   onAdd: () => void;
 }) {
   return (
@@ -621,6 +999,7 @@ function LedgerHeaderRow({
       }}
     >
       <Eyebrow size={11}>The hop bill</Eyebrow>
+      <HopGroupToggle mode={groupMode} onChange={onGroupModeChange} />
       <span
         aria-hidden
         style={{
@@ -639,6 +1018,79 @@ function LedgerHeaderRow({
         + Add hop
       </HSButton>
     </div>
+  );
+}
+
+/** Segmented "group by" toggle (Use & time · Variety). Mirrors the radar
+ *  card's RadarModeToggle shape with a hops-green active state. A small
+ *  "group" eyebrow sits inside the pill's left edge for context. */
+function HopGroupToggle({
+  mode,
+  onChange,
+}: {
+  mode: GroupMode;
+  onChange: (m: GroupMode) => void;
+}) {
+  const cellStyle = (active: boolean): CSSProperties => ({
+    fontFamily: hsTokens.body,
+    fontWeight: 700,
+    fontSize: 9,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    padding: "5px 11px",
+    border: "none",
+    background: active ? hsTokens.hops : "transparent",
+    color: active ? hsTokens.cream : hsTokens.ink,
+    cursor: "pointer",
+    transition: "background 120ms ease",
+    whiteSpace: "nowrap",
+  });
+  const opts: Array<{ id: GroupMode; label: string }> = [
+    { id: "use-time", label: "Use & time" },
+    { id: "variety", label: "Variety" },
+  ];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+      <Eyebrow size={9} color={hsTokens.muted}>
+        Group
+      </Eyebrow>
+      <div
+        role="tablist"
+        aria-label="Group hops by"
+        style={{
+          display: "inline-flex",
+          background: hsTokens.paper,
+          border: `1.5px solid ${hsTokens.ink}`,
+          borderRadius: 999,
+          overflow: "hidden",
+          boxShadow: hsTokens.sh1,
+        }}
+      >
+        {opts.map((o, i) => (
+          <span key={o.id} style={{ display: "inline-flex" }}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === o.id}
+              style={cellStyle(mode === o.id)}
+              onClick={() => onChange(o.id)}
+            >
+              {o.label}
+            </button>
+            {i < opts.length - 1 ? (
+              <span
+                aria-hidden
+                style={{
+                  width: 1.5,
+                  background: hsTokens.ink,
+                  alignSelf: "stretch",
+                }}
+              />
+            ) : null}
+          </span>
+        ))}
+      </div>
+    </span>
   );
 }
 
@@ -696,6 +1148,8 @@ const IBU_CELL_BG =
 
 function Ledger({
   hops,
+  groupMode,
+  assignments,
   totalGrams,
   og,
   batchVolumeGal,
@@ -707,6 +1161,7 @@ function Ledger({
   onDryHopStartDayChange,
   onSwap,
   onUsageChange,
+  onRetime,
   onRemove,
   onAdd,
   onRowHoverStart,
@@ -714,6 +1169,8 @@ function Ledger({
   onRowHoverEnd,
 }: {
   hops: Hop[];
+  groupMode: GroupMode;
+  assignments?: Record<string, GroupAssignment>;
   totalGrams: number;
   og: number;
   batchVolumeGal: number;
@@ -725,69 +1182,781 @@ function Ledger({
   onDryHopStartDayChange: (id: string, v: number) => void;
   onSwap: (id: string) => void;
   onUsageChange: (id: string, next: Usage) => void;
+  onRetime: (id: string, usage: Usage, timeKey: number) => void;
   onRemove: (id: string) => void;
   onAdd: () => void;
   onRowHoverStart: (name: string, flavor: HopFlavorProfile) => void;
   onRowCursorMove: (e: React.MouseEvent) => void;
   onRowHoverEnd: () => void;
 }) {
+  const groups = buildHopGroups(
+    hops,
+    groupMode,
+    og,
+    batchVolumeGal,
+    assignments
+  );
+  const grandIbu = groups.reduce((sum, g) => sum + g.totalIbu, 0);
+
+  // After each render, equalize input widths per column across the whole
+  // section so weight/time boxes are compact but match down the column.
+  const groupsRef = useRef<HTMLDivElement>(null);
+  useIsoLayoutEffect(() => {
+    equalizeInputWidths(groupsRef.current);
+  });
+
+  // Drag-to-retime: dropping a row onto another use-time section adopts that
+  // section's usage + time. Mouse needs an 8px travel and touch a press-hold,
+  // so clicking the row's inputs and scrolling with a finger still work.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+  const [activeHop, setActiveHop] = useState<Hop | null>(null);
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveHop(hops.find((h) => h.id === e.active.id) ?? null);
+  };
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveHop(null);
+    const data = e.over?.data.current as
+      | { usage?: Usage; timeKey?: number }
+      | undefined;
+    if (!data || data.usage === undefined || data.timeKey === undefined) return;
+    onRetime(String(e.active.id), data.usage, data.timeKey);
+  };
+
+  // One LedgerRow (motion-wrapped). The per-hop IBU is recomputed here so the
+  // row readout matches the group + grand subtotals exactly. `draggable` is on
+  // for use-time rows (retiming) and off for the variety singles table.
+  const renderRow = (h: Hop, isLast: boolean, draggable: boolean) => {
+    const ibuContribution = recipeCalculationService.calculateSingleHopIBU(
+      h,
+      og,
+      batchVolumeGal
+    );
+    return (
+      <LedgerRowMotion key={h.id}>
+        <LedgerRow
+          hop={h}
+          ibuContribution={ibuContribution}
+          isLast={isLast}
+          draggable={draggable}
+          onGramsChange={(v) => onGramsChange(h.id, v)}
+          onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
+          onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
+          onWhirlpoolTimeChange={(v) => onWhirlpoolTimeChange(h.id, v)}
+          onDryHopDaysChange={(v) => onDryHopDaysChange(h.id, v)}
+          onDryHopStartDayChange={(v) => onDryHopStartDayChange(h.id, v)}
+          onSwap={() => onSwap(h.id)}
+          onUsageChange={(next) => onUsageChange(h.id, next)}
+          onRemove={() => onRemove(h.id)}
+          onRowHoverStart={onRowHoverStart}
+          onRowCursorMove={onRowCursorMove}
+          onRowHoverEnd={onRowHoverEnd}
+        />
+      </LedgerRowMotion>
+    );
+  };
+
+  // Variety-mode row: drops the per-row name + radar (those live big in the
+  // card's left rail) and leads with what the addition is used for.
+  const renderVarietyRow = (h: Hop, isLast: boolean) => {
+    const ibuContribution = recipeCalculationService.calculateSingleHopIBU(
+      h,
+      og,
+      batchVolumeGal
+    );
+    return (
+      <LedgerRowMotion key={h.id}>
+        <VarietyRow
+          hop={h}
+          ibuContribution={ibuContribution}
+          isLast={isLast}
+          onGramsChange={(v) => onGramsChange(h.id, v)}
+          onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
+          onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
+          onWhirlpoolTimeChange={(v) => onWhirlpoolTimeChange(h.id, v)}
+          onDryHopDaysChange={(v) => onDryHopDaysChange(h.id, v)}
+          onDryHopStartDayChange={(v) => onDryHopStartDayChange(h.id, v)}
+          onUsageChange={(next) => onUsageChange(h.id, next)}
+          onRemove={() => onRemove(h.id)}
+        />
+      </LedgerRowMotion>
+    );
+  };
+
   return (
     <>
-      <div
-        className="hs-hops-ledger"
-        style={{
-          background: hsTokens.paper,
-          border: `2px solid ${hsTokens.ink}`,
-          borderRadius: 14,
-          boxShadow: hsTokens.sh3,
-          overflow: "hidden",
-        }}
+      {/* Each group is its own bounded card (border + radius). Use-time groups
+          are vertical tables; variety groups put a big title + radar in a left
+          rail with the additions beside it. A grand-total band closes the
+          stack. On mobile .hs-hops-ledger borders are stripped (see styles);
+          the per-group bands carry the separation instead. */}
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveHop(null)}
       >
-        <LedgerHead />
-        {(() => {
-          let totalIbu = 0;
-          const rows = hops.map((h, i) => {
-            const ibuContribution =
-              recipeCalculationService.calculateSingleHopIBU(h, og, batchVolumeGal);
-            totalIbu += ibuContribution;
-            return (
-              <LedgerRowMotion key={h.id}>
-                <LedgerRow
-                  hop={h}
-                  ibuContribution={ibuContribution}
-                  isLast={i === hops.length - 1}
-                  onGramsChange={(v) => onGramsChange(h.id, v)}
-                  onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
-                  onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
-                  onWhirlpoolTimeChange={(v) => onWhirlpoolTimeChange(h.id, v)}
-                  onDryHopDaysChange={(v) => onDryHopDaysChange(h.id, v)}
-                  onDryHopStartDayChange={(v) =>
-                    onDryHopStartDayChange(h.id, v)
-                  }
-                  onSwap={() => onSwap(h.id)}
-                  onUsageChange={(next) => onUsageChange(h.id, next)}
-                  onRemove={() => onRemove(h.id)}
-                  onRowHoverStart={onRowHoverStart}
-                  onRowCursorMove={onRowCursorMove}
-                  onRowHoverEnd={onRowHoverEnd}
+        <div
+          ref={groupsRef}
+          className="hs-hops-groups"
+          style={{ display: "flex", flexDirection: "column", gap: 14 }}
+        >
+          {groupMode === "variety"
+            ? (() => {
+                // A variety earns the big rail card only once it has 2+
+                // additions; one-off varieties stay as plain rows in a shared
+                // "Single additions" table (no oversized radar for a lone hop).
+                const multis = groups.filter((g) => g.hops.length >= 2);
+                const singles = groups
+                  .filter((g) => g.hops.length === 1)
+                  .sort((a, b) => brewDayCompare(a.hops[0], b.hops[0]));
+                return (
+                  <>
+                    {multis.map((group) => (
+                      <VarietyGroupCard
+                        key={group.key}
+                        group={group}
+                        renderVarietyRow={renderVarietyRow}
+                      />
+                    ))}
+                    {singles.length > 0 ? (
+                      <SinglesTableCard
+                        singles={singles}
+                        renderRow={renderRow}
+                      />
+                    ) : null}
+                  </>
+                );
+              })()
+            : groups.map((group) => (
+                <UseTimeGroupCard
+                  key={group.key}
+                  group={group}
+                  renderRow={renderRow}
                 />
-              </LedgerRowMotion>
-            );
-          });
-          return (
-            <>
-              <LedgerRowsAnimated>{rows}</LedgerRowsAnimated>
-              <LedgerTotal
-                totalGrams={totalGrams}
-                totalIbu={totalIbu}
-                entries={hops.length}
-              />
-            </>
-          );
-        })()}
-      </div>
+              ))}
+          <GrandHopTotal
+            entries={hops.length}
+            totalGrams={totalGrams}
+            totalIbu={grandIbu}
+          />
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {activeHop ? <DragRowPreview hop={activeHop} /> : null}
+        </DragOverlay>
+      </DndContext>
       <MobileAddRow onAdd={onAdd} />
     </>
+  );
+}
+
+/** Floating preview shown under the cursor while dragging a row. */
+function DragRowPreview({ hop }: { hop: Hop }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 14px",
+        background: hsTokens.paper,
+        border: `2px solid ${hsTokens.ink}`,
+        borderRadius: 10,
+        boxShadow: hsTokens.sh3,
+        cursor: "grabbing",
+        transform: "rotate(-1.5deg)",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 16,
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+        }}
+      >
+        {hop.name}
+      </span>
+      <span
+        style={{
+          fontFamily: hsTokens.script,
+          fontSize: 14,
+          color: hsTokens.muted,
+        }}
+      >
+        drop on a section to retime
+      </span>
+    </div>
+  );
+}
+
+// ─── Group cards (use-time tables / variety left-rail layout) ──────
+
+const GROUP_CARD_STYLE: CSSProperties = {
+  background: hsTokens.paper,
+  border: `2px solid ${hsTokens.ink}`,
+  borderRadius: 14,
+  boxShadow: hsTokens.sh3,
+  overflow: "hidden",
+};
+
+/** Use & time group: a vertical table — title band, its own column header,
+ *  rows, then a subtotal row at the bottom. Doubles as a drop target: a row
+ *  dragged in adopts this section's usage + time. */
+function UseTimeGroupCard({
+  group,
+  renderRow,
+}: {
+  group: HopGroup;
+  renderRow: (h: Hop, isLast: boolean, draggable: boolean) => ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: group.key,
+    data: { usage: group.usage, timeKey: group.timeKey },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className="hs-hops-ledger"
+      style={{
+        ...GROUP_CARD_STYLE,
+        border: `2px solid ${isOver ? hsTokens.hops : hsTokens.ink}`,
+        boxShadow: isOver
+          ? `0 0 0 3px color-mix(in srgb, ${hsTokens.hops} 30%, transparent), ${hsTokens.sh3}`
+          : GROUP_CARD_STYLE.boxShadow,
+        transition: "box-shadow 120ms ease, border-color 120ms ease",
+      }}
+    >
+      <GroupTitleBand label={group.label} sublabel={group.sublabel} />
+      <LedgerHead />
+      <LedgerRowsAnimated>
+        {group.hops.map((h, i) =>
+          renderRow(h, i === group.hops.length - 1, true)
+        )}
+      </LedgerRowsAnimated>
+      <LedgerTotal
+        entries={group.hops.length}
+        totalGrams={group.totalGrams}
+        totalIbu={group.totalIbu}
+        label="Subtotal"
+      />
+    </div>
+  );
+}
+
+/** Shared table collecting one-off varieties — each renders as a plain row
+ *  (name + radar + use/time/weight/IBU), the "old way" before a variety grows
+ *  into its own rail card. */
+function SinglesTableCard({
+  singles,
+  renderRow,
+}: {
+  singles: HopGroup[];
+  renderRow: (h: Hop, isLast: boolean, draggable: boolean) => ReactNode;
+}) {
+  const totalGrams = singles.reduce((s, g) => s + g.totalGrams, 0);
+  const totalIbu = singles.reduce((s, g) => s + g.totalIbu, 0);
+  return (
+    <div className="hs-hops-ledger" style={GROUP_CARD_STYLE}>
+      <GroupTitleBand
+        label="Single additions"
+        sublabel={`${singles.length} ${
+          singles.length === 1 ? "variety" : "varieties"
+        }`}
+      />
+      <LedgerHead />
+      <LedgerRowsAnimated>
+        {singles.map((g, i) =>
+          renderRow(g.hops[0], i === singles.length - 1, false)
+        )}
+      </LedgerRowsAnimated>
+      <LedgerTotal
+        entries={singles.length}
+        totalGrams={totalGrams}
+        totalIbu={totalIbu}
+        label="Subtotal"
+      />
+    </div>
+  );
+}
+
+/** Slim band naming a group — title (+ timing sublabel) on the section's hops
+ *  tint, matching the single-color tinting of the other builder sections.
+ *  Stays visible on mobile (unlike the column header) so each section keeps
+ *  its label when the table collapses to per-hop cards. */
+function GroupTitleBand({
+  label,
+  sublabel,
+}: {
+  label: string;
+  sublabel?: string;
+}) {
+  return (
+    <div
+      className="hs-hops-group-title"
+      style={{
+        display: "flex",
+        alignItems: "baseline",
+        gap: 9,
+        padding: "9px 16px",
+        background: "color-mix(in srgb, var(--hs-cream) 94%, var(--hs-hops))",
+        borderBottom: `2px solid ${hsTokens.ink}`,
+      }}
+    >
+      <span
+        title={label}
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 17,
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+          lineHeight: 1,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          minWidth: 0,
+        }}
+      >
+        {label}
+      </span>
+      {sublabel ? (
+        <span
+          style={{
+            fontFamily: hsTokens.script,
+            fontSize: 15,
+            color: hsTokens.muted,
+            transform: "rotate(-1deg)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {sublabel}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Variety group (left rail + additions table) ──────────────────
+
+/** Right-table columns for a variety card: use | time | weight | IBU | ×. */
+const VARIETY_COLS = "minmax(110px, 1fr) minmax(110px, 1fr) 92px 64px 32px";
+
+/** Variety group: the variety's identity (big title + radar + AA/adds) lives
+ *  in a left rail; every addition of that variety sits beside it as a row that
+ *  leads with what it's used for. */
+function VarietyGroupCard({
+  group,
+  renderVarietyRow,
+}: {
+  group: HopGroup;
+  renderVarietyRow: (h: Hop, isLast: boolean) => ReactNode;
+}) {
+  const firstHop = group.hops[0];
+  const flavor = firstHop
+    ? firstHop.flavor ??
+      hopEnrichmentService.getFlavorByName(firstHop.name) ??
+      null
+    : null;
+  const aa = firstHop?.alphaAcid ?? 0;
+  const count = group.hops.length;
+
+  return (
+    <div
+      className="hs-hops-ledger hs-hops-variety-card"
+      style={GROUP_CARD_STYLE}
+    >
+      <div
+        className="hs-hops-variety-layout"
+        style={{ display: "flex", alignItems: "stretch" }}
+      >
+        {/* Left rail — variety identity. */}
+        <aside
+          className="hs-hops-variety-aside"
+          style={{
+            width: 200,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            padding: "16px 16px 18px",
+            background: hsTokens.paper,
+            borderRight: `2px solid ${hsTokens.ink}`,
+          }}
+        >
+          <span
+            title={group.label}
+            style={{
+              fontFamily: hsTokens.display,
+              fontSize: 22,
+              letterSpacing: "-0.02em",
+              lineHeight: 1,
+              color: hsTokens.ink,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0,
+              alignSelf: "stretch",
+              textAlign: "center",
+            }}
+          >
+            {group.label}
+          </span>
+
+          {/* Radar sits directly on the rail. The container is positioned +
+              flex:1 so the absolutely-positioned svg robustly fills the rail's
+              slack (percentage heights resolve against an abs-positioned
+              container), scaling the radar with the row count — compact for a
+              2-row variety, large for a tall one, no dead space. */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 104,
+              alignSelf: "stretch",
+              position: "relative",
+            }}
+          >
+            {flavor ? (
+              <RowHoverMiniRadar
+                flavor={flavor}
+                color={group.accentColor}
+                fill
+              />
+            ) : (
+              <p
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: hsTokens.script,
+                  fontSize: 14,
+                  color: hsTokens.muted,
+                  textAlign: "center",
+                  margin: 0,
+                  padding: "0 10px",
+                  lineHeight: 1.35,
+                }}
+              >
+                no flavor data for this variety
+              </p>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "6px 14px",
+              paddingTop: 2,
+            }}
+          >
+            <SubStat value={aa.toFixed(1)} unit="% AA" />
+            <SubStat value={String(count)} unit={count === 1 ? "add" : "adds"} />
+          </div>
+        </aside>
+
+        {/* Right — the additions table. */}
+        <div
+          className="hs-hops-variety-main"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <VarietyColumnHead />
+          <LedgerRowsAnimated>
+            {group.hops.map((h, i) =>
+              renderVarietyRow(h, i === group.hops.length - 1)
+            )}
+          </LedgerRowsAnimated>
+          <VarietyTotalRow group={group} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VarietyColumnHead() {
+  return (
+    <div
+      className="hs-hops-ledger-row hs-hops-ledger-head-row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: VARIETY_COLS,
+        padding: "10px 14px",
+        background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-hops))",
+        borderBottom: `2px solid ${hsTokens.ink}`,
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <Eyebrow size={10} style={{ display: "block", textAlign: "center" }}>
+        Use
+      </Eyebrow>
+      <Eyebrow size={10} style={{ display: "block", textAlign: "center" }}>
+        Time
+      </Eyebrow>
+      <Eyebrow
+        size={10}
+        style={{ display: "block", textAlign: "center", paddingRight: 28 }}
+      >
+        Weight
+      </Eyebrow>
+      <div
+        style={{
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: IBU_CELL_BG,
+          padding: "10px 12px",
+          margin: "-10px -12px",
+        }}
+      >
+        <Eyebrow size={10} style={{ letterSpacing: "0.18em" }}>
+          IBU
+        </Eyebrow>
+      </div>
+      <span />
+    </div>
+  );
+}
+
+function VarietyRow({
+  hop,
+  ibuContribution,
+  isLast,
+  onGramsChange,
+  onTimeMinutesChange,
+  onTemperatureChange,
+  onWhirlpoolTimeChange,
+  onDryHopDaysChange,
+  onDryHopStartDayChange,
+  onUsageChange,
+  onRemove,
+}: {
+  hop: Hop;
+  ibuContribution: number;
+  isLast: boolean;
+  onGramsChange: (v: number) => void;
+  onTimeMinutesChange: (v: number) => void;
+  onTemperatureChange: (v: number) => void;
+  onWhirlpoolTimeChange: (v: number) => void;
+  onDryHopDaysChange: (v: number) => void;
+  onDryHopStartDayChange: (v: number) => void;
+  onUsageChange: (next: Usage) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      className="hs-hops-ledger-row hs-hops-variety-row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: VARIETY_COLS,
+        padding: "14px 14px",
+        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <UsageSelect usage={hop.type} onChange={onUsageChange} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <TimingCell
+          hop={hop}
+          onTimeMinutesChange={onTimeMinutesChange}
+          onTemperatureChange={onTemperatureChange}
+          onWhirlpoolTimeChange={onWhirlpoolTimeChange}
+          onDryHopDaysChange={onDryHopDaysChange}
+          onDryHopStartDayChange={onDryHopStartDayChange}
+        />
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <EditableCell
+          value={hop.grams}
+          step={1}
+          min={0}
+          precision={0}
+          format={(v) => v.toFixed(0)}
+          suffix="g"
+          ariaLabel="Hop weight in grams"
+          onCommit={onGramsChange}
+          colKey="weight"
+        />
+      </div>
+      <div
+        className="hs-hops-ibu-cell"
+        style={{
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: IBU_CELL_BG,
+          padding: "14px 12px",
+          margin: "-14px -12px",
+        }}
+        title="Estimated IBU contribution from this addition"
+      >
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 18,
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: "-0.01em",
+            color: ibuContribution > 0.05 ? hsTokens.ink : hsTokens.muted,
+            lineHeight: 1,
+          }}
+        >
+          {ibuContribution > 0.05 ? ibuContribution.toFixed(1) : "—"}
+        </span>
+      </div>
+      <button
+        type="button"
+        className="hs-hops-remove-btn"
+        onClick={onRemove}
+        aria-label={`Remove ${hop.name} (${USAGE_LABEL[hop.type]})`}
+        style={{
+          width: 28,
+          height: 28,
+          padding: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          color: hsTokens.roast,
+          border: "none",
+          borderRadius: 6,
+          cursor: "pointer",
+        }}
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+/** Subtotal row closing a variety card's additions table. */
+function VarietyTotalRow({ group }: { group: HopGroup }) {
+  return (
+    <div
+      className="hs-hops-ledger-row hs-hops-variety-total"
+      style={{
+        display: "grid",
+        gridTemplateColumns: VARIETY_COLS,
+        padding: "12px 14px",
+        background: "color-mix(in srgb, var(--hs-cream-2) 96%, var(--hs-hops))",
+        borderTop: `2px solid ${hsTokens.ink}`,
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 15,
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+        }}
+      >
+        Subtotal
+      </span>
+      <span />
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
+          <span
+            style={{
+              fontFamily: hsTokens.display,
+              fontSize: 18,
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.01em",
+              color: hsTokens.ink,
+            }}
+          >
+            {group.totalGrams.toFixed(0)}
+          </span>
+          <span
+            style={{
+              fontFamily: hsTokens.mono,
+              fontSize: 11,
+              color: hsTokens.muted,
+            }}
+          >
+            g
+          </span>
+        </span>
+      </div>
+      <div
+        className="hs-hops-ibu-cell"
+        style={{
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background:
+            "color-mix(in srgb, color-mix(in srgb, var(--hs-ink) 9%, var(--hs-cream-2)) 96%, var(--hs-hops))",
+          padding: "12px",
+          margin: "-12px",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: 18,
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: "-0.01em",
+            color: hsTokens.ink,
+          }}
+        >
+          {group.totalIbu.toFixed(0)}
+        </span>
+      </div>
+      <span />
+    </div>
+  );
+}
+
+function SubStat({ value, unit }: { value: string; unit: string }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 3 }}>
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 15,
+          fontVariantNumeric: "tabular-nums",
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </span>
+      <span
+        style={{ fontFamily: hsTokens.mono, fontSize: 10, color: hsTokens.muted }}
+      >
+        {unit}
+      </span>
+    </span>
   );
 }
 
@@ -799,8 +1968,8 @@ function LedgerHead() {
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "10px 14px 10px 18px",
-        // Section-tinted ledger head: ~7% hops-green mixed into cream so each
-        // section's main table band feels distinct while staying in harmony.
+        // Section-tinted column header — hops green, like every other builder
+        // section tints its own furniture with its single section color.
         background: "color-mix(in srgb, var(--hs-cream) 96%, var(--hs-hops))",
         borderBottom: `2px solid ${hsTokens.ink}`,
         alignItems: "center",
@@ -866,6 +2035,7 @@ function LedgerRow({
   hop,
   ibuContribution,
   isLast,
+  draggable,
   onGramsChange,
   onTimeMinutesChange,
   onTemperatureChange,
@@ -882,6 +2052,7 @@ function LedgerRow({
   hop: Hop;
   ibuContribution: number;
   isLast: boolean;
+  draggable: boolean;
   onGramsChange: (v: number) => void;
   onTimeMinutesChange: (v: number) => void;
   onTemperatureChange: (v: number) => void;
@@ -898,9 +2069,18 @@ function LedgerRow({
   const purpose = purposeOf(hop.alphaAcid);
   const hopFlavor =
     hop.flavor ?? hopEnrichmentService.getFlavorByName(hop.name) ?? null;
+  // Whole row is the drag activator (a row dragged onto another section
+  // retimes). Mouse/touch sensors only start a drag after travel/press-hold,
+  // so the inner inputs and buttons still take clicks.
+  const { setNodeRef, listeners, isDragging } = useDraggable({
+    id: hop.id,
+    disabled: !draggable,
+  });
   return (
     <div
+      ref={setNodeRef}
       className="hs-hops-ledger-row hs-hops-data-row"
+      {...(draggable ? listeners : {})}
       style={{
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
@@ -908,15 +2088,14 @@ function LedgerRow({
         borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
         alignItems: "center",
         gap: 12,
+        cursor: draggable ? "grab" : undefined,
+        opacity: isDragging ? 0.4 : 1,
       }}
     >
       {/* Per-hop mini flavor radar — replaces the colored use-badge.
           Hover triggers a cursor-follow preview that mirrors the modal
           preset preview (large radar + name header). */}
-      <div
-        className="hs-hops-radar-cell"
-        style={{ display: "flex", justifyContent: "center" }}
-      >
+      <div className="hs-hops-radar-cell">
         <RowMiniRadar
           flavor={hopFlavor}
           hopName={hop.name}
@@ -1023,6 +2202,7 @@ function LedgerRow({
           suffix="g"
           ariaLabel="Hop weight in grams"
           onCommit={onGramsChange}
+          colKey="weight"
         />
       </div>
 
@@ -1098,14 +2278,100 @@ function LedgerRow({
   );
 }
 
+/** Grand total — clean like the fermentables grain total (a top rule, no
+ *  tinted band) but laid out on the ledger grid so its weight + IBU line up
+ *  under those columns. Carries the total-row class so it collapses to a tidy
+ *  3-cell row on mobile. */
+function GrandHopTotal({
+  entries,
+  totalGrams,
+  totalIbu,
+}: {
+  entries: number;
+  totalGrams: number;
+  totalIbu: number;
+}) {
+  const stat = (value: string, unit: string) => (
+    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 20,
+          fontVariantNumeric: "tabular-nums",
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+        }}
+      >
+        {value}
+      </span>
+      <span
+        style={{ fontFamily: hsTokens.mono, fontSize: 11, color: hsTokens.muted }}
+      >
+        {unit}
+      </span>
+    </span>
+  );
+  return (
+    <div
+      className="hs-hops-ledger-row hs-hops-total-row"
+      style={{
+        // Match the card rows' inner inset (2px border + 18/14 padding) so the
+        // columns line up across the section.
+        display: "grid",
+        gridTemplateColumns: LEDGER_COLS,
+        padding: "16px 16px 16px 20px",
+        borderTop: `2px solid ${hsTokens.ink}`,
+        background: "transparent",
+        alignItems: "baseline",
+        gap: 12,
+      }}
+    >
+      <span />
+      <span
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 18,
+          letterSpacing: "-0.01em",
+          color: hsTokens.ink,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Total hops
+        <span
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 12,
+            fontWeight: 400,
+            color: hsTokens.muted,
+            marginLeft: 8,
+          }}
+        >
+          {entries} addition{entries === 1 ? "" : "s"}
+        </span>
+      </span>
+      <span />
+      <span />
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        {stat(totalGrams.toFixed(0), "g")}
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        {stat(totalIbu.toFixed(0), "IBU")}
+      </div>
+      <span />
+    </div>
+  );
+}
+
 function LedgerTotal({
   totalGrams,
   totalIbu,
   entries,
+  label = "Total hops",
 }: {
   totalGrams: number;
   totalIbu: number;
   entries: number;
+  label?: string;
 }) {
   return (
     <div
@@ -1139,7 +2405,7 @@ function LedgerTotal({
           color: hsTokens.ink,
         }}
       >
-        Total hops
+        {label}
       </span>
       <span />
       <span />
@@ -1605,6 +2871,7 @@ function TimingCell({
         suffix="min"
         ariaLabel="Boil time in minutes"
         onCommit={onTimeMinutesChange}
+        colKey="time"
       />
     );
   }
@@ -1614,7 +2881,7 @@ function TimingCell({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 0,
+          gap: 5,
           alignItems: "flex-start",
         }}
       >
@@ -1628,6 +2895,7 @@ function TimingCell({
           ariaLabel="Whirlpool time in minutes"
           onCommit={onWhirlpoolTimeChange}
           compact
+          colKey="time"
         />
         <EditableCell
           value={hop.temperatureC ?? 80}
@@ -1641,6 +2909,7 @@ function TimingCell({
           onCommit={onTemperatureChange}
           compact
           muted
+          colKey="time"
         />
       </div>
     );
@@ -1651,7 +2920,7 @@ function TimingCell({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 0,
+          gap: 5,
           alignItems: "flex-start",
         }}
       >
@@ -1665,6 +2934,7 @@ function TimingCell({
           ariaLabel="Dry hop duration in days"
           onCommit={onDryHopDaysChange}
           compact
+          colKey="time"
         />
         <EditableCell
           value={hop.dryHopStartDay ?? 0}
@@ -1677,6 +2947,7 @@ function TimingCell({
           onCommit={onDryHopStartDayChange}
           compact
           muted
+          colKey="time"
         />
       </div>
     );
@@ -1790,6 +3061,7 @@ function EditableCell({
   precision,
   compact,
   muted,
+  colKey,
 }: {
   value: number;
   onCommit: (v: number) => void;
@@ -1802,14 +3074,19 @@ function EditableCell({
   precision?: number;
   compact?: boolean;
   muted?: boolean;
+  /** Column id (e.g. "weight" / "time") used to equalize input widths across
+   *  the section — see equalizeInputWidths. */
+  colKey?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const [hovered, setHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const valueFontSize = compact ? (muted ? 18 : 22) : 30;
-  const editFontSize = compact ? 22 : 28;
+  // Script numerals stay (the hops section's handwritten character) but live
+  // in a defined box now — trimmed a touch so the boxed cell isn't oversized.
+  const valueFontSize = compact ? (muted ? 17 : 20) : 25;
+  const editFontSize = compact ? 19 : 23;
 
   const enterEdit = () => {
     setDraft(String(value));
@@ -1846,102 +3123,105 @@ function EditableCell({
     }
   }, [editing]);
 
-  if (editing) {
-    return (
-      <input
-        ref={inputRef}
-        type="number"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") commit();
-          else if (e.key === "Escape") cancel();
-        }}
-        step={step}
-        min={min}
-        max={max}
-        aria-label={ariaLabel}
-        style={{
-          width: "100%",
-          background: hsTokens.cream,
-          border: `1.5px solid ${hsTokens.hops}`,
-          outline: "none",
-          fontFamily: hsTokens.script,
-          fontWeight: 500,
-          fontSize: editFontSize,
-          color: hsTokens.ink,
-          fontVariantNumeric: "tabular-nums",
-          textAlign: "left",
-          padding: "2px 8px",
-          margin: 0,
-          appearance: "textfield",
-          borderRadius: 6,
-        }}
-      />
-    );
-  }
-
   return (
-    // Presentational wrapper for hover-stepper visibility. The interactive
-    // children (edit button + stepper buttons) handle all keyboard/touch input.
+    // Wrapper persists across edit/rest so its measured (equalized) width
+    // carries over; `data-hop-input` lets equalizeInputWidths size every input
+    // in a column to the widest one in the section.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
+      data-hop-input={colKey}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{ position: "relative", display: "inline-flex" }}
     >
-      <button
-        type="button"
-        onClick={enterEdit}
-        aria-label={`Edit ${format(value)}${suffix ?? ""}`}
-        className="hs-hops-edit-btn"
-        style={{
-          background: "transparent",
-          border: "none",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
-          padding: "2px 30px 2px 6px",
-          margin: 0,
-          cursor: "text",
-          display: "inline-flex",
-          alignItems: "baseline",
-          gap: 5,
-          color: "inherit",
-          fontFamily: "inherit",
-          borderRadius: 0,
-          transition: "background 90ms ease, border-bottom-style 90ms ease",
-        }}
-      >
-        <span
+      {editing ? (
+        <input
+          ref={inputRef}
+          type="number"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            else if (e.key === "Escape") cancel();
+          }}
+          step={step}
+          min={min}
+          max={max}
+          aria-label={ariaLabel}
           style={{
+            width: "100%",
+            background: hsTokens.cream,
+            border: `1.5px solid ${hsTokens.hops}`,
+            outline: "none",
             fontFamily: hsTokens.script,
             fontWeight: 500,
-            fontSize: valueFontSize,
-            lineHeight: 1.05,
-            color: muted ? hsTokens.muted : hsTokens.ink,
-            opacity: muted ? 0.92 : 1,
+            fontSize: editFontSize,
+            color: hsTokens.ink,
+            fontVariantNumeric: "tabular-nums",
+            textAlign: "left",
+            padding: "4px 9px",
+            margin: 0,
+            appearance: "textfield",
+            borderRadius: 7,
           }}
-        >
-          {format(value)}
-        </span>
-        {suffix ? (
-          <span
+        />
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={enterEdit}
+            aria-label={`Edit ${format(value)}${suffix ?? ""}`}
+            className="hs-hops-edit-btn"
             style={{
-              fontFamily: hsTokens.mono,
-              fontSize: compact ? 10 : 11,
-              color: hsTokens.muted,
+              background: hsTokens.paper,
+              border: `1.5px solid ${hsTokens.ink}`,
+              padding: "3px 25px 3px 10px",
+              margin: 0,
+              cursor: "text",
+              width: "100%",
+              display: "inline-flex",
+              alignItems: "baseline",
+              gap: 5,
+              color: "inherit",
+              fontFamily: "inherit",
+              borderRadius: 7,
+              boxShadow: hsTokens.sh1,
+              transition: "background 90ms ease, box-shadow 90ms ease",
             }}
           >
-            {suffix}
-          </span>
-        ) : null}
-      </button>
-      <HoverSteppers
-        visible={hovered}
-        compact={compact}
-        onUp={() => nudge(1)}
-        onDown={() => nudge(-1)}
-      />
+            <span
+              style={{
+                fontFamily: hsTokens.script,
+                fontWeight: 500,
+                fontSize: valueFontSize,
+                lineHeight: 1.05,
+                color: muted ? hsTokens.muted : hsTokens.ink,
+                opacity: muted ? 0.92 : 1,
+              }}
+            >
+              {format(value)}
+            </span>
+            {suffix ? (
+              <span
+                style={{
+                  fontFamily: hsTokens.mono,
+                  fontSize: compact ? 10 : 11,
+                  color: hsTokens.muted,
+                }}
+              >
+                {suffix}
+              </span>
+            ) : null}
+          </button>
+          <HoverSteppers
+            visible={hovered}
+            compact={compact}
+            onUp={() => nudge(1)}
+            onDown={() => nudge(-1)}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -3168,6 +4448,19 @@ function HopSectionStyles() {
       .hs-hops-section .hs-hops-grid-lhead { min-width: 0; }
       .hs-hops-section .hs-hops-grid-ltable { min-width: 0; }
 
+      /* Rows are plain paper — the green lives in the header/footer bands, not
+         the table body. */
+      .hs-hops-section .hs-hops-data-row,
+      .hs-hops-section .hs-hops-variety-row {
+        background: var(--hs-paper);
+      }
+
+      .hs-hops-section .hs-hops-radar-cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       @media (max-width: 900px) {
         .hs-hops-section .hs-hops-grid {
           row-gap: 12px;
@@ -3177,21 +4470,22 @@ function HopSectionStyles() {
       /* Desktop hover — subtle cream-2 tint across the ledger row, plus
          fades in the ghost × remove button. */
       @media (min-width: 641px) and (hover: hover) {
-        .hs-hops-section .hs-hops-data-row {
+        .hs-hops-section .hs-hops-data-row,
+        .hs-hops-section .hs-hops-variety-row {
           transition: background 90ms ease;
         }
-        .hs-hops-section .hs-hops-data-row:hover {
-          /* Section-tinted hover: ~2% hops mixed into a paper/cream-2 base.
-             Lighter overall than a pure cream-2 hover so the hover lifts
-             rather than darkens, while still tagging the row with the
-             section accent. */
-          background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-hops));
+        .hs-hops-section .hs-hops-data-row:hover,
+        .hs-hops-section .hs-hops-variety-row:hover {
+          /* Faint hops wash on hover so the active row reads against the plain
+             paper rows. */
+          background: color-mix(in srgb, var(--hs-paper) 93%, var(--hs-hops));
         }
         .hs-hops-section .hs-hops-remove-btn {
           opacity: 0.32;
           transition: opacity 90ms ease, background 90ms ease;
         }
-        .hs-hops-section .hs-hops-data-row:hover .hs-hops-remove-btn {
+        .hs-hops-section .hs-hops-data-row:hover .hs-hops-remove-btn,
+        .hs-hops-section .hs-hops-variety-row:hover .hs-hops-remove-btn {
           opacity: 1;
         }
         .hs-hops-section .hs-hops-remove-btn:hover {
@@ -3204,7 +4498,22 @@ function HopSectionStyles() {
         }
         .hs-hops-section .hs-hops-edit-btn:hover {
           background: ${hsTokens.cream2};
-          border-bottom-style: solid !important;
+        }
+      }
+
+      /* Variety cards stack the left rail above the additions table once the
+         side-by-side row gets tight. */
+      @media (max-width: 768px) {
+        .hs-hops-section .hs-hops-variety-layout {
+          flex-direction: column;
+        }
+        .hs-hops-section .hs-hops-variety-aside {
+          width: auto !important;
+          border-right: none !important;
+          border-bottom: 2px solid ${hsTokens.ink};
+        }
+        .hs-hops-section .hs-hops-variety-aside svg {
+          max-width: 150px;
         }
       }
 
@@ -3340,6 +4649,60 @@ function HopSectionStyles() {
         }
         .hs-hops-ledger-head {
           flex-wrap: wrap;
+        }
+
+        /* Variety row reflow: use+remove / time / weight+IBU, mirroring the
+           use-time data-row stack. */
+        .hs-hops-section .hs-hops-variety-row {
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          grid-template-areas:
+            "usecell  remove"
+            "timecell timecell"
+            "weight   ibucell" !important;
+          column-gap: 12px !important;
+          row-gap: 10px !important;
+          padding: 16px 0 !important;
+          border-bottom: 1px solid ${hsTokens.ink} !important;
+        }
+        .hs-hops-section .hs-hops-variety-row:last-of-type {
+          border-bottom: none !important;
+        }
+        .hs-hops-section .hs-hops-variety-row > :nth-child(1) {
+          grid-area: usecell;
+          justify-content: flex-start !important;
+        }
+        .hs-hops-section .hs-hops-variety-row > :nth-child(2) {
+          grid-area: timecell;
+          justify-content: flex-start !important;
+        }
+        .hs-hops-section .hs-hops-variety-row > :nth-child(3) {
+          grid-area: weight;
+          justify-content: flex-start !important;
+        }
+        .hs-hops-section .hs-hops-variety-row > :nth-child(4) {
+          grid-area: ibucell;
+          margin: 0 !important;
+          padding: 8px 14px !important;
+          border-radius: 8px;
+        }
+        .hs-hops-section .hs-hops-variety-row > :nth-child(5) {
+          grid-area: remove;
+          justify-self: end;
+        }
+        /* Variety subtotal collapses to "Subtotal · Σg · ΣIBU". */
+        .hs-hops-section .hs-hops-variety-total {
+          grid-template-columns: 1fr auto auto !important;
+          column-gap: 14px !important;
+          padding: 14px 0 !important;
+        }
+        .hs-hops-section .hs-hops-variety-total > :nth-child(2),
+        .hs-hops-section .hs-hops-variety-total > :nth-child(5) {
+          display: none !important;
+        }
+        .hs-hops-section .hs-hops-variety-total > :nth-child(4) {
+          margin: 0 !important;
+          padding: 6px 12px !important;
+          border-radius: 8px;
         }
       }
     `}</style>

@@ -424,7 +424,7 @@ function LedgerHeaderRow({
 
 // ─── Ledger ──────────────────────────────────────────────────────
 
-const LEDGER_COLS = "44px minmax(0, 1.5fr) 116px 116px 70px";
+const LEDGER_COLS = "44px minmax(0, 1.5fr) 132px 132px 70px";
 
 function Ledger({
   derived,
@@ -509,12 +509,12 @@ function LedgerHead() {
     >
       <span style={{ ...cellStyle, textAlign: "center" }}>#</span>
       <span style={cellStyle}>Step</span>
-      {/* Centered above the (also-centered) value cells below. The 28px
-          right offset compensates for the EditableCell button's right
-          stepper padding so the header centers over the visible glyphs,
-          not the button bbox. */}
-      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 28 }}>Temp</span>
-      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 28 }}>Time</span>
+      {/* Centered above the (also-centered) value chips below. The
+          32px right offset compensates for the chip's right stepper
+          padding so the header centers over the visible glyphs, not
+          the button bbox. */}
+      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 32 }}>Temp</span>
+      <span style={{ ...cellStyle, textAlign: "center", paddingRight: 32 }}>Time</span>
       <span style={{ ...cellStyle, textAlign: "right" }}>—</span>
     </div>
   );
@@ -547,6 +547,7 @@ function LedgerRow({
   onTimeNudge: (dir: 1 | -1) => void;
   onMove: (dir: -1 | 1) => void;
 }) {
+  const dark = d.step.temperatureC >= 72;
   return (
     <div
       className="hs-mash-ledger-row hs-mash-data-row"
@@ -559,19 +560,13 @@ function LedgerRow({
         gap: 14,
       }}
     >
-      {/* Step badge (# + color swatch) */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
-      >
+      {/* Step badge (# + temperature swatch) */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span
           aria-hidden
           style={{
-            width: 28,
-            height: 28,
+            width: 30,
+            height: 30,
             borderRadius: 999,
             background: d.color,
             border: `2px solid ${hsTokens.ink}`,
@@ -580,8 +575,8 @@ function LedgerRow({
             alignItems: "center",
             justifyContent: "center",
             fontFamily: hsTokens.display,
-            fontSize: 13,
-            color: d.step.temperatureC >= 72 ? hsTokens.cream : hsTokens.ink,
+            fontSize: 14,
+            color: dark ? hsTokens.cream : hsTokens.ink,
             lineHeight: 1,
           }}
         >
@@ -589,7 +584,7 @@ function LedgerRow({
         </span>
       </div>
 
-      {/* Step name (click to edit) + band caption */}
+      {/* Step name (click → edit) + band caption */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <button
           type="button"
@@ -631,7 +626,7 @@ function LedgerRow({
             fontFamily: hsTokens.script,
             fontSize: 14,
             color: hsTokens.muted,
-            lineHeight: 1,
+            lineHeight: 1.15,
           }}
         >
           {d.band}
@@ -641,8 +636,8 @@ function LedgerRow({
         </span>
       </div>
 
-      {/* Temp (editable) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Temperature chip */}
+      <div className="hs-mash-edit-cell" style={{ display: "flex", justifyContent: "center" }}>
         <EditableCell
           value={d.step.temperatureC}
           step={0.5}
@@ -656,8 +651,8 @@ function LedgerRow({
         />
       </div>
 
-      {/* Time (editable) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Duration chip */}
+      <div className="hs-mash-edit-cell" style={{ display: "flex", justifyContent: "center" }}>
         <EditableCell
           value={d.step.durationMinutes}
           step={5}
@@ -799,7 +794,7 @@ function LedgerTotal({ derived }: { derived: StepDerived[] }) {
   );
 }
 
-// ─── Editable cell ────────────────────────────────────────────────
+// ─── Editable chip — paper bg, script numerals, roast-bordered input ─
 
 function EditableCell({
   value,
@@ -873,20 +868,20 @@ function EditableCell({
         max={max}
         aria-label={ariaLabel}
         style={{
-          width: "100%",
+          width: 96,
           background: hsTokens.cream,
           border: `1.5px solid ${hsTokens.roast}`,
           outline: "none",
           fontFamily: hsTokens.script,
           fontWeight: 500,
-          fontSize: 28,
+          fontSize: 23,
           color: hsTokens.ink,
           fontVariantNumeric: "tabular-nums",
-          textAlign: "right",
-          padding: "2px 8px",
+          textAlign: "left",
+          padding: "4px 9px",
           margin: 0,
           appearance: "textfield",
-          borderRadius: 6,
+          borderRadius: 7,
         }}
       />
     );
@@ -902,13 +897,12 @@ function EditableCell({
       <button
         type="button"
         onClick={enterEdit}
-        aria-label={`Edit ${format(value)} ${suffix ?? ""}`}
+        aria-label={`Edit ${format(value)}${suffix ?? ""}`}
         className="hs-mash-edit-btn"
         style={{
-          background: "transparent",
-          border: "none",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
-          padding: "2px 28px 2px 6px",
+          background: hsTokens.paper,
+          border: `1.5px solid ${hsTokens.ink}`,
+          padding: "3px 32px 3px 11px",
           margin: 0,
           cursor: "text",
           display: "inline-flex",
@@ -916,16 +910,17 @@ function EditableCell({
           gap: 5,
           color: "inherit",
           fontFamily: "inherit",
-          borderRadius: 0,
-          transition: "background 90ms ease, border-bottom-style 90ms ease",
+          borderRadius: 7,
+          boxShadow: hsTokens.sh1,
+          transition: "background 90ms ease, box-shadow 90ms ease",
         }}
       >
         <span
           style={{
             fontFamily: hsTokens.script,
             fontWeight: 500,
-            fontSize: 28,
-            lineHeight: 1,
+            fontSize: 25,
+            lineHeight: 1.05,
             color: hsTokens.ink,
           }}
         >
@@ -1316,11 +1311,6 @@ function MobileAddRow({ onAdd }: { onAdd: () => void }) {
 function MashSectionStyles() {
   return (
     <style>{`
-      /* Desktop: 2-col grid. Header on top-left, ledger in row 2 with
-         sidebar (profile + readout packed via flex). */
-      /* Single-column layout — the aside (readout + notes) has been
-         hoisted to the parent HopSkipBuilder grid so it can morph
-         between tabs. */
       .hs-mash-section .hs-mash-grid {
         display: flex;
         flex-direction: column;
@@ -1329,21 +1319,18 @@ function MashSectionStyles() {
       }
       .hs-mash-section .hs-mash-grid-lhead { min-width: 0; }
       .hs-mash-section .hs-mash-grid-ltable { min-width: 0; }
+      .hs-mash-section .hs-mash-list-wrap { min-width: 0; }
 
       @media (max-width: 900px) {
-        .hs-mash-section .hs-mash-grid {
-          row-gap: 12px;
-        }
+        .hs-mash-section .hs-mash-grid { row-gap: 12px; }
       }
 
-      /* Desktop hover — subtle row tint + edit-btn underline solid. */
+      /* Desktop hover — subtle row tint (Hop-style ledger), not card lift. */
       @media (min-width: 641px) and (hover: hover) {
         .hs-mash-section .hs-mash-data-row {
           transition: background 90ms ease;
         }
         .hs-mash-section .hs-mash-data-row:hover {
-          /* Section-tinted hover: ~2% roast mixed into a paper/cream-2 base —
-             lighter overall than pure cream-2 so the hover lifts. */
           background: color-mix(in srgb, color-mix(in srgb, var(--hs-paper) 20%, var(--hs-cream-2)) 98%, var(--hs-roast));
         }
         .hs-mash-section .hs-mash-name-btn:hover .hs-mash-name {
@@ -1353,7 +1340,6 @@ function MashSectionStyles() {
         }
         .hs-mash-section .hs-mash-edit-btn:hover {
           background: ${hsTokens.cream2};
-          border-bottom-style: solid !important;
         }
         .hs-mash-section .hs-mash-gen-card:hover {
           transform: translate(-1px, -1px);
@@ -1361,12 +1347,10 @@ function MashSectionStyles() {
         }
       }
 
-      /* Mobile (≤640px) — collapse ledger to stacked cards, always-on
-         steppers, always-on move/remove buttons. */
+      /* Mobile (≤640px) — collapse ledger to stacked rows, always-on
+         steppers and move/remove buttons. */
       @media (max-width: 640px) {
-        .hs-mash-section .hs-mash-mobile-add {
-          display: flex !important;
-        }
+        .hs-mash-section .hs-mash-mobile-add { display: flex !important; }
 
         .hs-mash-section .hs-mash-steppers {
           opacity: 1 !important;
@@ -1405,9 +1389,8 @@ function MashSectionStyles() {
           display: grid !important;
           grid-template-columns: 44px minmax(0, 1fr) auto !important;
           grid-template-areas:
-            "badge name  actions"
-            "badge band  band"
-            "temp  temp  time" !important;
+            "badge name actions"
+            "temp  temp time" !important;
           column-gap: 12px !important;
           row-gap: 8px !important;
           padding: 16px 0 !important;
@@ -1438,12 +1421,6 @@ function MashSectionStyles() {
           grid-area: actions;
           justify-self: end;
         }
-        .hs-mash-section .hs-mash-edit-btn {
-          padding: 4px 36px 4px 8px !important;
-        }
-        .hs-mash-section .hs-mash-edit-btn > span:first-child {
-          font-size: 32px !important;
-        }
         .hs-mash-section .hs-mash-total-row {
           display: flex !important;
           justify-content: space-between !important;
@@ -1460,12 +1437,8 @@ function MashSectionStyles() {
         .hs-mash-section .hs-mash-total-row > :nth-child(5) {
           display: none !important;
         }
-        .hs-mash-section {
-          padding: 18px 14px !important;
-        }
-        .hs-mash-section .hs-mash-ledger-head {
-          flex-wrap: wrap;
-        }
+        .hs-mash-section { padding: 18px 14px !important; }
+        .hs-mash-section .hs-mash-ledger-head { flex-wrap: wrap; }
       }
     `}</style>
   );
