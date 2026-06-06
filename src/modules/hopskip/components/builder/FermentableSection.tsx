@@ -644,6 +644,15 @@ function BillStack({
             const showName = isHovered || r.pct >= 30;
             const bigFont = isHovered || r.pct >= 30;
             const targetWidth = `${displayPcts[i]}%`;
+            // Divider rule: ink 1.5px by default; switch to a thin (1px)
+            // light cream stroke ONLY when this slice AND the next are both
+            // dark — ink-on-dark blends a chocolate / black-malt stack into
+            // one indistinct blob. Light-and-light or mixed pairs keep ink.
+            const nextRow = rows[i + 1];
+            const bothDark = dark && Boolean(nextRow && nextRow.f.colorLovibond > 25);
+            const dividerStroke = bothDark
+              ? `1px solid color-mix(in oklch, ${hsTokens.paper} 88%, ${hsTokens.ink})`
+              : `1.5px solid ${hsTokens.ink}`;
             // Framer-motion interpolates "rgb(r,g,b)" values natively, so
             // swapping a grain (e.g. Pale → Crystal) tweens its segment
             // color over the same duration as the width shift. Width
@@ -686,8 +695,7 @@ function BillStack({
                 // of motion, lower energy.
                 transition={springSoft}
                 style={{
-                  borderRight:
-                    i < rows.length - 1 ? `2px solid ${hsTokens.ink}` : "none",
+                  borderRight: i < rows.length - 1 ? dividerStroke : "none",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",

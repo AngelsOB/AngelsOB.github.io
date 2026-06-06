@@ -3,6 +3,24 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 import { hsTokens } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
@@ -143,12 +161,6 @@ export default function MashSection() {
     }
   };
 
-  const moveStep = (index: number, dir: -1 | 1) => {
-    const target = index + dir;
-    if (target < 0 || target >= mashSteps.length) return;
-    reorderMashSteps(index, target);
-  };
-
   if (!currentRecipe) return null;
 
   return (
@@ -182,7 +194,7 @@ export default function MashSection() {
               onTimeChange={(id, v) => updateMashStep(id, { durationMinutes: v })}
               onTempNudge={(id, step, dir) => handleNudge(id, step, dir, "temp")}
               onTimeNudge={(id, step, dir) => handleNudge(id, step, dir, "time")}
-              onMove={moveStep}
+              onReorder={reorderMashSteps}
               onAdd={handleOpenAdd}
             />
           </div>
@@ -371,6 +383,9 @@ function LedgerHeaderRow({
       }}
     >
       <Eyebrow size={11}>The mash schedule</Eyebrow>
+      <HSScriptNote color={hsTokens.muted} size={15} rotate={-3}>
+        drag to reorder
+      </HSScriptNote>
       <span
         aria-hidden
         style={{
@@ -424,7 +439,7 @@ function LedgerHeaderRow({
 
 // ─── Ledger ──────────────────────────────────────────────────────
 
-const LEDGER_COLS = "44px minmax(0, 1.5fr) 132px 132px 70px";
+const LEDGER_COLS = "44px minmax(0, 1.5fr) 132px 132px 40px";
 
 function Ledger({
   derived,
@@ -434,7 +449,7 @@ function Ledger({
   onTimeChange,
   onTempNudge,
   onTimeNudge,
-  onMove,
+  onReorder,
   onAdd,
 }: {
   derived: StepDerived[];
@@ -444,9 +459,31 @@ function Ledger({
   onTimeChange: (id: string, v: number) => void;
   onTempNudge: (id: string, step: MashStep, dir: 1 | -1) => void;
   onTimeNudge: (id: string, step: MashStep, dir: 1 | -1) => void;
-  onMove: (index: number, dir: -1 | 1) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
   onAdd: () => void;
 }) {
+  const ids = derived.map((d) => d.step.id);
+
+  // Whole row is the drag surface (no handle). Mouse: require 8px of travel
+  // before drag starts so clicking the name / value / × still registers as
+  // a click. Touch: 180ms press-and-hold so finger swipes scroll the page
+  // and only a deliberate hold begins a drag. Keyboard sensor for a11y.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 180, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = ids.indexOf(String(active.id));
+    const newIndex = ids.indexOf(String(over.id));
+    if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
+  };
+
   return (
     <div
       className="hs-mash-ledger"
@@ -459,23 +496,29 @@ function Ledger({
       }}
     >
       <LedgerHead />
-      {derived.map((d, i) => (
-        <LedgerRow
-          key={d.step.id}
-          d={d}
-          index={i}
-          isLast={i === derived.length - 1}
-          isFirst={i === 0}
-          isOnlyOne={derived.length === 1}
-          onEdit={() => onEditStep(d.step)}
-          onRemove={() => onRemoveStep(d.step.id)}
-          onTempChange={(v) => onTempChange(d.step.id, v)}
-          onTimeChange={(v) => onTimeChange(d.step.id, v)}
-          onTempNudge={(dir) => onTempNudge(d.step.id, d.step, dir)}
-          onTimeNudge={(dir) => onTimeNudge(d.step.id, d.step, dir)}
-          onMove={(dir) => onMove(i, dir)}
-        />
-      ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          {derived.map((d, i) => (
+            <LedgerRow
+              key={d.step.id}
+              d={d}
+              index={i}
+              isLast={i === derived.length - 1}
+              isOnlyOne={derived.length === 1}
+              onEdit={() => onEditStep(d.step)}
+              onRemove={() => onRemoveStep(d.step.id)}
+              onTempChange={(v) => onTempChange(d.step.id, v)}
+              onTimeChange={(v) => onTimeChange(d.step.id, v)}
+              onTempNudge={(dir) => onTempNudge(d.step.id, d.step, dir)}
+              onTimeNudge={(dir) => onTimeNudge(d.step.id, d.step, dir)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
       <LedgerTotal derived={derived} />
       <MobileAddRow onAdd={onAdd} />
     </div>
@@ -524,7 +567,6 @@ function LedgerRow({
   d,
   index,
   isLast,
-  isFirst,
   isOnlyOne,
   onEdit,
   onRemove,
@@ -532,12 +574,10 @@ function LedgerRow({
   onTimeChange,
   onTempNudge,
   onTimeNudge,
-  onMove,
 }: {
   d: StepDerived;
   index: number;
   isLast: boolean;
-  isFirst: boolean;
   isOnlyOne: boolean;
   onEdit: () => void;
   onRemove: () => void;
@@ -545,11 +585,19 @@ function LedgerRow({
   onTimeChange: (v: number) => void;
   onTempNudge: (dir: 1 | -1) => void;
   onTimeNudge: (dir: 1 | -1) => void;
-  onMove: (dir: -1 | 1) => void;
 }) {
   const dark = d.step.temperatureC >= 72;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: d.step.id });
   return (
     <div
+      ref={setNodeRef}
       className="hs-mash-ledger-row hs-mash-data-row"
       style={{
         display: "grid",
@@ -558,7 +606,17 @@ function LedgerRow({
         borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
         alignItems: "center",
         gap: 14,
+        transform: CSS.Transform.toString(transform),
+        transition,
+        position: "relative",
+        zIndex: isDragging ? 5 : undefined,
+        opacity: isDragging ? 0.92 : 1,
+        background: isDragging ? hsTokens.paper : undefined,
+        boxShadow: isDragging ? hsTokens.sh3 : undefined,
+        cursor: isDragging ? "grabbing" : "grab",
       }}
+      {...attributes}
+      {...listeners}
     >
       {/* Step badge (# + temperature swatch) */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -666,53 +724,14 @@ function LedgerRow({
         />
       </div>
 
-      {/* Actions: move ↑ ↓ + remove ×. Disabled when only one step. */}
+      {/* Remove × (the whole row is the drag surface — no move chevrons). */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 2,
         }}
       >
-        <IconBtn
-          ariaLabel={`Move ${d.step.name} up`}
-          onClick={() => onMove(-1)}
-          disabled={isFirst}
-          className="hs-mash-move-btn"
-        >
-          <svg
-            width="10"
-            height="7"
-            viewBox="0 0 10 6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M1 5 5 1 9 5" />
-          </svg>
-        </IconBtn>
-        <IconBtn
-          ariaLabel={`Move ${d.step.name} down`}
-          onClick={() => onMove(1)}
-          disabled={isLast}
-          className="hs-mash-move-btn"
-        >
-          <svg
-            width="10"
-            height="7"
-            viewBox="0 0 10 6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M1 1 5 5 9 1" />
-          </svg>
-        </IconBtn>
         <IconBtn
           ariaLabel={`Remove ${d.step.name}`}
           onClick={onRemove}
@@ -1371,7 +1390,6 @@ function MashSectionStyles() {
           height: 9px !important;
           stroke-width: 2 !important;
         }
-        .hs-mash-section .hs-mash-move-btn,
         .hs-mash-section .hs-mash-remove-btn {
           opacity: 1 !important;
         }

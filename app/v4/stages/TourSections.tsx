@@ -4,12 +4,14 @@ import HSButton from "@/modules/hopskip/components/HSButton";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { CTA, STAGES } from "../data";
 
-// Left-column text blocks for the Phase 0 spike (Hero intro + Hops +
-// Brewsheet). Pure scrolling DOM. The Brewsheet block is the one GSAP
-// hard-pins; HomeV4 targets these via the `data-v4-stage` attribute.
+// Left-column text blocks for the tour. Pure scrolling DOM. HomeV4 targets
+// these via the `data-v4-stage` attribute for the per-beat triggers.
 //
-// Text reveals here are intentionally plain in Phase 0 — SplitText reveals
-// are Phase 4. The point of the spike is the mock choreography + the pin.
+// Headings + body paragraphs are tagged `data-v4-split-reveal` with a mode
+// (`words` for short heads, `lines` for paragraphs). HomeV4's useGSAP picks
+// them up, SplitText-splits each, and plays a single rise-up reveal on
+// scroll-enter. Eyebrows + the hero CTA are NOT split — they're small
+// "labels" that read naturally without a reveal.
 
 const eyebrowStyle: React.CSSProperties = {
   fontFamily: hsTokens.body,
@@ -55,6 +57,8 @@ export function StageIntro() {
     <section style={{ ...sectionStyle(72), justifyContent: "flex-end" }}>
       <p style={eyebrowStyle}>{s.kicker}</p>
       <h1
+        data-v4-split-reveal
+        data-v4-split-mode="words"
         style={{
           fontFamily: hsTokens.display,
           fontSize: "clamp(40px, 6vw, 84px)",
@@ -67,7 +71,13 @@ export function StageIntro() {
         {s.headline.pre}
         <span style={{ color: hsTokens.roast }}>{s.headline.accent}</span>
       </h1>
-      <p style={{ ...bodyStyle, maxWidth: 560 }}>{s.subhead}</p>
+      <p
+        data-v4-split-reveal
+        data-v4-split-mode="lines"
+        style={{ ...bodyStyle, maxWidth: 560 }}
+      >
+        {s.subhead}
+      </p>
       <div
         style={{
           marginTop: 26,
@@ -109,6 +119,8 @@ export function StageOpening() {
       {s.sentences.map((sentence, i) => (
         <p
           key={i}
+          data-v4-split-reveal
+          data-v4-split-mode="lines"
           style={{
             fontFamily: hsTokens.display,
             fontStyle: "italic",
@@ -133,8 +145,12 @@ export function StageGrains() {
   return (
     <section data-v4-stage="grains" style={sectionStyle(96)}>
       <p style={eyebrowStyle}>{s.h2}</p>
-      <h2 style={leadStyle}>{s.lead}</h2>
-      <p style={bodyStyle}>{s.body}</p>
+      <h2 data-v4-split-reveal data-v4-split-mode="words" style={leadStyle}>
+        {s.lead}
+      </h2>
+      <p data-v4-split-reveal data-v4-split-mode="lines" style={bodyStyle}>
+        {s.body}
+      </p>
     </section>
   );
 }
@@ -144,9 +160,16 @@ export function StageHops() {
   return (
     <section data-v4-stage="hops" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
-      <h2 style={leadStyle}>{s.lead}</h2>
+      <h2 data-v4-split-reveal data-v4-split-mode="words" style={leadStyle}>
+        {s.lead}
+      </h2>
       {s.paragraphs.map((p, i) => (
-        <p key={i} style={bodyStyle}>
+        <p
+          key={i}
+          data-v4-split-reveal
+          data-v4-split-mode="lines"
+          style={bodyStyle}
+        >
           {p}
         </p>
       ))}
@@ -159,9 +182,16 @@ export function StageWater() {
   return (
     <section data-v4-stage="water" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
-      <h2 style={leadStyle}>{s.lead}</h2>
+      <h2 data-v4-split-reveal data-v4-split-mode="words" style={leadStyle}>
+        {s.lead}
+      </h2>
       {s.paragraphs.map((p, i) => (
-        <p key={i} style={bodyStyle}>
+        <p
+          key={i}
+          data-v4-split-reveal
+          data-v4-split-mode="lines"
+          style={bodyStyle}
+        >
           {p}
         </p>
       ))}
@@ -174,9 +204,16 @@ export function StageHonestNumbers() {
   return (
     <section data-v4-stage="honest" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
-      <h2 style={leadStyle}>{s.lead}</h2>
+      <h2 data-v4-split-reveal data-v4-split-mode="words" style={leadStyle}>
+        {s.lead}
+      </h2>
       {s.paragraphs.map((p, i) => (
-        <p key={i} style={bodyStyle}>
+        <p
+          key={i}
+          data-v4-split-reveal
+          data-v4-split-mode="lines"
+          style={bodyStyle}
+        >
           {p}
         </p>
       ))}
@@ -189,9 +226,16 @@ export function StageBrewSheet() {
   return (
     <section data-v4-stage="brewsheet" style={sectionStyle(120)}>
       <p style={{ ...eyebrowStyle, color: hsTokens.roast }}>{s.h2}</p>
-      <h2 style={leadStyle}>{s.lead}</h2>
+      <h2 data-v4-split-reveal data-v4-split-mode="words" style={leadStyle}>
+        {s.lead}
+      </h2>
       {s.paragraphs.map((p, i) => (
-        <p key={i} style={bodyStyle}>
+        <p
+          key={i}
+          data-v4-split-reveal
+          data-v4-split-mode="lines"
+          style={bodyStyle}
+        >
           {p}
         </p>
       ))}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
 import type { TabKey } from "./V4Mock";
 import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 
@@ -45,9 +46,30 @@ export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive 
 
 // ─── shared shell ─────────────────────────────────────────────────────────
 
-function SectionBody({ children, gap = 8 }: { children: React.ReactNode; gap?: number }) {
+function SectionBody({
+  children,
+  gap = 8,
+  noBottomPad = false,
+}: {
+  children: React.ReactNode;
+  gap?: number;
+  noBottomPad?: boolean;
+}) {
+  // Default keeps a 10px bottom padding so non-scrolling sections (Mash's pH
+  // gauge, Yeast's starter card, Fermentation's per-step tiles) have a bit
+  // of breathing room above the body's bottom border. Sections with a
+  // scrollable last child (FermentablesSection) opt in to `noBottomPad` so
+  // the last row card extends to the body outline.
   return (
-    <div style={{ height: "100%", padding: 10, display: "flex", flexDirection: "column", gap }}>
+    <div
+      style={{
+        height: "100%",
+        padding: noBottomPad ? "10px 10px 0" : 10,
+        display: "flex",
+        flexDirection: "column",
+        gap,
+      }}
+    >
       {children}
     </div>
   );
@@ -140,7 +162,7 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
   const revealedLb = grainsList.reduce((s, g, i) => s + g.lb * reveal(i), 0);
   const revealedCount = grainsList.filter((_, i) => reveal(i) > 0.5).length;
   return (
-    <SectionBody gap={7}>
+    <SectionBody gap={7} noBottomPad>
       <SectionHead title="Grain." meta={`${revealedCount} in the bill · ${revealedLb.toFixed(1)} lb`} underline={MALT} />
       {/* bill stack — each segment grows in with its grain */}
       <div style={{ height: 11, background: hsTokens.cream2, border: `1.5px solid ${INK}`, borderRadius: 999, overflow: "hidden", display: "flex" }}>
@@ -148,8 +170,25 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
           <div key={`${g.name}-${i}`} style={{ width: `${(g.lb / total) * 100 * reveal(i)}%`, background: srmToRgb(g.srm) }} />
         ))}
       </div>
-      {/* ledger rows — fade + slide in as each grain is added */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1 }}>
+      {/* ledger rows — fade + slide in as each grain is added. Scrollable so
+          recipes with a long grain bill (the signed-in mock case) can scroll
+          to see all rows; the header + bill stack above stay visible.
+          10px of bottom padding INSIDE the scroll container so the last row
+          card has breathing room above the body border at the scroll end —
+          the container itself extends to the outline (noBottomPad on
+          SectionBody) so the scrollbar runs full height. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
+          paddingBottom: 10,
+        }}
+      >
         {grainsList.map((g, i) => {
           const r = reveal(i);
           return (
@@ -428,7 +467,17 @@ function IonBar({ label, value, color, max, tMin, tMax }: { label: string; value
 function YeastSection({ data }: { data?: V4MockData }) {
   const y = data?.yeast ?? null;
   const name = y?.name ?? "WLP001 · California Ale";
-  const sub = y ? `${y.lab} · Liquid` : "White Labs · Liquid · 1 vial = 100 B cells";
+  // Data mode: show just the laboratory (matches the real builder, which
+  // shows `row.yeast.laboratory` as the caption under the strain name —
+  // see hopskip/components/builder/YeastSection.tsx). Don't append a form
+  // ("Liquid" / "Dry") because the recipe's Yeast model doesn't carry it,
+  // so we'd guess wrong for dry strains.
+  const sub = y ? y.lab : "White Labs · Liquid · 1 vial = 100 B cells";
+  // Brand logo for the badge — same source the real builder + brew sheet
+  // use (yeastLabIcons.ts). Tour default falls back to "White Labs" so the
+  // sample shows a real favicon too. Letter fallback for unmapped labs.
+  const labName = y?.lab ?? "White Labs";
+  const favicon = getYeastLabFavicon(labName);
   const atten = y ? `${y.attenPct}%` : "79%";
   const temp = y?.tempF ?? "68°F";
   const flocc = y?.flocc ?? "Med";
@@ -441,8 +490,51 @@ function YeastSection({ data }: { data?: V4MockData }) {
       <SectionHead title="Yeast." meta={meta} underline={YEAST} />
       {/* strain card */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: hsTokens.cream, border: `2px solid ${INK}`, borderRadius: 12, boxShadow: "3px 3px 0 var(--hs-ink)" }}>
-        <span aria-hidden style={{ width: 44, height: 44, background: YEAST, border: `2px solid ${INK}`, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: hsTokens.display, fontSize: 19, color: INK, boxShadow: "2px 2px 0 var(--hs-ink)" }}>
-          ✿
+        {/* Lab badge — brand favicon when we have a mapped logo, letter
+            fallback otherwise. Background is cream (like the real builder's
+            LabBadge) so the logo's own colors aren't overridden by YEAST. */}
+        <span
+          aria-hidden
+          style={{
+            width: 44,
+            height: 44,
+            background: hsTokens.cream,
+            border: `2px solid ${INK}`,
+            borderRadius: 12,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 4,
+            boxShadow: "2px 2px 0 var(--hs-ink)",
+            overflow: "hidden",
+          }}
+        >
+          {favicon ? (
+            <img
+              src={favicon}
+              alt={labName}
+              width={28}
+              height={28}
+              style={{
+                width: 28,
+                height: 28,
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+          ) : (
+            <span
+              style={{
+                fontFamily: hsTokens.display,
+                fontSize: 18,
+                color: YEAST,
+                lineHeight: 1,
+              }}
+            >
+              {labName.charAt(0).toUpperCase() || "Y"}
+            </span>
+          )}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: hsTokens.display, fontSize: 18, letterSpacing: "-0.03em", color: INK, lineHeight: 1 }}>{name}</div>

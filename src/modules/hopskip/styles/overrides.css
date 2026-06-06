@@ -1177,6 +1177,14 @@
 .hs-theme .hs-builder-grid[data-tab="water"] .hs-builder-side {
   padding-top: 41px;
 }
+/* Yeast's "THE YEAST STRAIN" header line is the slim StrainBlockHeader
+   (~32px tall — just the eyebrow / labels / +Pick button) followed by
+   the 16px grid row-gap before the strain card. Default 56px offset
+   leaves the helper sitting noticeably below the strain card's top
+   edge, so override to align with it. */
+.hs-theme .hs-builder-grid[data-tab="yeast"] .hs-builder-side {
+  padding-top: 44px;
+}
 
 /* Hide each section's own SectionTitle when rendered inside the builder
    grid — the title is now hoisted to the grid top by BuilderTitleBar so
