@@ -49,8 +49,57 @@ export type HopPreset = {
   notes?: string;
 };
 
+// Biological classification of a yeast strain (distinct from the recipe-level
+// packaging `YeastType` in Recipe.ts, which is liquid-100/dry/slurry/etc.).
+export type YeastStrainType =
+  | "ale"
+  | "lager"
+  | "kveik"
+  | "wheat"
+  | "brett"
+  | "wild"
+  | "bacteria"
+  | "blend"
+  | "wine"
+  | "other";
+
+export type YeastForm = "liquid" | "dry";
+
+// Mirrors BeerJSON FlocculationType.
+export type YeastFlocculation =
+  | "very-low"
+  | "low"
+  | "medium-low"
+  | "medium"
+  | "medium-high"
+  | "high"
+  | "very-high";
+
+// NOTE: keep this in sync with the YeastPreset in src/utils/presets.ts (the data source).
 export type YeastPreset = {
-  name: string;
-  attenuationPercent?: number;
+  name: string; // stable recipe lookup key — never rename (recipes reference yeast by name)
   category: string; // "Escarpment Labs", "Wyeast", "Fermentis", etc.
+  attenuationPercent?: number; // 0-1, the single headline attenuation number
+  // --- BeerJSON-aligned enrichment (all optional, additive for backward-compat) ---
+  type?: YeastStrainType;
+  form?: YeastForm;
+  tempMinC?: number; // recommended fermentation temperature range (°C)
+  tempMaxC?: number;
+  flocculation?: YeastFlocculation;
+  attenuationMin?: number; // 0-1, published attenuation range low
+  attenuationMax?: number; // 0-1, published attenuation range high
+  alcoholTolerance?: number; // approx. max ABV (%) the strain can reach
+  producer?: string; // canonical producer name (may differ from the display `category`)
+  labProductId?: string; // lab catalog id, e.g. "WLP001", "1056", "US-05"
+  pof?: boolean; // phenolic off-flavor positive (4VG) — clove/spice capable
+  sta1?: boolean; // STA1/diastaticus marker (super-attenuating)
+  description?: string; // short tasting/usage notes
+  styles?: string[]; // recommended beer styles
+  substitutes?: string[]; // derived "similar / replaceable" strains (recipe-key names), best-first
+  // Strain-equivalence ("same strain, other labs") — CURATED lineage, NOT computed from stats.
+  strainGroup?: string; // slug shared by all labs' versions of one strain, e.g. "chico"
+  strainGroupLabel?: string; // human label, e.g. "Chico / American Ale"
+  // Provenance
+  source?: string; // where the facts came from, e.g. "White Labs spec sheet"
+  sourceConfidence?: "high" | "medium" | "low";
 };

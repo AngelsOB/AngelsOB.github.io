@@ -64,10 +64,18 @@ export default function CreditsPage() {
           </p>
         </Section>
 
-        <Section title="Grain and yeast">
+        <Section title="Grain">
+          <p>Grain specifications are compiled from maltster published data.</p>
+        </Section>
+
+        <Section title="Yeast">
           <p>
-            Grain and yeast specifications are compiled from maltster and
-            yeast-lab published data.
+            Yeast facts &mdash; attenuation, temperature range, flocculation,
+            type, form, and alcohol tolerance &mdash; are compiled from the
+            producers&apos; own published data: Escarpment Labs, White Labs,
+            Wyeast, Fermentis/Lallemand, Imperial Yeast, Omega Yeast, and
+            Mangrove Jack&apos;s. We reproduce only the factual specs, not the
+            producers&apos; written descriptions.
           </p>
         </Section>
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   collection,
   query,
@@ -19,6 +20,10 @@ import HSButton from "../HSButton";
 import HSCard from "../HSCard";
 import HSScriptNote from "../HSScriptNote";
 import HSBrowseCard, { type BrowseRecipe } from "./HSBrowseCard";
+import HSPreviewColumn from "./HSPreviewColumn";
+import { cardPathFor, loadFullPublicRecipe } from "./loadFullPublicRecipe";
+import { usePreviewState } from "./usePreviewState";
+import { useCanPreview, usePreviewWidth } from "./usePreviewLayout";
 
 type SortOption = "newest" | "popular" | "top-rated";
 const MAX_COMPARE = 8;
@@ -75,6 +80,23 @@ export default function HSBrowsePage({ initialRecipes }: Props) {
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const canPreview = useCanPreview();
+  const prefersReducedMotion = useReducedMotion();
+  const previewWidth = usePreviewWidth();
+  const preview = usePreviewState({ canPreview, disabled: compareMode });
+  const previewSelectedId = preview.selection?.id;
+
+  const handlePreviewSelect = useCallback(
+    (r: BrowseRecipe) => {
+      void preview.handleSelect({
+        id: r.id,
+        openHref: cardPathFor(r),
+        loadFull: () => loadFullPublicRecipe(r),
+      });
+    },
+    [preview],
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -426,25 +448,62 @@ export default function HSBrowsePage({ initialRecipes }: Props) {
 
       {showGrid ? (
         <div
-          className="hs-browse-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 20,
-          }}
+          className="hs-preview-shell hs-browse-shell"
+          data-preview-open={previewSelectedId && canPreview ? "true" : "false"}
         >
-          {filteredRecipes.map((recipe, idx) => (
-            <HSBrowseCard
-              key={recipe.id}
-              recipe={recipe}
-              isNavigating={navigatingId === recipe.id}
-              onNavigate={() => setNavigatingId(recipe.id)}
-              compareMode={compareMode}
-              isSelected={selectedIds.has(recipe.id)}
-              onToggleSelect={toggleSelect}
-              tilt={TILT_CYCLE[idx % TILT_CYCLE.length]}
-            />
-          ))}
+          <div
+            className="hs-browse-grid"
+            data-preview-open={previewSelectedId && canPreview ? "true" : "false"}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 20,
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
+            {filteredRecipes.map((recipe, idx) => (
+              <motion.div
+                key={recipe.id}
+                layout
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : {
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 30,
+                        mass: 0.8,
+                      }
+                }
+                style={{ minWidth: 0 }}
+              >
+                <HSBrowseCard
+                  recipe={recipe}
+                  isNavigating={navigatingId === recipe.id}
+                  onNavigate={() => setNavigatingId(recipe.id)}
+                  compareMode={compareMode}
+                  isSelected={selectedIds.has(recipe.id)}
+                  onToggleSelect={toggleSelect}
+                  tilt={TILT_CYCLE[idx % TILT_CYCLE.length]}
+                  previewMode={canPreview && !compareMode}
+                  isPreviewSelected={previewSelectedId === recipe.id}
+                  anyPreviewSelected={!!previewSelectedId}
+                  onPreviewSelect={handlePreviewSelect}
+                />
+              </motion.div>
+            ))}
+          </div>
+          <HSPreviewColumn
+            open={!!previewSelectedId && canPreview}
+            full={preview.full}
+            loading={preview.loading}
+            error={preview.error}
+            cardPath={preview.selection?.openHref ?? ""}
+            previewWidth={previewWidth}
+            onClose={preview.handleClose}
+            onRetry={preview.handleRetry}
+          />
         </div>
       ) : null}
 
@@ -493,15 +552,23 @@ export default function HSBrowsePage({ initialRecipes }: Props) {
 
       <style>{`
         .hs-browse-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        .hs-browse-grid[data-preview-open="true"] {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
         @media (max-width: 1024px) {
-          .hs-browse-grid { grid-template-columns: 1fr 1fr !important; }
+          .hs-browse-grid,
+          .hs-browse-grid[data-preview-open="true"] { grid-template-columns: 1fr 1fr !important; }
         }
         @media (max-width: 640px) {
-          .hs-browse-grid { grid-template-columns: 1fr !important; }
+          .hs-browse-grid,
+          .hs-browse-grid[data-preview-open="true"] { grid-template-columns: 1fr !important; }
         }
         @keyframes hs-pulse {
           0%, 100% { opacity: 0.55; }
           50% { opacity: 1; }
+        }
+        .hs-preview-shell[data-preview-open="true"] .hs-browse-card-title {
+          font-size: 18px !important;
         }
       `}</style>
     </section>

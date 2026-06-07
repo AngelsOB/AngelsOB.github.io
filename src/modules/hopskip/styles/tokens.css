@@ -153,3 +153,25 @@
     transform: perspective(900px) rotateX(var(--hs-tilt-y, 0deg)) rotateY(var(--hs-tilt-x, 0deg)) !important;
   }
 }
+
+/* ──────────── Preview-mode selection highlight ────────────
+   Selected card (when a slide-in V4Mock preview is open) gets a honey ring
+   plus a recolored offset shadow at the hover-position. Applied by setting
+   data-preview-selected="true" on the .hs-lift-card wrapper. */
+.hs-lift-card[data-preview-selected="true"]::before {
+  background: var(--hs-honey) !important;
+  transform: translate(7px, 7px) !important;
+}
+
+/* ──────────── Preview shell layout ────────────
+   Shared flex shell that wraps a cards grid + the optional slide-in preview
+   column. `align-items: stretch` so the column matches the cards-grid height
+   — required for position:sticky on the panel inside to follow scroll. */
+.hs-preview-shell {
+  display: flex;
+  align-items: stretch;
+}
+.hs-preview-col { min-width: 0; }
+@media (max-width: 1024px) {
+  .hs-preview-col { display: none !important; }
+}

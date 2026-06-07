@@ -116,12 +116,14 @@ export default function HopSkipBuilder({
 }: Props) {
   const isShared = Boolean(sharedRecipe);
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const recipeError = useRecipeStore((s) => s.error);
   const loadRecipe = useRecipeStore((s) => s.loadRecipe);
   const createNewRecipe = useRecipeStore((s) => s.createNewRecipe);
   const setCurrentRecipe = useRecipeStore((s) => s.setCurrentRecipe);
   const updateRecipe = useRecipeStore((s) => s.updateRecipe);
   const saveCurrentRecipe = useRecipeStore((s) => s.saveCurrentRecipe);
   const viewerUid = useAuthStore((s) => s.user?.uid);
+  const isAuthLoading = useAuthStore((s) => s.isLoading);
   const isOwnedByViewer = Boolean(viewerUid && sharedOwnerId && viewerUid === sharedOwnerId);
 
   // Brew Mode wiring (Phase 2.5b)
@@ -233,11 +235,24 @@ export default function HopSkipBuilder({
   const initialized = useRef(false);
   useEffect(() => {
     if (initialized.current) return;
+    // Shared (public) recipes are handed in directly — no auth or fetch needed.
+    if (sharedRecipe) {
+      initialized.current = true;
+      setCurrentRecipe(sharedRecipe);
+      return;
+    }
+    // Wait for Firebase auth to settle before choosing a data source. Until it
+    // does, getRecipeRepo() returns null, so we'd read the wrong (localStorage)
+    // store, find nothing, and — because init runs once — never retry. That was
+    // the "stuck on Loading recipe…" hard-refresh bug: this effect fired before
+    // onAuthStateChanged rehydrated the user. Deferring until isAuthLoading
+    // flips lets the effect re-run and load against the correct repo (Firestore
+    // for signed-in users, localStorage for anonymous).
+    if (isAuthLoading) return;
     initialized.current = true;
-    if (sharedRecipe) setCurrentRecipe(sharedRecipe);
-    else if (recipeId) loadRecipe(recipeId);
+    if (recipeId) loadRecipe(recipeId);
     else createNewRecipe();
-  }, [recipeId, sharedRecipe, loadRecipe, createNewRecipe, setCurrentRecipe]);
+  }, [recipeId, sharedRecipe, isAuthLoading, loadRecipe, createNewRecipe, setCurrentRecipe]);
 
   const handleSave = useCallback(() => {
     saveCurrentRecipe();
@@ -412,6 +427,41 @@ export default function HopSkipBuilder({
   }, [isBrewMode, priorSessionsForRecipe.length, exitBrewMode, startNewSession]);
 
   if (!currentRecipe) {
+    // Only treat it as a failure once auth has settled and the store reported
+    // an error — otherwise we're still in the normal fetch window.
+    if (recipeError && !isAuthLoading) {
+      return (
+        <section style={{ padding: `80px ${BAND_PADDING_X}`, textAlign: "center" }}>
+          <HSScriptNote color={hsTokens.roast} size={22}>
+            hmm —
+          </HSScriptNote>
+          <h1
+            style={{
+              ...display,
+              fontFamily: hsTokens.display,
+              fontSize: "clamp(28px, 5vw, 44px)",
+              color: hsTokens.ink,
+              margin: "10px 0 8px",
+            }}
+          >
+            Couldn&rsquo;t load this recipe.
+          </h1>
+          <p
+            style={{
+              color: hsTokens.muted,
+              fontFamily: hsTokens.body,
+              fontSize: 14,
+              margin: "0 0 20px",
+            }}
+          >
+            It may have been deleted, set to private, or the link is wrong.
+          </p>
+          <HSButton href={isShared ? "/browse" : "/recipes"} variant="ink" color={hsTokens.hops} arrow>
+            {isShared ? "Back to browse" : "Back to recipes"}
+          </HSButton>
+        </section>
+      );
+    }
     return (
       <section
         style={{

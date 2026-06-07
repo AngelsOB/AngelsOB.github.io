@@ -220,11 +220,23 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       // Try IndexedDB cache first for instant display, then fetch fresh
       firestoreRepo.loadByIdFromCache(id).then((cachedRecipe) => {
         if (cachedRecipe) {
-          set({ currentRecipe: cachedRecipe, savedSnapshot: cachedRecipe, isLoading: false });
+          set({ currentRecipe: cachedRecipe, savedSnapshot: cachedRecipe, isLoading: false, error: null });
         }
       });
       firestoreRepo.loadByIdAsync(id).then(
-        (recipe) => set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false }),
+        (recipe) => {
+          if (recipe) {
+            set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false, error: null });
+          } else if (!get().currentRecipe || get().currentRecipe?.id !== id) {
+            // Fetch succeeded but there's no such recipe for this user
+            // (deleted, never existed, or owned by someone else). Surface it
+            // as not-found instead of leaving the UI spinning forever.
+            set({ error: 'Recipe not found', isLoading: false });
+          } else {
+            // A cached copy is already on screen — just stop the spinner.
+            set({ isLoading: false });
+          }
+        },
         () => {
           if (!get().currentRecipe || get().currentRecipe?.id !== id) {
             set({ error: 'Failed to load recipe', isLoading: false });
@@ -236,7 +248,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
     try {
       const recipe = recipeRepository.loadById(id);
-      set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false });
+      if (recipe) {
+        set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false, error: null });
+      } else {
+        set({ error: 'Recipe not found', isLoading: false });
+      }
     } catch {
       set({ error: 'Failed to load recipe', isLoading: false });
     }

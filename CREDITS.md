@@ -43,10 +43,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### Grains and yeast
+### Grains
 
-Grain and yeast specifications are compiled from maltster and yeast-lab
-published data.
+Grain specifications are compiled from maltster published data.
+
+### Yeast
+
+Yeast facts — attenuation, temperature range, flocculation, type, form, and
+alcohol tolerance — are compiled from the producers' own published data:
+Escarpment Labs, White Labs, Wyeast, Fermentis/Lallemand, Imperial Yeast, Omega
+Yeast, and Mangrove Jack's. We reproduce only the factual specs, not the
+producers' written descriptions.
 
 ## Built with
 

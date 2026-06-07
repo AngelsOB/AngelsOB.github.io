@@ -3,12 +3,11 @@
 import { useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, setDoc, updateDoc, increment } from "firebase/firestore";
 
 import { db, auth } from "@/config/firebase";
 import { uid } from "@/utils/uid";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
-import { findSeedRecipe, SEED_SLUG_MAP } from "@/data/seed-recipes";
 import {
   downloadTextFile,
   generateBeerXml,
@@ -25,9 +24,8 @@ import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
 
 import { hsTokens } from "../../tokens";
 import HSCard from "../HSCard";
-import HSScriptNote from "../HSScriptNote";
 import HSActionMenu, { type HSActionMenuItem } from "../HSActionMenu";
-import { useCursorFollowCard } from "../useCursorFollowCard";
+import { cardPathFor, loadFullPublicRecipe } from "./loadFullPublicRecipe";
 
 const calcService = new RecipeCalculationService();
 
@@ -58,6 +56,10 @@ interface Props {
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
   tilt?: number;
+  previewMode?: boolean;
+  isPreviewSelected?: boolean;
+  anyPreviewSelected?: boolean;
+  onPreviewSelect?: (recipe: BrowseRecipe) => void;
 }
 
 export default function HSBrowseCard({
@@ -68,6 +70,10 @@ export default function HSBrowseCard({
   isSelected,
   onToggleSelect,
   tilt = 0,
+  previewMode,
+  isPreviewSelected,
+  anyPreviewSelected,
+  onPreviewSelect,
 }: Props) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -76,23 +82,12 @@ export default function HSBrowseCard({
   const exportAllowed = canAccess("export", userState);
   const [isBusy, setIsBusy] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const { setWrapper, ctaRef, onMouseMove, onMouseLeave } = useCursorFollowCard({
-    disabled: compareMode,
-  });
 
   const srmColor = recipe.stats.srm != null ? srmToRgb(recipe.stats.srm) : "rgb(220, 190, 140)";
-  const cardPath =
-    recipe.source === "official"
-      ? `/r/${SEED_SLUG_MAP[recipe.id] || recipe.id}`
-      : `/r/${recipe.shareSlug}`;
+  const cardPath = cardPathFor(recipe);
 
   async function getFullRecipe(): Promise<Recipe | null> {
-    if (recipe.source === "official") {
-      return findSeedRecipe(recipe.id) ?? null;
-    }
-    const snap = await getDoc(doc(db, "recipes", recipe.id));
-    if (!snap.exists()) return null;
-    return { id: snap.id, ...snap.data() } as Recipe;
+    return loadFullPublicRecipe(recipe);
   }
 
   async function handleFork(e: React.MouseEvent) {
@@ -163,11 +158,7 @@ export default function HSBrowseCard({
   function handleCopyShareLink(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const path =
-      recipe.source === "official"
-        ? `/r/${SEED_SLUG_MAP[recipe.id] || recipe.id}`
-        : `/r/${recipe.shareSlug}`;
-    navigator.clipboard.writeText(`${window.location.origin}${path}`);
+    navigator.clipboard.writeText(`${window.location.origin}${cardPath}`);
     toast.success("Share link copied");
   }
 
@@ -252,6 +243,11 @@ export default function HSBrowseCard({
       onToggleSelect?.(recipe.id);
       return;
     }
+    if (previewMode && onPreviewSelect) {
+      e.preventDefault();
+      onPreviewSelect(recipe);
+      return;
+    }
     onNavigate?.();
     router.push(cardPath);
   }
@@ -262,6 +258,11 @@ export default function HSBrowseCard({
     if (compareMode) {
       e.preventDefault();
       onToggleSelect?.(recipe.id);
+      return;
+    }
+    if (previewMode && onPreviewSelect) {
+      e.preventDefault();
+      onPreviewSelect(recipe);
       return;
     }
     onNavigate?.();
@@ -292,45 +293,61 @@ export default function HSBrowseCard({
   ];
 
   const selectIndicatorStyle: CSSProperties = {
-    position: "absolute",
-    top: 12,
-    left: 12,
     width: 28,
     height: 28,
-    borderRadius: 999,
-    border: `2px solid ${isSelected ? hsTokens.water : hsTokens.muted}`,
+    borderRadius: 6,
+    border: `2px solid ${isSelected ? hsTokens.water : hsTokens.ink}`,
     background: isSelected ? hsTokens.water : hsTokens.paper,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 20,
-    pointerEvents: "none",
+    boxShadow: "2px 2px 0 var(--hs-ink)",
   };
 
+  const previewActive = !!(previewMode && isPreviewSelected);
+  const previewDimmed = !!(
+    previewMode &&
+    anyPreviewSelected &&
+    !isPreviewSelected
+  );
   const wrapperStyle: CSSProperties = {
     position: "relative",
     cursor: "pointer",
-    outline: compareMode && isSelected ? `2px solid ${hsTokens.water}` : undefined,
-    outlineOffset: compareMode && isSelected ? 4 : undefined,
+    outline:
+      compareMode && isSelected
+        ? `2px solid ${hsTokens.water}`
+        : previewActive
+          ? `6px solid ${hsTokens.honey}`
+          : undefined,
+    outlineOffset:
+      compareMode && isSelected ? 4 : previewActive ? 0 : undefined,
     borderRadius: 14,
+    transform: previewActive
+      ? "translate(-2px, -3px) scale(1.02)"
+      : previewDimmed
+        ? "scale(0.92)"
+        : undefined,
+    transition:
+      "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), outline-offset 220ms ease",
+    willChange: previewMode ? "transform" : undefined,
   };
 
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- card-as-tile pattern, mirrors classic BrowseCard
-    <div ref={setWrapper} className="hs-lift-card" role="article" tabIndex={0} style={wrapperStyle} onClick={handleCardClick} onKeyDown={handleCardKey} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+    <div className="hs-lift-card" data-preview-selected={previewActive ? "true" : undefined} role="article" tabIndex={0} style={wrapperStyle} onClick={handleCardClick} onKeyDown={handleCardKey}>
       <Link
         href={cardPath}
         tabIndex={-1}
         aria-hidden
         prefetch={false}
         onClick={(e) => {
-          if (compareMode) e.preventDefault();
+          if (compareMode || previewMode) e.preventDefault();
         }}
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 0,
-          pointerEvents: compareMode ? "none" : undefined,
+          pointerEvents: compareMode || previewMode ? "none" : undefined,
         }}
       >
         <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
@@ -368,6 +385,7 @@ export default function HSBrowseCard({
                 }}
               >
                 <div
+                  className="hs-browse-card-title"
                   style={{
                     fontFamily: hsTokens.display,
                     fontSize: 22,
@@ -644,57 +662,48 @@ export default function HSBrowseCard({
         </div>
       </HSCard>
 
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pure-handler wrapper to stop card click bubbling; HSActionMenu trigger handles its own keyboard. */}
-      <div
-        style={{ position: "absolute", top: 12, right: 12, zIndex: 25 }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-      >
-        <HSActionMenu
-          triggerTitle="Recipe actions"
-          triggerAriaLabel="Recipe actions"
-          trigger={
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="5" r="1" />
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="12" cy="19" r="1" />
-            </svg>
-          }
-          items={menuItems}
-        />
-      </div>
-
       {compareMode ? (
-        <div style={selectIndicatorStyle}>
-          {isSelected ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          ) : null}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 25,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={selectIndicatorStyle}>
+            {isSelected ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : null}
+          </div>
         </div>
-      ) : null}
-
-      <div
-        ref={ctaRef}
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          opacity: 0,
-          pointerEvents: "none",
-          zIndex: 28,
-          transform: "translate(0, 0)",
-          transition: "opacity 140ms ease, transform 90ms ease-out",
-          willChange: "transform, opacity",
-        }}
-      >
-        <HSScriptNote color={hsTokens.water} size={20}>
-          open →
-        </HSScriptNote>
-      </div>
+      ) : (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pure-handler wrapper to stop card click bubbling; HSActionMenu trigger handles its own keyboard.
+        <div
+          style={{ position: "absolute", top: 12, right: 12, zIndex: 25 }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <HSActionMenu
+            triggerTitle="Recipe actions"
+            triggerAriaLabel="Recipe actions"
+            trigger={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            }
+            items={menuItems}
+          />
+        </div>
+      )}
 
       {(isNavigating || isBusy) ? (
         <div

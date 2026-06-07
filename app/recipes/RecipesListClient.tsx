@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
 import HSCard from "@/modules/hopskip/components/HSCard";
-import HSCardLift from "@/modules/hopskip/components/HSCardLift";
 import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import HSButton from "@/modules/hopskip/components/HSButton";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import HSPreviewColumn from "@/modules/hopskip/components/public/HSPreviewColumn";
+import { usePreviewState } from "@/modules/hopskip/components/public/usePreviewState";
+import {
+  useCanPreview,
+  usePreviewWidth,
+} from "@/modules/hopskip/components/public/usePreviewLayout";
+
+import MyRecipeCard from "./MyRecipeCard";
 
 type SortKey = "date-desc" | "date-asc" | "name-asc" | "name-desc" | "abv-desc" | "ibu-desc";
 
@@ -33,6 +40,24 @@ export default function HopSkipRecipes() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("date-desc");
   const [pendingDelete, setPendingDelete] = useState<Recipe | null>(null);
+
+  const canPreview = useCanPreview();
+  const prefersReducedMotion = useReducedMotion();
+  const previewWidth = usePreviewWidth();
+  const preview = usePreviewState({ canPreview });
+  const previewSelectedId = preview.selection?.id;
+
+  const handlePreviewSelect = useCallback(
+    (recipe: Recipe) => {
+      void preview.handleSelect({
+        id: recipe.id,
+        openHref: `/recipes/${recipe.id}`,
+        // Owned recipes are already in the Zustand store — no fetch needed.
+        loadFull: async () => recipe,
+      });
+    },
+    [preview],
+  );
 
   useEffect(() => {
     if (!recipesLoaded) loadRecipes();
@@ -217,176 +242,81 @@ export default function HopSkipRecipes() {
           </HSCard>
         ) : (
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-              gap: 22,
-            }}
+            className="hs-preview-shell hs-my-recipes-shell"
+            data-preview-open={previewSelectedId && canPreview ? "true" : "false"}
           >
-            {filtered.map((entry, idx) => {
-              const { r, calc } = entry;
-              const tilt = tilts[idx % tilts.length];
-              const srm = calc.srm ?? 0;
-              return (
-                <div key={r.id} style={{ position: "relative" }}>
-                  <HSCardLift
-                    href={`/recipes/${r.id}`}
-                    ariaLabel={r.name || "Untitled recipe"}
-                    ctaColor={hsTokens.hops}
+            <div
+              className="hs-my-recipes-grid"
+              data-preview-open={previewSelectedId && canPreview ? "true" : "false"}
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fill, minmax(320px, 1fr))",
+                gap: 22,
+                minWidth: 0,
+                flex: 1,
+              }}
+            >
+              {filtered.map((entry, idx) => {
+                const { r, calc } = entry;
+                const tilt = tilts[idx % tilts.length];
+                return (
+                  <motion.div
+                    key={r.id}
+                    layout
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : {
+                            type: "spring",
+                            stiffness: 260,
+                            damping: 30,
+                            mass: 0.8,
+                          }
+                    }
+                    style={{ minWidth: 0 }}
                   >
-                    <HSCard shadow={3} tilt={tilt} padding={0} style={{ overflow: "hidden" }}>
-                      <div style={{ height: 18, background: srmToRgb(srm) }} aria-hidden />
-                      <div style={{ padding: "18px 20px 20px" }}>
-                        <div
-                          style={{
-                            fontFamily: hsTokens.display,
-                            fontSize: 22,
-                            letterSpacing: "-0.035em",
-                            lineHeight: 1.05,
-                            overflow: "hidden",
-                            display: "-webkit-box",
-                            WebkitBoxOrient: "vertical",
-                            WebkitLineClamp: 2,
-                          }}
-                        >
-                          {r.name || "Untitled recipe"}
-                        </div>
-                        <div
-                          style={{
-                            fontStyle: "italic",
-                            fontSize: 13,
-                            color: hsTokens.muted,
-                            marginTop: 4,
-                            minHeight: 18,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {r.style || "no style set"}
-                        </div>
-
-                        {(r.tags ?? []).length > 0 ? (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-                            {(r.tags ?? []).slice(0, 3).map((t) => (
-                              <span
-                                key={t}
-                                style={{
-                                  fontFamily: hsTokens.body,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  letterSpacing: "0.08em",
-                                  textTransform: "uppercase",
-                                  background: color_mix(hsTokens.hops, hsTokens.cream2, 0.25),
-                                  color: hsTokens.ink,
-                                  padding: "3px 10px",
-                                  borderRadius: 999,
-                                }}
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        <div
-                          style={{
-                            marginTop: 14,
-                            display: "grid",
-                            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                            gap: 8,
-                          }}
-                        >
-                          {[
-                            { label: "ABV", value: `${(calc.abv ?? 0).toFixed(1)}%`, accent: hsTokens.yeast },
-                            { label: "IBU", value: `${Math.round(calc.ibu ?? 0)}`, accent: hsTokens.hops },
-                            { label: "SRM", value: `${(calc.srm ?? 0).toFixed(0)}`, accent: hsTokens.roast },
-                            { label: "OG", value: `${(calc.og ?? 0).toFixed(3)}`, accent: hsTokens.malt },
-                          ].map((s) => (
-                            <div
-                              key={s.label}
-                              style={{
-                                background: hsTokens.cream2,
-                                borderTop: `3px solid ${s.accent}`,
-                                borderRadius: 6,
-                                padding: "8px 6px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  letterSpacing: "0.14em",
-                                  textTransform: "uppercase",
-                                  color: hsTokens.muted,
-                                }}
-                              >
-                                {s.label}
-                              </div>
-                              <div
-                                style={{
-                                  fontFamily: hsTokens.display,
-                                  fontSize: 15,
-                                  letterSpacing: "-0.03em",
-                                  marginTop: 2,
-                                  fontVariantNumeric: "tabular-nums",
-                                }}
-                              >
-                                {s.value}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div
-                          style={{
-                            marginTop: 14,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            fontSize: 11,
-                            color: hsTokens.muted,
-                          }}
-                        >
-                          <span style={{ fontFamily: hsTokens.mono, fontVariantNumeric: "tabular-nums" }}>
-                            {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : "—"}
-                          </span>
-                        </div>
-                      </div>
-                    </HSCard>
-                  </HSCardLift>
-
-                  <button
-                    type="button"
-                    aria-label="Delete recipe"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setPendingDelete(r);
-                    }}
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      right: 10,
-                      width: 28,
-                      height: 28,
-                      border: `1.5px solid ${hsTokens.ink}`,
-                      background: hsTokens.paper,
-                      borderRadius: 999,
-                      cursor: "pointer",
-                      color: hsTokens.ink,
-                      fontFamily: hsTokens.body,
-                      fontWeight: 700,
-                      fontSize: 14,
-                      lineHeight: 1,
-                      padding: 0,
-                      boxShadow: hsTokens.sh1,
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              );
-            })}
+                    <MyRecipeCard
+                      recipe={r}
+                      calc={calc}
+                      tilt={tilt}
+                      onDelete={setPendingDelete}
+                      previewMode={canPreview}
+                      isPreviewSelected={previewSelectedId === r.id}
+                      anyPreviewSelected={!!previewSelectedId}
+                      onPreviewSelect={handlePreviewSelect}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+            <HSPreviewColumn
+              open={!!previewSelectedId && canPreview}
+              full={preview.full}
+              loading={preview.loading}
+              error={preview.error}
+              cardPath={preview.selection?.openHref ?? ""}
+              previewWidth={previewWidth}
+              onClose={preview.handleClose}
+              onRetry={preview.handleRetry}
+            />
+            <style>{`
+              /* When preview is open, snap to a fixed 2-col grid (matches
+                 /browse). auto-fill at narrow widths combined with the
+                 layout-tracking motion.div leaves weird row gaps. */
+              .hs-my-recipes-grid[data-preview-open="true"] {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                align-content: start;
+              }
+              .hs-my-recipes-shell[data-preview-open="true"] .hs-browse-card-title {
+                font-size: 18px !important;
+              }
+              /* Closed state: keep auto-fill but pin to top so a short list
+                 doesn't space-evenly through the stretched shell height. */
+              .hs-my-recipes-grid {
+                align-content: start;
+              }
+            `}</style>
           </div>
         )}
       </section>
@@ -445,9 +375,4 @@ export default function HopSkipRecipes() {
       ) : null}
     </main>
   );
-}
-
-function color_mix(a: string, b: string, t: number) {
-  // simple helper to render a CSS color-mix(); not an actual mix — relies on CSS to compute
-  return `color-mix(in oklch, ${a} ${Math.round(t * 100)}%, ${b})`;
 }
