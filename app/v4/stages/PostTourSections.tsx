@@ -8,6 +8,7 @@ import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "../../_home/lib/communityCard";
+import CompareMockV4 from "../mock/CompareMockV4";
 import { CTA, STAGES } from "../data";
 
 // Below-tour stages — full-width, no sticky mock. Reveals are wired in HomeV4
@@ -53,37 +54,60 @@ export function StageCompare() {
         padding: "clamp(56px, 8vw, 96px) clamp(20px, 4vw, 56px)",
       }}
     >
-      <div data-v4-reveal style={{ maxWidth: 720, margin: "0 auto" }}>
-        <StageEyebrow>{s.h2}</StageEyebrow>
-        <p
-          style={{
-            fontFamily: hsTokens.display,
-            fontSize: "clamp(28px, 3.2vw, 40px)",
-            letterSpacing: "-0.03em",
-            lineHeight: 1.08,
-            color: hsTokens.ink,
-            margin: "10px 0 18px",
-          }}
-        >
-          {s.lead}
-        </p>
-        {s.paragraphs.map((p, i) => (
+      <div
+        className="v4-compare-grid"
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 460px)",
+          gap: "clamp(28px, 4vw, 56px)",
+          alignItems: "center",
+        }}
+      >
+        <div data-v4-reveal>
+          <StageEyebrow>{s.h2}</StageEyebrow>
           <p
-            key={i}
             style={{
-              fontFamily: hsTokens.body,
-              fontSize: 17,
-              lineHeight: 1.6,
-              color:
-                i === s.paragraphs.length - 1 ? hsTokens.ink : hsTokens.muted,
-              margin: i === 0 ? 0 : "14px 0 0",
-              maxWidth: 640,
+              fontFamily: hsTokens.display,
+              fontSize: "clamp(28px, 3.2vw, 40px)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.08,
+              color: hsTokens.ink,
+              margin: "10px 0 18px",
             }}
           >
-            {p}
+            {s.lead}
           </p>
-        ))}
+          {s.paragraphs.map((p, i) => (
+            <p
+              key={i}
+              style={{
+                fontFamily: hsTokens.body,
+                fontSize: 17,
+                lineHeight: 1.6,
+                color:
+                  i === s.paragraphs.length - 1 ? hsTokens.ink : hsTokens.muted,
+                margin: i === 0 ? 0 : "14px 0 0",
+                maxWidth: 540,
+              }}
+            >
+              {p}
+            </p>
+          ))}
+        </div>
+        <div data-v4-reveal>
+          <CompareMockV4 />
+        </div>
       </div>
+      <style>{`
+        @media (max-width: 900px) {
+          .v4-compare-grid {
+            grid-template-columns: 1fr !important;
+            max-width: 640px !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }
