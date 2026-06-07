@@ -128,6 +128,10 @@ export const generateRecipeMarkdown = (
   // ── Header ──────────────────────────────────────────────────────
   lines.push(`# ${recipe.name || "Untitled Recipe"}`);
   lines.push("");
+  if (recipe.subtitle) {
+    lines.push(`*${recipe.subtitle}*`);
+    lines.push("");
+  }
   if (recipe.style) {
     lines.push(`**${recipe.style}**`);
     lines.push("");

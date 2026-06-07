@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
 import { hsTokens } from "../../tokens";
@@ -9,6 +9,8 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
 import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
+import { useYeastHoverPreview } from "../builder/yeastHoverPreview";
 
 type AttenuationBand = "low" | "med" | "high";
 
@@ -54,18 +56,52 @@ export default function YeastPresetModal({
   const searchId = useId();
   const titleId = useId();
 
+  // Flattened library — feeds peer/substitute resolution inside the
+  // shared hover preview. Built once per modal render.
+  const flatLibrary = useMemo<YeastPreset[]>(() => {
+    const out: YeastPreset[] = [];
+    for (const group of presetsGrouped) {
+      for (const p of group.items) out.push(p);
+    }
+    return out;
+  }, [presetsGrouped]);
+
+  // Picker uses a short dwell + cursor-right placement — long enough
+  // to filter a quick sweep down the list, short enough to still feel
+  // responsive when the brewer wants to compare two adjacent rows.
+  // The builder strain card uses the longer default dwell since the
+  // card has editable inputs that need to NOT pop the preview.
+  const { portal: previewPortal, getTriggerProps, clear: clearPreview } =
+    useYeastHoverPreview(flatLibrary, {
+      showDelay: 650,
+      placement: "cursor-right",
+    });
+
+  useEffect(() => {
+    if (!isOpen) clearPreview();
+  }, [isOpen, clearPreview]);
+
   const availableBrands = useMemo(
     () => presetsGrouped.map((g) => g.label).sort(),
     [presetsGrouped]
   );
 
   const filteredGrouped = useMemo(() => {
-    const q = searchQuery.toLowerCase();
     return presetsGrouped
       .map((group) => ({
         ...group,
         items: group.items.filter((p) => {
-          if (q && !p.name.toLowerCase().includes(q)) return false;
+          if (
+            !fuzzyIncludes(
+              searchQuery,
+              p.name,
+              p.labProductId,
+              p.category,
+              p.producer
+            )
+          ) {
+            return false;
+          }
           if (
             activeFilters.brands.length &&
             !activeFilters.brands.includes(group.label)
@@ -116,6 +152,7 @@ export default function YeastPresetModal({
   };
 
   return (
+    <>
     <HSModal
       isOpen={isOpen}
       onClose={handleClose}
@@ -132,7 +169,7 @@ export default function YeastPresetModal({
 
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
           display: "flex",
           flexDirection: "column",
@@ -248,6 +285,7 @@ export default function YeastPresetModal({
                       key={`${group.label}-${preset.name}`}
                       preset={preset}
                       onClick={() => handleSelect(preset)}
+                      hoverProps={getTriggerProps(preset)}
                     />
                   ))}
                 </div>
@@ -273,6 +311,8 @@ export default function YeastPresetModal({
         </HSButton>
       </HSModalFooter>
     </HSModal>
+    {isOpen ? previewPortal : null}
+    </>
   );
 }
 
@@ -447,9 +487,15 @@ function GroupHeader({ label }: { label: string }) {
 function PresetRow({
   preset,
   onClick,
+  hoverProps,
 }: {
   preset: YeastPreset;
   onClick: () => void;
+  hoverProps: {
+    onMouseEnter?: (e: React.MouseEvent) => void;
+    onMouseMove?: (e: React.MouseEvent) => void;
+    onMouseLeave?: () => void;
+  };
 }) {
   const favicon = getYeastLabFavicon(preset.category);
   return (
@@ -473,9 +519,14 @@ function PresetRow({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = hsTokens.cream2;
+        hoverProps.onMouseEnter?.(e);
+      }}
+      onMouseMove={(e) => {
+        hoverProps.onMouseMove?.(e);
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "transparent";
+        hoverProps.onMouseLeave?.();
       }}
     >
       <span

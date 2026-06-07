@@ -8,6 +8,7 @@ import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import type { OtherIngredientCategory } from "@/modules/beta-builder/domain/models/Recipe";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
 import { OTHER_INGREDIENT_PRESETS } from "@/utils/presets";
 
 const CATEGORY_LABELS: Record<OtherIngredientCategory, string> = {
@@ -56,14 +57,13 @@ export default function WaterIngredientPickerModal({
   const titleId = useId();
 
   const filteredGroups = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
     return CATEGORY_ORDER
       .filter((cat) => activeCategory === "all" || activeCategory === cat)
       .map((cat) => ({
         category: cat,
         label: CATEGORY_LABELS[cat],
         items: (OTHER_INGREDIENT_PRESETS[cat] || []).filter((name) =>
-          q ? name.toLowerCase().includes(q) : true
+          fuzzyIncludes(searchQuery, name, CATEGORY_LABELS[cat])
         ),
       }))
       .filter((g) => g.items.length > 0);
@@ -99,7 +99,7 @@ export default function WaterIngredientPickerModal({
 
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
           display: "flex",
           flexDirection: "column",

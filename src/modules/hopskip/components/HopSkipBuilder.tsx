@@ -9,7 +9,7 @@ import { hsTokens } from "../tokens";
 import HSEyebrow from "./HSEyebrow";
 import HSScriptNote from "./HSScriptNote";
 
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
+import { isRecipeDirty, useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
 import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
 import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
@@ -20,7 +20,7 @@ import YeastSection from "@/modules/hopskip/components/builder/YeastSection";
 import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import EquipmentSection from "@/modules/hopskip/components/builder/EquipmentSection";
-import StyleSelectorModal from "@/modules/beta-builder/presentation/components/StyleSelectorModal";
+import BjcpStylePresetModal from "./modals/BjcpStylePresetModal";
 import UnsavedChangesModal from "@/modules/beta-builder/presentation/components/UnsavedChangesModal";
 import { useUnsavedChangesGuard } from "@/modules/beta-builder/presentation/hooks/useUnsavedChangesGuard";
 import BJCPStyleRail from "./BJCPStyleRail";
@@ -116,6 +116,7 @@ export default function HopSkipBuilder({
 }: Props) {
   const isShared = Boolean(sharedRecipe);
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const savedSnapshot = useRecipeStore((s) => s.savedSnapshot);
   const recipeError = useRecipeStore((s) => s.error);
   const loadRecipe = useRecipeStore((s) => s.loadRecipe);
   const createNewRecipe = useRecipeStore((s) => s.createNewRecipe);
@@ -156,6 +157,8 @@ export default function HopSkipBuilder({
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isEquipmentOpen, setIsEquipmentOpen] = useState(false);
   const [showStyleRanges, setShowStyleRanges] = useState(true);
+  const [isTitleAreaHovered, setIsTitleAreaHovered] = useState(false);
+  const [isSubtitleFocused, setIsSubtitleFocused] = useState(false);
 
   // Tab strip responsive layout — measure the tablist's available width
   // and tier the rendering: full chrome → drop count → drop swatch →
@@ -538,38 +541,46 @@ export default function HopSkipBuilder({
                 />
               ) : null}
             </>
-          ) : (
-            <>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: savedRecently ? hsTokens.hops : hsTokens.muted,
-                  transition: "color 0.2s",
-                  fontFamily: hsTokens.body,
-                }}
-              >
-                {savedRecently ? "✓ Saved!" : "Edits not saved"}
-              </span>
-              <button
-                type="button"
-                onClick={handleSave}
-                style={{
-                  background: hsTokens.hops,
-                  color: hsTokens.cream,
-                  border: `2px solid ${hsTokens.ink}`,
-                  padding: "8px 14px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  borderRadius: 999,
-                  boxShadow: hsTokens.sh2,
-                  cursor: "pointer",
-                  fontFamily: hsTokens.body,
-                }}
-              >
-                Save recipe →
-              </button>
-            </>
-          )}
+          ) : (() => {
+            const isDirty = isRecipeDirty(currentRecipe, savedSnapshot);
+            return (
+              <>
+                <ShareToggle
+                  isPublic={currentRecipe.isPublic !== false}
+                  onToggle={() =>
+                    updateRecipe({
+                      isPublic: currentRecipe.isPublic === false,
+                    })
+                  }
+                />
+                <div style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={!isDirty}
+                    style={{
+                      background: hsTokens.hops,
+                      color: hsTokens.cream,
+                      border: `2px solid ${hsTokens.ink}`,
+                      padding: "8px 14px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      borderRadius: 999,
+                      boxShadow: isDirty ? hsTokens.sh2 : "none",
+                      cursor: isDirty ? "pointer" : "default",
+                      fontFamily: hsTokens.body,
+                      opacity: isDirty ? 1 : 0.4,
+                      transition:
+                        "opacity 280ms ease, box-shadow 240ms ease",
+                    }}
+                  >
+                    Save recipe →
+                  </button>
+                  <SaveStatusNote savedRecently={savedRecently} isDirty={isDirty} />
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -586,7 +597,11 @@ export default function HopSkipBuilder({
         >
           {isShared ? "shared recipe —" : "recipe draft —"}
         </HSScriptNote>
-        <div style={{ marginTop: 6 }}>
+        <div
+          style={{ marginTop: 6 }}
+          onMouseEnter={() => setIsTitleAreaHovered(true)}
+          onMouseLeave={() => setIsTitleAreaHovered(false)}
+        >
           {isShared ? (
             <h1
               style={{
@@ -622,6 +637,65 @@ export default function HopSkipBuilder({
               }}
             />
           )}
+          {/* ── Subtitle (attribution / tagline) ──
+              Empty state collapses; reveals on hover of title block or focus. */}
+          {isShared ? (
+            currentRecipe.subtitle ? (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontFamily: hsTokens.script,
+                  fontSize: "clamp(20px, 3vw, 28px)",
+                  lineHeight: 1.1,
+                  color: hsTokens.muted,
+                }}
+              >
+                {currentRecipe.subtitle}
+              </div>
+            ) : null
+          ) : (() => {
+            const hasValue = !!(
+              currentRecipe.subtitle && currentRecipe.subtitle.length > 0
+            );
+            const reveal = hasValue || isTitleAreaHovered || isSubtitleFocused;
+            return (
+              <div
+                style={{
+                  overflow: "hidden",
+                  maxHeight: reveal ? 44 : 0,
+                  opacity: reveal ? 1 : 0,
+                  marginTop: reveal ? 4 : 0,
+                  transition:
+                    "max-height 200ms ease, opacity 180ms ease, margin-top 200ms ease",
+                }}
+              >
+                <input
+                  type="text"
+                  value={currentRecipe.subtitle ?? ""}
+                  onChange={(e) =>
+                    updateRecipe({ subtitle: e.target.value || undefined })
+                  }
+                  onFocus={() => setIsSubtitleFocused(true)}
+                  onBlur={() => setIsSubtitleFocused(false)}
+                  aria-label="Recipe subtitle or attribution"
+                  placeholder="Subtitle…"
+                  style={{
+                    fontFamily: hsTokens.script,
+                    fontSize: "clamp(20px, 3vw, 28px)",
+                    lineHeight: 1.1,
+                    border: "none",
+                    background: "transparent",
+                    color: hsTokens.muted,
+                    outline: "none",
+                    padding: 0,
+                    width: "100%",
+                    minWidth: 0,
+                    display: "block",
+                  }}
+                />
+              </div>
+            );
+          })()}
         </div>
         <div
           style={{
@@ -1437,9 +1511,10 @@ export default function HopSkipBuilder({
         </div>
       </section>
 
-      <StyleSelectorModal
+      <BjcpStylePresetModal
         isOpen={isStyleModalOpen}
         onClose={() => setIsStyleModalOpen(false)}
+        currentStyle={currentRecipe.style}
         onSelect={(style: string) => {
           const newStyle = style || undefined;
           const wc = currentRecipe.waterChemistry;
@@ -1475,6 +1550,144 @@ export default function HopSkipBuilder({
 }
 
 /* ─────────────────────────── primitives ─────────────────────────── */
+
+/**
+ * Inline pill beside the Save button — controls whether the recipe is
+ * publicly shared. Mirrors the meta-pill chrome used in the title band.
+ */
+function ShareToggle({
+  isPublic,
+  onToggle,
+}: {
+  isPublic: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      role="switch"
+      aria-checked={isPublic}
+      aria-label={
+        isPublic
+          ? "Recipe is public. Click to make private."
+          : "Recipe is private. Click to make public."
+      }
+      title={
+        isPublic
+          ? "Public — anyone with the link can view. Click to make private."
+          : "Private — only you can see this recipe. Click to share publicly."
+      }
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        background: isPublic ? hsTokens.paper : "transparent",
+        color: isPublic ? hsTokens.ink : hsTokens.muted,
+        border: `1.5px solid ${
+          isPublic
+            ? hsTokens.ink
+            : `color-mix(in oklch, ${hsTokens.ink} 25%, transparent)`
+        }`,
+        borderRadius: 999,
+        padding: "6px 12px 6px 10px",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        fontFamily: hsTokens.body,
+        cursor: "pointer",
+        boxShadow: isPublic ? hsTokens.sh1 : "none",
+        transition: "background 140ms ease, color 140ms ease, border-color 140ms ease",
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          width: 9,
+          height: 9,
+          borderRadius: "50%",
+          background: isPublic ? hsTokens.water : "transparent",
+          border: `1.5px solid ${isPublic ? hsTokens.water : hsTokens.muted}`,
+        }}
+      />
+      <span>{isPublic ? "Public" : "Private"}</span>
+    </button>
+  );
+}
+
+/**
+ * Two-state sticker for save status. Visually mirrors the "extend boil"
+ * warning on the Hops tab — paper bg, accent border, script font, slight
+ * rotation. The chip animates between two positions:
+ *
+ *  - Clean (no edits to save): stamps on top of the faded Save button,
+ *    centered vertically, slight -1.5° tilt. Acts as the "nothing to do
+ *    here" badge.
+ *  - Dirty (edits pending): drops down on a string under the solid Save
+ *    button, -3° tilt. Acts as the nudge to commit.
+ *
+ * The transform-only animation keeps `transformOrigin` constant so the
+ * tilt feels like a single pendulum motion instead of a snap.
+ */
+function SaveStatusNote({
+  savedRecently,
+  isDirty,
+}: {
+  savedRecently: boolean;
+  isDirty: boolean;
+}) {
+  // savedRecently is a brief "✓ saved!" pulse right after the save action
+  // succeeds — treat it like the clean state so the chip stays overlaid on
+  // the button rather than dropping back down.
+  const overlay = !isDirty;
+  const label = savedRecently
+    ? "✓ saved!"
+    : isDirty
+      ? "edits not saved !"
+      : "all changes saved";
+  const accent = overlay ? hsTokens.hops : hsTokens.roast;
+  // Save button is ≈38px tall (8 + 13 + 8 padding/text + 2*2 border).
+  // Overlay clips the chip onto the button's lower-right corner — shifted
+  // right (translateX 36) and down (translateY 22) with a -10° tilt so the
+  // chip reads like a paper tag dangling off the corner and "Save recipe"
+  // stays readable in the upper-left of the button. Below drops the chip
+  // to 44px so it clears the button bottom by 6px when there are edits
+  // pending, with the original -3° tilt.
+  const transform = overlay
+    ? "translateX(36px) translateY(22px) rotate(-10deg)"
+    : "translateY(44px) rotate(-3deg)";
+  return (
+    <span
+      aria-live="polite"
+      style={{
+        position: "absolute",
+        top: 0,
+        right: 6,
+        transformOrigin: "top right",
+        transform,
+        whiteSpace: "nowrap",
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "5px 11px 6px",
+        background: hsTokens.paper,
+        color: accent,
+        border: `1.5px solid ${accent}`,
+        borderRadius: 10,
+        boxShadow: hsTokens.sh2,
+        fontFamily: hsTokens.script,
+        fontSize: 16,
+        lineHeight: 1,
+        pointerEvents: "none",
+        transition:
+          "transform 320ms cubic-bezier(0.32, 0.72, 0, 1), color 220ms ease, border-color 220ms ease",
+        zIndex: 2,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 function ClickableMetaPill({
   label,

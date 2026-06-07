@@ -11,6 +11,7 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 import type { FermentablePreset } from "@/modules/beta-builder/domain/models/Presets";
 import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { BREWING_ORIGINS, getCountryFlag } from "@/utils/flags";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 type ColorCategory = "light" | "amber" | "dark" | "roasted";
 type TypeFilter = "grain" | "extract" | "sugar" | "adjunct_mashable";
@@ -88,12 +89,11 @@ export default function FermentablePresetModal({
   }, [presetsGrouped]);
 
   const filteredGrouped = useMemo(() => {
-    const q = searchQuery.toLowerCase();
     return presetsGrouped
       .map((group) => ({
         ...group,
         items: group.items.filter((p) => {
-          if (q && !p.name.toLowerCase().includes(q)) return false;
+          if (!fuzzyIncludes(searchQuery, p.name, group.label)) return false;
           if (activeFilters.origins.length) {
             if (!p.originCode || !activeFilters.origins.includes(p.originCode)) return false;
           }
@@ -154,7 +154,7 @@ export default function FermentablePresetModal({
       {/* Search + filter toggle */}
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
           display: "flex",
           flexDirection: "column",

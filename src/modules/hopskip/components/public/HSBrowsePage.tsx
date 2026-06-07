@@ -39,6 +39,7 @@ function mapDocs(docs: QueryDocumentSnapshot<DocumentData>[]): BrowseRecipe[] {
     return {
       id: d.id,
       name: data.name || "",
+      subtitle: data.subtitle || undefined,
       style: data.style || "",
       ownerName: data.ownerName || "Anonymous Brewer",
       ownerId: data.ownerId || "",

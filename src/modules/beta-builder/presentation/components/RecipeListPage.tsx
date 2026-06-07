@@ -32,8 +32,10 @@ import type { Recipe } from "../../domain/models/Recipe";
 import { srmToRgb } from "../../utils/srmColorUtils";
 import VersionHistoryModal from "./VersionHistoryModal";
 import RecipeSessionsBar from "./RecipeSessionsBar";
+import ReviewImportMatchesModal from "./ReviewImportMatchesModal";
 import { toast } from "../../../../stores/toastStore";
 import ScalableText from "@/components/ScalableText";
+import { beerXmlImportService, type PendingMatch } from "../../domain/services/BeerXmlImportService";
 
 type SortOption =
   | "date-desc"
@@ -56,7 +58,8 @@ export default function RecipeListPage() {
     deleteRecipe,
     setCurrentRecipe,
     isLoading,
-    importFromBeerXml,
+    parseBeerXml,
+    commitImportedRecipe,
     importFromJson,
   } = useRecipeStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -72,6 +75,11 @@ export default function RecipeListPage() {
   const atLimit = userState === "free" && !canCreate;
   const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  // BeerXML import review modal — populated when parse surfaces low-confidence matches.
+  const [importReview, setImportReview] = useState<{
+    recipe: Recipe;
+    pendingMatches: PendingMatch[];
+  } | null>(null);
 
   // Close import menu on outside click
   useEffect(() => {
@@ -359,15 +367,26 @@ export default function RecipeListPage() {
               const file = e.target.files?.[0];
               if (!file) return;
               const reader = new FileReader();
-              reader.onload = () => {
+              reader.onload = async () => {
                 const text = typeof reader.result === "string" ? reader.result : "";
-                const imported = importFromBeerXml(text);
-                if (imported) {
-                  loadRecipes();
-                  toast.success(`Imported "${imported.name}"`);
-                } else {
+                const result = parseBeerXml(text);
+                if (!result) {
                   toast.error("Failed to import BeerXML file");
+                  return;
                 }
+                // If everything matched cleanly, commit straight away.
+                if (result.pendingMatches.length === 0) {
+                  const saved = await commitImportedRecipe(result.recipe);
+                  if (saved) {
+                    loadRecipes();
+                    toast.success(`Imported "${saved.name}"`);
+                  } else {
+                    toast.error("Failed to save imported recipe");
+                  }
+                  return;
+                }
+                // Otherwise hand off to the review modal.
+                setImportReview(result);
               };
               reader.readAsText(file);
               e.target.value = "";
@@ -571,6 +590,31 @@ export default function RecipeListPage() {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         reason="Export is a Premium feature."
+      />
+
+      {/* BeerXML Import Review Modal */}
+      <ReviewImportMatchesModal
+        isOpen={importReview !== null}
+        pendingMatches={importReview?.pendingMatches ?? []}
+        onCancel={() => {
+          setImportReview(null);
+          toast.success("Import canceled");
+        }}
+        onConfirm={async (resolutions) => {
+          if (!importReview) return;
+          const resolved = beerXmlImportService.applyResolutions(
+            importReview.recipe,
+            resolutions
+          );
+          const saved = await commitImportedRecipe(resolved);
+          setImportReview(null);
+          if (saved) {
+            loadRecipes();
+            toast.success(`Imported "${saved.name}"`);
+          } else {
+            toast.error("Failed to save imported recipe");
+          }
+        }}
       />
     </div>
   );

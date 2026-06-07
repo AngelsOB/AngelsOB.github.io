@@ -8,6 +8,7 @@ import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import type { EquipmentProfile } from "@/modules/beta-builder/domain/models/Equipment";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface Props {
   isOpen: boolean;
@@ -40,15 +41,10 @@ export default function EquipmentProfileModal({
   );
 
   const filteredGrouped = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
     const matches = profiles.filter((p) => {
       if (sourceFilter === "preset" && p.isCustom) return false;
       if (sourceFilter === "custom" && !p.isCustom) return false;
-      if (!q) return true;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        (p.description ?? "").toLowerCase().includes(q)
-      );
+      return fuzzyIncludes(searchQuery, p.name, p.description);
     });
     const presets = matches.filter((p) => !p.isCustom);
     const customs = matches.filter((p) => p.isCustom);
@@ -86,7 +82,7 @@ export default function EquipmentProfileModal({
 
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
           display: "flex",
           flexDirection: "column",

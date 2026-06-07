@@ -1661,7 +1661,7 @@ function Swatch({
             letterSpacing: "0.02em",
           }}
         >
-          {L}°
+          {Math.round(L)}°
         </span>
       </div>
       <span

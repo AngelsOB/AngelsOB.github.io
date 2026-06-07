@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -28,6 +27,7 @@ import HSButton from "../HSButton";
 import HopPresetModal from "../modals/HopPresetModal";
 import CustomHopModal from "../modals/CustomHopModal";
 import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
+import { useHopHoverPreview } from "./hopHoverPreview";
 
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
@@ -391,84 +391,40 @@ export default function HopSection() {
   // of waiting out the stepper debounce (a drop is a deliberate move).
   const forceRegroupRef = useRef(false);
 
-  // Per-row mini-radar hover preview state + imperative cursor-follow refs.
-  // Mirrors the modal's preview pattern (always-mounted portal, opacity-0
-  // until hover; ref-driven transforms instead of state-per-mousemove).
-  const [hoveredRowFlavor, setHoveredRowFlavor] = useState<{
-    name: string;
-    flavor: HopFlavorProfile;
-  } | null>(null);
-  const rowPreviewRef = useRef<HTMLDivElement | null>(null);
-  const rowLastClientXRef = useRef<number | null>(null);
-  const rowRestTimerRef = useRef<number | null>(null);
-
-  const applyRowPreviewTransform = useCallback(
-    (clientX: number, clientY: number, rotation: number) => {
-      const t = rowPreviewRef.current;
-      if (!t) return;
-      const PREVIEW_W = 200;
-      const OFFSET = 18;
-      const willClipRight =
-        typeof window !== "undefined" &&
-        clientX + OFFSET + PREVIEW_W > window.innerWidth - 12;
-      const x = willClipRight ? clientX - OFFSET - PREVIEW_W : clientX + OFFSET;
-      const PREVIEW_HALF_H = 120;
-      const minY = PREVIEW_HALF_H + 6;
-      const maxY =
-        typeof window !== "undefined"
-          ? window.innerHeight - PREVIEW_HALF_H - 6
-          : clientY;
-      const y = Math.max(minY, Math.min(maxY, clientY));
-      t.style.transform = `translate(${x}px, ${y}px) translateY(-50%) rotate(${rotation}deg)`;
-    },
-    []
-  );
-
-  const onRowCursorMove = useCallback(
-    (e: React.MouseEvent) => {
-      const t = rowPreviewRef.current;
-      if (!t) return;
-      const last = rowLastClientXRef.current;
-      const isFirstMove = last === null;
-      const dx = last !== null ? e.clientX - last : 0;
-      rowLastClientXRef.current = e.clientX;
-      const rotation = isFirstMove ? 0 : Math.max(-12, Math.min(12, -dx * 0.4));
-
-      if (isFirstMove) {
-        t.style.transition = "none";
-        applyRowPreviewTransform(e.clientX, e.clientY, 0);
-        void t.offsetHeight;
-        t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
-      } else {
-        applyRowPreviewTransform(e.clientX, e.clientY, rotation);
-      }
-      t.style.opacity = "1";
-      if (rowRestTimerRef.current !== null)
-        window.clearTimeout(rowRestTimerRef.current);
-      const rx = e.clientX;
-      const ry = e.clientY;
-      rowRestTimerRef.current = window.setTimeout(
-        () => applyRowPreviewTransform(rx, ry, 0),
-        120
-      );
-    },
-    [applyRowPreviewTransform]
-  );
-
-  const onRowCursorLeave = useCallback(() => {
-    const t = rowPreviewRef.current;
-    if (t) t.style.opacity = "0";
-    setHoveredRowFlavor(null);
-    rowLastClientXRef.current = null;
-    if (rowRestTimerRef.current !== null) {
-      window.clearTimeout(rowRestTimerRef.current);
-      rowRestTimerRef.current = null;
-    }
-  }, []);
-
   useEffect(() => {
     loadHopPresets();
   }, [loadHopPresets]);
+
+  // Flat hop library + name lookup — fed into the shared hover hook so
+  // it can resolve a row's hop name → full preset and run the similar-
+  // hops cosine over the 9-axis flavor vector.
+  const hopPresetByName = useMemo(() => {
+    const m = new Map<string, HopPreset>();
+    for (const group of hopPresetsGrouped) {
+      for (const p of group.items) m.set(p.name, p);
+    }
+    return m;
+  }, [hopPresetsGrouped]);
+  const flatHopLibrary = useMemo<HopPreset[]>(
+    () => Array.from(hopPresetByName.values()),
+    [hopPresetByName]
+  );
+
+  // Shared hover-preview instance for all hop rows in this section.
+  // 300ms dwell (default) — a quick stepper-tap or row sweep shouldn't
+  // fire the panel; the picker modal uses 0 instead.
+  const {
+    portal: hoverPortal,
+    getTriggerProps: getHopHoverTriggerProps,
+    clear: clearHopHoverPreview,
+  } = useHopHoverPreview(flatHopLibrary);
+
+  // Hide the hover preview when the swap picker opens — the cursor
+  // hasn't physically left the trigger boundary, so mouseLeave doesn't
+  // fire on its own and the panel would linger behind the modal.
+  useEffect(() => {
+    if (isPickerOpen) clearHopHoverPreview();
+  }, [isPickerOpen, clearHopHoverPreview]);
 
   const hops = useMemo(
     () => currentRecipe?.hops ?? [],
@@ -692,11 +648,24 @@ export default function HopSection() {
               onRemove={removeHop}
               onAdd={handleAddNew}
               onAddVariety={handleAddVariety}
-              onRowHoverStart={(name, flavor) =>
-                setHoveredRowFlavor({ name, flavor })
-              }
-              onRowCursorMove={onRowCursorMove}
-              onRowHoverEnd={onRowCursorLeave}
+              getHoverTriggerProps={(hop) => {
+                // Prefer the live library preset when present (carries
+                // alpha/beta/oil + flavorConfidence). Fall back to a
+                // synthesized preset built from the recipe's own Hop
+                // data so legacy/custom hops still get a preview as
+                // long as we have a flavor vector for them.
+                const fromLib = hopPresetByName.get(hop.name);
+                if (fromLib) return getHopHoverTriggerProps(fromLib);
+                const flavor =
+                  hop.flavor ??
+                  hopEnrichmentService.getFlavorByName(hop.name);
+                if (!flavor) return {};
+                return getHopHoverTriggerProps({
+                  name: hop.name,
+                  alphaAcidPercent: hop.alphaAcid,
+                  flavor,
+                });
+              }}
             />
           </div>
 
@@ -722,113 +691,26 @@ export default function HopSection() {
         onSave={handleSaveCustomPreset}
       />
 
-      {typeof document !== "undefined"
-        ? createPortal(
-            // Always-mounted cursor-follow preview wrapper. Imperative
-            // transform updates (no setState per mousemove) keep the row
-            // scroll buttery smooth on mouse-over.
-            <div
-              className="hs-theme"
-              ref={rowPreviewRef}
-              role="tooltip"
-              aria-hidden={hoveredRowFlavor === null}
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: 200,
-                zIndex: 1000,
-                pointerEvents: "none",
-                opacity: 0,
-                transition: "opacity 140ms ease, transform 90ms ease-out",
-                background: "#f8f3dc",
-                backgroundColor: "var(--hs-paper, #f8f3dc)",
-                border: `2px solid ${hsTokens.ink}`,
-                borderRadius: 10,
-                boxShadow: hsTokens.sh3,
-                padding: 12,
-              }}
-            >
-              {hoveredRowFlavor ? (
-                <RowHoverPreviewBody
-                  name={hoveredRowFlavor.name}
-                  flavor={hoveredRowFlavor.flavor}
-                />
-              ) : null}
-            </div>,
-            document.body
-          )
-        : null}
+      {hoverPortal}
     </section>
   );
 }
 
-/** Header + mini radar shown inside the row's cursor-follow preview. */
-function RowHoverPreviewBody({
-  name,
-  flavor,
-}: {
-  name: string;
-  flavor: HopFlavorProfile;
-}) {
-  // Same dominant-axis tint as RowMiniRadar so the polygon color matches
-  // the row's leftmost glyph.
-  let bestKey: (typeof HOP_FLAVOR_KEYS)[number] = HOP_FLAVOR_KEYS[0];
-  let bestV = -1;
-  for (const k of HOP_FLAVOR_KEYS) {
-    const v = flavor[k] ?? 0;
-    if (v > bestV) {
-      bestV = v;
-      bestKey = k;
-    }
-  }
-  const accentColor = HOP_FLAVOR_COLOR[bestKey] ?? hsTokens.hops;
-  return (
-    <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 6,
-          paddingBottom: 6,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
-        }}
-      >
-        <span
-          aria-hidden
-          style={{
-            width: 9,
-            height: 9,
-            borderRadius: "50%",
-            background: accentColor,
-            border: `1px solid ${hsTokens.ink}`,
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 13,
-            color: hsTokens.ink,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {name}
-        </span>
-      </div>
-      <RowHoverMiniRadar flavor={flavor} color={accentColor} />
-    </>
-  );
-}
+// Trigger handler props returned by useHopHoverPreview. Pulled out as a
+// named type so HopLedger + LedgerRow can pipe them through without a
+// verbose inline shape.
+type HopHoverTriggerProps = {
+  onMouseEnter?: (e: React.MouseEvent) => void;
+  onMouseMove?: (e: React.MouseEvent) => void;
+  onMouseLeave?: () => void;
+};
 
-/** Larger version of RowMiniRadar with axis labels — shown in the hover
- *  preview and the variety card's left rail. Single-flavor 9-axis polygon.
- *  `fill` makes it size to its container's height (square, capped by width)
- *  so the rail radar scales with the addition count. */
+/** Larger version of RowMiniRadar with axis labels — used in the
+ *  variety card's left rail (the section's old per-row hover preview
+ *  was removed and migrated to `useHopHoverPreview`'s shared panel).
+ *  Single-flavor 9-axis polygon. `fill` makes it size to its container's
+ *  height (square, capped by width) so the rail radar scales with the
+ *  addition count. */
 function RowHoverMiniRadar({
   flavor,
   color,
@@ -1221,9 +1103,7 @@ function Ledger({
   onRemove,
   onAdd,
   onAddVariety,
-  onRowHoverStart,
-  onRowCursorMove,
-  onRowHoverEnd,
+  getHoverTriggerProps,
 }: {
   hops: Hop[];
   groupMode: GroupMode;
@@ -1245,9 +1125,10 @@ function Ledger({
   onRemove: (id: string) => void;
   onAdd: () => void;
   onAddVariety: (sourceHop: Hop) => void;
-  onRowHoverStart: (name: string, flavor: HopFlavorProfile) => void;
-  onRowCursorMove: (e: React.MouseEvent) => void;
-  onRowHoverEnd: () => void;
+  /** Per-hop hover-trigger props from `useHopHoverPreview`. Takes the
+   *  whole Hop so the row can fall back to recipe-side data (flavor +
+   *  alpha) when the hop's name isn't in the live library. */
+  getHoverTriggerProps: (hop: Hop) => HopHoverTriggerProps;
 }) {
   const groups = buildHopGroups(
     hops,
@@ -1312,9 +1193,7 @@ function Ledger({
           onSwap={() => onSwap(h.id)}
           onUsageChange={(next) => onUsageChange(h.id, next)}
           onRemove={() => onRemove(h.id)}
-          onRowHoverStart={onRowHoverStart}
-          onRowCursorMove={onRowCursorMove}
-          onRowHoverEnd={onRowHoverEnd}
+          hoverProps={getHoverTriggerProps(h)}
         />
       </LedgerRowMotion>
     );
@@ -2176,9 +2055,7 @@ function LedgerRow({
   onSwap,
   onUsageChange,
   onRemove,
-  onRowHoverStart,
-  onRowCursorMove,
-  onRowHoverEnd,
+  hoverProps,
 }: {
   hop: Hop;
   ibuContribution: number;
@@ -2195,9 +2072,7 @@ function LedgerRow({
   onSwap: () => void;
   onUsageChange: (next: Usage) => void;
   onRemove: () => void;
-  onRowHoverStart: (name: string, flavor: HopFlavorProfile) => void;
-  onRowCursorMove: (e: React.MouseEvent) => void;
-  onRowHoverEnd: () => void;
+  hoverProps: HopHoverTriggerProps;
 }) {
   const purpose = purposeOf(hop.alphaAcid);
   const hopFlavor =
@@ -2214,6 +2089,7 @@ function LedgerRow({
       ref={setNodeRef}
       className="hs-hops-ledger-row hs-hops-data-row"
       {...(draggable ? listeners : {})}
+      {...hoverProps}
       style={{
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
@@ -2226,16 +2102,11 @@ function LedgerRow({
       }}
     >
       {/* Per-hop mini flavor radar — replaces the colored use-badge.
-          Hover triggers a cursor-follow preview that mirrors the modal
-          preset preview (large radar + name header). */}
+          The hover trigger is on the row, not the radar specifically,
+          so any cursor inside the row surfaces the preview (after the
+          300ms dwell — quick edits don't fire it). */}
       <div className="hs-hops-radar-cell">
-        <RowMiniRadar
-          flavor={hopFlavor}
-          hopName={hop.name}
-          onHoverStart={onRowHoverStart}
-          onCursorMove={onRowCursorMove}
-          onHoverEnd={onRowHoverEnd}
-        />
+        <RowMiniRadar flavor={hopFlavor} hopName={hop.name} />
       </div>
 
       {/* Hop name — click to swap */}
@@ -2843,15 +2714,9 @@ function UsageSelect({
 function RowMiniRadar({
   flavor,
   hopName,
-  onHoverStart,
-  onCursorMove,
-  onHoverEnd,
 }: {
   flavor: HopFlavorProfile | null;
   hopName: string;
-  onHoverStart?: (name: string, flavor: HopFlavorProfile) => void;
-  onCursorMove?: (e: React.MouseEvent) => void;
-  onHoverEnd?: () => void;
 }) {
   const size = 44;
   const pad = 4;
@@ -2859,19 +2724,6 @@ function RowMiniRadar({
   const cx = size / 2;
   const cy = size / 2;
   const axes = HOP_FLAVOR_KEYS.length;
-
-  // Wrap the SVG in a button so it's hoverable AND keyboard-focusable.
-  // Bare-bones styling — no background, no border, just a hit area.
-  const hoverHandlers = flavor
-    ? {
-        onMouseEnter: (e: React.MouseEvent) => {
-          onHoverStart?.(hopName, flavor);
-          onCursorMove?.(e);
-        },
-        onMouseMove: (e: React.MouseEvent) => onCursorMove?.(e),
-        onMouseLeave: () => onHoverEnd?.(),
-      }
-    : {};
 
   if (!flavor) {
     return (
@@ -2938,7 +2790,6 @@ function RowMiniRadar({
     <button
       type="button"
       aria-label={`${hopName} flavor profile`}
-      {...hoverHandlers}
       style={{
         background: "transparent",
         border: "none",

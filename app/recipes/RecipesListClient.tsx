@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
@@ -17,6 +17,12 @@ import {
   useCanPreview,
   usePreviewWidth,
 } from "@/modules/hopskip/components/public/usePreviewLayout";
+import ReviewImportMatchesModal from "@/modules/beta-builder/presentation/components/ReviewImportMatchesModal";
+import {
+  beerXmlImportService,
+  type PendingMatch,
+} from "@/modules/beta-builder/domain/services/BeerXmlImportService";
+import { toast } from "@/stores/toastStore";
 
 import MyRecipeCard from "./MyRecipeCard";
 
@@ -36,10 +42,49 @@ export default function HopSkipRecipes() {
   const recipesLoaded = useRecipeStore((s) => s.recipesLoaded);
   const loadRecipes = useRecipeStore((s) => s.loadRecipes);
   const deleteRecipe = useRecipeStore((s) => s.deleteRecipe);
+  const parseBeerXml = useRecipeStore((s) => s.parseBeerXml);
+  const commitImportedRecipe = useRecipeStore((s) => s.commitImportedRecipe);
 
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("date-desc");
   const [pendingDelete, setPendingDelete] = useState<Recipe | null>(null);
+  // BeerXML import — populated when parse surfaces low-confidence preset matches.
+  const [importReview, setImportReview] = useState<{
+    recipe: Recipe;
+    pendingMatches: PendingMatch[];
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleImportFile = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const text = typeof reader.result === "string" ? reader.result : "";
+        const result = parseBeerXml(text);
+        if (!result) {
+          toast.error("Couldn't read that BeerXML file");
+          return;
+        }
+        if (result.pendingMatches.length === 0) {
+          const saved = await commitImportedRecipe(result.recipe);
+          if (saved) {
+            loadRecipes();
+            toast.success(`Imported "${saved.name}"`);
+          } else {
+            toast.error("Failed to save imported recipe");
+          }
+          return;
+        }
+        setImportReview(result);
+      };
+      reader.readAsText(file);
+    },
+    [parseBeerXml, commitImportedRecipe, loadRecipes],
+  );
 
   const canPreview = useCanPreview();
   const prefersReducedMotion = useReducedMotion();
@@ -145,6 +190,20 @@ export default function HopSkipRecipes() {
           <HSButton href="/recipes/new" variant="ink" color={hsTokens.hops} arrow>
             + New recipe
           </HSButton>
+          <HSButton variant="ghost" onClick={handleImportClick}>
+            Import BeerXML
+          </HSButton>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xml,text/xml"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImportFile(file);
+              e.target.value = "";
+            }}
+          />
           <div
             style={{
               flex: 1,
@@ -225,8 +284,8 @@ export default function HopSkipRecipes() {
               <HSButton href="/recipes/new" variant="ink" color={hsTokens.hops} arrow>
                 Start a recipe
               </HSButton>
-              <HSButton href="/recipes" variant="ghost">
-                Open classic builder
+              <HSButton variant="ghost" onClick={handleImportClick}>
+                Import BeerXML
               </HSButton>
             </div>
           </HSCard>
@@ -320,6 +379,31 @@ export default function HopSkipRecipes() {
           </div>
         )}
       </section>
+
+      {/* BeerXML Import Review Modal */}
+      <ReviewImportMatchesModal
+        isOpen={importReview !== null}
+        pendingMatches={importReview?.pendingMatches ?? []}
+        onCancel={() => {
+          setImportReview(null);
+          toast.success("Import canceled");
+        }}
+        onConfirm={async (resolutions) => {
+          if (!importReview) return;
+          const resolved = beerXmlImportService.applyResolutions(
+            importReview.recipe,
+            resolutions,
+          );
+          const saved = await commitImportedRecipe(resolved);
+          setImportReview(null);
+          if (saved) {
+            loadRecipes();
+            toast.success(`Imported "${saved.name}"`);
+          } else {
+            toast.error("Failed to save imported recipe");
+          }
+        }}
+      />
 
       {/* Delete confirmation */}
       {pendingDelete ? (

@@ -19,6 +19,7 @@ import HubRecipeCard, { HubRecipeCardGrid, HUB_CARD_TILTS } from "./HubRecipeCar
 interface CommunityPreview {
   id: string;
   name: string;
+  subtitle?: string;
   style: string;
   ownerName: string;
   shareSlug: string;
@@ -128,6 +129,7 @@ export default function RecipesHubClient({ community }: Props) {
                 const browseRecipe: BrowseRecipe = {
                   id: c.id,
                   name: c.name,
+                  subtitle: c.subtitle,
                   style: c.style,
                   ownerName: c.ownerName,
                   shareSlug: c.shareSlug,
@@ -143,6 +145,7 @@ export default function RecipesHubClient({ community }: Props) {
                     key={c.id}
                     href={openHref}
                     name={c.name}
+                    subtitle={c.subtitle}
                     style={c.style}
                     ownerName={c.ownerName}
                     tags={c.tags}

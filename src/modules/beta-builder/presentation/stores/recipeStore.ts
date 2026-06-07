@@ -14,14 +14,17 @@ import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion
 import { recipeRepository } from '../../domain/repositories/RecipeRepository';
 import { FirestoreRecipeRepository } from '../../domain/repositories/FirestoreRecipeRepository';
 import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
-import { beerXmlImportService } from '../../domain/services/BeerXmlImportService';
+import {
+  beerXmlImportService,
+  type BeerXmlImportResult,
+} from '../../domain/services/BeerXmlImportService';
 import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
 import { toast } from '../../../../stores/toastStore';
 import { useAuthStore, deriveUserState } from '../../../auth/authStore';
 import { canCreateRecipe, RECIPE_LIMIT } from '../../../auth/tierAccess';
 import { auth } from '@/config/firebase';
 import { generateShareSlug } from '../../../sharing/slugUtils';
-import { syncPublicIndex } from '../../../sharing/publishService';
+import { syncPublicIndex, unpublishRecipe } from '../../../sharing/publishService';
 import { usePreferencesStore } from '../../../auth/preferencesStore';
 import { processLabelImage } from '../../../labels/imageProcessor';
 import { uploadLabel as uploadLabelToStorage, deleteLabel as deleteLabelFromStorage } from '../../../labels/labelService';
@@ -89,7 +92,13 @@ type RecipeStore = {
   saveCurrentRecipe: () => Promise<boolean>;
   deleteRecipe: (id: RecipeId) => void;
   setCurrentRecipe: (recipe: Recipe | null) => void;
-  importFromBeerXml: (xml: string) => Recipe | null;
+  /**
+   * Parse BeerXML and surface low-confidence preset matches for review.
+   * Does NOT persist — call `commitImportedRecipe` once the user resolves matches.
+   */
+  parseBeerXml: (xml: string) => BeerXmlImportResult | null;
+  /** Persist a recipe that came from an import flow (post-review). */
+  commitImportedRecipe: (recipe: Recipe) => Promise<Recipe | null>;
   importFromJson: (json: string) => Recipe | null;
 
   // Ingredient actions
@@ -263,7 +272,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const defaultPublic = usePreferencesStore.getState().defaultRecipePublic;
     const newRecipe: Recipe = {
       id: uid(),
-      name: 'New Recipe',
+      // Empty by default so the "Untitled recipe" placeholder shows.
+      // saveCurrentRecipe() fills in a fallback if the user never names it.
+      name: '',
       style: undefined,
       notes: undefined,
       tags: [],
@@ -368,8 +379,12 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   // unsaved-changes guard sees clean state during the in-flight save.
   // Rolls the snapshot back if the save errors out.
   saveCurrentRecipe: async () => {
-    const current = get().currentRecipe;
-    if (!current) return false;
+    const raw = get().currentRecipe;
+    if (!raw) return false;
+    // Fall back to a default name if the user never typed one.
+    const trimmed = (raw.name ?? '').trim();
+    const current = trimmed ? raw : { ...raw, name: 'Untitled Recipe' };
+    if (current !== raw) set({ currentRecipe: current });
     const prevSnapshot = get().savedSnapshot;
 
     const firestoreRepo = getRecipeRepo();
@@ -422,9 +437,13 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         useAuthStore.getState().adjustRecipeCount(1);
       }
 
-      // Sync publicRecipeIndex in the background for public recipes
-      if (recipeToSave.isPublic) {
+      // Sync publicRecipeIndex in the background. Publish when the saved
+      // recipe is public; unpublish when it just transitioned public→private
+      // on an existing (non-new) recipe so the browse listing stays in sync.
+      if (recipeToSave.isPublic !== false) {
         syncPublicIndex(recipeToSave);
+      } else if (!isNew && prevSnapshot && prevSnapshot.isPublic !== false) {
+        unpublishRecipe(recipeToSave.id).catch(() => { /* fire-and-forget */ });
       }
       return true;
     }
@@ -496,29 +515,43 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     set({ currentRecipe: recipe, savedSnapshot: recipe });
   },
 
-  // Import BeerXML and persist
-  importFromBeerXml: (xml: string) => {
+  // Parse BeerXML without persisting; caller resolves matches then commits.
+  parseBeerXml: (xml: string) => {
     try {
-      const recipe = beerXmlImportService.parse(xml);
-      if (!recipe) {
+      const result = beerXmlImportService.parse(xml);
+      if (!result?.recipe) {
         set({ error: 'Failed to import BeerXML' });
         return null;
       }
-      const firestoreRepo = getRecipeRepo();
-      if (firestoreRepo) {
-        if (!checkRecipeLimit()) return null;
-        firestoreRepo.saveNewAsync(recipe).then(() => {
-          useAuthStore.getState().adjustRecipeCount(1);
-          set({ recipes: [...get().recipes, recipe] });
-        });
-      } else {
-        recipeRepository.save(recipe);
-        set({ recipes: [...get().recipes, recipe] });
-      }
       set({ error: null });
-      return recipe;
+      return result;
     } catch {
       set({ error: 'Failed to import BeerXML' });
+      return null;
+    }
+  },
+
+  // Persist a recipe coming from the import flow (after match review).
+  commitImportedRecipe: async (recipe: Recipe) => {
+    const firestoreRepo = getRecipeRepo();
+    if (firestoreRepo) {
+      if (!checkRecipeLimit()) return null;
+      try {
+        await firestoreRepo.saveNewAsync(recipe);
+        useAuthStore.getState().adjustRecipeCount(1);
+        set({ recipes: [...get().recipes, recipe], error: null });
+        return recipe;
+      } catch {
+        set({ error: 'Failed to save imported recipe' });
+        return null;
+      }
+    }
+    try {
+      recipeRepository.save(recipe);
+      set({ recipes: [...get().recipes, recipe], error: null });
+      return recipe;
+    } catch {
+      set({ error: 'Failed to save imported recipe' });
       return null;
     }
   },

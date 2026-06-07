@@ -191,7 +191,16 @@ export default function SignedInHeroV4() {
           >
             Pick up where you left off.
           </h1>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            className="v4-signedin-recipes-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 16,
+              alignContent: "start",
+              alignItems: "start",
+            }}
+          >
             {recent.map((r, idx) => (
               <MyRecipeCard
                 key={r.id}
@@ -205,29 +214,43 @@ export default function SignedInHeroV4() {
               />
             ))}
           </div>
-          {recipes.length > recent.length ? (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 18,
+              paddingRight: 10,
+            }}
+          >
             <a
               href="/recipes"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                marginTop: 14,
-                padding: "8px 14px",
+                padding: "10px 18px",
                 fontFamily: hsTokens.body,
-                fontSize: 12,
-                fontWeight: 600,
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
                 color: hsTokens.ink,
                 background: hsTokens.paper,
-                border: `1.5px solid ${hsTokens.ink}`,
+                border: `2px solid ${hsTokens.ink}`,
                 borderRadius: 999,
                 textDecoration: "none",
-                boxShadow: "2px 2px 0 var(--hs-ink)",
+                boxShadow: "3px 3px 0 var(--hs-ink)",
+                whiteSpace: "nowrap",
               }}
             >
-              Browse all {recipes.length} →
+              View my recipes
+              {recipes.length > recent.length ? (
+                <span style={{ color: hsTokens.muted, fontWeight: 600 }}>
+                  ({recipes.length})
+                </span>
+              ) : null}
+              <span aria-hidden style={{ fontSize: 15 }}>→</span>
             </a>
-          ) : null}
+          </div>
         </div>
 
         {/* Right — the v4 mock, static, showing the selected recipe */}
@@ -243,6 +266,9 @@ export default function SignedInHeroV4() {
       <style>{`
         @media (max-width: 1024px) {
           .v4-signedin-hero { grid-template-columns: 1fr !important; gap: 28px !important; }
+        }
+        @media (max-width: 640px) {
+          .v4-signedin-recipes-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

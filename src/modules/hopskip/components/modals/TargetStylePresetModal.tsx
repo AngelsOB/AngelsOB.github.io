@@ -11,6 +11,7 @@ import {
   BEER_STYLE_TARGETS,
   type BeerStyleTarget,
 } from "@/modules/beta-builder/domain/services/WaterChemistryService";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface StylePreset {
   name: string;
@@ -81,12 +82,11 @@ export default function TargetStylePresetModal({
   const titleId = useId();
 
   const filteredGroups = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return ALL_GROUPS;
+    if (!searchQuery.trim()) return ALL_GROUPS;
     return ALL_GROUPS.map((g) => ({
       label: g.label,
-      items: g.items.filter(
-        (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+      items: g.items.filter((s) =>
+        fuzzyIncludes(searchQuery, s.name, s.description, g.label)
       ),
     })).filter((g) => g.items.length > 0);
   }, [searchQuery]);
@@ -123,7 +123,7 @@ export default function TargetStylePresetModal({
 
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
         }}
       >
