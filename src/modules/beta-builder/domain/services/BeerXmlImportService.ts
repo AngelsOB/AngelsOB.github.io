@@ -55,6 +55,33 @@ const yieldToPpg = (yieldPercent: number | undefined): number | undefined => {
   return Math.round((yieldPercent / 100) * 46);
 };
 
+// ---------- Water salt routing (BeerXML MISC → waterChemistry.saltAdditions) ----------
+
+type SaltKey = 'gypsum_g' | 'cacl2_g' | 'epsom_g' | 'nacl_g' | 'nahco3_g';
+
+// Salts our ion calculator models. Names cover the common spellings/synonyms
+// that exporters emit (Brewfather/BeerSmith/BeerJSON tools all differ).
+const SALT_ALIASES: Array<{ key: SaltKey; match: RegExp }> = [
+  { key: 'gypsum_g', match: /\b(gypsum|caso4|calcium\s+sulf[a|p]?h?ate)\b/i },
+  // Order matters: match calcium-chloride BEFORE generic "chloride" so it
+  // doesn't get swallowed by anything else later.
+  { key: 'cacl2_g', match: /\b(cacl2?|calcium\s+chloride)\b/i },
+  { key: 'epsom_g', match: /\b(epsom(\s+salt)?|mgso4|magnesium\s+sulf[a|p]?h?ate)\b/i },
+  { key: 'nahco3_g', match: /\b(baking\s+soda|sodium\s+bicarbonate|nahco3|bicarbonate)\b/i },
+  // NaCl is last so "epsom salt" / "canning salt" can't match it incorrectly.
+  { key: 'nacl_g', match: /\b(table\s+salt|canning\s+salt|sodium\s+chloride|nacl|^salt$|^salt\b)/i },
+];
+
+function matchWaterSalt(name: string | undefined): SaltKey | null {
+  if (!name) return null;
+  const n = name.trim();
+  if (!n) return null;
+  for (const { key, match } of SALT_ALIASES) {
+    if (match.test(n)) return key;
+  }
+  return null;
+}
+
 // ---------- Match result types surfaced to the UI ----------
 
 export type PendingHopMatch = {
@@ -350,15 +377,34 @@ class BeerXmlImportService {
       });
     }
 
-    // Misc items (other ingredients)
+    // Misc items + water salts
+    // BeerXML lumps water salts under MISCS with TYPE=Water Agent. If we drop
+    // them straight into otherIngredients they show up as "Additional items"
+    // and don't feed the ion calculator. Route the 5 salts our chemistry
+    // model knows about into saltAdditions instead, and only fall through to
+    // otherIngredients for things we don't model (acids, finings, spices…).
     const otherIngredients: OtherIngredient[] = [];
+    const saltAdditions: Partial<Record<SaltKey, number>> = {};
     const miscParent = recipeEl.getElementsByTagName('MISCS')?.[0];
     if (miscParent) {
       const miscEls = Array.from(miscParent.getElementsByTagName('MISC'));
       miscEls.forEach((m) => {
+        const rawName = text(m, 'NAME');
         const amountKg = toNumber(text(m, 'AMOUNT')) ?? 0;
+        const grams = roundTo(amountKg * 1000, 2) ?? 0;
         const useStr = (text(m, 'USE') || 'boil').toLowerCase();
         const typeStr = (text(m, 'TYPE') || 'other').toLowerCase();
+        const isWater = typeStr.includes('water');
+
+        // Salt routing: water-agent MISC whose name matches a modeled salt.
+        if (isWater) {
+          const salt = matchWaterSalt(rawName);
+          if (salt) {
+            // Accumulate — a recipe may split the same salt across mash/sparge.
+            saltAdditions[salt] = roundTo((saltAdditions[salt] ?? 0) + grams, 2) ?? 0;
+            return;
+          }
+        }
 
         let timing: OtherIngredient['timing'] = 'boil';
         if (useStr.includes('mash')) timing = 'mash';
@@ -366,7 +412,7 @@ class BeerXmlImportService {
         else if (useStr.includes('bottling')) timing = 'bottling';
 
         let category: OtherIngredientCategory = 'other';
-        if (typeStr.includes('water')) category = 'water-agent';
+        if (isWater) category = 'water-agent';
         else if (typeStr.includes('fining')) category = 'fining';
         else if (typeStr.includes('spice')) category = 'spice';
         else if (typeStr.includes('flavor')) category = 'flavor';
@@ -374,15 +420,47 @@ class BeerXmlImportService {
 
         otherIngredients.push({
           id: uid(),
-          name: text(m, 'NAME') || 'Misc',
+          name: rawName || 'Misc',
           category,
-          amount: amountKg * 1000, // BeerXML stores in kg, convert to g
+          amount: grams,
           unit: 'g',
           timing,
           notes: text(m, 'NOTES'),
         });
       });
     }
+
+    // Optional source water profile from <WATERS><WATER>…</WATER></WATERS>.
+    // Not every exporter includes one; defaults to all-zeros (RO/distilled)
+    // when absent, so a recipe with only salt additions still gets a valid
+    // waterChemistry block.
+    let sourceProfile: { Ca: number; Mg: number; Na: number; Cl: number; SO4: number; HCO3: number } | null = null;
+    let sourceProfileName: string | undefined;
+    const watersParent = recipeEl.getElementsByTagName('WATERS')?.[0];
+    if (watersParent) {
+      const waterEl = watersParent.getElementsByTagName('WATER')?.[0];
+      if (waterEl) {
+        sourceProfileName = text(waterEl, 'NAME');
+        sourceProfile = {
+          Ca: roundTo(toNumber(text(waterEl, 'CALCIUM')) ?? 0, 1) ?? 0,
+          Mg: roundTo(toNumber(text(waterEl, 'MAGNESIUM')) ?? 0, 1) ?? 0,
+          Na: roundTo(toNumber(text(waterEl, 'SODIUM')) ?? 0, 1) ?? 0,
+          Cl: roundTo(toNumber(text(waterEl, 'CHLORIDE')) ?? 0, 1) ?? 0,
+          SO4: roundTo(toNumber(text(waterEl, 'SULFATE')) ?? 0, 1) ?? 0,
+          HCO3: roundTo(toNumber(text(waterEl, 'BICARBONATE')) ?? 0, 1) ?? 0,
+        };
+      }
+    }
+
+    const hasSalts = Object.keys(saltAdditions).length > 0;
+    const waterChemistry =
+      hasSalts || sourceProfile
+        ? {
+            sourceProfile: sourceProfile ?? { Ca: 0, Mg: 0, Na: 0, Cl: 0, SO4: 0, HCO3: 0 },
+            saltAdditions,
+            sourceProfileName,
+          }
+        : undefined;
 
     const recipe: Recipe = {
       id: uid(),
@@ -411,7 +489,7 @@ class BeerXmlImportService {
       yeasts,
       otherIngredients,
       mashSteps,
-      waterChemistry: undefined,
+      waterChemistry,
       fermentationSteps,
       createdAt: now,
       updatedAt: now,
