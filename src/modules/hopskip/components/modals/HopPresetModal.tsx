@@ -1,18 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import { createPortal } from "react-dom";
 
 import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type {
-  HopPreset,
-  HopFlavorProfile,
-} from "@/modules/beta-builder/domain/models/Presets";
-import { HOP_FLAVOR_KEYS } from "@/modules/beta-builder/domain/models/Presets";
+import type { HopPreset } from "@/modules/beta-builder/domain/models/Presets";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
+import { useHopHoverPreview } from "../builder/hopHoverPreview";
 
 type PurposeFilter = "aroma" | "dual" | "bittering";
 type FlavorFilter =
@@ -123,100 +120,39 @@ export default function HopPresetModal({
     purposes: PurposeFilter[];
     flavors: FlavorFilter[];
   }>({ purposes: [], flavors: [] });
-  const [hoveredPreset, setHoveredPreset] = useState<HopPreset | null>(null);
   const searchId = useId();
   const titleId = useId();
 
-  // Cursor-follow tooltip refs (imperative transforms, no setState per move
-  // — matches the compare page's BarRow + HopSection radar pattern).
-  const previewRef = useRef<HTMLDivElement | null>(null);
-  const lastClientXRef = useRef<number | null>(null);
-  const restTimerRef = useRef<number | null>(null);
-
-  /** Position the preview near (clientX, clientY) with optional rotation.
-   *  Flips to the left of the cursor if it would clip the viewport edge. */
-  const applyTransform = useCallback(
-    (clientX: number, clientY: number, rotation: number) => {
-      const t = previewRef.current;
-      if (!t) return;
-      const PREVIEW_W = 188;
-      const OFFSET = 18;
-      const willClipRight =
-        typeof window !== "undefined" &&
-        clientX + OFFSET + PREVIEW_W > window.innerWidth - 12;
-      const x = willClipRight ? clientX - OFFSET - PREVIEW_W : clientX + OFFSET;
-      // Clamp Y so the preview never spills past viewport top/bottom.
-      const PREVIEW_HALF_H = 110;
-      const minY = PREVIEW_HALF_H + 6;
-      const maxY =
-        typeof window !== "undefined"
-          ? window.innerHeight - PREVIEW_HALF_H - 6
-          : clientY;
-      const y = Math.max(minY, Math.min(maxY, clientY));
-      t.style.transform = `translate(${x}px, ${y}px) translateY(-50%) rotate(${rotation}deg)`;
-    },
-    []
-  );
-
-  const onCursorMove = useCallback(
-    (e: React.MouseEvent) => {
-      const t = previewRef.current;
-      if (!t) return;
-      const last = lastClientXRef.current;
-      const isFirstMove = last === null;
-      const dx = last !== null ? e.clientX - last : 0;
-      lastClientXRef.current = e.clientX;
-      // Velocity rotation, capped so it stays subtle.
-      const rotation = isFirstMove ? 0 : Math.max(-12, Math.min(12, -dx * 0.4));
-
-      if (isFirstMove) {
-        // First-show snap — disable transition for one frame so the tooltip
-        // appears AT the cursor instead of animating in from viewport origin.
-        t.style.transition = "none";
-        applyTransform(e.clientX, e.clientY, 0);
-        void t.offsetHeight; // force reflow so the snap commits before re-enable
-        t.style.transition = "opacity 140ms ease, transform 90ms ease-out";
-      } else {
-        applyTransform(e.clientX, e.clientY, rotation);
-      }
-      t.style.opacity = "1";
-      if (restTimerRef.current !== null)
-        window.clearTimeout(restTimerRef.current);
-      const rx = e.clientX;
-      const ry = e.clientY;
-      restTimerRef.current = window.setTimeout(
-        () => applyTransform(rx, ry, 0),
-        120
-      );
-    },
-    [applyTransform]
-  );
-
-  const onCursorLeave = useCallback(() => {
-    const t = previewRef.current;
-    if (t) t.style.opacity = "0";
-    lastClientXRef.current = null;
-    if (restTimerRef.current !== null) {
-      window.clearTimeout(restTimerRef.current);
-      restTimerRef.current = null;
+  // Flat library — feeds similar-hops cosine lookups in the preview.
+  const flatLibrary = useMemo<HopPreset[]>(() => {
+    const out: HopPreset[] = [];
+    for (const group of presetsGrouped) {
+      for (const p of group.items) out.push(p);
     }
-  }, []);
+    return out;
+  }, [presetsGrouped]);
 
-  // Clear the preview when the modal closes so it doesn't linger.
+  // Shared hover hook — short dwell + cursor-right placement so the
+  // panel doesn't flicker through every row on a quick sweep, but
+  // still feels responsive when comparing two adjacent rows. Builder
+  // rows use the longer default dwell + anchored-above placement so
+  // the hovered row stays visible.
+  const { portal: previewPortal, getTriggerProps, clear: clearPreview } =
+    useHopHoverPreview(flatLibrary, {
+      showDelay: 650,
+      placement: "cursor-right",
+    });
+
   useEffect(() => {
-    if (!isOpen) {
-      setHoveredPreset(null);
-      onCursorLeave();
-    }
-  }, [isOpen, onCursorLeave]);
+    if (!isOpen) clearPreview();
+  }, [isOpen, clearPreview]);
 
   const filteredGrouped = useMemo(() => {
-    const q = searchQuery.toLowerCase();
     return presetsGrouped
       .map((group) => ({
         ...group,
         items: group.items.filter((p) => {
-          if (q && !p.name.toLowerCase().includes(q)) return false;
+          if (!fuzzyIncludes(searchQuery, p.name, group.label)) return false;
           if (activeFilters.purposes.length) {
             if (!activeFilters.purposes.includes(purposeOf(p))) return false;
           }
@@ -276,7 +212,7 @@ export default function HopPresetModal({
       {/* Search + filter toggle */}
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
           display: "flex",
           flexDirection: "column",
@@ -391,12 +327,7 @@ export default function HopPresetModal({
                       key={`${group.label}-${preset.name}`}
                       preset={preset}
                       onClick={() => handleSelect(preset)}
-                      onHoverStart={(p) => setHoveredPreset(p)}
-                      onCursorMove={onCursorMove}
-                      onHoverEnd={() => {
-                        setHoveredPreset(null);
-                        onCursorLeave();
-                      }}
+                      hoverProps={getTriggerProps(preset)}
                     />
                   ))}
                 </div>
@@ -422,197 +353,8 @@ export default function HopPresetModal({
         </HSButton>
       </HSModalFooter>
     </HSModal>
-    {isOpen && typeof document !== "undefined"
-      ? createPortal(
-          // Wrap in .hs-theme so the CSS custom properties (var(--hs-paper)
-          // etc.) cascade into the portal. Otherwise the preview can read as
-          // transparent on screens where the theme class lives on a deeper
-          // element than the portal target.
-          <div
-            className="hs-theme"
-            ref={previewRef}
-            role="tooltip"
-            aria-hidden={hoveredPreset === null}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: 188,
-              zIndex: 1000,
-              pointerEvents: "none",
-              opacity: 0,
-              transition: "opacity 140ms ease, transform 90ms ease-out",
-              background: "#f8f3dc",
-              backgroundColor: "var(--hs-paper, #f8f3dc)",
-              border: `2px solid ${hsTokens.ink}`,
-              borderRadius: 10,
-              boxShadow: hsTokens.sh3,
-              padding: 10,
-            }}
-          >
-            {hoveredPreset?.flavor ? (
-              <PreviewBody preset={hoveredPreset} />
-            ) : null}
-          </div>,
-          document.body
-        )
-      : null}
+    {isOpen ? previewPortal : null}
     </>
-  );
-}
-
-/** Inner content of the cursor-follow preview — name header + mini radar. */
-function PreviewBody({ preset }: { preset: HopPreset }) {
-  if (!preset.flavor) return null;
-  const dom = dominantFlavor(preset);
-  const accentColor = dom ? FLAVOR_COLOR[dom] : hsTokens.hops;
-  return (
-    <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          marginBottom: 4,
-          paddingBottom: 4,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
-        }}
-      >
-        <span
-          aria-hidden
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: accentColor,
-            border: `1px solid ${hsTokens.ink}`,
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 12,
-            color: hsTokens.ink,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {preset.name}
-        </span>
-      </div>
-      <PresetMiniRadar flavor={preset.flavor} color={accentColor} />
-    </>
-  );
-}
-
-/** Single-flavor 9-axis polygon, designed for the modal hover preview.
- *  Smaller + simpler than HopSection's main radar; no hover tooltips. */
-function PresetMiniRadar({
-  flavor,
-  color,
-}: {
-  flavor: HopFlavorProfile;
-  color: string;
-}) {
-  const size = 150;
-  const max = 5;
-  const pad = 22;
-  const radius = size / 2 - pad;
-  const cx = size / 2;
-  const cy = size / 2;
-  const axes = HOP_FLAVOR_KEYS.length;
-
-  const pointAt = (i: number, value: number) => {
-    const angle = (Math.PI * 2 * i) / axes - Math.PI / 2;
-    const r = (value / max) * radius;
-    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
-  };
-
-  const labelAt = (i: number) => {
-    const angle = (Math.PI * 2 * i) / axes - Math.PI / 2;
-    const r = radius + 10;
-    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
-  };
-
-  const ringPoints = (mult: number) =>
-    HOP_FLAVOR_KEYS.map((_, i) => {
-      const angle = (Math.PI * 2 * i) / axes - Math.PI / 2;
-      const r = radius * mult;
-      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
-    }).join(" ");
-
-  const polyPoints = HOP_FLAVOR_KEYS.map((k, i) =>
-    pointAt(i, flavor[k] ?? 0).join(",")
-  ).join(" ");
-
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      width="100%"
-      height="auto"
-      preserveAspectRatio="xMidYMid meet"
-      style={{ display: "block", margin: "0 auto" }}
-      aria-hidden
-    >
-      {[0.5, 1].map((m) => (
-        <polygon
-          key={m}
-          points={ringPoints(m)}
-          fill="none"
-          stroke="var(--hs-ink)"
-          strokeWidth={0.4}
-          opacity={m === 1 ? 0.3 : 0.18}
-        />
-      ))}
-      {HOP_FLAVOR_KEYS.map((k, i) => {
-        const [x, y] = pointAt(i, max);
-        return (
-          <line
-            key={k}
-            x1={cx}
-            y1={cy}
-            x2={x}
-            y2={y}
-            stroke="var(--hs-ink)"
-            strokeWidth={0.25}
-            opacity={0.2}
-          />
-        );
-      })}
-      <polygon
-        points={polyPoints}
-        fill={color}
-        fillOpacity={0.32}
-        stroke={color}
-        strokeWidth={1.4}
-        strokeLinejoin="round"
-      />
-      {HOP_FLAVOR_KEYS.map((k, i) => {
-        const [lx, ly] = labelAt(i);
-        return (
-          <text
-            key={`label-${k}`}
-            x={lx}
-            y={ly}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            style={{
-              fontFamily: hsTokens.body,
-              fontWeight: 700,
-              fontSize: 6,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              fill: FLAVOR_COLOR[k as FlavorFilter] ?? hsTokens.muted,
-            }}
-          >
-            {FLAVOR_LABEL[k as FlavorFilter]?.split(" ")[0] ?? k}
-          </text>
-        );
-      })}
-    </svg>
   );
 }
 
@@ -803,15 +545,15 @@ function GroupHeader({ label }: { label: string }) {
 function PresetRow({
   preset,
   onClick,
-  onHoverStart,
-  onCursorMove,
-  onHoverEnd,
+  hoverProps,
 }: {
   preset: HopPreset;
   onClick: () => void;
-  onHoverStart?: (preset: HopPreset) => void;
-  onCursorMove?: (e: React.MouseEvent) => void;
-  onHoverEnd?: () => void;
+  hoverProps: {
+    onMouseEnter?: (e: React.MouseEvent) => void;
+    onMouseMove?: (e: React.MouseEvent) => void;
+    onMouseLeave?: () => void;
+  };
 }) {
   const purpose = purposeOf(preset);
   const dom = dominantFlavor(preset);
@@ -838,19 +580,14 @@ function PresetRow({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = hsTokens.cream2;
-        if (!preset.flavor) return;
-        onHoverStart?.(preset);
-        // Pass through the cursor-follow handler so the snap-on-first-move
-        // pattern can lock onto the initial position.
-        onCursorMove?.(e);
+        hoverProps.onMouseEnter?.(e);
       }}
       onMouseMove={(e) => {
-        if (!preset.flavor) return;
-        onCursorMove?.(e);
+        hoverProps.onMouseMove?.(e);
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "transparent";
-        onHoverEnd?.();
+        hoverProps.onMouseLeave?.();
       }}
     >
       <span

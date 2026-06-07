@@ -236,6 +236,8 @@ export type Packaging = {
 export type Recipe = {
   id: RecipeId;
   name: string;
+  /** Short attribution / tagline shown under the title (e.g., "Adapted from Brewing Classic Styles"). */
+  subtitle?: string;
 
   /** Recipe metadata */
   style?: string; // BJCP style name (e.g., "American IPA")

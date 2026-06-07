@@ -25,6 +25,8 @@ import type {
 } from "@/modules/beta-builder/domain/models/Recipe";
 import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
 import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import { inferDefaultYeastType } from "./yeastDetails";
+import { useYeastHoverPreview } from "./yeastHoverPreview";
 
 type YeastModelKey = "white-none" | "white-shaking" | "braukaiser";
 
@@ -144,17 +146,18 @@ export default function YeastSection() {
   // already handles N rows. For now everything below the ledger
   // (starter steps, pitch dashboard) operates on the first strain.
   const primary: Yeast | null = yeasts[0] ?? null;
+  const primaryPreset = primary ? presetByName.get(primary.name) ?? null : null;
   const starterInfo: StarterInfo = useMemo(
     () =>
       primary?.starter ?? {
-        yeastType: "liquid-100",
+        yeastType: inferDefaultYeastType(primaryPreset),
         packs: 1,
         mfgDate: "",
         slurryLiters: 0,
         slurryBillionPerMl: 1,
         steps: [],
       },
-    [primary]
+    [primary, primaryPreset]
   );
 
   const writeStarter = (partial: Partial<StarterInfo>) => {
@@ -163,11 +166,24 @@ export default function YeastSection() {
   };
 
   const handleSelectPreset = (preset: YeastPreset) => {
+    const inferredType = inferDefaultYeastType(preset);
     if (swapTargetId) {
+      const existing = yeasts.find((y) => y.id === swapTargetId);
+      const nextStarter: StarterInfo = existing?.starter
+        ? { ...existing.starter, yeastType: inferredType }
+        : {
+            yeastType: inferredType,
+            packs: 1,
+            mfgDate: "",
+            slurryLiters: 0,
+            slurryBillionPerMl: 1,
+            steps: [],
+          };
       updateYeast(swapTargetId, {
         name: preset.name,
         attenuation: preset.attenuationPercent ?? 0.75,
         laboratory: preset.category,
+        starter: nextStarter,
       });
     } else {
       const newYeast: Yeast = {
@@ -175,6 +191,14 @@ export default function YeastSection() {
         name: preset.name,
         attenuation: preset.attenuationPercent ?? 0.75,
         laboratory: preset.category,
+        starter: {
+          yeastType: inferredType,
+          packs: 1,
+          mfgDate: "",
+          slurryLiters: 0,
+          slurryBillionPerMl: 1,
+          steps: [],
+        },
       };
       addYeast(newYeast);
     }
@@ -197,6 +221,31 @@ export default function YeastSection() {
     setIsPickerOpen(true);
   };
 
+  // Flat library — feeds the shared hover-preview hook for peer +
+  // substitute resolution.
+  const libraryFlat = useMemo<YeastPreset[]>(
+    () => Array.from(presetByName.values()),
+    [presetByName]
+  );
+
+  // Single hover-preview instance for all strain cards in the section.
+  // Each card spreads `getTriggerProps(preset)` onto its outer div so
+  // hovering anywhere on the card surfaces the same tooltip the picker
+  // shows. Cleared imperatively when the swap modal opens so it doesn't
+  // linger behind the modal overlay.
+  const {
+    portal: hoverPortal,
+    getTriggerProps: getHoverTriggerProps,
+    clear: clearHoverPreview,
+  } = useYeastHoverPreview(libraryFlat);
+
+  // Hide the card hover preview when the swap picker opens — the cursor
+  // hasn't physically left the card boundary, so mouseLeave doesn't fire
+  // on its own and the tooltip would otherwise linger behind the modal.
+  useEffect(() => {
+    if (isPickerOpen) clearHoverPreview();
+  }, [isPickerOpen, clearHoverPreview]);
+
   const handleApplyGenerator = (gen: YeastGenerator) => {
     if (yeasts.length > 0) {
       if (
@@ -213,6 +262,14 @@ export default function YeastSection() {
       name: gen.preset.name,
       attenuation: gen.preset.attenuationPercent ?? 0.75,
       laboratory: gen.preset.category,
+      starter: {
+        yeastType: inferDefaultYeastType(gen.preset),
+        packs: 1,
+        mfgDate: "",
+        slurryLiters: 0,
+        slurryBillionPerMl: 1,
+        steps: [],
+      },
     });
   };
 
@@ -346,6 +403,9 @@ export default function YeastSection() {
                 packs={starterInfo.packs}
                 slurryLiters={starterInfo.slurryLiters ?? 0}
                 mfgDate={starterInfo.mfgDate ?? ""}
+                presetByName={presetByName}
+                recipeAbv={calculations?.abv ?? null}
+                getHoverTriggerProps={getHoverTriggerProps}
                 onSwap={handleSwapStrain}
                 onRemove={removeYeast}
                 onAttenuationChange={(id, v) => handleAttenuationCommit(id, v / 100)}
@@ -398,9 +458,20 @@ export default function YeastSection() {
         onClose={() => setIsCustomOpen(false)}
         onSave={handleSaveCustomPreset}
       />
+
+      {hoverPortal}
     </section>
   );
 }
+
+// React.MouseEvent handlers returned by useYeastHoverPreview. Pulled out
+// as a named type because both StrainLedger and StrainCard pass them
+// through unchanged — saving a verbose inline type at each call site.
+type HoverTriggerProps = {
+  onMouseEnter?: (e: React.MouseEvent) => void;
+  onMouseMove?: (e: React.MouseEvent) => void;
+  onMouseLeave?: () => void;
+};
 
 // ─── Outer frame ──────────────────────────────────────────────────
 
@@ -613,6 +684,9 @@ function StrainLedger({
   packs,
   slurryLiters,
   mfgDate,
+  presetByName,
+  recipeAbv,
+  getHoverTriggerProps,
   onSwap,
   onRemove,
   onAttenuationChange,
@@ -628,6 +702,11 @@ function StrainLedger({
   packs: number;
   slurryLiters: number;
   mfgDate: string;
+  presetByName: Map<string, YeastPreset>;
+  recipeAbv: number | null;
+  getHoverTriggerProps: (
+    preset: YeastPreset | null | undefined
+  ) => HoverTriggerProps;
   onSwap: (id: string) => void;
   onRemove: (id: string) => void;
   onAttenuationChange: (id: string, v: number) => void;
@@ -662,6 +741,9 @@ function StrainLedger({
                 packs={packs}
                 slurryLiters={slurryLiters}
                 mfgDate={mfgDate}
+                preset={presetByName.get(r.yeast.name) ?? null}
+                recipeAbv={recipeAbv}
+                hoverProps={getHoverTriggerProps(presetByName.get(r.yeast.name))}
                 onSwap={() => onSwap(r.yeast.id)}
                 onRemove={() => onRemove(r.yeast.id)}
                 onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}
@@ -853,6 +935,9 @@ function StrainCard({
   packs,
   slurryLiters,
   mfgDate,
+  preset,
+  recipeAbv,
+  hoverProps,
   onSwap,
   onRemove,
   onAttenuationChange,
@@ -869,6 +954,9 @@ function StrainCard({
   packs: number;
   slurryLiters: number;
   mfgDate: string;
+  preset: YeastPreset | null;
+  recipeAbv: number | null;
+  hoverProps: HoverTriggerProps;
   onSwap: () => void;
   onRemove: () => void;
   onAttenuationChange: (v: number) => void;
@@ -878,6 +966,32 @@ function StrainCard({
   onTypeChange: (next: YeastType) => void;
   onMfgDateChange: (v: string) => void;
 }) {
+  // Alcohol-tolerance flag — surfaces when the recipe's estimated ABV
+  // approaches or exceeds the strain's published tolerance, i.e. when
+  // we're at risk of a stuck ferment. Two bands:
+  //  • "approaching" — within 1% below tolerance (honey, soft alert)
+  //  • "exceeds"     — at/above tolerance (roast, stronger alert)
+  // Brewer can still ship it; we just nudge. Rendered inline beneath
+  // the lab caption so it stays visible without hover.
+  const abvFlag: AbvFlag | null = useMemo(() => {
+    if (recipeAbv == null || !preset?.alcoholTolerance) return null;
+    const tol = preset.alcoholTolerance;
+    if (recipeAbv >= tol) {
+      return {
+        kind: "exceeds",
+        label: `${recipeAbv.toFixed(1)}% ABV · over ${Math.round(tol)}% max`,
+        title: `${preset.name} tops out around ${Math.round(tol)}% ABV — your recipe is estimated at ${recipeAbv.toFixed(1)}%. Stuck-fermentation risk.`,
+      };
+    }
+    if (tol - recipeAbv <= 1) {
+      return {
+        kind: "approaching",
+        label: `${recipeAbv.toFixed(1)}% ABV · near ${Math.round(tol)}% max`,
+        title: `${preset.name} tops out around ${Math.round(tol)}% ABV — your recipe is estimated at ${recipeAbv.toFixed(1)}%. Watch for sluggish finish.`,
+      };
+    }
+    return null;
+  }, [recipeAbv, preset]);
   // The yeast-type cycle only applies to the primary strain — multi-
   // strain blends share one set of source fields at the section level.
   const isPrimary = index === 0;
@@ -892,7 +1006,7 @@ function StrainCard({
   const packsStep = yeastType === "slurry" ? 0.1 : 1;
 
   return (
-    <div className="hs-yeast-strain-card">
+    <div className="hs-yeast-strain-card" {...hoverProps}>
       {/* Lab favicon badge (click → swap strain) — enlarged from 36→44
           to match the card scale. */}
       <div
@@ -981,6 +1095,11 @@ function StrainCard({
           >
             {row.yeast.laboratory}
           </span>
+        ) : null}
+        {abvFlag ? (
+          <div style={{ marginTop: 5 }}>
+            <StrainAbvChip flag={abvFlag} />
+          </div>
         ) : null}
       </div>
 
@@ -1100,7 +1219,67 @@ function StrainCard({
           </svg>
         </IconBtn>
       </div>
+
     </div>
+  );
+}
+
+// ─── ABV-tolerance chip (rendered inline under the lab caption) ──────
+
+type AbvFlag = {
+  kind: "approaching" | "exceeds";
+  label: string;
+  title: string;
+};
+
+/**
+ * Alcohol-tolerance flag — surfaces when the recipe's estimated ABV
+ * approaches or exceeds the strain's published tolerance. Two tones:
+ * honey for "approaching" (cautionary), roast for "exceeds" (warning).
+ * Brewer can override by overpitching, picking a higher-tol strain, or
+ * lowering OG; we just nudge.
+ */
+function StrainAbvChip({ flag }: { flag: AbvFlag }) {
+  const exceeds = flag.kind === "exceeds";
+  const accent = exceeds ? hsTokens.roast : hsTokens.honey;
+  return (
+    <span
+      title={flag.title}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "3px 10px",
+        background: `color-mix(in srgb, ${hsTokens.paper} 78%, ${accent} 18%)`,
+        border: `1.5px solid ${accent}`,
+        borderRadius: 999,
+        fontFamily: hsTokens.body,
+        flexShrink: 0,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          display: "inline-block",
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: accent,
+          border: `1px solid ${hsTokens.ink}`,
+        }}
+      />
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: hsTokens.ink,
+          letterSpacing: "0.01em",
+        }}
+      >
+        {flag.label}
+      </span>
+    </span>
   );
 }
 
@@ -2586,22 +2765,32 @@ function YeastSectionStyles() {
 export function YeastHelperCard() {
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const calculations = useRecipeCalculations(currentRecipe);
+  const yeastPresetsGrouped = usePresetStore((s) => s.yeastPresetsGrouped);
   const yeasts = useMemo(
     () => currentRecipe?.yeasts ?? [],
     [currentRecipe?.yeasts]
   );
   const primary: Yeast | null = yeasts[0] ?? null;
+  // Look up the primary strain's preset so the starter-type fallback
+  // can mirror form/category instead of always assuming liquid-100.
+  const primaryPreset = useMemo<YeastPreset | null>(() => {
+    if (!primary) return null;
+    for (const group of yeastPresetsGrouped) {
+      for (const p of group.items) if (p.name === primary.name) return p;
+    }
+    return null;
+  }, [primary, yeastPresetsGrouped]);
   const starterInfo: StarterInfo = useMemo(
     () =>
       primary?.starter ?? {
-        yeastType: "liquid-100",
+        yeastType: inferDefaultYeastType(primaryPreset),
         packs: 1,
         mfgDate: "",
         slurryLiters: 0,
         slurryBillionPerMl: 1,
         steps: [],
       },
-    [primary]
+    [primary, primaryPreset]
   );
   const starterResults = useMemo(() => {
     if (!currentRecipe) return null;

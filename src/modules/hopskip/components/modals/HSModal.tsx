@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, LazyMotion, domMax, m } from "framer-motion";
 
 import { hsTokens } from "../../tokens";
+import { easeStandard, springSupersoft } from "../../motion";
 
 interface Props {
   isOpen: boolean;
@@ -28,14 +30,19 @@ const SIZE_MAX_WIDTH: Record<NonNullable<Props["size"]>, number> = {
   "3xl": 1040,
 };
 
+// Captured from the most recent pointerdown — usually the "add ingredient"
+// button click — so the dialog can scale out of / collapse back into that
+// exact point.
 let lastPointerX = 0;
 let lastPointerY = 0;
+let hasCapturedPointer = false;
 if (typeof window !== "undefined") {
   document.addEventListener(
     "pointerdown",
     (e) => {
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
+      hasCapturedPointer = true;
     },
     true
   );
@@ -67,17 +74,28 @@ export default function HSModal({
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const generatedId = useId();
   const dialogLabelId = labelledById ?? `hs-modal-label-${generatedId}`;
-  const [originStyle, setOriginStyle] = useState<CSSProperties>({});
 
-  useEffect(() => {
-    if (!isOpen) return;
+  // Capture the click origin synchronously on the rising edge of isOpen so the
+  // very first paint already has transform-origin pointing at the button. A
+  // ref + render-time check beats useEffect here — useEffect lands a frame
+  // late, so the scale-in would briefly anchor at center then snap to button.
+  // We freeze the origin for the whole open/close cycle: re-using it on close
+  // means the dialog collapses back to the same button it grew out of (a
+  // drawer-like motion) rather than flying off to a backdrop-click point.
+  const enterOriginRef = useRef<CSSProperties>({});
+  const wasOpenRef = useRef(false);
+  if (isOpen && !wasOpenRef.current && typeof window !== "undefined") {
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
-    setOriginStyle({
-      "--hs-modal-dx": `${lastPointerX - cx}px`,
-      "--hs-modal-dy": `${lastPointerY - cy}px`,
-    } as CSSProperties);
-  }, [isOpen]);
+    // If no pointer has ever been captured (modal opened via keyboard on page
+    // load), fall back to center so it just scales in place.
+    const ox = hasCapturedPointer ? lastPointerX - cx : 0;
+    const oy = hasCapturedPointer ? lastPointerY - cy : 0;
+    enterOriginRef.current = {
+      transformOrigin: `calc(50% + ${ox}px) calc(50% + ${oy}px)`,
+    };
+  }
+  wasOpenRef.current = isOpen;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -142,7 +160,7 @@ export default function HSModal({
     }
   }, [isOpen]);
 
-  if (!isOpen || typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
 
   const maxWidth = SIZE_MAX_WIDTH[size];
 
@@ -150,73 +168,73 @@ export default function HSModal({
     if (closeOnBackdropClick) onClose();
   };
 
+  // Exit uses the calm standard tween (per motion philosophy: "exits use the
+  // standard easeOut"). Entrance uses springSoft to match the grain-bar
+  // visualizer's bouncy settle.
+  const exitTween = { duration: 0.2, ease: easeStandard } as const;
+
   return createPortal(
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      className="hs-theme"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 60,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        backgroundColor: "rgba(10, 8, 6, 0.45)",
-        backdropFilter: "blur(2px)",
-        animation: "hs-modal-backdrop-in 280ms cubic-bezier(0.32, 0.72, 0, 1) both",
-      }}
-      onClick={handleBackdropClick}
-    >
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={dialogLabelId}
-        aria-describedby={describedById}
-        tabIndex={-1}
-        style={
-          {
-            position: "relative",
-            background: hsTokens.paper,
-            color: hsTokens.ink,
-            border: `2px solid ${hsTokens.ink}`,
-            borderTop: `7px solid ${accent}`,
-            borderRadius: 14,
-            boxShadow: hsTokens.sh4,
-            width: "100%",
-            maxWidth,
-            maxHeight: "90vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            animation: "hs-modal-scale-in 320ms cubic-bezier(0.32, 0.72, 0, 1) both",
-            ...originStyle,
-          } as CSSProperties
-        }
-        onClick={(e) => e.stopPropagation()}
-      >
-        <span id={dialogLabelId} hidden />
-        {children}
-      </div>
-      <style>{`
-        @keyframes hs-modal-backdrop-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes hs-modal-scale-in {
-          from {
-            opacity: 0;
-            transform: translate(var(--hs-modal-dx, 0px), var(--hs-modal-dy, 0px)) scale(0.85);
-          }
-          to {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-        }
-      `}</style>
-    </div>,
+    <LazyMotion features={domMax} strict>
+      <AnimatePresence>
+        {isOpen ? (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <m.div
+            key="hs-modal-overlay"
+            className="hs-theme"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: exitTween }}
+            transition={{ duration: 0.24, ease: easeStandard }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 60,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              backgroundColor: "rgba(10, 8, 6, 0.45)",
+              backdropFilter: "blur(2px)",
+            }}
+            onClick={handleBackdropClick}
+          >
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
+            <m.div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={dialogLabelId}
+              aria-describedby={describedById}
+              tabIndex={-1}
+              initial={{ opacity: 0.6, scale: 0.55 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.55, transition: exitTween }}
+              transition={springSupersoft}
+              style={{
+                position: "relative",
+                background: hsTokens.paper,
+                color: hsTokens.ink,
+                border: `2px solid ${hsTokens.ink}`,
+                borderTop: `7px solid ${accent}`,
+                borderRadius: 14,
+                boxShadow: hsTokens.sh4,
+                width: "100%",
+                maxWidth,
+                maxHeight: "90vh",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                ...enterOriginRef.current,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span id={dialogLabelId} hidden />
+              {children}
+            </m.div>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
+    </LazyMotion>,
     document.body
   );
 }

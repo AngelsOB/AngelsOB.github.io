@@ -79,6 +79,22 @@ export default function CreditsPage() {
           </p>
         </Section>
 
+        <Section title="Yeast strain matching">
+          <p>
+            The &ldquo;same strain, other labs&rdquo; groupings and substitute
+            suggestions are built from the homebrew community&apos;s
+            strain-equivalence work &mdash; dmtaylor&apos;s Yeast Master chart,
+            the suregork genome analysis, and the Mr. Malty strain chart &mdash;
+            informed by published brewing-yeast genomics (Gallone et al., 2016).
+          </p>
+          <p>
+            We compiled these into our own dataset. Honest caveat: which
+            commercial products are genetically &ldquo;the same strain&rdquo; is
+            partly inference, not lab-verified identity, so treat substitutes as
+            well-informed suggestions, not certainties.
+          </p>
+        </Section>
+
         <Section title="Built with">
           <p>
             Brewing.It runs on Next.js, React, and Firebase, plus a pile of other

@@ -55,6 +55,16 @@ Escarpment Labs, White Labs, Wyeast, Fermentis/Lallemand, Imperial Yeast, Omega
 Yeast, and Mangrove Jack's. We reproduce only the factual specs, not the
 producers' written descriptions.
 
+### Yeast strain matching
+
+The "same strain, other labs" groupings and substitute suggestions are built
+from the homebrew community's strain-equivalence work — dmtaylor's Yeast Master
+chart, the suregork (Kristoffer Krogerus) genome analysis, and the Mr. Malty
+strain chart — informed by published brewing-yeast genomics (Gallone et al.,
+2016). We compiled these into our own dataset. Honest caveat: which commercial
+products are genetically "the same strain" is partly inference, not lab-verified
+identity, so treat substitutes as well-informed suggestions, not certainties.
+
 ## Built with
 
 Brewing.It runs on Next.js, React, and Firebase, plus many other open-source

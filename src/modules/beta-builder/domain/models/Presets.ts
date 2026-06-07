@@ -41,11 +41,23 @@ export type HopFlavorProfile = {
   resinPine: number;
 };
 
+// NOTE: keep this in sync with the HopPreset in src/utils/presets.ts (the data source).
 export type HopPreset = {
   name: string;
   alphaAcidPercent: number;
+  // Alpha/beta acid ranges + oil chemistry from grower data (kasperg3, MIT).
+  alphaLow?: number;
+  alphaHigh?: number;
+  betaAcidPercent?: number;
+  betaLow?: number;
+  betaHigh?: number;
+  oilTotalMlPer100g?: number;
+  cohumulonePercent?: number;
+  originCode?: string; // ISO-3166-1 alpha-2 (e.g., US, DE, NZ)
   category?: string; // "US Hops", "Noble Hops", "New Zealand Hops", etc.
   flavor?: HopFlavorProfile;
+  flavorSource?: "curated" | "derived"; // provenance of the flavor vector
+  flavorConfidence?: "curated" | "high" | "low";
   notes?: string;
 };
 

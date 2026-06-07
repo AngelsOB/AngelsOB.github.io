@@ -300,6 +300,7 @@ export default function MyRecentRecipes({
               key={r.id}
               href={openHref}
               name={r.name ?? ""}
+              subtitle={r.subtitle}
               style={r.style ?? ""}
               // Shift the tilt index by 1 so the new-tile sits in slot 0's tilt
               // and the recipes get the rest of the rotation pattern.

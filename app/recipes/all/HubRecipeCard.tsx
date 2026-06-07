@@ -14,6 +14,7 @@ import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 interface Props {
   href: string;
   name: string;
+  subtitle?: string;
   style: string;
   stats: {
     abv?: number;
@@ -43,6 +44,7 @@ interface Props {
 export default function HubRecipeCard({
   href,
   name,
+  subtitle,
   style,
   stats,
   ownerName,
@@ -77,6 +79,22 @@ export default function HubRecipeCard({
           >
             {name || "Untitled recipe"}
           </div>
+          {subtitle ? (
+            <div
+              style={{
+                fontFamily: hsTokens.script,
+                fontSize: 17,
+                lineHeight: 1.1,
+                color: hsTokens.muted,
+                marginTop: 2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {subtitle}
+            </div>
+          ) : null}
           {style ? (
             <div
               style={{
@@ -392,6 +410,7 @@ export function HubRecipeCardGrid({ children }: { children: React.ReactNode }) {
         display: "grid",
         gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
         gap: 20,
+        alignItems: "start",
       }}
     >
       {children}

@@ -117,6 +117,20 @@ export const springSoft = {
   duration: 0.42,
 } as const;
 
+/**
+ * Supersoft spring. A notch less bounce and a touch quicker than
+ * `springSoft` — still alive with a bit of play, but the overshoot
+ * doesn't read as kinetic. Use for large surfaces appearing (modal
+ * dialogs, sheets, panels) where `springSoft`'s bounce feels too punchy
+ * but a flat tween would feel dead. Tuned to settle just past 1 and
+ * land without a second wobble.
+ */
+export const springSupersoft = {
+  type: "spring" as const,
+  bounce: 0.22,
+  duration: 0.32,
+} as const;
+
 // ─── Tweens ────────────────────────────────────────────────────────
 
 /**

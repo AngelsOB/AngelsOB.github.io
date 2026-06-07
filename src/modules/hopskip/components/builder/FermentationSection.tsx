@@ -28,6 +28,7 @@ import HSActionMenu from "../HSActionMenu";
 import FermentationStepModal from "../modals/FermentationStepModal";
 
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
+import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
 import { uid } from "@/utils/uid";
 import { packagingCalculationService as pkgCalc } from "@/modules/beta-builder/domain/services/PackagingCalculationService";
 import type {
@@ -37,6 +38,21 @@ import type {
   PackagingMethod,
   PrimingSugarType,
 } from "@/modules/beta-builder/domain/models/Recipe";
+import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
+
+// Step types where the strain's published temperature range is meaningful.
+// Cold-crash + conditioning/lagering are intentionally below the range
+// (we're dropping yeast out, not fermenting), so warning there is noise.
+const ACTIVE_FERMENT_TYPES: ReadonlySet<FermentationStepType> = new Set([
+  "primary",
+  "secondary",
+  "diacetyl-rest",
+]);
+
+export type StrainTempRange = {
+  minC: number;
+  maxC: number;
+};
 
 // Defaults used when the recipe hasn't explicitly configured `packaging` yet.
 // Mirrors classic `PackagingSection.tsx` DEFAULT_PACKAGING but trimmed to the
@@ -107,6 +123,7 @@ interface Generator {
 export default function FermentationSection() {
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
   const updateRecipe = useRecipeStore((s) => s.updateRecipe);
+  const yeastPresetsGrouped = usePresetStore((s) => s.yeastPresetsGrouped);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStep, setEditingStep] = useState<FermentationStep | null>(null);
@@ -115,6 +132,28 @@ export default function FermentationSection() {
     () => currentRecipe?.fermentationSteps ?? [],
     [currentRecipe?.fermentationSteps]
   );
+
+  // Pull the primary strain's published temp range so the schedule can
+  // surface it ("strain likes 16–22°C") and flag any active-fermentation
+  // step that lands outside it. Falls back to null when no strain is
+  // pitched or the strain isn't carried in our enriched library.
+  const primaryYeast = currentRecipe?.yeasts?.[0] ?? null;
+  const primaryPreset = useMemo<YeastPreset | null>(() => {
+    if (!primaryYeast) return null;
+    for (const group of yeastPresetsGrouped) {
+      for (const p of group.items) {
+        if (p.name === primaryYeast.name) return p;
+      }
+    }
+    return null;
+  }, [primaryYeast, yeastPresetsGrouped]);
+
+  const strainTempRange = useMemo<StrainTempRange | null>(() => {
+    if (!primaryPreset) return null;
+    const { tempMinC, tempMaxC } = primaryPreset;
+    if (tempMinC == null || tempMaxC == null) return null;
+    return { minC: tempMinC, maxC: tempMaxC };
+  }, [primaryPreset]);
 
   const derived = useMemo<StepDerived[]>(() => {
     let cumulative = 0;
@@ -293,11 +332,20 @@ export default function FermentationSection() {
           <BlockEyebrow
             label="The fermentation schedule"
             hint={derived.length > 0 ? "drag to reorder" : null}
-            meta={
-              derived.length > 0
-                ? `${derived.length} ${derived.length === 1 ? "step" : "steps"} · ${totalDays} ${totalDays === 1 ? "day" : "days"}`
-                : null
-            }
+            meta={(() => {
+              const parts: string[] = [];
+              if (derived.length > 0) {
+                parts.push(
+                  `${derived.length} ${derived.length === 1 ? "step" : "steps"} · ${totalDays} ${totalDays === 1 ? "day" : "days"}`
+                );
+              }
+              if (strainTempRange) {
+                parts.push(
+                  `strain likes ${Math.round(strainTempRange.minC)}–${Math.round(strainTempRange.maxC)}°C`
+                );
+              }
+              return parts.length > 0 ? parts.join(" · ") : null;
+            })()}
             right={
               derived.length > 0 ? (
                 <BlockHeaderActions>
@@ -338,6 +386,7 @@ export default function FermentationSection() {
             ) : (
               <Ledger
                 derived={derived}
+                strainTempRange={strainTempRange}
                 onEditStep={handleOpenEdit}
                 onRemoveStep={handleRemove}
                 onTempChange={handleTempChange}
@@ -604,6 +653,7 @@ const LEDGER_COLS = "44px minmax(0, 1.5fr) 116px 116px 40px";
 
 function Ledger({
   derived,
+  strainTempRange,
   onEditStep,
   onRemoveStep,
   onTempChange,
@@ -614,6 +664,7 @@ function Ledger({
   onAdd,
 }: {
   derived: StepDerived[];
+  strainTempRange: StrainTempRange | null;
   onEditStep: (step: FermentationStep) => void;
   onRemoveStep: (id: string) => void;
   onTempChange: (id: string, v: number) => void;
@@ -670,6 +721,7 @@ function Ledger({
               index={i}
               isLast={i === derived.length - 1}
               isOnlyOne={derived.length === 1}
+              strainTempRange={strainTempRange}
               onEdit={() => onEditStep(d.step)}
               onRemove={() => onRemoveStep(d.step.id)}
               onTempChange={(v) => onTempChange(d.step.id, v)}
@@ -727,6 +779,7 @@ function LedgerRow({
   index,
   isLast,
   isOnlyOne,
+  strainTempRange,
   onEdit,
   onRemove,
   onTempChange,
@@ -738,6 +791,7 @@ function LedgerRow({
   index: number;
   isLast: boolean;
   isOnlyOne: boolean;
+  strainTempRange: StrainTempRange | null;
   onEdit: () => void;
   onRemove: () => void;
   onTempChange: (v: number) => void;
@@ -746,6 +800,22 @@ function LedgerRow({
   onDurationNudge: (dir: 1 | -1) => void;
 }) {
   const dark = badgeIsDark(d.step.type);
+  // Only flag steps where the brewer is trying to ferment — cold-crash
+  // and lagering are intentionally outside the strain's active range.
+  const tempWarning = (() => {
+    if (!strainTempRange) return null;
+    if (!ACTIVE_FERMENT_TYPES.has(d.step.type)) return null;
+    const t = d.step.temperatureC;
+    if (t > strainTempRange.maxC) {
+      const over = t - strainTempRange.maxC;
+      return `${over.toFixed(1)}°C over strain max`;
+    }
+    if (t < strainTempRange.minC) {
+      const under = strainTempRange.minC - t;
+      return `${under.toFixed(1)}°C under strain min`;
+    }
+    return null;
+  })();
   const {
     attributes,
     listeners,
@@ -857,8 +927,17 @@ function LedgerRow({
         </span>
       </div>
 
-      {/* Temp (editable) */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* Temp (editable) — optional strain-range nudge underneath when
+          this step's temp falls outside the published range. Only flags
+          active-fermentation steps (cold-crash etc. are deliberate). */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
         <EditableCell
           value={d.step.temperatureC}
           step={0.5}
@@ -870,6 +949,22 @@ function LedgerRow({
           onCommit={onTempChange}
           onNudge={onTempNudge}
         />
+        {tempWarning ? (
+          <span
+            className="hs-fermentation-temp-warn"
+            title={`Strain prefers ${Math.round(strainTempRange!.minC)}–${Math.round(strainTempRange!.maxC)}°C`}
+            style={{
+              fontFamily: hsTokens.script,
+              fontSize: 13,
+              lineHeight: 1.1,
+              color: hsTokens.roast,
+              transform: "rotate(-1.5deg)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {tempWarning}
+          </span>
+        ) : null}
       </div>
 
       {/* Duration (editable) */}

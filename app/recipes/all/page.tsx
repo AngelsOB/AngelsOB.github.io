@@ -20,6 +20,7 @@ export const revalidate = 3600;
 interface CommunityPreview {
   id: string;
   name: string;
+  subtitle?: string;
   style: string;
   ownerName: string;
   shareSlug: string;
@@ -40,6 +41,7 @@ async function loadCommunityPreview(): Promise<CommunityPreview[]> {
       return {
         id: doc.id,
         name: (d.name as string) || "Untitled Recipe",
+        subtitle: (d.subtitle as string | undefined) ?? undefined,
         style: (d.style as string) || "",
         ownerName: (d.ownerName as string) || "Anonymous Brewer",
         shareSlug: (d.shareSlug as string) || doc.id,

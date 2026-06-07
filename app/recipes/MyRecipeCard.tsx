@@ -141,6 +141,22 @@ export default function MyRecipeCard({
           >
             {recipe.name || "Untitled recipe"}
           </div>
+          {recipe.subtitle ? (
+            <div
+              style={{
+                fontFamily: hsTokens.script,
+                fontSize: 17,
+                lineHeight: 1.1,
+                color: hsTokens.muted,
+                marginTop: 2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {recipe.subtitle}
+            </div>
+          ) : null}
           <div
             style={{
               fontStyle: "italic",

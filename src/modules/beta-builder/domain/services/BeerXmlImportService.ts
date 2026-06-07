@@ -1,6 +1,23 @@
-import type { Recipe, Fermentable, Hop, MashStep, FermentationStep, Yeast, OtherIngredient, OtherIngredientCategory } from '../models/Recipe';
-import { uid } from "@/utils/uid";
+import type {
+  Recipe,
+  Fermentable,
+  Hop,
+  MashStep,
+  FermentationStep,
+  Yeast,
+  OtherIngredient,
+  OtherIngredientCategory,
+} from '../models/Recipe';
+import { uid } from '@/utils/uid';
 import { hopEnrichmentService } from './HopEnrichmentService';
+import {
+  matchHop,
+  matchGrain,
+  matchYeast,
+  type MatchCandidate,
+} from '@/utils/ingredientMatching';
+import { matchBjcpStyle, bjcpCodeFromParts, type BjcpStyleHit } from '@/utils/bjcpMatching';
+import type { HopPreset, GrainPreset, YeastPreset } from '@/utils/presets';
 
 const text = (parent: Element | null, tag: string): string | undefined => {
   const el = parent?.getElementsByTagName(tag)?.[0];
@@ -12,6 +29,15 @@ const toNumber = (value: string | undefined): number | undefined => {
   if (value == null) return undefined;
   const n = Number(value);
   return Number.isFinite(n) ? n : undefined;
+};
+
+// Strip precision artifacts from BeerXML floats (some exporters round-trip
+// through SRM↔Lovibond / alpha-as-fraction conversions and emit values like
+// 4.5685179°L). We keep one decimal of meaningful precision.
+const roundTo = (n: number | undefined, decimals: number): number | undefined => {
+  if (n == null || !Number.isFinite(n)) return undefined;
+  const f = Math.pow(10, decimals);
+  return Math.round(n * f) / f;
 };
 
 const alphaToPercent = (alphaRaw: number | undefined): number | undefined => {
@@ -29,8 +55,60 @@ const yieldToPpg = (yieldPercent: number | undefined): number | undefined => {
   return Math.round((yieldPercent / 100) * 46);
 };
 
+// ---------- Match result types surfaced to the UI ----------
+
+export type PendingHopMatch = {
+  kind: 'hop';
+  ingredientId: string;
+  imported: string;
+  best: MatchCandidate<HopPreset> | null;
+  candidates: MatchCandidate<HopPreset>[];
+  reason?: string;
+};
+export type PendingGrainMatch = {
+  kind: 'grain';
+  ingredientId: string;
+  imported: string;
+  best: MatchCandidate<GrainPreset> | null;
+  candidates: MatchCandidate<GrainPreset>[];
+  reason?: string;
+};
+export type PendingYeastMatch = {
+  kind: 'yeast';
+  ingredientId: string;
+  imported: string;
+  best: MatchCandidate<YeastPreset> | null;
+  candidates: MatchCandidate<YeastPreset>[];
+  reason?: string;
+};
+export type PendingStyleMatch = {
+  kind: 'style';
+  imported: string;
+  best: MatchCandidate<BjcpStyleHit> | null;
+  candidates: MatchCandidate<BjcpStyleHit>[];
+  reason?: string;
+};
+
+export type PendingMatch =
+  | PendingHopMatch
+  | PendingGrainMatch
+  | PendingYeastMatch
+  | PendingStyleMatch;
+
+export type BeerXmlImportResult = {
+  recipe: Recipe;
+  pendingMatches: PendingMatch[];
+};
+
+/** Resolutions returned by the review UI back to the import committer. */
+export type MatchResolution =
+  | { kind: 'hop'; ingredientId: string; presetName?: string }
+  | { kind: 'grain'; ingredientId: string; presetName?: string }
+  | { kind: 'yeast'; ingredientId: string; presetName?: string }
+  | { kind: 'style'; canonical?: string };
+
 class BeerXmlImportService {
-  parse(xml: string): Recipe {
+  parse(xml: string): BeerXmlImportResult {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, 'text/xml');
     const recipeEl = doc.getElementsByTagName('RECIPE')?.[0];
@@ -40,11 +118,31 @@ class BeerXmlImportService {
 
     const now = new Date().toISOString();
     const name = text(recipeEl, 'NAME') || 'Imported BeerXML';
-    const styleName = text(recipeEl, 'STYLE') ? text(recipeEl.getElementsByTagName('STYLE')[0], 'NAME') : undefined;
 
-    // BeerXML BATCH_SIZE = into-fermenter volume; our batchVolumeL = final packaged volume.
-    // We can't derive fermenter loss from BeerXML (no packaged-volume field), so we pass
-    // the value through as-is. This overestimates by ~fermenterLossLiters (default 0.5L).
+    // Style: prefer category-number + style-letter when present (most reliable).
+    const styleEl = recipeEl.getElementsByTagName('STYLE')?.[0] ?? null;
+    const styleName = styleEl ? text(styleEl, 'NAME') : undefined;
+    const styleCategoryNumber = styleEl ? text(styleEl, 'CATEGORY_NUMBER') : undefined;
+    const styleLetter = styleEl ? text(styleEl, 'STYLE_LETTER') : undefined;
+    const codeHint = bjcpCodeFromParts(styleCategoryNumber, styleLetter) ?? undefined;
+
+    const pendingMatches: PendingMatch[] = [];
+    let resolvedStyle: string | undefined = styleName;
+    if (styleName || codeHint) {
+      const styleMatch = matchBjcpStyle(styleName ?? '', codeHint);
+      if (styleMatch.autoAccept && styleMatch.canonical) {
+        resolvedStyle = styleMatch.canonical;
+      } else if (styleMatch.best) {
+        pendingMatches.push({
+          kind: 'style',
+          imported: styleName ?? codeHint ?? '',
+          best: styleMatch.best,
+          candidates: styleMatch.candidates,
+          reason: styleMatch.reason,
+        });
+      }
+    }
+
     const batchVolumeL = toNumber(text(recipeEl, 'BATCH_SIZE')) ?? 20;
     const boilTimeMin = toNumber(text(recipeEl, 'BOIL_TIME')) ?? 60;
     const efficiency = toNumber(text(recipeEl, 'EFFICIENCY')) ?? 75;
@@ -55,14 +153,31 @@ class BeerXmlImportService {
     if (fermParent) {
       const fermEls = Array.from(fermParent.getElementsByTagName('FERMENTABLE'));
       fermEls.forEach((f) => {
-        const amtKg = toNumber(text(f, 'AMOUNT')) ?? 0;
-        const colorLov = toNumber(text(f, 'COLOR')) ?? 2;
+        const amtKg = roundTo(toNumber(text(f, 'AMOUNT')), 4) ?? 0;
+        const colorLov = roundTo(toNumber(text(f, 'COLOR')), 1) ?? 2;
         const potential = potentialToPpg(toNumber(text(f, 'POTENTIAL')));
         const yieldPct = yieldToPpg(toNumber(text(f, 'YIELD')));
         const ppg = potential ?? yieldPct ?? 36;
+        const importedName = text(f, 'NAME') || 'Fermentable';
+        const id = uid();
+
+        const grainMatch = matchGrain(importedName);
+        const resolvedName =
+          grainMatch.autoAccept && grainMatch.best ? grainMatch.best.presetName : importedName;
+        if (!grainMatch.autoAccept && grainMatch.best) {
+          pendingMatches.push({
+            kind: 'grain',
+            ingredientId: id,
+            imported: importedName,
+            best: grainMatch.best,
+            candidates: grainMatch.candidates,
+            reason: grainMatch.reason,
+          });
+        }
+
         fermentables.push({
-          id: uid(),
-          name: text(f, 'NAME') || 'Fermentable',
+          id,
+          name: resolvedName,
           weightKg: amtKg,
           colorLovibond: colorLov,
           ppg,
@@ -79,8 +194,8 @@ class BeerXmlImportService {
       const hopEls = Array.from(hopsParent.getElementsByTagName('HOP'));
       hopEls.forEach((h) => {
         const amountKg = toNumber(text(h, 'AMOUNT')) ?? 0;
-        const amountG = amountKg * 1000;
-        const alpha = alphaToPercent(toNumber(text(h, 'ALPHA'))) ?? 0;
+        const amountG = roundTo(amountKg * 1000, 1) ?? 0;
+        const alpha = roundTo(alphaToPercent(toNumber(text(h, 'ALPHA'))), 1) ?? 0;
         const use = (text(h, 'USE') || '').toLowerCase();
         const timeMin = toNumber(text(h, 'TIME'));
 
@@ -88,22 +203,43 @@ class BeerXmlImportService {
         if (use.includes('dry')) type = 'dry hop';
         else if (use.includes('mash')) type = 'mash';
         else if (use.includes('first')) type = 'first wort';
-        else if (use.includes('aroma') || use.includes('whirlpool') || use.includes('flameout')) type = 'whirlpool';
+        else if (use.includes('aroma') || use.includes('whirlpool') || use.includes('flameout'))
+          type = 'whirlpool';
 
-        const hopName = text(h, 'NAME') || 'Hop';
+        const importedName = text(h, 'NAME') || 'Hop';
+        const id = uid();
 
-        hops.push(hopEnrichmentService.enrichHop({
-          id: uid(),
-          name: hopName,
-          alphaAcid: alpha,
-          grams: amountG,
-          type,
-          timeMinutes: type === 'boil' || type === 'first wort' ? timeMin : undefined,
-          whirlpoolTimeMinutes: type === 'whirlpool' ? timeMin : undefined,
-          temperatureC: type === 'whirlpool' ? toNumber(text(h, 'TEMPERATURE')) : undefined,
-          dryHopStartDay: type === 'dry hop' ? 7 : undefined,
-          dryHopDays: type === 'dry hop' ? 3 : undefined,
-        }));
+        const hopMatchResult = matchHop(importedName);
+        const resolvedName =
+          hopMatchResult.autoAccept && hopMatchResult.best
+            ? hopMatchResult.best.presetName
+            : importedName;
+        if (!hopMatchResult.autoAccept && hopMatchResult.best) {
+          pendingMatches.push({
+            kind: 'hop',
+            ingredientId: id,
+            imported: importedName,
+            best: hopMatchResult.best,
+            candidates: hopMatchResult.candidates,
+            reason: hopMatchResult.reason,
+          });
+        }
+
+        // enrichHop pulls flavor profile from presets keyed off the (now canonical) name.
+        hops.push(
+          hopEnrichmentService.enrichHop({
+            id,
+            name: resolvedName,
+            alphaAcid: alpha,
+            grams: amountG,
+            type,
+            timeMinutes: type === 'boil' || type === 'first wort' ? timeMin : undefined,
+            whirlpoolTimeMinutes: type === 'whirlpool' ? timeMin : undefined,
+            temperatureC: type === 'whirlpool' ? toNumber(text(h, 'TEMPERATURE')) : undefined,
+            dryHopStartDay: type === 'dry hop' ? 7 : undefined,
+            dryHopDays: type === 'dry hop' ? 3 : undefined,
+          })
+        );
       });
     }
 
@@ -114,13 +250,37 @@ class BeerXmlImportService {
       const yeastEls = Array.from(yeastsParent.getElementsByTagName('YEAST'));
       yeastEls.forEach((yeastEl) => {
         const attenuationPct = toNumber(text(yeastEl, 'ATTENUATION'));
-        const attDecimal =
-          attenuationPct != null ? (attenuationPct > 1 ? attenuationPct / 100 : attenuationPct) : undefined;
+        const attDecimal = roundTo(
+          attenuationPct != null
+            ? attenuationPct > 1
+              ? attenuationPct / 100
+              : attenuationPct
+            : undefined,
+          3
+        );
+        const importedName = text(yeastEl, 'NAME') || 'Yeast';
+        const laboratory = text(yeastEl, 'LABORATORY');
+        const id = uid();
+
+        const yeastMatch = matchYeast(importedName, laboratory);
+        const resolvedName =
+          yeastMatch.autoAccept && yeastMatch.best ? yeastMatch.best.presetName : importedName;
+        if (!yeastMatch.autoAccept && yeastMatch.best) {
+          pendingMatches.push({
+            kind: 'yeast',
+            ingredientId: id,
+            imported: importedName,
+            best: yeastMatch.best,
+            candidates: yeastMatch.candidates,
+            reason: yeastMatch.reason,
+          });
+        }
+
         yeasts.push({
-          id: uid(),
-          name: text(yeastEl, 'NAME') || 'Yeast',
+          id,
+          name: resolvedName,
           attenuation: attDecimal ?? 0.75,
-          laboratory: text(yeastEl, 'LABORATORY'),
+          laboratory,
         });
       });
     }
@@ -165,7 +325,8 @@ class BeerXmlImportService {
     }
 
     const tertiaryDays = toNumber(text(recipeEl, 'TERTIARY_AGE'));
-    const tertiaryTempC = toNumber(text(recipeEl, 'TERTIARY_TEMP')) ?? secondaryTempC ?? primaryTempC;
+    const tertiaryTempC =
+      toNumber(text(recipeEl, 'TERTIARY_TEMP')) ?? secondaryTempC ?? primaryTempC;
     if (tertiaryDays && tertiaryDays > 0) {
       fermentationSteps.push({
         id: uid(),
@@ -177,7 +338,8 @@ class BeerXmlImportService {
     }
 
     const conditioningDays = toNumber(text(recipeEl, 'AGE'));
-    const conditioningTempC = toNumber(text(recipeEl, 'AGE_TEMP')) ?? tertiaryTempC ?? secondaryTempC ?? primaryTempC;
+    const conditioningTempC =
+      toNumber(text(recipeEl, 'AGE_TEMP')) ?? tertiaryTempC ?? secondaryTempC ?? primaryTempC;
     if (conditioningDays && conditioningDays > 0) {
       fermentationSteps.push({
         id: uid(),
@@ -225,7 +387,7 @@ class BeerXmlImportService {
     const recipe: Recipe = {
       id: uid(),
       name,
-      style: styleName,
+      style: resolvedStyle,
       notes: text(recipeEl, 'NOTES'),
       tags: [],
       currentVersion: 1,
@@ -255,7 +417,38 @@ class BeerXmlImportService {
       updatedAt: now,
     };
 
-    return recipe;
+    return { recipe, pendingMatches };
+  }
+
+  /**
+   * Apply user-confirmed resolutions from the review modal back onto the parsed recipe.
+   * Each resolution may carry `presetName` (apply) or undefined (keep imported name).
+   * For hops, also re-runs enrichment in case the canonical name unlocks a flavor profile.
+   */
+  applyResolutions(recipe: Recipe, resolutions: MatchResolution[]): Recipe {
+    const next: Recipe = JSON.parse(JSON.stringify(recipe));
+    for (const r of resolutions) {
+      if (r.kind === 'style') {
+        if (r.canonical) next.style = r.canonical;
+        continue;
+      }
+      if (!r.presetName) continue;
+      if (r.kind === 'hop') {
+        const hop = next.hops.find((h) => h.id === r.ingredientId);
+        if (hop) {
+          hop.name = r.presetName;
+          const enriched = hopEnrichmentService.enrichHop(hop);
+          Object.assign(hop, enriched);
+        }
+      } else if (r.kind === 'grain') {
+        const grain = next.fermentables.find((g) => g.id === r.ingredientId);
+        if (grain) grain.name = r.presetName;
+      } else if (r.kind === 'yeast') {
+        const yeast = next.yeasts.find((y) => y.id === r.ingredientId);
+        if (yeast) yeast.name = r.presetName;
+      }
+    }
+    return next;
   }
 }
 

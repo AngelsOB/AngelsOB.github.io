@@ -32,6 +32,7 @@ const calcService = new RecipeCalculationService();
 export type BrowseRecipe = {
   id: string;
   name: string;
+  subtitle?: string;
   style: string;
   ownerName: string;
   ownerId?: string;
@@ -422,6 +423,22 @@ export default function HSBrowseCard({
                   </span>
                 ) : null}
               </div>
+              {recipe.subtitle ? (
+                <div
+                  style={{
+                    fontFamily: hsTokens.script,
+                    fontSize: 17,
+                    lineHeight: 1.1,
+                    color: hsTokens.muted,
+                    marginTop: 2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {recipe.subtitle}
+                </div>
+              ) : null}
               {recipe.style ? (
                 <div
                   style={{

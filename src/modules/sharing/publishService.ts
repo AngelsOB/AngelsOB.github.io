@@ -38,6 +38,7 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
   // Write publicRecipeIndex entry
   await setDoc(indexRef, {
     name: recipe.name,
+    subtitle: recipe.subtitle || null,
     style: recipe.style || '',
     ownerName: user.displayName || 'Anonymous Brewer',
     ownerId: user.uid,

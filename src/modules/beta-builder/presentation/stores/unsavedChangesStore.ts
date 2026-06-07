@@ -166,6 +166,16 @@ export const useUnsavedChangesStore = create<UnsavedChangesStore>((set, get) => 
 
   handleDiscard: () => {
     const { pendingAction } = get();
+    // Revert dirty edits to the last clean snapshot. Without this the dirty
+    // currentRecipe survives in the store and either (a) re-appears as
+    // "saved" the next time the user opens the recipe (loadRecipe's fast
+    // path overwrites savedSnapshot with the dirty current), or (b) gets
+    // persisted by the next legitimate save call — so "discard" silently
+    // becomes "save anyway".
+    const { currentRecipe, savedSnapshot } = useRecipeStore.getState();
+    if (currentRecipe && savedSnapshot && currentRecipe !== savedSnapshot) {
+      useRecipeStore.setState({ currentRecipe: savedSnapshot });
+    }
     set({
       isModalOpen: false,
       pendingAction: null,

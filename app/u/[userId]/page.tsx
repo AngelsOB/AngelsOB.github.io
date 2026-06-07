@@ -35,6 +35,7 @@ async function loadProfile(userId: string): Promise<ProfileData> {
       return {
         id: doc.id,
         name: (data.name as string) || "",
+        subtitle: (data.subtitle as string | undefined) ?? undefined,
         style: (data.style as string) || "",
         ownerName: (data.ownerName as string) || "Anonymous Brewer",
         ownerId: (data.ownerId as string) || "",

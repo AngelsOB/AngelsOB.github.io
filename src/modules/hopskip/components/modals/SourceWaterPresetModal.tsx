@@ -11,6 +11,7 @@ import {
   COMMON_WATER_PROFILES,
   type WaterProfile,
 } from "@/modules/beta-builder/domain/services/WaterChemistryService";
+import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface SourcePreset {
   name: string;
@@ -41,9 +42,8 @@ export default function SourceWaterPresetModal({
   const titleId = useId();
 
   const filtered = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return ALL_PRESETS;
-    return ALL_PRESETS.filter((p) => p.name.toLowerCase().includes(q));
+    if (!searchQuery.trim()) return ALL_PRESETS;
+    return ALL_PRESETS.filter((p) => fuzzyIncludes(searchQuery, p.name));
   }, [searchQuery]);
 
   const handleClose = () => {
@@ -73,7 +73,7 @@ export default function SourceWaterPresetModal({
 
       <div
         style={{
-          padding: "14px 22px 0",
+          padding: "14px 22px 14px",
           background: hsTokens.paper,
         }}
       >
