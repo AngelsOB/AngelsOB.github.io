@@ -6,6 +6,9 @@ import GENERATED_GRAINS from "./presets.generated.grains.json";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - JSON import handled by bundler
 import GENERATED_HOPS from "./presets.generated.hops.json";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - JSON import handled by bundler
+import GENERATED_YEASTS from "./presets.generated.yeasts.json";
 
 export type GrainPreset = {
   name: string;
@@ -38,10 +41,58 @@ export type HopPreset = {
   notes?: string;
 };
 
+// Biological classification of a yeast strain (distinct from the recipe-level
+// packaging `YeastType` in Recipe.ts, which is liquid-100/dry/slurry/etc.).
+export type YeastStrainType =
+  | "ale"
+  | "lager"
+  | "kveik"
+  | "wheat"
+  | "brett"
+  | "wild"
+  | "bacteria"
+  | "blend"
+  | "wine"
+  | "other";
+
+export type YeastForm = "liquid" | "dry";
+
+// Mirrors BeerJSON FlocculationType.
+export type YeastFlocculation =
+  | "very-low"
+  | "low"
+  | "medium-low"
+  | "medium"
+  | "medium-high"
+  | "high"
+  | "very-high";
+
 export type YeastPreset = {
-  name: string;
-  attenuationPercent?: number;
-  category: string; // e.g., "Escarpment Labs", "Wyeast", "Fermentis"
+  name: string; // stable recipe lookup key — never rename (recipes reference yeast by name)
+  category: string; // lab/producer display group, e.g. "Escarpment Labs", "Wyeast", "Fermentis"
+  attenuationPercent?: number; // 0-1, the single headline attenuation number
+  // --- BeerJSON-aligned enrichment (all optional, additive for backward-compat) ---
+  type?: YeastStrainType;
+  form?: YeastForm;
+  tempMinC?: number; // recommended fermentation temperature range (°C)
+  tempMaxC?: number;
+  flocculation?: YeastFlocculation;
+  attenuationMin?: number; // 0-1, published attenuation range low
+  attenuationMax?: number; // 0-1, published attenuation range high
+  alcoholTolerance?: number; // approx. max ABV (%) the strain can reach
+  producer?: string; // canonical producer name (may differ from the display `category`)
+  labProductId?: string; // lab catalog id, e.g. "WLP001", "1056", "US-05"
+  pof?: boolean; // phenolic off-flavor positive (4VG) — clove/spice capable
+  sta1?: boolean; // STA1/diastaticus marker (super-attenuating)
+  description?: string; // short tasting/usage notes
+  styles?: string[]; // recommended beer styles
+  substitutes?: string[]; // derived "similar / replaceable" strains (recipe-key names), best-first
+  // Strain-equivalence ("same strain, other labs") — CURATED lineage, NOT computed from stats.
+  strainGroup?: string; // slug shared by all labs' versions of one strain, e.g. "chico"
+  strainGroupLabel?: string; // human label, e.g. "Chico / American Ale"
+  // Provenance
+  source?: string; // where the facts came from, e.g. "White Labs spec sheet"
+  sourceConfidence?: "high" | "medium" | "low";
 };
 
 // Numeric flavor radar profile keys used by our comparison chart
@@ -89,472 +140,10 @@ export const EMPTY_HOP_FLAVOR: HopFlavorProfile = {
 // See src/utils/presets.generated.hops.json (generated offline and committed).
 export const HOP_PRESETS: HopPreset[] = GENERATED_HOPS as unknown as HopPreset[];
 
-export const YEAST_PRESETS: YeastPreset[] = [
-  // Escarpment Labs
-  {
-    name: "American Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Anchorman Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Ardennes Belgian Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Arset Kveik Blend",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  { name: "Belgian Sour Blend", category: "Escarpment Labs" },
-  { name: "Berliner Brett I", category: "Escarpment Labs" },
-  {
-    name: "Biergarten Lager",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.73,
-  },
-  { name: "Brett B", category: "Escarpment Labs" },
-  { name: "Brett D", category: "Escarpment Labs" },
-  { name: "Brett Q", category: "Escarpment Labs" },
-  { name: "Brussels Brett", category: "Escarpment Labs" },
-  { name: "Cali Ale", category: "Escarpment Labs", attenuationPercent: 0.78 },
-  { name: "Cerberus", category: "Escarpment Labs", attenuationPercent: 0.75 },
-  {
-    name: "Classic Witbier",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Copenhagen Lager",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Czech Lager",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Dry Belgian Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "Ebbegarden Kveik Blend",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "English Ale I",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "English Ale II",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "English Ale III",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Foggy London Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Fruit Bomb Saison",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "Fruity Witbier",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "Hornindal Kveik Blend",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  { name: "Irish Ale", category: "Escarpment Labs", attenuationPercent: 0.75 },
-  { name: "Isar Lager", category: "Escarpment Labs", attenuationPercent: 0.78 },
-  { name: "Kolsch Ale", category: "Escarpment Labs", attenuationPercent: 0.78 },
-  { name: "Krispy", category: "Escarpment Labs", attenuationPercent: 0.76 },
-  { name: "Lactobacillus Blend 2.0", category: "Escarpment Labs" },
-  { name: "Lactobacillus brevis", category: "Escarpment Labs" },
-  {
-    name: "Mexican Lager",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Munich Lager",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "New World Saison",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "Old World Saison Blend",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.85,
-  },
-  {
-    name: "Ontario Farmhouse Ale Blend",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "Saison Maison",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "Skare Kveik",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Spooky Saison",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.85,
-  },
-  {
-    name: "St-Remy Abbey Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "St. Lucifer Belgian Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "Stirling Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.75,
-  },
-  { name: "Uberweizen", category: "Escarpment Labs", attenuationPercent: 0.8 },
-  {
-    name: "Vermont Ale",
-    category: "Escarpment Labs",
-    attenuationPercent: 0.78,
-  },
-  { name: "Voss Kveik", category: "Escarpment Labs", attenuationPercent: 0.78 },
-  { name: "Weizen I", category: "Escarpment Labs", attenuationPercent: 0.8 },
-  { name: "Wild Thing", category: "Escarpment Labs", attenuationPercent: 0.85 },
-
-  // Wyeast
-  { name: "1056 American Ale", category: "Wyeast", attenuationPercent: 0.77 },
-  { name: "1318 London Ale III", category: "Wyeast", attenuationPercent: 0.75 },
-  { name: "1084 Irish Ale", category: "Wyeast", attenuationPercent: 0.75 },
-  { name: "1968 London ESB Ale", category: "Wyeast", attenuationPercent: 0.73 },
-  { name: "2565 Kölsch", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "3711 French Saison", category: "Wyeast", attenuationPercent: 0.85 },
-  {
-    name: "3787 Trappist High Gravity",
-    category: "Wyeast",
-    attenuationPercent: 0.8,
-  },
-  { name: "1010 American Wheat", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "1028 London Ale", category: "Wyeast", attenuationPercent: 0.75 },
-  { name: "1098 British Ale", category: "Wyeast", attenuationPercent: 0.75 },
-  {
-    name: "1272 American Ale II",
-    category: "Wyeast",
-    attenuationPercent: 0.77,
-  },
-  { name: "1332 Northwest Ale", category: "Wyeast", attenuationPercent: 0.75 },
-  {
-    name: "1450 Denny's Favorite 50 Ale",
-    category: "Wyeast",
-    attenuationPercent: 0.77,
-  },
-  { name: "1728 Scottish Ale", category: "Wyeast", attenuationPercent: 0.75 },
-  { name: "1764 Pacman", category: "Wyeast", attenuationPercent: 0.78 },
-  {
-    name: "2001 Pilsner Urquell H-Strain",
-    category: "Wyeast",
-    attenuationPercent: 0.78,
-  },
-  { name: "2007 Pilsen Lager", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "2042 Danish Lager", category: "Wyeast", attenuationPercent: 0.78 },
-  {
-    name: "2112 California Lager",
-    category: "Wyeast",
-    attenuationPercent: 0.78,
-  },
-  { name: "2124 Bohemian Lager", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "2206 Bavarian Lager", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "2278 Czech Pils", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "2308 Munich Lager", category: "Wyeast", attenuationPercent: 0.78 },
-  {
-    name: "3068 Weihenstephan Weizen",
-    category: "Wyeast",
-    attenuationPercent: 0.8,
-  },
-  { name: "3333 German Wheat", category: "Wyeast", attenuationPercent: 0.78 },
-  { name: "3724 Belgian Saison", category: "Wyeast", attenuationPercent: 0.85 },
-  { name: "3726 Farmhouse Ale", category: "Wyeast", attenuationPercent: 0.85 },
-
-  // Fermentis (Standard Dry Yeasts)
-  { name: "SafAle BE-134", category: "Fermentis", attenuationPercent: 0.85 },
-  { name: "SafAle BE-256", category: "Fermentis", attenuationPercent: 0.8 },
-  { name: "SafAle F-2", category: "Fermentis", attenuationPercent: 0.9 },
-  { name: "SafAle K-97", category: "Fermentis", attenuationPercent: 0.75 },
-  { name: "SafAle S-04", category: "Fermentis", attenuationPercent: 0.75 },
-  { name: "SafAle S-33", category: "Fermentis", attenuationPercent: 0.7 },
-  { name: "SafAle T-58", category: "Fermentis", attenuationPercent: 0.7 },
-  { name: "SafAle US-05", category: "Fermentis", attenuationPercent: 0.78 },
-  { name: "SafAle WB-06", category: "Fermentis", attenuationPercent: 0.8 },
-  { name: "SafBrew DA-16", category: "Fermentis", attenuationPercent: 0.9 },
-  { name: "SafBrew HA-18", category: "Fermentis", attenuationPercent: 0.9 },
-  { name: "SafBrew LA-01", category: "Fermentis", attenuationPercent: 0.85 },
-  { name: "SafLager S-189", category: "Fermentis", attenuationPercent: 0.82 },
-  { name: "SafLager S-23", category: "Fermentis", attenuationPercent: 0.78 },
-  { name: "SafLager W-34/70", category: "Fermentis", attenuationPercent: 0.82 },
-  { name: "SafSour LP 652", category: "Fermentis" },
-
-  // Lallemand (Standard Dry Yeasts)
-  { name: "LalBrew Abbaye", category: "Lallemand", attenuationPercent: 0.75 },
-  {
-    name: "LalBrew Belle Saison",
-    category: "Lallemand",
-    attenuationPercent: 0.85,
-  },
-  {
-    name: "LalBrew BRY-97 American West Coast Ale",
-    category: "Lallemand",
-    attenuationPercent: 0.78,
-  },
-  { name: "LalBrew CBC-1", category: "Lallemand", attenuationPercent: 0.75 },
-  {
-    name: "LalBrew Diamond Lager",
-    category: "Lallemand",
-    attenuationPercent: 0.78,
-  },
-  { name: "LalBrew Koln", category: "Lallemand", attenuationPercent: 0.78 },
-  { name: "LalBrew London", category: "Lallemand", attenuationPercent: 0.75 },
-  {
-    name: "LalBrew Munich Classic",
-    category: "Lallemand",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "LalBrew New England",
-    category: "Lallemand",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "LalBrew Nottingham",
-    category: "Lallemand",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "LalBrew Verdant IPA",
-    category: "Lallemand",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "LalBrew Voss Kveik",
-    category: "Lallemand",
-    attenuationPercent: 0.8,
-  },
-  { name: "LalBrew Windsor", category: "Lallemand", attenuationPercent: 0.75 },
-  { name: "LalBrew Wit", category: "Lallemand", attenuationPercent: 0.75 },
-  {
-    name: "Prise de Mousse Wine Yeast",
-    category: "Lallemand",
-    attenuationPercent: 1.0,
-  },
-  { name: "Sourvisiae", category: "Lallemand" },
-  { name: "WildBrew Philly Sour", category: "Lallemand" },
-
-  // Imperial Yeast (limited to common use)
-  {
-    name: "Imperial Organic Yeast A07 Flagship",
-    category: "Imperial Yeast",
-    attenuationPercent: 0.78,
-  },
-
-  // Omega Yeast
-  {
-    name: "Omega Yeast OYL-004 West Coast Ale I",
-    category: "Omega Yeast",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "OYL-006 Voss Kveik",
-    category: "Omega Yeast",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "OYL-011 British Ale I",
-    category: "Omega Yeast",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "OYL-013 London Ale",
-    category: "Omega Yeast",
-    attenuationPercent: 0.75,
-  },
-  { name: "OYL-024 Dry Hop", category: "Omega Yeast", attenuationPercent: 0.8 },
-  {
-    name: "OYL-030 Tropical IPA",
-    category: "Omega Yeast",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "OYL-033 Hornindal Kveik",
-    category: "Omega Yeast",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "OYL-041 DIPA Ale",
-    category: "Omega Yeast",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "OYL-052 Omega HotHead Ale",
-    category: "Omega Yeast",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "OYL-057 Wallonian Farmhouse",
-    category: "Omega Yeast",
-    attenuationPercent: 0.85,
-  },
-  {
-    name: "OYL-061 Lutra Kveik",
-    category: "Omega Yeast",
-    attenuationPercent: 0.85,
-  },
-  { name: "OYL-101 Saisonstein's Monster", category: "Omega Yeast" },
-  {
-    name: "OYL-200 Kolsch I",
-    category: "Omega Yeast",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "OYL-203 Hefe Weizen",
-    category: "Omega Yeast",
-    attenuationPercent: 0.8,
-  },
-  { name: "OYL-300 Lactobacillus Blend", category: "Omega Yeast" },
-  {
-    name: "OYL-400 American Lager",
-    category: "Omega Yeast",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "OYL-500 Belgian Ale A",
-    category: "Omega Yeast",
-    attenuationPercent: 0.75,
-  },
-
-  // White Labs
-  {
-    name: "WLP001 California Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP002 English Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "WLP007 Dry English Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "WLP008 East Coast Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "WLP013 London Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.75,
-  },
-  {
-    name: "WLP029 German Ale/Kölsch Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP051 California Ale V Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP066 London Fog Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP300 Hefeweizen Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "WLP500 Trappist Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.8,
-  },
-  {
-    name: "WLP530 Abbey Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP550 Belgian Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP565 Belgian Saison I Ale Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.85,
-  },
-  {
-    name: "WLP800 Pilsner Lager Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP830 German Lager Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP833 German Bock Lager Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP838 Southern German Lager Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-  {
-    name: "WLP860 Munich Helles Yeast",
-    category: "White Labs",
-    attenuationPercent: 0.78,
-  },
-];
+// Yeast presets: generated offline and committed (mirrors the hops/grains pattern).
+// Currently name/category/attenuation only; BeerJSON-aligned enrichment fields are
+// optional and filled in over time. See src/utils/presets.generated.yeasts.json.
+export const YEAST_PRESETS: YeastPreset[] = GENERATED_YEASTS as unknown as YeastPreset[];
 
 const CUSTOM_GRAINS_KEY = "beerapp.customGrains";
 const CUSTOM_HOPS_KEY = "beerapp.customHops";

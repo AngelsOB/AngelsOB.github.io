@@ -1,18 +1,20 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import HSButton from "@/modules/hopskip/components/HSButton";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
 import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import MyRecipeCard from "../recipes/MyRecipeCard";
 import { V4Mock, type TabKey } from "./mock/V4Mock";
 import { mapRecipeToV4Mock } from "./lib/mapRecipeToV4Mock";
+
+const RECIPE_TILTS = [-0.4, 0.3, -0.5, 0.4, -0.3];
 
 gsap.registerPlugin(useGSAP);
 
@@ -21,6 +23,7 @@ gsap.registerPlugin(useGSAP);
 // beats. We position the mock's scene-level layers (radar / water / brew sheet)
 // at their rest "home" so every tab renders correctly without the tour's GSAP.
 export default function SignedInHeroV4() {
+  const router = useRouter();
   const recipes = useRecipeStore((s) => s.recipes);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +44,20 @@ export default function SignedInHeroV4() {
     [selected],
   );
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
+
+  // Click-twice-to-open pattern: first click selects (drives the right-side
+  // V4Mock), second click on the already-selected card navigates to the
+  // builder. Mirrors the preview interaction on /recipes — same affordance.
+  const handleCardClick = useCallback(
+    (r: Recipe) => {
+      if (selected?.id === r.id) {
+        router.push(`/recipes/${r.id}`);
+      } else {
+        setSelectedId(r.id);
+      }
+    },
+    [router, selected?.id],
+  );
 
   // Place the mock's scene-level layers at home (rest). No ScrollTriggers — this
   // is a static mock. Re-runs on recipe/tab change; also on resize + font settle.
@@ -174,14 +191,17 @@ export default function SignedInHeroV4() {
           >
             Pick up where you left off.
           </h1>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {recent.map((r) => (
-              <RecipeRow
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {recent.map((r, idx) => (
+              <MyRecipeCard
                 key={r.id}
                 recipe={r}
-                active={r.id === (selected?.id ?? "")}
-                openHref={`/recipes/${r.id}`}
-                onSelect={() => setSelectedId(r.id)}
+                calc={recipeCalculationService.calculate(r)}
+                tilt={RECIPE_TILTS[idx % RECIPE_TILTS.length]}
+                previewMode
+                isPreviewSelected={r.id === (selected?.id ?? "")}
+                anyPreviewSelected={!!selected}
+                onPreviewSelect={handleCardClick}
               />
             ))}
           </div>
@@ -229,149 +249,3 @@ export default function SignedInHeroV4() {
   );
 }
 
-function RecipeRow({
-  recipe,
-  active,
-  openHref,
-  onSelect,
-}: {
-  recipe: Recipe;
-  active: boolean;
-  openHref: string;
-  onSelect: () => void;
-}) {
-  const router = useRouter();
-  const calc = useMemo(
-    () => recipeCalculationService.calculate(recipe),
-    [recipe],
-  );
-  const srmColor = srmToRgb(Math.max(0.1, calc.srm));
-  // Same affordance as the live homepage SignedInHero: a non-active row is
-  // a select (drives the right-side mock); an already-active row is the
-  // "Open" action (router.push to /recipes/{id}). Pairs with the "Open →"
-  // pill that appears on the active row.
-  const handleClick = () => {
-    if (active) router.push(openHref);
-    else onSelect();
-  };
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-label={
-        active
-          ? `Open ${recipe.name || "recipe"} in the builder`
-          : `Select ${recipe.name || "recipe"}`
-      }
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        width: "100%",
-        textAlign: "left",
-        padding: "10px 12px",
-        background: active ? hsTokens.paper : hsTokens.cream2,
-        border: `${active ? 2 : 1.5}px solid ${active ? hsTokens.ink : `color-mix(in oklch, ${hsTokens.ink} 22%, transparent)`}`,
-        borderRadius: 12,
-        boxShadow: active ? "3px 3px 0 var(--hs-ink)" : "none",
-        cursor: "pointer",
-        fontFamily: hsTokens.body,
-      }}
-    >
-      <span
-        aria-hidden
-        style={{
-          width: 10,
-          height: 38,
-          background: srmColor,
-          border: `1.5px solid ${hsTokens.ink}`,
-          borderRadius: 4,
-          flexShrink: 0,
-        }}
-      />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            display: "block",
-            fontFamily: hsTokens.display,
-            fontSize: 18,
-            letterSpacing: "-0.03em",
-            color: hsTokens.ink,
-            lineHeight: 1.05,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {recipe.name || "Untitled recipe"}
-        </span>
-        {recipe.style ? (
-          <span
-            style={{
-              display: "block",
-              fontStyle: "italic",
-              fontSize: 12,
-              color: hsTokens.muted,
-              marginTop: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {recipe.style}
-          </span>
-        ) : null}
-      </span>
-      <span
-        style={{
-          flexShrink: 0,
-          fontFamily: hsTokens.mono,
-          fontSize: 11,
-          fontWeight: 700,
-          color: hsTokens.muted,
-          fontVariantNumeric: "tabular-nums",
-          textAlign: "right",
-        }}
-      >
-        {calc.abv.toFixed(1)}% · {Math.round(calc.ibu)} IBU
-      </span>
-      {active ? (
-        <span
-          aria-hidden
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            padding: "4px 9px",
-            background: hsTokens.hops,
-            border: `1.5px solid ${hsTokens.ink}`,
-            borderRadius: 999,
-            fontFamily: hsTokens.body,
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: hsTokens.cream,
-            boxShadow: "2px 2px 0 var(--hs-ink)",
-            flexShrink: 0,
-            marginLeft: 4,
-          }}
-        >
-          Open →
-        </span>
-      ) : (
-        <span
-          aria-hidden
-          style={{
-            color: hsTokens.muted,
-            fontSize: 14,
-            flexShrink: 0,
-            marginLeft: 2,
-          }}
-        >
-          →
-        </span>
-      )}
-    </button>
-  );
-}

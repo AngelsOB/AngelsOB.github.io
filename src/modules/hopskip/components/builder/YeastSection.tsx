@@ -54,36 +54,27 @@ function keyToModel(k: YeastModelKey): StarterStep["model"] {
 }
 
 // ─── Yeast strain quick-picks ─────────────────────────────────────────
-// Three real, widely-available dry strains that cover the bulk of
-// homebrew use cases (clean ale / clean lager / hot-ferment kveik).
-// "Or browse the full library" lives next to them as the escape hatch
-// for everything else. The data here matches what the strain looks
-// like when added — name + lab + dry attenuation — so the row reads
-// like the user picked it from the library themselves.
+// Three real, widely-available strains that cover the bulk of homebrew
+// use cases (clean ale / clean lager / hot-ferment kveik). "Or browse
+// the full library" lives next to them as the escape hatch for everything
+// else. Only the editorial blurb + which strains to feature live here;
+// the actual stats (lab, attenuation) are resolved live from the yeast
+// library so a shortcut can never drift from its real preset.
+const FEATURED_STRAIN_PICKS: Array<{
+  name: string; // must match a YeastPreset name in the library
+  label: string;
+  blurb: string;
+}> = [
+  { name: "SafAle US-05", label: "SafAle US-05", blurb: "clean American ale" },
+  { name: "SafLager W-34/70", label: "SafLager 34/70", blurb: "clean German lager" },
+  { name: "LalBrew Voss Kveik", label: "LalBrew Voss", blurb: "Norwegian kveik" },
+];
 
 interface YeastGenerator {
   label: string;
   sub: string;
   preset: YeastPreset;
 }
-
-const YEAST_GENERATORS: YeastGenerator[] = [
-  {
-    label: "SafAle US-05",
-    sub: "clean American ale · 78%",
-    preset: { name: "SafAle US-05", category: "Fermentis", attenuationPercent: 0.78 },
-  },
-  {
-    label: "SafLager 34/70",
-    sub: "clean German lager · 83%",
-    preset: { name: "SafLager W-34/70", category: "Fermentis", attenuationPercent: 0.83 },
-  },
-  {
-    label: "LalBrew Voss",
-    sub: "Norwegian kveik · 85%",
-    preset: { name: "LalBrew Voss Kveik", category: "Lallemand", attenuationPercent: 0.85 },
-  },
-];
 
 // ─── Main component ─────────────────────────────────────────────────
 
@@ -112,6 +103,27 @@ export default function YeastSection() {
   useEffect(() => {
     loadYeastPresets();
   }, [loadYeastPresets]);
+
+  // Quick-pick shortcuts resolve their stats from the live yeast library
+  // (single source of truth) rather than carrying hardcoded copies.
+  const presetByName = useMemo(() => {
+    const m = new Map<string, YeastPreset>();
+    for (const group of yeastPresetsGrouped) {
+      for (const p of group.items) m.set(p.name, p);
+    }
+    return m;
+  }, [yeastPresetsGrouped]);
+
+  const featuredGenerators = useMemo<YeastGenerator[]>(() => {
+    return FEATURED_STRAIN_PICKS.flatMap((pick) => {
+      const preset = presetByName.get(pick.name);
+      if (!preset) return [];
+      const att = preset.attenuationPercent;
+      const sub =
+        att != null ? `${pick.blurb} · ${Math.round(att * 100)}%` : pick.blurb;
+      return [{ label: pick.label, sub, preset }];
+    });
+  }, [presetByName]);
 
   const yeasts = useMemo(
     () => currentRecipe?.yeasts ?? [],
@@ -324,7 +336,7 @@ export default function YeastSection() {
             {strainRows.length === 0 ? (
               <StrainEmptyState
                 onAdd={handleAddStrain}
-                generators={YEAST_GENERATORS}
+                generators={featuredGenerators}
                 onApplyGenerator={handleApplyGenerator}
               />
             ) : (

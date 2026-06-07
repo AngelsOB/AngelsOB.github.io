@@ -95,9 +95,13 @@ interface Props {
    *  to this href (matches the live homepage HeroBuilderCard). When unset
    *  the chrome shows the decorative "Save recipe →" pill (the tour). */
   openHref?: string;
+  /** When set, a small close (X) button appears in the chrome beside the
+   *  Open / Save pill. Used by the browse-preview panel; left undefined
+   *  elsewhere so the homepage versions of the mock don't show it. */
+  onClose?: () => void;
 }
 
-export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref }: Props) {
+export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref, onClose }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
   const waterActive = activeTab === "water";
@@ -120,7 +124,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
         }}
       >
         <div className="v4-dim">
-          <MockHeader data={data} openHref={openHref} />
+          <MockHeader data={data} openHref={openHref} onClose={onClose} />
         </div>
         <div className="v4-dim">
           <MockStats grainFill={grainFill} fgShift={fgShift} data={data} />
@@ -151,7 +155,9 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
             // Fixed height = consistent rendered area across recipes + tabs.
             // Section internals (the hop bill, grain ledger) handle their own
             // overflow via overflowY:auto + minHeight:0 in the flex chain.
-            height: 240,
+            // CSS var so callers (e.g. browse preview) can give the mock more
+            // vertical room without forking the component.
+            height: "var(--v4-mock-body-h, 240px)",
             // When the brew sheet is active it provides its own box outline,
             // so drop the body border here to avoid a double outline.
             borderLeft: brewsheetActive ? "none" : `2px solid ${hsTokens.ink}`,
@@ -413,9 +419,11 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
 function MockHeader({
   data,
   openHref,
+  onClose,
 }: {
   data?: V4MockData;
   openHref?: string;
+  onClose?: () => void;
 }) {
   const name = data?.name ?? "Citra Mosaic IPA";
   const style = data?.style ?? "American IPA · 21A";
@@ -467,13 +475,52 @@ function MockHeader({
         ) : (
           <span style={backStyle}>← Back to recipes</span>
         )}
-        {openHref ? (
-          <Link href={openHref} style={pillStyle}>
-            Open recipe →
-          </Link>
-        ) : (
-          <span style={pillStyle}>Save recipe →</span>
-        )}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          {openHref ? (
+            <Link href={openHref} style={pillStyle}>
+              Open recipe →
+            </Link>
+          ) : (
+            <span style={pillStyle}>Save recipe →</span>
+          )}
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close preview"
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 999,
+                border: `2px solid ${hsTokens.ink}`,
+                background: hsTokens.paper,
+                color: hsTokens.ink,
+                boxShadow: "2px 2px 0 var(--hs-ink)",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <h2

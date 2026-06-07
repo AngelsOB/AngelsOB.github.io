@@ -15,33 +15,79 @@ import { hsTokens } from "../tokens";
 import { easeStandard, springSoft } from "../motion";
 import HSBrandMark from "./HSBrandMark";
 import HSAuthButton from "./HSAuthButton";
+import FloatingCalculator, {
+  FLOATING_CALC_META,
+  widthFor,
+  type FloatingCalcId,
+} from "./FloatingCalculator";
 import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
 import { useUnsavedChangesStore } from "@/modules/beta-builder/presentation/stores/unsavedChangesStore";
 
 interface NavChild {
+  /** Used as the menu-item key + accessibility target.
+   *  When `kind: "calc"`, the value is the FloatingCalcId, not a route. */
   href: string;
   label: string;
+  /** Optional accent dot to render before the label. */
+  accent?: string;
+  /** "link" (default) navigates to href. "calc" opens a floating PIP.
+   *  "create" navigates but renders with a "+" badge in place of the dot to
+   *  signal a primary new-item action. */
+  kind?: "link" | "calc" | "create";
 }
 
 interface NavLink {
   href: string;
   label: string;
-  /** When present the link becomes a dropdown trigger instead of a plain
-   *  link — hover (mouse) or tap (touch) opens a menu of these destinations. */
+  /** When present the link becomes a dropdown trigger.
+   *  - `triggerNavigates: true` (Recipes, Calculators): on desktop the trigger
+   *    is a Link — hover opens the menu, click navigates to `href`. On mobile
+   *    it falls back to a button-toggle (no hover) UNLESS `noMobileDropdown`
+   *    is set, in which case it renders as a plain Link with no dropdown.
+   *  - `triggerNavigates` unset: the trigger is a button that toggles the
+   *    menu on click on every viewport. */
   children?: NavChild[];
+  triggerNavigates?: boolean;
+  /** When true, the dropdown is suppressed on small viewports and the trigger
+   *  renders as a plain Link to `href`. Used for the floating-calculator
+   *  dropdown which has no place on mobile. */
+  noMobileDropdown?: boolean;
 }
+
+const CALC_ORDER: FloatingCalcId[] = [
+  "abv",
+  "ibu",
+  "boil-off",
+  "dilution",
+  "carbonation",
+  "hydrometer",
+  "strike-temp",
+];
 
 const LINKS: NavLink[] = [
   { href: "/", label: "Home" },
   {
-    href: "/recipes",
+    href: "/recipes/all",
     label: "Recipes",
+    triggerNavigates: true,
     children: [
       { href: "/recipes", label: "My Recipes" },
       { href: "/browse", label: "Browse All" },
+      { href: "/recipes/new", label: "New recipe", kind: "create" },
     ],
   },
-  { href: "/calculators", label: "Calculators" },
+  {
+    href: "/calculators",
+    label: "Calculators",
+    triggerNavigates: true,
+    noMobileDropdown: true,
+    children: CALC_ORDER.map((id) => ({
+      href: id,
+      label: FLOATING_CALC_META[id].title,
+      accent: FLOATING_CALC_META[id].accent,
+      kind: "calc" as const,
+    })),
+  },
   { href: "/learn", label: "Learn" },
 ];
 
@@ -268,7 +314,22 @@ export default function HSHeader() {
   const closeTimer = useRef<number | null>(null);
   const [openHref, setOpenHref] = useState<string | null>(null);
   const [menuLeft, setMenuLeft] = useState(0);
-  const MENU_W = 220;
+  // Width fits the longest calculator title with a leading accent dot.
+  const MENU_W = 260;
+
+  // Small-viewport flag — drives per-link trigger behavior swaps:
+  //   • Calculators (noMobileDropdown): becomes a plain Link → /calculators.
+  //     PIPs are pointless on a phone-sized screen.
+  //   • Recipes (triggerNavigates without noMobileDropdown): falls back to a
+  //     button-toggle dropdown because hover-to-open doesn't exist on touch.
+  // Same 1024px breakpoint the collapse-on-scroll effect uses.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const cancelClose = () => {
     if (closeTimer.current !== null) {
@@ -309,6 +370,68 @@ export default function HSHeader() {
   useEffect(() => {
     setOpenHref(null);
   }, [pathname]);
+
+  // ── Floating calculator PIPs ──────────────────────────────────────────
+  // PIPs close on navigation per product decision. State lives here (local)
+  // since no other surface opens them yet.
+  type OpenCalc = {
+    id: FloatingCalcId;
+    position: { x: number; y: number };
+    z: number;
+  };
+  const [openCalcs, setOpenCalcs] = useState<OpenCalc[]>([]);
+  const zCounter = useRef(50);
+
+  useEffect(() => {
+    setOpenCalcs([]);
+  }, [pathname]);
+
+  const openFloatingCalc = (id: FloatingCalcId) => {
+    setOpenCalcs((prev) => {
+      // Already open → just bring to top.
+      if (prev.some((c) => c.id === id)) {
+        const nextZ = ++zCounter.current;
+        return prev.map((c) => (c.id === id ? { ...c, z: nextZ } : c));
+      }
+      // Stagger spawn from the upper-right of the viewport. Anchor by the
+      // PIP's own width so wider calcs (IBU) still land on-screen.
+      const w = widthFor(id);
+      const idx = prev.length;
+      const baseX =
+        typeof window !== "undefined"
+          ? Math.max(24, window.innerWidth - w - 24)
+          : 320;
+      const baseY = 96;
+      const nextZ = ++zCounter.current;
+      return [
+        ...prev,
+        {
+          id,
+          position: { x: baseX + idx * 28, y: baseY + idx * 28 },
+          z: nextZ,
+        },
+      ];
+    });
+  };
+
+  const closeFloatingCalc = (id: FloatingCalcId) => {
+    setOpenCalcs((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const moveFloatingCalc = (id: FloatingCalcId, position: { x: number; y: number }) => {
+    setOpenCalcs((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, position } : c))
+    );
+  };
+
+  const focusFloatingCalc = (id: FloatingCalcId) => {
+    setOpenCalcs((prev) => {
+      const top = prev.find((c) => c.id === id);
+      if (!top || top.z === zCounter.current) return prev;
+      const nextZ = ++zCounter.current;
+      return prev.map((c) => (c.id === id ? { ...c, z: nextZ } : c));
+    });
+  };
 
   // While open: dismiss on Escape, an outside press, or any scroll/resize.
   useEffect(() => {
@@ -571,8 +694,89 @@ export default function HSHeader() {
           )}
           {LINKS.map((l, i) => {
             const active = isLinkActive(l);
-            if (l.children) {
+            // Suppress the dropdown entirely on small viewports for items
+            // flagged noMobileDropdown — they fall through to the plain Link
+            // render below.
+            const hasDropdown =
+              !!l.children && !(isMobile && l.noMobileDropdown);
+            if (hasDropdown) {
               const open = openHref === l.href;
+              // On desktop, triggerNavigates uses the Link-with-hover-dropdown
+              // pattern. On mobile (no hover available), fall back to the
+              // button-toggle pattern so the dropdown is still reachable.
+              const useNavigatingTrigger = l.triggerNavigates && !isMobile;
+              const triggerStyle = {
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                appearance: "none" as const,
+                WebkitAppearance: "none" as const,
+                margin: 0,
+                padding: "6px 14px",
+                background: "transparent",
+                border: "2px solid transparent",
+                borderRadius: 999,
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                color: active || open ? hsTokens.ink : hsTokens.muted,
+                textDecoration: "none",
+                fontFamily: hsTokens.body,
+                cursor: "pointer",
+                transition: reduceMotion ? "none" : ("color 180ms ease" as const),
+              };
+              const chevron = (
+                <svg
+                  aria-hidden
+                  width="9"
+                  height="9"
+                  viewBox="0 0 10 10"
+                  style={{
+                    transition: reduceMotion ? "none" : "transform 180ms ease",
+                    transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                  }}
+                >
+                  <path
+                    d="M2 3.5 L5 6.5 L8 3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              );
+              if (useNavigatingTrigger) {
+                // Desktop pattern (Calculators, Recipes): trigger is a Link.
+                // Click navigates to the index/hub page; hover opens the menu.
+                return (
+                  <Link
+                    ref={(el) => {
+                      linkRefs.current[i] = el;
+                    }}
+                    key={l.href}
+                    href={l.href}
+                    aria-haspopup="menu"
+                    aria-expanded={open}
+                    onClick={(e) => {
+                      handleNavLinkClick(l.href)(e);
+                      closeMenu();
+                    }}
+                    onPointerEnter={(e) => {
+                      if (e.pointerType === "mouse")
+                        openMenu(l.href, e.currentTarget);
+                    }}
+                    onPointerLeave={(e) => {
+                      if (e.pointerType === "mouse") scheduleClose();
+                    }}
+                    onMouseEnter={() => setHoveredHref(l.href)}
+                    style={triggerStyle}
+                  >
+                    {l.label}
+                    {chevron}
+                  </Link>
+                );
+              }
               return (
                 <button
                   type="button"
@@ -590,46 +794,10 @@ export default function HSHeader() {
                     if (e.pointerType === "mouse") scheduleClose();
                   }}
                   onMouseEnter={() => setHoveredHref(l.href)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    margin: 0,
-                    padding: "6px 14px",
-                    background: "transparent",
-                    border: "2px solid transparent",
-                    borderRadius: 999,
-                    fontSize: 15,
-                    fontWeight: 700,
-                    letterSpacing: "0.02em",
-                    color: active || open ? hsTokens.ink : hsTokens.muted,
-                    fontFamily: hsTokens.body,
-                    cursor: "pointer",
-                    transition: reduceMotion ? "none" : "color 180ms ease",
-                  }}
+                  style={triggerStyle}
                 >
                   {l.label}
-                  <svg
-                    aria-hidden
-                    width="9"
-                    height="9"
-                    viewBox="0 0 10 10"
-                    style={{
-                      transition: reduceMotion ? "none" : "transform 180ms ease",
-                      transform: open ? "rotate(180deg)" : "rotate(0deg)",
-                    }}
-                  >
-                    <path
-                      d="M2 3.5 L5 6.5 L8 3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  {chevron}
                 </button>
               );
             }
@@ -702,8 +870,100 @@ export default function HSHeader() {
                 }}
               >
                 {openLink.children.map((c, ci) => {
+                  const isCalc = c.kind === "calc";
+                  // When sitting on the parent's exact hub path (e.g.
+                  // /recipes/all), no child should highlight as active —
+                  // they're alternative destinations from the hub. This also
+                  // sidesteps the otherwise-incorrect prefix match where
+                  // "/recipes" would catch "/recipes/all".
                   const childActive =
-                    pathname === c.href || pathname.startsWith(c.href + "/");
+                    !isCalc &&
+                    pathname !== openLink.href &&
+                    (pathname === c.href || pathname.startsWith(c.href + "/"));
+                  const itemStyle = {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "11px 16px",
+                    fontFamily: hsTokens.body,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: "0.01em",
+                    color: hsTokens.ink,
+                    textDecoration: "none",
+                    background: childActive ? hsTokens.cream2 : "transparent",
+                    boxShadow: childActive
+                      ? `inset 3px 0 0 ${hsTokens.malt}`
+                      : "none",
+                    borderTop:
+                      ci > 0 ? `1px solid ${hsTokens.cream2}` : "none",
+                    border: "none",
+                    width: "100%",
+                    textAlign: "left" as const,
+                    cursor: "pointer",
+                  };
+                  // For "create" items, render a tiny "+" badge instead of
+                  // the accent dot — same footprint, but reads as a primary
+                  // new-item action rather than a category swatch.
+                  const leading =
+                    c.kind === "create" ? (
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 999,
+                          background: hsTokens.malt,
+                          border: `1.5px solid ${hsTokens.ink}`,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: hsTokens.ink,
+                          fontFamily: hsTokens.body,
+                          fontWeight: 800,
+                          fontSize: 13,
+                          lineHeight: 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        +
+                      </span>
+                    ) : c.accent ? (
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 9,
+                          height: 9,
+                          borderRadius: 999,
+                          background: c.accent,
+                          border: `1px solid ${hsTokens.ink}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : null;
+                  if (isCalc) {
+                    return (
+                      <button
+                        type="button"
+                        key={c.href}
+                        role="menuitem"
+                        onClick={() => {
+                          openFloatingCalc(c.href as FloatingCalcId);
+                          closeMenu();
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = hsTokens.cream2;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
+                        }}
+                        style={itemStyle}
+                      >
+                        {leading}
+                        <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                      </button>
+                    );
+                  }
                   return (
                     <Link
                       key={c.href}
@@ -721,25 +981,10 @@ export default function HSHeader() {
                           ? hsTokens.cream2
                           : "transparent";
                       }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "11px 16px",
-                        fontFamily: hsTokens.body,
-                        fontSize: 14,
-                        fontWeight: 700,
-                        letterSpacing: "0.01em",
-                        color: hsTokens.ink,
-                        textDecoration: "none",
-                        background: childActive ? hsTokens.cream2 : "transparent",
-                        boxShadow: childActive
-                          ? `inset 3px 0 0 ${hsTokens.malt}`
-                          : "none",
-                        borderTop:
-                          ci > 0 ? `1px solid ${hsTokens.cream2}` : "none",
-                      }}
+                      style={itemStyle}
                     >
-                      {c.label}
+                      {leading}
+                      <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
                     </Link>
                   );
                 })}
@@ -749,6 +994,17 @@ export default function HSHeader() {
         </div>
         <HSAuthButton />
       </div>
+      {openCalcs.map((c) => (
+        <FloatingCalculator
+          key={c.id}
+          id={c.id}
+          position={c.position}
+          zIndex={c.z}
+          onClose={() => closeFloatingCalc(c.id)}
+          onMove={(p) => moveFloatingCalc(c.id, p)}
+          onFocus={() => focusFloatingCalc(c.id)}
+        />
+      ))}
       <style>{`
         @media (max-width: 720px) {
           /* Compact single row instead of the two-row stack: tighter padding,

@@ -350,6 +350,7 @@ export default function HopSection() {
   const addHop = useRecipeStore((s) => s.addHop);
   const updateHop = useRecipeStore((s) => s.updateHop);
   const removeHop = useRecipeStore((s) => s.removeHop);
+  const updateRecipe = useRecipeStore((s) => s.updateRecipe);
 
   const hopPresetsGrouped = usePresetStore((s) => s.hopPresetsGrouped);
   const loadHopPresets = usePresetStore((s) => s.loadHopPresets);
@@ -557,6 +558,22 @@ export default function HopSection() {
     setIsPickerOpen(true);
   };
 
+  // Add another addition of an existing variety (variety-mode card header
+  // "+"). Skips the preset picker by cloning name/AA/flavor from a hop already
+  // in the bill; defaults the new addition to boil/60 min/28 g so the user
+  // dials it in like a fresh add.
+  const handleAddVariety = (sourceHop: Hop) => {
+    addHop({
+      id: uid(),
+      name: sourceHop.name,
+      alphaAcid: sourceHop.alphaAcid,
+      grams: 28,
+      type: "boil",
+      timeMinutes: 60,
+      flavor: sourceHop.flavor,
+    });
+  };
+
   const handleSaveCustomPreset = (preset: HopPreset) => {
     saveHopPreset(preset);
     toast.success(`"${preset.name}" saved — select it from the list to add`);
@@ -642,6 +659,13 @@ export default function HopSection() {
               totalGrams={totalGrams}
               og={calculations?.og ?? 1.05}
               batchVolumeGal={(currentRecipe?.batchVolumeL ?? 20) * 0.264172}
+              boilTimeMin={currentRecipe?.equipment?.boilTimeMin ?? 60}
+              onExtendBoil={(min) => {
+                if (!currentRecipe) return;
+                updateRecipe({
+                  equipment: { ...currentRecipe.equipment, boilTimeMin: min },
+                });
+              }}
               onGramsChange={(id, v) =>
                 updateHop(id, { grams: Math.max(0, v) })
               }
@@ -667,6 +691,7 @@ export default function HopSection() {
               onRetime={handleRetimeHop}
               onRemove={removeHop}
               onAdd={handleAddNew}
+              onAddVariety={handleAddVariety}
               onRowHoverStart={(name, flavor) =>
                 setHoveredRowFlavor({ name, flavor })
               }
@@ -1182,6 +1207,8 @@ function Ledger({
   totalGrams,
   og,
   batchVolumeGal,
+  boilTimeMin,
+  onExtendBoil,
   onGramsChange,
   onTimeMinutesChange,
   onTemperatureChange,
@@ -1193,6 +1220,7 @@ function Ledger({
   onRetime,
   onRemove,
   onAdd,
+  onAddVariety,
   onRowHoverStart,
   onRowCursorMove,
   onRowHoverEnd,
@@ -1203,6 +1231,8 @@ function Ledger({
   totalGrams: number;
   og: number;
   batchVolumeGal: number;
+  boilTimeMin: number;
+  onExtendBoil: (newBoilMin: number) => void;
   onGramsChange: (id: string, v: number) => void;
   onTimeMinutesChange: (id: string, v: number) => void;
   onTemperatureChange: (id: string, v: number) => void;
@@ -1214,6 +1244,7 @@ function Ledger({
   onRetime: (id: string, usage: Usage, timeKey: number) => void;
   onRemove: (id: string) => void;
   onAdd: () => void;
+  onAddVariety: (sourceHop: Hop) => void;
   onRowHoverStart: (name: string, flavor: HopFlavorProfile) => void;
   onRowCursorMove: (e: React.MouseEvent) => void;
   onRowHoverEnd: () => void;
@@ -1270,6 +1301,8 @@ function Ledger({
           ibuContribution={ibuContribution}
           isLast={isLast}
           draggable={draggable}
+          boilTimeMin={boilTimeMin}
+          onExtendBoil={onExtendBoil}
           onGramsChange={(v) => onGramsChange(h.id, v)}
           onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
           onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
@@ -1301,6 +1334,8 @@ function Ledger({
           hop={h}
           ibuContribution={ibuContribution}
           isLast={isLast}
+          boilTimeMin={boilTimeMin}
+          onExtendBoil={onExtendBoil}
           onGramsChange={(v) => onGramsChange(h.id, v)}
           onTimeMinutesChange={(v) => onTimeMinutesChange(h.id, v)}
           onTemperatureChange={(v) => onTemperatureChange(h.id, v)}
@@ -1348,6 +1383,7 @@ function Ledger({
                         key={group.key}
                         group={group}
                         renderVarietyRow={renderVarietyRow}
+                        onAddVariety={onAddVariety}
                       />
                     ))}
                     {singles.length > 0 ? (
@@ -1579,9 +1615,11 @@ const VARIETY_COLS = "minmax(110px, 1fr) minmax(110px, 1fr) 92px 64px 32px";
 function VarietyGroupCard({
   group,
   renderVarietyRow,
+  onAddVariety,
 }: {
   group: HopGroup;
   renderVarietyRow: (h: Hop, isLast: boolean) => ReactNode;
+  onAddVariety: (sourceHop: Hop) => void;
 }) {
   const firstHop = group.hops[0];
   const flavor = firstHop
@@ -1700,7 +1738,10 @@ function VarietyGroupCard({
             flexDirection: "column",
           }}
         >
-          <VarietyColumnHead />
+          <VarietyColumnHead
+            onAdd={firstHop ? () => onAddVariety(firstHop) : undefined}
+            varietyLabel={group.label}
+          />
           <LedgerRowsAnimated>
             {group.hops.map((h, i) =>
               renderVarietyRow(h, i === group.hops.length - 1)
@@ -1713,7 +1754,13 @@ function VarietyGroupCard({
   );
 }
 
-function VarietyColumnHead() {
+function VarietyColumnHead({
+  onAdd,
+  varietyLabel,
+}: {
+  onAdd?: () => void;
+  varietyLabel?: string;
+}) {
   return (
     <div
       className="hs-hops-ledger-row hs-hops-ledger-head-row"
@@ -1754,7 +1801,54 @@ function VarietyColumnHead() {
           IBU
         </Eyebrow>
       </div>
-      <span />
+      {onAdd ? (
+        <button
+          type="button"
+          onClick={onAdd}
+          aria-label={
+            varietyLabel
+              ? `Add another addition of ${varietyLabel}`
+              : "Add another addition of this variety"
+          }
+          title={
+            varietyLabel
+              ? `Add another addition of ${varietyLabel}`
+              : "Add another addition"
+          }
+          style={{
+            justifySelf: "center",
+            width: 24,
+            height: 24,
+            padding: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: hsTokens.paper,
+            color: hsTokens.hops,
+            border: `1.5px solid ${hsTokens.ink}`,
+            borderRadius: 999,
+            boxShadow: hsTokens.sh1,
+            cursor: "pointer",
+          }}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+      ) : (
+        <span />
+      )}
     </div>
   );
 }
@@ -1763,6 +1857,8 @@ function VarietyRow({
   hop,
   ibuContribution,
   isLast,
+  boilTimeMin,
+  onExtendBoil,
   onGramsChange,
   onTimeMinutesChange,
   onTemperatureChange,
@@ -1775,6 +1871,8 @@ function VarietyRow({
   hop: Hop;
   ibuContribution: number;
   isLast: boolean;
+  boilTimeMin: number;
+  onExtendBoil: (newBoilMin: number) => void;
   onGramsChange: (v: number) => void;
   onTimeMinutesChange: (v: number) => void;
   onTemperatureChange: (v: number) => void;
@@ -1802,6 +1900,8 @@ function VarietyRow({
       <div style={{ display: "flex", justifyContent: "center" }}>
         <TimingCell
           hop={hop}
+          boilTimeMin={boilTimeMin}
+          onExtendBoil={onExtendBoil}
           onTimeMinutesChange={onTimeMinutesChange}
           onTemperatureChange={onTemperatureChange}
           onWhirlpoolTimeChange={onWhirlpoolTimeChange}
@@ -2065,6 +2165,8 @@ function LedgerRow({
   ibuContribution,
   isLast,
   draggable,
+  boilTimeMin,
+  onExtendBoil,
   onGramsChange,
   onTimeMinutesChange,
   onTemperatureChange,
@@ -2082,6 +2184,8 @@ function LedgerRow({
   ibuContribution: number;
   isLast: boolean;
   draggable: boolean;
+  boilTimeMin: number;
+  onExtendBoil: (newBoilMin: number) => void;
   onGramsChange: (v: number) => void;
   onTimeMinutesChange: (v: number) => void;
   onTemperatureChange: (v: number) => void;
@@ -2212,6 +2316,8 @@ function LedgerRow({
       <div style={{ display: "flex", justifyContent: "center" }}>
         <TimingCell
           hop={hop}
+          boilTimeMin={boilTimeMin}
+          onExtendBoil={onExtendBoil}
           onTimeMinutesChange={onTimeMinutesChange}
           onTemperatureChange={onTemperatureChange}
           onWhirlpoolTimeChange={onWhirlpoolTimeChange}
@@ -2876,6 +2982,8 @@ function RowMiniRadar({
 
 function TimingCell({
   hop,
+  boilTimeMin,
+  onExtendBoil,
   onTimeMinutesChange,
   onTemperatureChange,
   onWhirlpoolTimeChange,
@@ -2883,6 +2991,8 @@ function TimingCell({
   onDryHopStartDayChange,
 }: {
   hop: Hop;
+  boilTimeMin: number;
+  onExtendBoil: (newBoilMin: number) => void;
   onTimeMinutesChange: (v: number) => void;
   onTemperatureChange: (v: number) => void;
   onWhirlpoolTimeChange: (v: number) => void;
@@ -2891,16 +3001,11 @@ function TimingCell({
 }) {
   if (hop.type === "boil") {
     return (
-      <EditableCell
-        value={hop.timeMinutes ?? 0}
-        step={5}
-        min={0}
-        precision={0}
-        format={(v) => v.toFixed(0)}
-        suffix="min"
-        ariaLabel="Boil time in minutes"
-        onCommit={onTimeMinutesChange}
-        colKey="time"
+      <BoilTimingCell
+        hop={hop}
+        boilTimeMin={boilTimeMin}
+        onExtendBoil={onExtendBoil}
+        onTimeMinutesChange={onTimeMinutesChange}
       />
     );
   }
@@ -3000,6 +3105,156 @@ function TimingCell({
     >
       no timing
     </span>
+  );
+}
+
+/** Boil-time cell with an over-boil floating warning. Split out from TimingCell
+ *  so hooks (anchor ref) only run on the boil branch — the timing column
+ *  shapeshifts between usages, so the cell-level wrapper keeps hook calls
+ *  unconditional per render. */
+function BoilTimingCell({
+  hop,
+  boilTimeMin,
+  onExtendBoil,
+  onTimeMinutesChange,
+}: {
+  hop: Hop;
+  boilTimeMin: number;
+  onExtendBoil: (newBoilMin: number) => void;
+  onTimeMinutesChange: (v: number) => void;
+}) {
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const hopMin = hop.timeMinutes ?? 0;
+  const overBoil = hopMin > boilTimeMin;
+  return (
+    <div ref={anchorRef} style={{ display: "inline-flex" }}>
+      <EditableCell
+        value={hopMin}
+        step={5}
+        min={0}
+        precision={0}
+        format={(v) => v.toFixed(0)}
+        suffix="min"
+        ariaLabel="Boil time in minutes"
+        onCommit={onTimeMinutesChange}
+        colKey="time"
+      />
+      {overBoil ? (
+        <OverBoilWarning
+          hopMin={hopMin}
+          boilMin={boilTimeMin}
+          onExtend={() => onExtendBoil(hopMin)}
+          anchorRef={anchorRef}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/** Floating note shown beside a boil hop's time when the addition is scheduled
+ *  longer than the boil itself. Portaled to document.body so the group card's
+ *  overflow:hidden (it clips children for rounded corners) doesn't cut it off.
+ *  Position is synced to the anchor cell each frame so it tracks through the
+ *  row's framer-motion enter/exit transitions. Clicking extends the boil to
+ *  match — the explicit fix beats silently mutating boilTimeMin behind the
+ *  user's back (it drives boil-off, pre-boil volume, and OG math). */
+function OverBoilWarning({
+  hopMin,
+  boilMin,
+  onExtend,
+  anchorRef,
+}: {
+  hopMin: number;
+  boilMin: number;
+  onExtend: () => void;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const noteRef = useRef<HTMLButtonElement>(null);
+
+  useIsoLayoutEffect(() => {
+    let frame = 0;
+    let lastTop = -1;
+    let lastLeft = -1;
+    const tick = () => {
+      const a = anchorRef.current;
+      const n = noteRef.current;
+      if (a && n) {
+        const r = a.getBoundingClientRect();
+        // Document-relative coords (viewport rect + scroll offset) so the
+        // note — portaled to body with position: absolute — scrolls with the
+        // page naturally. Using fixed + viewport coords forces a per-frame
+        // catch-up against scroll, which reads as floaty.
+        // Anchor: just inside the cell's left edge, vertically centered. The
+        // note's right-center is placed here (see transform) so its body
+        // extends LEFT, sitting in front of the boil input's left side.
+        const top = r.top + r.height / 2 + window.scrollY;
+        const left = r.left + 8 + window.scrollX;
+        if (top !== lastTop || left !== lastLeft) {
+          n.style.top = `${top}px`;
+          n.style.left = `${left}px`;
+          lastTop = top;
+          lastLeft = left;
+        }
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [anchorRef]);
+
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <button
+      ref={noteRef}
+      type="button"
+      onClick={onExtend}
+      className="hs-theme hs-hops-over-boil"
+      title={`This addition is ${hopMin} min but the boil is only ${boilMin} min.`}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        transform: "translate(-100%, -50%) rotate(-3deg)",
+        transformOrigin: "right center",
+        whiteSpace: "nowrap",
+        display: "inline-flex",
+        alignItems: "baseline",
+        gap: 6,
+        padding: "7px 12px 8px",
+        background: hsTokens.paper,
+        color: hsTokens.roast,
+        border: `1.5px solid ${hsTokens.roast}`,
+        borderRadius: 10,
+        boxShadow: hsTokens.sh2,
+        fontFamily: hsTokens.script,
+        fontSize: 16,
+        lineHeight: 1.1,
+        cursor: "pointer",
+        zIndex: 1000,
+      }}
+    >
+      <span
+        style={{
+          textDecoration: "underline",
+          textDecorationStyle: "dotted",
+          textUnderlineOffset: 2,
+        }}
+      >
+        extend boil to {hopMin} min
+      </span>
+      <span
+        aria-hidden
+        style={{
+          fontFamily: hsTokens.display,
+          fontSize: 18,
+          lineHeight: 1,
+          fontWeight: 700,
+        }}
+      >
+        !
+      </span>
+    </button>,
+    document.body
   );
 }
 

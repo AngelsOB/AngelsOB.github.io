@@ -1,0 +1,83 @@
+# Yeast strain groups & substitutes — method + sources
+
+`strainGroup` = same genetic isolate (genome-level clones). `substitutes` = close cousins brewers swap for a similar result.
+
+Derived from dmtaylor's community Yeast Master equivalency chart (Dave Taylor; itself citing suregork/Kristoffer Krogerus genome analysis + Mr. Malty / Kristen England), built as our own grouping respecting its (NOT X) markers. Commercial strain mappings are community-inferred (informed by genomics, which anonymizes strains) — cross-checked against BeerMaverick where possible.
+
+## Groups (75)
+
+- **WLP545 Belgian Strong Ale** — B64 Napoleon, LalBrew Belle Saison, M29 French Saison Yeast, OYL-026 French Saison, WLP545 Belgian Strong Ale Yeast, 3711 French Saison
+- **WLP550 Belgian Ale** — Ardennes Ale, B45 Gnome, OYL-024 Dry Hop, WLP550 Belgian Ale Yeast, 3522 Belgian Ardennes
+- **WLP860 Munich Helles** — Biergarten Lager, L17 Harvest, OYL-114 Bayern Lager, WLP860 Munich Helles Yeast, 2352-PC Munich Lager II
+- **WLP850 Copenhagen Lager** — Copenhagen Lager, L25 Hygge, OYL-104 Danish Lager, WLP850 Copenhagen Lager Yeast, 2042 Danish Lager
+- **WLP810 San Francisco Lager** — Goldrush Lager, L05 Cablecar, OYL-105 West Coast Lager, WLP810 San Francisco Lager Yeast, 2112 California Lager
+- **WLP004 Irish Ale** — Irish Ale, A10 Darkness, OYL-005 Irish Ale, WLP004 Irish Ale Yeast, 1084 Irish Ale
+- **WLP095 Burlington Ale** — Vermont Ale, A04 Barbarian, LalBrew New England, OYL-052 Omega HotHead Ale, WLP095 Burlington Ale Yeast
+- **WLP520 Sigmund Kveik Ale** — Voss Kveik, A43 Loki, M12 Kveik Yeast, OYL-061 Lutra Kveik, WLP520 Sigmund Kveik Ale Yeast
+- **WLP380 Hefeweizen IV Ale** — Weizen I, G01 Stefon, OYL-021 Hefeweizen Ale I, WLP380 Hefeweizen IV Ale Yeast, 3068 Weihenstephan Weizen
+- **WLP500 Trappist Ale** — B53 Precious, LalBrew Abbaye, OYL-018 Abbey Ale C, WLP500 Trappist Ale Yeast, 1214 Belgian Abbey Style Ale
+- **A15 Independence** — American Ale, A15 Independence, OYL-009 West Coast Ale II, 1272 American Ale II
+- **WLP644 Saccharomyces brux-like Trois** — Cerberus, A20 Citrus, OYL-200 Kolsch I, WLP644 Saccharomyces brux-like Trois
+- **WLP802 Czech Budejovice Lager** — Czech Lager, OYL-100 Lager I, WLP802 Czech Budejovice Lager Yeast, 2000-PC Budvar Lager
+- **A38 Juice** — Foggy London Ale, A38 Juice, OYL-011 British Ale I, 1318 London Ale III
+- **WLP521 Hornindal Kveik Ale** — Hornindal Kveik Blend, A46 Bartleby, OYL-091 Hornindal Kveik, WLP521 Hornindal Kveik Ale Yeast
+- **L13 Global** — Isar Lager, L13 Global, OYL-106 German Lager I, 2124 Bohemian Lager
+- **WLP029 German Ale/Kölsch** — Kolsch Ale, G03 Dieter, OYL-044 Kolsch II, WLP029 German Ale/Kölsch Yeast
+- **WLP940 Mexican Lager** — Mexican Lager, L09 Que Bueno, OYL-113 Mexican Lager, WLP940 Mexican Lager Yeast
+- **WLP041 Pacific Ale** — Northwest Ale, OYL-012 Pacific NW Ale, WLP041 Pacific Ale Yeast, 1332 Northwest Ale
+- **WLP540 Abbey IV Ale** — St-Remy Abbey Ale, OYL-020 Belgian Ale R, WLP540 Abbey IV Ale Yeast, 1762 Belgian Abbey Style Ale II
+- **WLP570 Belgian Golden Ale** — SafAle WB-06, OYL-019 Belgian Ale D, WLP570 Belgian Golden Ale Yeast, 1388 Belgian Strong Ale
+- **WLP022 Essex Ale** — A05 Voyager, OYL-014 British Ale VII, WLP022 Essex Ale Yeast, 1469 West Yorkshire Ale
+- **WLP090 San Diego Super Ale** — A18 Joystick, OYL-043 Point Loma (formerly West Coast Ale III), WLP090 San Diego Super Ale Yeast, 1764 Pacman
+- **WLP400 Belgian Wit Ale** — A44 Kveiking, OYL-030 Tropical IPA, WLP400 Belgian Wit Ale Yeast, 3944 Belgian Witbier
+- **WLP530 Abbey Ale** — B48 Triple Double, OYL-028 Belgian Ale W, WLP530 Abbey Ale Yeast, 3787 Trappist High Gravity
+- **WLP833 German Bock Lager** — L18 The GOAT, OYL-111 German Bock, WLP833 German Bock Lager Yeast, 2487-PC Hella Bock Lager
+- **WLP830 German Lager** — L28 Urkel, OYL-108 Pilsner II, WLP830 German Lager Yeast, 2278 Czech Pils
+- **LalBrew Windsor** — LalBrew Windsor, M15 Empire Ale Yeast, OYL-007 British Ale II, 1099 Whitbread Ale
+- **A07 Flagship** — Cali Ale, A07 Flagship, 1056 American Ale
+- **SafLager S-23** — Premium Pils, SafLager S-23, 2001 Pilsner Urquell H-Strain
+- **OYL-039 Biere de Garde** — Spooky Saison, OYL-039 Biere de Garde, 3725-PC Bière de Garde
+- **SafAle S-04** — SafAle S-04, M36 Liberty Bell Ale Yeast, 1026-PC British Cask Ale
+- **SafLager W-34/70** — SafLager W-34/70, OYL-103 American Lager, 2035-PC American Lager
+- **A01 House** — A01 House, OYL-006 Voss Kveik, 1098 British Ale
+- **B56 Rustic** — B56 Rustic, OYL-042 Belgian Saison II, 3726 Farmhouse Ale
+- **WLP510 Bastogne Belgian Ale** — B63 Monastic, OYL-046 Belgian Ale O, WLP510 Bastogne Belgian Ale Yeast
+- **L02 Fest** — L02 Fest, OYL-107 Oktoberfest, 2206 Bavarian Lager
+- **WLP835 German X Lager** — L26 Pilgrimage, WLP835 German X Lager Yeast, 2105-PC Rocky Mountain Lager
+- **WLP039 East Midlands Ale** — LalBrew Nottingham, M42 New World Strong Ale Yeast, WLP039 East Midlands Ale Yeast
+- **WLP066 London Fog Ale** — LalBrew Verdant IPA, M66 Hophead Ale Yeast, WLP066 London Fog Ale Yeast
+- **WLP023 Burton Ale** — OYL-010 British Ale IV, WLP023 Burton Ale Yeast, 1275 Thames Valley Ale
+- **WLP025 Southwold Ale** — OYL-013 London Ale, WLP025 Southwold Ale Yeast, 1335 British Ale II
+- **WLP300 Hefeweizen Ale** — OYL-022 Hefeweizen Ale II, WLP300 Hefeweizen Ale Yeast, 3333 German Wheat
+- **WLP351 Bavarian Weizen Ale** — OYL-025 Bavarian Wheat I, WLP351 Bavarian Weizen Ale Yeast, 3638 Bavarian Wheat
+- **WLP565 Belgian Saison I Ale** — OYL-027 Belgian Saison I, WLP565 Belgian Saison I Ale Yeast, 3724 Belgian Saison
+- **WLP845 Fast Lager** — Autobahn Lager, WLP845 Fast Lager Yeast
+- **3763 Roeselare Ale Blend** — Belgian Sour Blend, 3763 Roeselare Ale Blend
+- **WLP002 English Ale** — English Ale I, WLP002 English Ale Yeast
+- **WLP007 Dry English Ale** — English Ale II, WLP007 Dry English Ale Yeast
+- **SafAle BE-134** — SafAle BE-134, M41 Belgian Ale Yeast
+- **WLP590 French Saison Ale** — SafAle BE-256, WLP590 French Saison Ale Yeast
+- **SafAle S-33** — SafAle S-33, M10 Workhorse Yeast
+- **WLP885 Zurich Lager** — SafLager S-189, WLP885 Zurich Lager Yeast
+- **A31 Tartan** — A31 Tartan, 1728 Scottish Ale
+- **G02 Kaiser** — G02 Kaiser, 1007 German Ale
+- **L11 Gateway** — L11 Gateway, 2007 Pilsen Lager
+- **LalBrew BRY-97 American West Coast Ale** — LalBrew BRY-97 American West Coast Ale, M44 US West Coast Yeast
+- **LalBrew Diamond Lager** — LalBrew Diamond Lager, 2308 Munich Lager
+- **WLP585 Belgian Saison III Ale** — LalBrew Farmhouse, WLP585 Belgian Saison III Ale Yeast
+- **LalBrew NovaLager** — LalBrew NovaLager, M24 Versa Lager Yeast
+- **WLP410 Belgian Wit II Ale** — M21 Belgian Wit Yeast, WLP410 Belgian Wit II Ale Yeast
+- **WLP320 American Hefeweizen Ale** — OYL-002 American Wheat, WLP320 American Hefeweizen Ale Yeast
+- **OYL-003 London Ale** — OYL-003 London Ale, 1028 London Ale
+- **WLP001 California Ale** — OYL-004 West Coast Ale I, WLP001 California Ale Yeast
+- **WLP028 Edinburgh/Scottish Ale** — OYL-015 Scottish Ale, WLP028 Edinburgh/Scottish Ale Yeast
+- **OYL-016 Extra Special (formerly British Ale VIII)** — OYL-016 Extra Special (formerly British Ale VIII), 1968 London ESB Ale
+- **OYL-017 Kolsch I** — OYL-017 Kolsch I, 2565 Kölsch
+- **OYL-023 Grand Cru** — OYL-023 Grand Cru, 3463-PC Forbidden Fruit
+- **WLP008 East Coast Ale** — OYL-032 East Coast Ale, WLP008 East Coast Ale Yeast
+- **OYL-041 DIPA Ale** — OYL-041 DIPA Ale, 1450 Denny's Favorite 50 Ale
+- **WLP515 Antwerp Ale** — OYL-049 Belgian Ale DK, WLP515 Antwerp Ale Yeast
+- **WLP838 Southern German Lager** — OYL-109 German Lager II, WLP838 Southern German Lager Yeast
+- **WLP003 German Ale II** — WLP003 German Ale II Yeast, 2575-PC Kölsch II
+- **WLP033 Klassic Ale** — WLP033 Klassic Ale Yeast, 1768-PC English Special Bitter
+- **WLP920 Old Bavarian Lager** — WLP920 Old Bavarian Lager Yeast, 2247-PC European Lager
