@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://angelsob.github.io/about.html</loc>
-    <lastmod>2026-06-09T01:18:58.692Z</lastmod>
+    <loc>https://your-website-url.example.com/posts/welcome/index.html</loc>
+    <lastmod>2026-06-09T01:22:35.389Z</lastmod>
   </url>
   <url>
-    <loc>https://angelsob.github.io/posts/welcome/index.html</loc>
-    <lastmod>2026-06-09T01:18:58.694Z</lastmod>
+    <loc>https://your-website-url.example.com/index.html</loc>
+    <lastmod>2026-06-09T01:22:35.388Z</lastmod>
   </url>
   <url>
-    <loc>https://angelsob.github.io/posts/post-with-code/index.html</loc>
-    <lastmod>2026-06-09T01:18:58.694Z</lastmod>
+    <loc>https://your-website-url.example.com/about.html</loc>
+    <lastmod>2026-06-09T01:22:35.388Z</lastmod>
   </url>
   <url>
-    <loc>https://angelsob.github.io/index.html</loc>
-    <lastmod>2026-06-09T01:18:58.692Z</lastmod>
+    <loc>https://your-website-url.example.com/posts/post-with-code/index.html</loc>
+    <lastmod>2026-06-09T01:22:35.389Z</lastmod>
   </url>
 </urlset>
