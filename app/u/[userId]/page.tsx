@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import HSUserProfile from "@/modules/hopskip/components/public/HSUserProfile";
-import type { BrowseRecipe } from "@/modules/hopskip/components/public/HSBrowseCard";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSUserProfile from "@/modules/builder/components/public/HSUserProfile";
+import type { BrowseRecipe } from "@/modules/builder/components/public/HSBrowseCard";
+import { hsTokens } from "@/modules/builder/tokens";
 
 export const dynamic = "force-dynamic";
 

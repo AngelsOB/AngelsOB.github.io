@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 import { V4Mock, type TabKey } from "../../../../../app/v4/mock/V4Mock";

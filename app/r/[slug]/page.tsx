@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { getPublicRecipe, buildRecipeJsonLd } from '@/modules/sharing/getPublicRecipe'
-import HSPublicRecipeShell from '@/modules/hopskip/components/public/HSPublicRecipeShell'
-import HSCard from '@/modules/hopskip/components/HSCard'
-import HSScriptNote from '@/modules/hopskip/components/HSScriptNote'
-import { hsTokens } from '@/modules/hopskip/tokens'
+import HSPublicRecipeShell from '@/modules/builder/components/public/HSPublicRecipeShell'
+import HSCard from '@/modules/builder/components/HSCard'
+import HSScriptNote from '@/modules/builder/components/HSScriptNote'
+import { hsTokens } from '@/modules/builder/tokens'
 
 interface PageProps {
   params: Promise<{ slug: string }>

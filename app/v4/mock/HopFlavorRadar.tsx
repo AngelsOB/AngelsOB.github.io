@@ -1,6 +1,6 @@
 "use client";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 
 // Mini and full hop flavor radar SVG. Lifted verbatim from
 // app/v3/components/mock/sections/HopFlavorRadar.tsx — pure SVG, no

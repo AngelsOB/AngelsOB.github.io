@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import AbvCalculator from "@/modules/hopskip/components/calculators/AbvCalculator";
-import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
-import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
+import { hsTokens } from "@/modules/builder/tokens";
+import AbvCalculator from "@/modules/builder/components/calculators/AbvCalculator";
+import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "ABV Calculator: Alcohol by Volume",

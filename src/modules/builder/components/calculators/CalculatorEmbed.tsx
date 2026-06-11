@@ -2,10 +2,10 @@
 
 import type { ReactNode } from "react";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import Glyph, { type GlyphKind } from "@/modules/hopskip/components/Glyph";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import Glyph, { type GlyphKind } from "@/modules/builder/components/Glyph";
 
 interface Props {
   eyebrow: string;

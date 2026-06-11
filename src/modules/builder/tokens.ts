@@ -2,7 +2,7 @@
 //
 // Surface colors (cream, cream-2, paper, ink, muted) resolve to CSS variables
 // so inline styles automatically switch when dark mode toggles. The CSS
-// variables themselves are defined in src/modules/hopskip/styles/tokens.css.
+// variables themselves are defined in src/modules/builder/styles/tokens.css.
 //
 // Ingredient accents (malt, hops, water, yeast, roast, honey) stay literal
 // hex — they don't change between light and dark mode by design.

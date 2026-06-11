@@ -10,7 +10,7 @@ function readSrc(relPath: string): string {
 
 describe('Phase 4 — Internal Linking', () => {
   describe('Footer links (HSFooter)', () => {
-    const footerSrc = readSrc('src/modules/hopskip/components/HSFooter.tsx')
+    const footerSrc = readSrc('src/modules/builder/components/HSFooter.tsx')
 
     it('links to Start a recipe (/recipes/new)', () => {
       expect(footerSrc).toContain('href: "/recipes/new"')

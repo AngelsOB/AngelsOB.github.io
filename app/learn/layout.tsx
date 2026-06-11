@@ -1,8 +1,8 @@
 import "katex/dist/katex.min.css";
 import type { Metadata } from "next";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSLearnNav from "@/modules/hopskip/components/HSLearnNav";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSLearnNav from "@/modules/builder/components/HSLearnNav";
 
 export const metadata: Metadata = {
   title: {

@@ -6,8 +6,8 @@
 import { type CSSProperties } from "react";
 import Link from "next/link";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSCard from "@/modules/hopskip/components/HSCard";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { Recipe, RecipeCalculations } from "@/modules/recipe/models/Recipe";
 

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
 import { learnNav } from "@/modules/learn/docsConfig";
 
 export const metadata: Metadata = {

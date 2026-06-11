@@ -1,6 +1,6 @@
 "use client";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 

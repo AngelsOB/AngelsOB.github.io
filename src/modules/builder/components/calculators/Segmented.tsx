@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 
 interface Option<T extends string> {
   value: T;

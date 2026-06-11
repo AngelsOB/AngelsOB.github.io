@@ -1,8 +1,8 @@
 "use client";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
 
 interface Props {
   label: string;

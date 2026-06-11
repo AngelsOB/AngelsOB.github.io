@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import HSBrowsePage from "@/modules/hopskip/components/public/HSBrowsePage";
-import type { BrowseRecipe } from "@/modules/hopskip/components/public/HSBrowseCard";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSBrowsePage from "@/modules/builder/components/public/HSBrowsePage";
+import type { BrowseRecipe } from "@/modules/builder/components/public/HSBrowseCard";
+import { hsTokens } from "@/modules/builder/tokens";
 import { SEED_RECIPES, SEED_SLUG_MAP } from "@/data/seed-recipes";
 
 export const dynamic = "force-dynamic";

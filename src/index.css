@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "./modules/hopskip/styles/tokens.css";
-@import "./modules/hopskip/styles/overrides.css";
+@import "./modules/builder/styles/tokens.css";
+@import "./modules/builder/styles/overrides.css";
 
 @theme {
   --font-handwritten: "Shadows Into Light", cursive;

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import StrikeTempCalculator from "@/modules/hopskip/components/calculators/StrikeTempCalculator";
-import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
-import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
+import { hsTokens } from "@/modules/builder/tokens";
+import StrikeTempCalculator from "@/modules/builder/components/calculators/StrikeTempCalculator";
+import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Strike Water Temperature Calculator",

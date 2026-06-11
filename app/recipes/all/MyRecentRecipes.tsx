@@ -6,11 +6,11 @@ import { useEffect, useMemo } from "react";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import { hsTokens } from "@/modules/builder/tokens";
 import { toast } from "@/stores/toastStore";
-import type { PreviewSelection } from "@/modules/hopskip/components/public/usePreviewState";
+import type { PreviewSelection } from "@/modules/builder/components/public/usePreviewState";
 
 import HubRecipeCard, {
   HubRecipeCardGrid,

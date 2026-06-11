@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import HSCompareRecipesPage from "@/modules/hopskip/components/public/HSCompareRecipesPage";
+import HSCompareRecipesPage from "@/modules/builder/components/public/HSCompareRecipesPage";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 import { findSeedRecipe } from "@/data/seed-recipes";
 

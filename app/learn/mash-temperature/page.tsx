@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Mash Temperature & Enzyme Kinetics",

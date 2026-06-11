@@ -3,21 +3,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
-import HSButton from "@/modules/hopskip/components/HSButton";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
+import HSButton from "@/modules/builder/components/HSButton";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
-import HSPreviewColumn from "@/modules/hopskip/components/public/HSPreviewColumn";
-import { usePreviewState } from "@/modules/hopskip/components/public/usePreviewState";
+import HSPreviewColumn from "@/modules/builder/components/public/HSPreviewColumn";
+import { usePreviewState } from "@/modules/builder/components/public/usePreviewState";
 import {
   useCanPreview,
   usePreviewWidth,
-} from "@/modules/hopskip/components/public/usePreviewLayout";
-import ReviewImportMatchesModal from "@/modules/hopskip/components/ReviewImportMatchesModal";
+} from "@/modules/builder/components/public/usePreviewLayout";
+import ReviewImportMatchesModal from "@/modules/builder/components/ReviewImportMatchesModal";
 import {
   beerXmlImportService,
   type PendingMatch,

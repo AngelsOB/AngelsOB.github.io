@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import { useReducedMotion } from "./lib/useReducedMotion";
 import { useLenis } from "./lib/scroll";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 import type { TabKey } from "./V4Mock";
@@ -469,7 +469,7 @@ function YeastSection({ data }: { data?: V4MockData }) {
   const name = y?.name ?? "WLP001 · California Ale";
   // Data mode: show just the laboratory (matches the real builder, which
   // shows `row.yeast.laboratory` as the caption under the strain name —
-  // see hopskip/components/builder/YeastSection.tsx). Don't append a form
+  // see modules/builder/components/builder/YeastSection.tsx). Don't append a form
   // ("Liquid" / "Dry") because the recipe's Yeast model doesn't carry it,
   // so we'd guess wrong for dry strains.
   const sub = y ? y.lab : "White Labs · Liquid · 1 vial = 100 B cells";

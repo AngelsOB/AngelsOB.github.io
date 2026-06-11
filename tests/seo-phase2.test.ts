@@ -272,7 +272,7 @@ describe('SEO Phase 2: OG image', () => {
 describe('SEO Phase 2: HSPublicRecipeShell', () => {
   const clientPath = resolve(
     srcDir,
-    'modules/hopskip/components/public/HSPublicRecipeShell.tsx',
+    'modules/builder/components/public/HSPublicRecipeShell.tsx',
   )
 
   test('is a client component', () => {

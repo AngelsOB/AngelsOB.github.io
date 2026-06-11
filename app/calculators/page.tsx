@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
-import Glyph, { type GlyphKind } from "@/modules/hopskip/components/Glyph";
-import AbvCalculator from "@/modules/hopskip/components/calculators/AbvCalculator";
-import IbuCalculator from "@/modules/hopskip/components/calculators/IbuCalculator";
-import BoilOffCalculator from "@/modules/hopskip/components/calculators/BoilOffCalculator";
-import DilutionCalculator from "@/modules/hopskip/components/calculators/DilutionCalculator";
-import CarbonationCalculator from "@/modules/hopskip/components/calculators/CarbonationCalculator";
-import HydrometerCorrectionCalculator from "@/modules/hopskip/components/calculators/HydrometerCorrectionCalculator";
-import StrikeTempCalculator from "@/modules/hopskip/components/calculators/StrikeTempCalculator";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
+import Glyph, { type GlyphKind } from "@/modules/builder/components/Glyph";
+import AbvCalculator from "@/modules/builder/components/calculators/AbvCalculator";
+import IbuCalculator from "@/modules/builder/components/calculators/IbuCalculator";
+import BoilOffCalculator from "@/modules/builder/components/calculators/BoilOffCalculator";
+import DilutionCalculator from "@/modules/builder/components/calculators/DilutionCalculator";
+import CarbonationCalculator from "@/modules/builder/components/calculators/CarbonationCalculator";
+import HydrometerCorrectionCalculator from "@/modules/builder/components/calculators/HydrometerCorrectionCalculator";
+import StrikeTempCalculator from "@/modules/builder/components/calculators/StrikeTempCalculator";
 
 type CalcId =
   | "abv"

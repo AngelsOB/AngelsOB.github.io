@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { abvFromOGFG } from "@/calculators/abv";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSNumberField from "@/modules/hopskip/components/HSNumberField";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSNumberField from "@/modules/builder/components/HSNumberField";
 import ResultGauge from "./ResultGauge";
 
 interface Props {

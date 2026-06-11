@@ -23,8 +23,8 @@ import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { postBoilVolume } from "@/calculators/boilOff";
 import { dilutionWater } from "@/calculators/dilution";
 import { abvFromOGFG } from "@/calculators/abv";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
+import { hsTokens } from "@/modules/builder/tokens";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 
 /**

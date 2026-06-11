@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import HSButton from "@/modules/hopskip/components/HSButton";
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSCardLift from "@/modules/hopskip/components/HSCardLift";
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSButton from "@/modules/builder/components/HSButton";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSCardLift from "@/modules/builder/components/HSCardLift";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import CompareMockV4 from "../mock/CompareMockV4";

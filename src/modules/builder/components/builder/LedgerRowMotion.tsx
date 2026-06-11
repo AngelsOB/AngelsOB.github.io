@@ -49,7 +49,7 @@ interface RowProps {
  * AnimatePresence can track which row is being added/removed.
  *
  *   - Enter: slides down 8px and fades in via the shared `springEnter`
- *     token (see src/modules/hopskip/motion.ts) — fast initial reach,
+ *     token (see src/modules/builder/motion.ts) — fast initial reach,
  *     gentle settle with a touch of overshoot.
  *   - Exit: collapses height to 0 and fades to 0 on `tweenStandard`.
  *     Removing a row is destructive — a calm easeOut reads right;

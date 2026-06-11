@@ -1,7 +1,7 @@
 "use client";
 
-import HSButton from "@/modules/hopskip/components/HSButton";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSButton from "@/modules/builder/components/HSButton";
+import { hsTokens } from "@/modules/builder/tokens";
 import { CTA, STAGES } from "../data";
 
 // Left-column text blocks for the tour. Pure scrolling DOM. HomeV4 targets

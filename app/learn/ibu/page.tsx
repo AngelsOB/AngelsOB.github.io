@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
-import HSFormulaCallout from "@/modules/hopskip/components/HSFormulaCallout";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
+import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
 export const metadata: Metadata = {
   title: "Understanding IBU: How Bitterness Is Calculated",

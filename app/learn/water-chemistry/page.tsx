@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
-import { WaterChemMockup } from "@/modules/hopskip/components/HSBuilderMockups";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
+import { WaterChemMockup } from "@/modules/builder/components/HSBuilderMockups";
 
 export const metadata: Metadata = {
   title: "Water Chemistry & the Auto-Calculator",

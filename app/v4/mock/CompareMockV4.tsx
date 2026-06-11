@@ -1,10 +1,10 @@
 "use client";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 // Small-scale faithful mirror of the real compare page,
-// src/modules/hopskip/components/public/HSCompareRecipesPage.tsx.
+// src/modules/builder/components/public/HSCompareRecipesPage.tsx.
 // Renders the page as ONE framed paper card (header → pill row → section
 // stack), not multiple stacked HSCards — keeps the mock reading as a single
 // captured page. Inner sections share the card and are separated by dashed

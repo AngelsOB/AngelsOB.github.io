@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 
 import type { Hop, Recipe } from "@/modules/recipe/models/Recipe";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSNumberField from "@/modules/hopskip/components/HSNumberField";
-import HSRangeBar from "@/modules/hopskip/components/HSRangeBar";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSNumberField from "@/modules/builder/components/HSNumberField";
+import HSRangeBar from "@/modules/builder/components/HSRangeBar";
 import ResultGauge from "./ResultGauge";
 
 interface Props {

@@ -1,12 +1,12 @@
 "use client";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { STAGES } from "../data";
 import type { V4BrewSheetData } from "../lib/mapRecipeToV4Mock";
 
 // Small-scale, presentational mirror of the live builder's brew sheet
-// (src/modules/hopskip/components/builder/HSBrewSheetSection.tsx). It copies
+// (src/modules/builder/components/builder/HSBrewSheetSection.tsx). It copies
 // that component's visual vocabulary — accent-barred cards, gridded stat
 // tables, display/script typography, the roast-accented OG recovery card —
 // at roughly half scale, without any of its interactivity or calc logic.

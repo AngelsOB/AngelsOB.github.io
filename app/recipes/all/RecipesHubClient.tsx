@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
-import HSPreviewColumn from "@/modules/hopskip/components/public/HSPreviewColumn";
-import { usePreviewState } from "@/modules/hopskip/components/public/usePreviewState";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import HSPreviewColumn from "@/modules/builder/components/public/HSPreviewColumn";
+import { usePreviewState } from "@/modules/builder/components/public/usePreviewState";
 import {
   useCanPreview,
   usePreviewWidth,
-} from "@/modules/hopskip/components/public/usePreviewLayout";
-import { loadFullPublicRecipe } from "@/modules/hopskip/components/public/loadFullPublicRecipe";
-import type { BrowseRecipe } from "@/modules/hopskip/components/public/HSBrowseCard";
+} from "@/modules/builder/components/public/usePreviewLayout";
+import { loadFullPublicRecipe } from "@/modules/builder/components/public/loadFullPublicRecipe";
+import type { BrowseRecipe } from "@/modules/builder/components/public/HSBrowseCard";
 
 import MyRecentRecipes from "./MyRecentRecipes";
 import HubRecipeCard, { HubRecipeCardGrid, HUB_CARD_TILTS } from "./HubRecipeCard";

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import CarbonationCalculator from "@/modules/hopskip/components/calculators/CarbonationCalculator";
-import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import { hsTokens } from "@/modules/builder/tokens";
+import CarbonationCalculator from "@/modules/builder/components/calculators/CarbonationCalculator";
+import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Carbonation Calculator: PSI for Your CO₂ Volumes",

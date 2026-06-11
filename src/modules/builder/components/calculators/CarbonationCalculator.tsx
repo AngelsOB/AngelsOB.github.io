@@ -8,8 +8,8 @@ import {
   fahrenheitToCelsius,
   psiToBar,
 } from "@/calculators/carbonation";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HSNumberField from "@/modules/hopskip/components/HSNumberField";
+import { hsTokens } from "@/modules/builder/tokens";
+import HSNumberField from "@/modules/builder/components/HSNumberField";
 import ResultGauge from "./ResultGauge";
 import Segmented from "./Segmented";
 

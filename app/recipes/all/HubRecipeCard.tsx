@@ -6,9 +6,9 @@
 import Link from "next/link";
 import { type CSSProperties } from "react";
 
-import HSCard from "@/modules/hopskip/components/HSCard";
-import HSCardLift from "@/modules/hopskip/components/HSCardLift";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSCardLift from "@/modules/builder/components/HSCardLift";
+import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 interface Props {

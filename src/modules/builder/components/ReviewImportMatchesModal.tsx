@@ -17,9 +17,9 @@ import HSModal, {
   HSModalBody,
   HSModalFooter,
   HSModalHeader,
-} from '@/modules/hopskip/components/modals/HSModal';
-import HSButton from '@/modules/hopskip/components/HSButton';
-import { hsTokens } from '@/modules/hopskip/tokens';
+} from '@/modules/builder/components/modals/HSModal';
+import HSButton from '@/modules/builder/components/HSButton';
+import { hsTokens } from '@/modules/builder/tokens';
 import type {
   MatchResolution,
   PendingGrainMatch,

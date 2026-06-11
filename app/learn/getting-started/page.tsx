@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import {
   EquipmentMockup,
   FermentablesMockup,
   WaterChemMockup,
   MashMockup,
   BrewDayMockup,
-} from "@/modules/hopskip/components/HSBuilderMockups";
+} from "@/modules/builder/components/HSBuilderMockups";
 
 export const metadata: Metadata = {
   title: "How To Use Brewing.It: Quick Start Guide",

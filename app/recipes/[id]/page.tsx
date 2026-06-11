@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import HopSkipBuilder from "@/modules/hopskip/components/HopSkipBuilder";
+import HopSkipBuilder from "@/modules/builder/components/HopSkipBuilder";
 
 export const dynamic = "force-dynamic";
 

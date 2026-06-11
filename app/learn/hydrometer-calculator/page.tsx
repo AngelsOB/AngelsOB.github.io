@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { hsTokens } from "@/modules/hopskip/tokens";
-import HydrometerCorrectionCalculator from "@/modules/hopskip/components/calculators/HydrometerCorrectionCalculator";
-import CalculatorEmbed from "@/modules/hopskip/components/calculators/CalculatorEmbed";
-import HSLearnArticle from "@/modules/hopskip/components/HSLearnArticle";
+import { hsTokens } from "@/modules/builder/tokens";
+import HydrometerCorrectionCalculator from "@/modules/builder/components/calculators/HydrometerCorrectionCalculator";
+import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
+import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 
 export const metadata: Metadata = {
   title: "Hydrometer Correction Calculator",

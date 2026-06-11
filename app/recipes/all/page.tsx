@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import HSScriptNote from "@/modules/builder/components/HSScriptNote";
+import { hsTokens } from "@/modules/builder/tokens";
 
 import RecipesHubClient from "./RecipesHubClient";
 

@@ -5,7 +5,7 @@ import {
   type WaterProfile,
 } from "@/modules/recipe/services/WaterChemistryService";
 import { getBjcpStyleSpec, type RangeTuple } from "@/utils/bjcpSpecs";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 
 // Maps a real Recipe into the data the v4 mock renders. The v4 mock is hardcoded
 // to a sample for the marketing tour; when a signed-in user views the homepage,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { hsTokens } from "@/modules/hopskip/tokens";
+import { hsTokens } from "@/modules/builder/tokens";
 import { HopFlavorRadar } from "./HopFlavorRadar";
 import BrewSheetPanelV4 from "./BrewSheetPanelV4";
 import { TabSection, SectionHead, WaterSection } from "./TabSections";
