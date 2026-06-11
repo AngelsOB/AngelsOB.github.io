@@ -12,6 +12,30 @@ import type { Recipe } from '@/modules/recipe/models/Recipe';
 const calcService = new RecipeCalculationService();
 
 /**
+ * Ask the server to flush ISR caches (/, /browse, /r/[slug], ...) so a
+ * publish/unpublish shows up immediately instead of after the hourly
+ * revalidate. Fire-and-forget: a failure just means the regular ISR window
+ * applies.
+ */
+function requestRevalidation(slug?: string): void {
+  const user = auth.currentUser;
+  if (!user) return;
+  user
+    .getIdToken()
+    .then((token) =>
+      fetch('/api/revalidate', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slug: slug ?? null }),
+      }),
+    )
+    .catch(() => { /* fire-and-forget */ });
+}
+
+/**
  * Publish a recipe: update the recipe doc and upsert publicRecipeIndex.
  * Returns the shareSlug.
  */
@@ -60,6 +84,8 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
     ratingCount,
   });
 
+  requestRevalidation(slug);
+
   return slug;
 }
 
@@ -68,7 +94,15 @@ export async function publishRecipe(recipe: Recipe): Promise<string> {
  * The recipe doc's isPublic flag is managed by the caller.
  */
 export async function unpublishRecipe(recipeId: string): Promise<void> {
-  await deleteDoc(doc(db, 'publicRecipeIndex', recipeId));
+  // Grab the slug before deleting so the cached /r/[slug] page can be
+  // flushed too — otherwise it would keep serving for up to an hour.
+  const indexRef = doc(db, 'publicRecipeIndex', recipeId);
+  const indexSnap = await getDoc(indexRef);
+  const slug = indexSnap.exists() ? (indexSnap.data().shareSlug as string | undefined) : undefined;
+
+  await deleteDoc(indexRef);
+
+  requestRevalidation(slug);
 }
 
 /**

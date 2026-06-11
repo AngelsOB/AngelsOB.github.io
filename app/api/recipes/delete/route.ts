@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth, adminStorage } from '@/config/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+
+/** Flush the ISR caches that list or render a public recipe. */
+function revalidatePublicSurfaces(uid: string, slug?: string) {
+  revalidatePath('/');
+  revalidatePath('/browse');
+  revalidatePath('/recipes/all');
+  revalidatePath('/sitemap.xml');
+  revalidatePath(`/u/${uid}`);
+  if (slug) revalidatePath(`/r/${slug}`);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,11 +45,17 @@ export async function POST(req: NextRequest) {
       // Also delete from publicRecipeIndex if it exists
       const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);
       const indexSnap = await indexRef.get();
-      if (indexSnap.exists) {
+      const wasPublic = indexSnap.exists;
+      const shareSlug = wasPublic ? (indexSnap.data()?.shareSlug as string | undefined) : undefined;
+      if (wasPublic) {
         batch.delete(indexRef);
       }
 
       await batch.commit();
+
+      if (wasPublic) {
+        revalidatePublicSurfaces(decoded.uid, shareSlug);
+      }
 
       // Clean up label image from Storage (best-effort)
       try {
@@ -49,7 +66,9 @@ export async function POST(req: NextRequest) {
       const indexRef = adminDb.collection('publicRecipeIndex').doc(recipeId);
       const indexSnap = await indexRef.get();
       if (indexSnap.exists) {
+        const shareSlug = indexSnap.data()?.shareSlug as string | undefined;
         await indexRef.delete();
+        revalidatePublicSurfaces(decoded.uid, shareSlug);
       }
     }
 
