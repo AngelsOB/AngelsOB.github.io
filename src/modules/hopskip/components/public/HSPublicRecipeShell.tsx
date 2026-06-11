@@ -1,6 +1,6 @@
 'use client';
 
-import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
+import type { Recipe } from '@/modules/recipe/models/Recipe';
 
 import HopSkipBuilder from '../HopSkipBuilder';
 

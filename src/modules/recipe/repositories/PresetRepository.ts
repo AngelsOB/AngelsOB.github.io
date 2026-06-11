@@ -14,15 +14,15 @@
  * - Saving custom presets
  */
 
-import { devError } from "../../../../utils/logger";
+import { devError } from "@/utils/logger";
 import type { FermentablePreset, HopPreset, YeastPreset } from "../models/Presets";
 import {
   FERMENTABLE_PRESETS,
   groupFermentables,
   type FermentableGroup,
-} from "../../data/fermentablePresets";
-import { HOP_PRESETS, groupHops, type HopCategory } from "../../data/hopPresets";
-import { YEAST_PRESETS, groupYeasts, type YeastCategory } from "../../data/yeastPresets";
+} from "@/modules/recipe/data/fermentablePresets";
+import { HOP_PRESETS, groupHops, type HopCategory } from "@/modules/recipe/data/hopPresets";
+import { YEAST_PRESETS, groupYeasts, type YeastCategory } from "@/modules/recipe/data/yeastPresets";
 
 // Storage keys for custom presets
 const CUSTOM_FERMENTABLES_KEY = "beta-custom-fermentables-v1";

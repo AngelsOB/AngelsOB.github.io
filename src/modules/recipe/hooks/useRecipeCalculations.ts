@@ -15,9 +15,9 @@
  */
 
 import { useMemo } from 'react';
-import type { Recipe, RecipeCalculations } from '../../domain/models/Recipe';
-import { recipeCalculationService } from '../../domain/services/RecipeCalculationService';
-import { usePreferencesStore } from '../../../auth/preferencesStore';
+import type { Recipe, RecipeCalculations } from '@/modules/recipe/models/Recipe';
+import { recipeCalculationService } from '@/modules/recipe/services/RecipeCalculationService';
+import { usePreferencesStore } from '@/modules/auth/preferencesStore';
 
 /**
  * Calculate all recipe values (memoized for performance)

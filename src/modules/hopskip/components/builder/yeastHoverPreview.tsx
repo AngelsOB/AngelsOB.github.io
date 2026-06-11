@@ -8,8 +8,8 @@ import { LazyMotion, domMax, m } from "framer-motion";
 
 import { hsTokens } from "../../tokens";
 import { springEnter, springTilt, springTrack } from "../../motion";
-import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
-import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import type { YeastPreset } from "@/modules/recipe/models/Presets";
+import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 
 import {
   findStrainPeers,

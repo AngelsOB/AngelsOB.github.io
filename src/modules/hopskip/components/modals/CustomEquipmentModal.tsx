@@ -8,7 +8,7 @@ import HSButton from "../HSButton";
 import HSEyebrow from "../HSEyebrow";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { EquipmentProfile } from "@/modules/beta-builder/domain/models/Equipment";
+import type { EquipmentProfile } from "@/modules/recipe/models/Equipment";
 import { toast } from "@/stores/toastStore";
 
 interface CurrentSettings {

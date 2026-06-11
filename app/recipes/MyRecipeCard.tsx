@@ -8,8 +8,8 @@ import Link from "next/link";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
 import HSCard from "@/modules/hopskip/components/HSCard";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
-import type { Recipe, RecipeCalculations } from "@/modules/beta-builder/domain/models/Recipe";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
+import type { Recipe, RecipeCalculations } from "@/modules/recipe/models/Recipe";
 
 interface Props {
   recipe: Recipe;

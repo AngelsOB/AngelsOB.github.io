@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/config/firebase-admin';
 import { findSeedRecipe } from '@/data/seed-recipes';
-import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
+import type { Recipe } from '@/modules/recipe/models/Recipe';
 
 export async function GET(req: NextRequest) {
   try {

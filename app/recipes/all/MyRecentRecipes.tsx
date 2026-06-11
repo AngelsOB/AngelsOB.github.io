@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useAuthStore } from "@/modules/auth/authStore";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import HSCard from "@/modules/hopskip/components/HSCard";
 import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
 import { hsTokens } from "@/modules/hopskip/tokens";

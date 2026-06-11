@@ -10,7 +10,7 @@ import type { Recipe, RecipeCalculations, Hop, Fermentable } from '../models/Rec
 import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
 import { mashScheduleService } from './MashScheduleService';
-import { inferFermentability, inferType } from '../../data/fermentablePresets';
+import { inferFermentability, inferType } from '@/modules/recipe/data/fermentablePresets';
 
 export type AttenuationModel = 'linear' | 'enzyme_kinetics' | 'brandam_ode';
 

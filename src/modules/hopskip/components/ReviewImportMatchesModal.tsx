@@ -17,9 +17,9 @@ import HSModal, {
   HSModalBody,
   HSModalFooter,
   HSModalHeader,
-} from '../../../hopskip/components/modals/HSModal';
-import HSButton from '../../../hopskip/components/HSButton';
-import { hsTokens } from '../../../hopskip/tokens';
+} from '@/modules/hopskip/components/modals/HSModal';
+import HSButton from '@/modules/hopskip/components/HSButton';
+import { hsTokens } from '@/modules/hopskip/tokens';
 import type {
   MatchResolution,
   PendingGrainMatch,
@@ -27,7 +27,7 @@ import type {
   PendingMatch,
   PendingStyleMatch,
   PendingYeastMatch,
-} from '../../domain/services/BeerXmlImportService';
+} from '@/modules/recipe/services/BeerXmlImportService';
 
 interface Props {
   isOpen: boolean;

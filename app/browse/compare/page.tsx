@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import HSCompareRecipesPage from "@/modules/hopskip/components/public/HSCompareRecipesPage";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 import { findSeedRecipe } from "@/data/seed-recipes";
 
 export const dynamic = "force-dynamic";

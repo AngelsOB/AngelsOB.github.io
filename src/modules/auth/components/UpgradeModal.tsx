@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import ModalOverlay from '../../beta-builder/presentation/components/ModalOverlay';
+import ModalOverlay from '@/components/ModalOverlay';
 import Button from '../../../components/Button';
 import { startCheckout } from '../stripeCheckout';
 

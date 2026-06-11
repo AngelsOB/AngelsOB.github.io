@@ -1,7 +1,7 @@
 "use client";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 // Small-scale faithful mirror of the real compare page,
 // src/modules/hopskip/components/public/HSCompareRecipesPage.tsx.

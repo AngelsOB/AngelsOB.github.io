@@ -1,9 +1,8 @@
 "use client";
 
-// Classic radar lives at OLD_HopFlavorRadar; learn module is itself quarantined.
+// Shared radar chart lives at @/components/HopFlavorRadar.
 // HS replacement ships in Phase 4 (learn article body rewrites).
-// eslint-disable-next-line no-restricted-imports
-import OLD_HopFlavorRadar from "@/modules/beta-builder/presentation/components/OLD_HopFlavorRadar";
+import HopFlavorRadar from "@/components/HopFlavorRadar";
 
 /** West Coast IPA hop profile — Centennial/Simcoe/Citra/Cascade blend */
 const westCoastIpaSeries = [
@@ -26,7 +25,7 @@ const westCoastIpaSeries = [
 export default function HopRadarDemo() {
   return (
     <div className="flex justify-center py-4">
-      <OLD_HopFlavorRadar
+      <HopFlavorRadar
         series={westCoastIpaSeries}
         size={340}
         labelColorize

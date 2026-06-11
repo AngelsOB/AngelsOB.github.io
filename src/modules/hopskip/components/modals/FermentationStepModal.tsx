@@ -12,7 +12,7 @@ import { uid } from "@/utils/uid";
 import type {
   FermentationStep,
   FermentationStepType,
-} from "@/modules/beta-builder/domain/models/Recipe";
+} from "@/modules/recipe/models/Recipe";
 import { toast } from "@/stores/toastStore";
 
 interface Props {

@@ -6,10 +6,10 @@
  */
 
 import { create } from 'zustand';
-import type { EquipmentProfile } from '../../domain/models/Equipment';
-import { EquipmentRepository } from '../../domain/repositories/EquipmentRepository';
-import { FirestoreEquipmentRepository } from '../../domain/repositories/FirestoreEquipmentRepository';
-import { useAuthStore } from '../../../auth/authStore';
+import type { EquipmentProfile } from '@/modules/recipe/models/Equipment';
+import { EquipmentRepository } from '@/modules/recipe/repositories/EquipmentRepository';
+import { FirestoreEquipmentRepository } from '@/modules/recipe/repositories/FirestoreEquipmentRepository';
+import { useAuthStore } from '@/modules/auth/authStore';
 
 function getEquipmentRepo() {
   const user = useAuthStore.getState().user;

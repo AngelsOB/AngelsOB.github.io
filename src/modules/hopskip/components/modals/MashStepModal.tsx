@@ -9,8 +9,8 @@ import HSScriptNote from "../HSScriptNote";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import { uid } from "@/utils/uid";
-import type { MashStep } from "@/modules/beta-builder/domain/models/Recipe";
-import { mashScheduleService } from "@/modules/beta-builder/domain/services/MashScheduleService";
+import type { MashStep } from "@/modules/recipe/models/Recipe";
+import { mashScheduleService } from "@/modules/recipe/services/MashScheduleService";
 import { toast } from "@/stores/toastStore";
 
 interface Props {

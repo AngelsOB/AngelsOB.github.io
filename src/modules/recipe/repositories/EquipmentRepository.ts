@@ -11,7 +11,7 @@
  * to an async backend (e.g., IndexedDB, remote API) without breaking changes.
  */
 
-import { devError } from '../../../../utils/logger';
+import { devError } from '@/utils/logger';
 import type { EquipmentProfile } from '../models/Equipment';
 import { EQUIPMENT_PRESETS } from '../models/Equipment';
 

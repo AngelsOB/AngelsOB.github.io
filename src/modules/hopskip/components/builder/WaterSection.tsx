@@ -42,7 +42,7 @@ import type {
   OtherIngredientCategory,
   Recipe,
   RecipeCalculations,
-} from "@/modules/beta-builder/domain/models/Recipe";
+} from "@/modules/recipe/models/Recipe";
 import {
   BEER_STYLE_TARGETS,
   COMMON_WATER_PROFILES,
@@ -50,10 +50,10 @@ import {
   waterChemistryService,
   type SaltAdditions,
   type WaterProfile,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
-import { optimizeSaltAdditions } from "@/modules/beta-builder/domain/services/WaterSaltOptimizer";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
+} from "@/modules/recipe/services/WaterChemistryService";
+import { optimizeSaltAdditions } from "@/modules/recipe/services/WaterSaltOptimizer";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
 // TODO: Re-enable premium gating once Stripe is live (mirrors classic)
 // import { useUserTier } from "@/modules/auth/useUserTier";
 // import { canAccess } from "@/modules/auth/tierAccess";

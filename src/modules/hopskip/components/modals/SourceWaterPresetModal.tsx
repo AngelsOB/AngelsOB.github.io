@@ -10,7 +10,7 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 import {
   COMMON_WATER_PROFILES,
   type WaterProfile,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
+} from "@/modules/recipe/services/WaterChemistryService";
 import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface SourcePreset {

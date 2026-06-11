@@ -7,7 +7,7 @@
  * Each time a recipe is modified, a new version snapshot is created.
  */
 
-import { devError } from '../../../../utils/logger';
+import { devError } from '@/utils/logger';
 import type { RecipeVersion } from '../models/Recipe';
 
 export class RecipeVersionRepository {

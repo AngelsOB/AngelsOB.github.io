@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import type { Recipe, RecipeCalculations } from '@/modules/beta-builder/domain/models/Recipe'
+import type { Recipe, RecipeCalculations } from '@/modules/recipe/models/Recipe'
 
 export type PublicRecipeResult = {
   recipe: Recipe
@@ -13,7 +13,7 @@ export type PublicRecipeResult = {
 export const getPublicRecipe = cache(async (slug: string): Promise<PublicRecipeResult | null> => {
   const { adminDb } = await import('@/config/firebase-admin')
   const { RecipeCalculationService } = await import(
-    '@/modules/beta-builder/domain/services/RecipeCalculationService'
+    '@/modules/recipe/services/RecipeCalculationService'
   )
 
   const snapshot = await adminDb

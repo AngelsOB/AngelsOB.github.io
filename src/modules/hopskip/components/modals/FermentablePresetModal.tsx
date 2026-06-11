@@ -8,8 +8,8 @@ import HSButton from "../HSButton";
 import HSIngredientDot from "../HSIngredientDot";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { FermentablePreset } from "@/modules/beta-builder/domain/models/Presets";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import type { FermentablePreset } from "@/modules/recipe/models/Presets";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { BREWING_ORIGINS, getCountryFlag } from "@/utils/flags";
 import { fuzzyIncludes } from "@/utils/ingredientMatching";
 

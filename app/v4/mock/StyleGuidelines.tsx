@@ -1,7 +1,7 @@
 "use client";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 
 // Compact mock of the real builder's BJCPStyleRail: a row of vitals gauges

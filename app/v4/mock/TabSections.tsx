@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
-import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
+import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 import type { TabKey } from "./V4Mock";
 import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 

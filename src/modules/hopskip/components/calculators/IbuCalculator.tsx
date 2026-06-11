@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 
-import type { Hop, Recipe } from "@/modules/beta-builder/domain/models/Recipe";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
+import type { Hop, Recipe } from "@/modules/recipe/models/Recipe";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import { hsTokens } from "@/modules/hopskip/tokens";
 import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
 import HSNumberField from "@/modules/hopskip/components/HSNumberField";

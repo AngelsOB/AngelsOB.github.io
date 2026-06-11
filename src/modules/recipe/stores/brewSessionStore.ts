@@ -12,12 +12,12 @@ import type {
   SessionId,
   SessionActuals,
   SessionStatus,
-} from '../../domain/models/BrewSession';
-import { type Recipe, deepCloneRecipe } from '../../domain/models/Recipe';
-import { brewSessionRepository } from '../../domain/repositories/BrewSessionRepository';
-import { FirestoreBrewSessionRepository } from '../../domain/repositories/FirestoreBrewSessionRepository';
-import { brewSessionCalculationService } from '../../domain/services/BrewSessionCalculationService';
-import { useAuthStore } from '../../../auth/authStore';
+} from '@/modules/recipe/models/BrewSession';
+import { type Recipe, deepCloneRecipe } from '@/modules/recipe/models/Recipe';
+import { brewSessionRepository } from '@/modules/recipe/repositories/BrewSessionRepository';
+import { FirestoreBrewSessionRepository } from '@/modules/recipe/repositories/FirestoreBrewSessionRepository';
+import { brewSessionCalculationService } from '@/modules/recipe/services/BrewSessionCalculationService';
+import { useAuthStore } from '@/modules/auth/authStore';
 
 function getSessionRepo() {
   const user = useAuthStore.getState().user;

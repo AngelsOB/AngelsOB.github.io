@@ -14,7 +14,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -36,7 +36,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -62,7 +62,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -88,7 +88,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -107,7 +107,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = { ...SEED_RECIPES[0], fermentables: [], hops: [], yeasts: [] }
@@ -123,7 +123,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -143,7 +143,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = SEED_RECIPES[0]
@@ -159,7 +159,7 @@ describe('SEO Phase 2: buildRecipeJsonLd', () => {
     )
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     const recipe = { ...SEED_RECIPES[0], tags: ['hoppy', 'west-coast'] }
@@ -236,7 +236,7 @@ describe('SEO Phase 2: seed recipes', () => {
   test('all seed recipes produce valid calculations', async () => {
     const { SEED_RECIPES } = await import('../src/data/seed-recipes')
     const { RecipeCalculationService } = await import(
-      '../src/modules/beta-builder/domain/services/RecipeCalculationService'
+      '@/modules/recipe/services/RecipeCalculationService'
     )
 
     for (const recipe of SEED_RECIPES) {

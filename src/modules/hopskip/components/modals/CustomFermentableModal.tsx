@@ -7,7 +7,7 @@ import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { FermentablePreset } from "@/modules/beta-builder/domain/models/Presets";
+import type { FermentablePreset } from "@/modules/recipe/models/Presets";
 import { toast } from "@/stores/toastStore";
 
 interface Props {

@@ -1,7 +1,7 @@
 "use client";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { STAGES } from "../data";
 import type { V4BrewSheetData } from "../lib/mapRecipeToV4Mock";
 

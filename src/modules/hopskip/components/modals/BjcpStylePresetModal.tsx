@@ -9,7 +9,7 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import { getBjcpCategories, type BjcpStyle } from "@/utils/bjcp";
 import { getBjcpStyleSpec, type BjcpStyleSpec } from "@/utils/bjcpSpecs";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 interface Props {
   isOpen: boolean;

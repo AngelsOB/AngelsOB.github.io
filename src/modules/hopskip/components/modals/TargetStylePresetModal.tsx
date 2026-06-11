@@ -10,7 +10,7 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 import {
   BEER_STYLE_TARGETS,
   type BeerStyleTarget,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
+} from "@/modules/recipe/services/WaterChemistryService";
 import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface StylePreset {

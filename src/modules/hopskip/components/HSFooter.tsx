@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { hsTokens } from "../tokens";
 import HSScriptNote from "./HSScriptNote";
-import { useUnsavedChangesStore } from "@/modules/beta-builder/presentation/stores/unsavedChangesStore";
+import { useUnsavedChangesStore } from "@/modules/recipe/stores/unsavedChangesStore";
 
 const COLS: { label: string; links: { href: string; text: string }[] }[] = [
   {

@@ -7,8 +7,8 @@ import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
-import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import type { YeastPreset } from "@/modules/recipe/models/Presets";
+import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 import { fuzzyIncludes } from "@/utils/ingredientMatching";
 import { useYeastHoverPreview } from "../builder/yeastHoverPreview";
 

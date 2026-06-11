@@ -7,7 +7,7 @@ import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { EquipmentProfile } from "@/modules/beta-builder/domain/models/Equipment";
+import type { EquipmentProfile } from "@/modules/recipe/models/Equipment";
 import { fuzzyIncludes } from "@/utils/ingredientMatching";
 
 interface Props {

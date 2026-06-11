@@ -19,10 +19,10 @@ import HSModal, {
   HSModalBody,
   HSModalFooter,
   HSModalHeader,
-} from '../../../hopskip/components/modals/HSModal';
-import HSButton from '../../../hopskip/components/HSButton';
-import { hsTokens } from '../../../hopskip/tokens';
-import { useUnsavedChangesStore } from '../stores/unsavedChangesStore';
+} from '@/modules/hopskip/components/modals/HSModal';
+import HSButton from '@/modules/hopskip/components/HSButton';
+import { hsTokens } from '@/modules/hopskip/tokens';
+import { useUnsavedChangesStore } from '@/modules/recipe/stores/unsavedChangesStore';
 
 export default function UnsavedChangesModal() {
   const isModalOpen = useUnsavedChangesStore((s) => s.isModalOpen);

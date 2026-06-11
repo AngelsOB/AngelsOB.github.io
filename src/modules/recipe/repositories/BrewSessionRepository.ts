@@ -7,7 +7,7 @@
  * Sessions track actual brew days and measurements.
  */
 
-import { devError } from '../../../../utils/logger';
+import { devError } from '@/utils/logger';
 import type { BrewSession, SessionId } from '../models/BrewSession';
 
 export class BrewSessionRepository {

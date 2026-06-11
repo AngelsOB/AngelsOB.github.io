@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useRef, useState } from 'react';
-import { useRecipeStore } from '../beta-builder/presentation/stores/recipeStore';
+import { useRecipeStore } from '@/modules/recipe/stores/recipeStore';
 
 interface LabelUploaderProps {
   labelUrl?: string;

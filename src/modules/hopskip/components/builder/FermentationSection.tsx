@@ -27,18 +27,18 @@ import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
 import FermentationStepModal from "../modals/FermentationStepModal";
 
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { usePresetStore } from "@/modules/recipe/stores/presetStore";
 import { uid } from "@/utils/uid";
-import { packagingCalculationService as pkgCalc } from "@/modules/beta-builder/domain/services/PackagingCalculationService";
+import { packagingCalculationService as pkgCalc } from "@/modules/recipe/services/PackagingCalculationService";
 import type {
   FermentationStep,
   FermentationStepType,
   Packaging,
   PackagingMethod,
   PrimingSugarType,
-} from "@/modules/beta-builder/domain/models/Recipe";
-import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
+} from "@/modules/recipe/models/Recipe";
+import type { YeastPreset } from "@/modules/recipe/models/Presets";
 
 // Step types where the strain's published temperature range is meaningful.
 // Cold-crash + conditioning/lagering are intentionally below the range

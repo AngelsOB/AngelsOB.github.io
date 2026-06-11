@@ -5,13 +5,13 @@
  * Provides lookup function with fuzzy matching for laboratory names.
  */
 
-import escarpmentFavicon from "../../../../assets/yeast-favicons/escarpment-favicon.png";
-import fermentisFavicon from "../../../../assets/yeast-favicons/fermentis-favicon.png";
-import imperialFavicon from "../../../../assets/yeast-favicons/imperial-favicon.svg";
-import lallemandFavicon from "../../../../assets/yeast-favicons/lallemand-favicon.png";
-import omegaFavicon from "../../../../assets/yeast-favicons/omega-favicon.png";
-import whitelabsFavicon from "../../../../assets/yeast-favicons/whitelabs-favicon.jpg";
-import wyeastFavicon from "../../../../assets/yeast-favicons/wyeast-favicon.png";
+import escarpmentFavicon from "@/assets/yeast-favicons/escarpment-favicon.png";
+import fermentisFavicon from "@/assets/yeast-favicons/fermentis-favicon.png";
+import imperialFavicon from "@/assets/yeast-favicons/imperial-favicon.svg";
+import lallemandFavicon from "@/assets/yeast-favicons/lallemand-favicon.png";
+import omegaFavicon from "@/assets/yeast-favicons/omega-favicon.png";
+import whitelabsFavicon from "@/assets/yeast-favicons/whitelabs-favicon.jpg";
+import wyeastFavicon from "@/assets/yeast-favicons/wyeast-favicon.png";
 
 /** Helper to get the src string from a Next.js image import */
 function src(img: string | { src: string }): string {

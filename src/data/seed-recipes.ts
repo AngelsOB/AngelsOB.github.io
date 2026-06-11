@@ -6,7 +6,7 @@
  * Users can fork them into their own collection.
  */
 
-import type { Recipe } from '../modules/beta-builder/domain/models/Recipe';
+import type { Recipe } from '@/modules/recipe/models/Recipe';
 
 export const SEED_RECIPES: Recipe[] = [
   // ── 21A  American IPA ────────────────────────────────────────────────

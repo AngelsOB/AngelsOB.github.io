@@ -49,16 +49,16 @@ import CustomFermentableModal from "../modals/CustomFermentableModal";
 const HOVER_REVEAL_PCT = 30;
 
 import { uid } from "@/utils/uid";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { usePresetStore } from "@/modules/recipe/stores/presetStore";
 import { toast } from "@/stores/toastStore";
-import { fermentableCalculationService } from "@/modules/beta-builder/domain/services/FermentableCalculationService";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import type { Fermentable } from "@/modules/beta-builder/domain/models/Recipe";
-import type { FermentablePreset } from "@/modules/beta-builder/domain/models/Presets";
-import { getFermentability } from "@/modules/beta-builder/data/fermentablePresets";
+import { fermentableCalculationService } from "@/modules/recipe/services/FermentableCalculationService";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import type { Fermentable } from "@/modules/recipe/models/Recipe";
+import type { FermentablePreset } from "@/modules/recipe/models/Presets";
+import { getFermentability } from "@/modules/recipe/data/fermentablePresets";
 import { getCountryFlag, BREWING_ORIGINS } from "@/utils/flags";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 type Mode = "amount" | "percent";
 

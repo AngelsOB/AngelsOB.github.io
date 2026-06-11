@@ -30,19 +30,19 @@ import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
 import { useHopHoverPreview } from "./hopHoverPreview";
 
 import { uid } from "@/utils/uid";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
-import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { usePresetStore } from "@/modules/recipe/stores/presetStore";
+import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
 import { toast } from "@/stores/toastStore";
-import { hopFlavorCalculationService } from "@/modules/beta-builder/domain/services/HopFlavorCalculationService";
-import { hopEnrichmentService } from "@/modules/beta-builder/domain/services/HopEnrichmentService";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import type { Hop } from "@/modules/beta-builder/domain/models/Recipe";
+import { hopFlavorCalculationService } from "@/modules/recipe/services/HopFlavorCalculationService";
+import { hopEnrichmentService } from "@/modules/recipe/services/HopEnrichmentService";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import type { Hop } from "@/modules/recipe/models/Recipe";
 import type {
   HopPreset,
   HopFlavorProfile,
-} from "@/modules/beta-builder/domain/models/Presets";
-import { HOP_FLAVOR_KEYS } from "@/modules/beta-builder/domain/models/Presets";
+} from "@/modules/recipe/models/Presets";
+import { HOP_FLAVOR_KEYS } from "@/modules/recipe/models/Presets";
 
 type Usage = Hop["type"];
 
@@ -4520,7 +4520,7 @@ function HopSectionStyles() {
   return (
     <style>{`
       /* ── Radar chart entrance animations (ported from classic
-         OLD_HopFlavorRadar) ── Rings + axes fade in, series polygons
+         HopFlavorRadar) ── Rings + axes fade in, series polygons
          scale-bounce in with stagger. Entrance-only — no perpetual
          animation, and CRUCIALLY no persistent style changes (the classic
          used stroke-dasharray for the rings to draw-in, but that

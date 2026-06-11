@@ -1,6 +1,6 @@
 import { hsTokens } from "../tokens";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import HSEyebrow from "./HSEyebrow";
 import HSScriptNote from "./HSScriptNote";
 import BJCPRangeRow from "./BJCPRangeRow";

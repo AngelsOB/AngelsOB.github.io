@@ -6,12 +6,12 @@
  */
 
 import { create } from "zustand";
-import { devError } from "../../../../utils/logger";
-import type { FermentablePreset, HopPreset, YeastPreset } from "../../domain/models/Presets";
-import { presetRepository } from "../../domain/repositories/PresetRepository";
-import type { FermentableGroup } from "../../data/fermentablePresets";
-import type { HopCategory } from "../../data/hopPresets";
-import type { YeastCategory } from "../../data/yeastPresets";
+import { devError } from "@/utils/logger";
+import type { FermentablePreset, HopPreset, YeastPreset } from "@/modules/recipe/models/Presets";
+import { presetRepository } from "@/modules/recipe/repositories/PresetRepository";
+import type { FermentableGroup } from "@/modules/recipe/data/fermentablePresets";
+import type { HopCategory } from "@/modules/recipe/data/hopPresets";
+import type { YeastCategory } from "@/modules/recipe/data/yeastPresets";
 
 type PresetStore = {
   // State

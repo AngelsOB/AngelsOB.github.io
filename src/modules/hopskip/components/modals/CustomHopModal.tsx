@@ -7,7 +7,7 @@ import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { HopPreset } from "@/modules/beta-builder/domain/models/Presets";
+import type { HopPreset } from "@/modules/recipe/models/Presets";
 import { toast } from "@/stores/toastStore";
 
 interface Props {

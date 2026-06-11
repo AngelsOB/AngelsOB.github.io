@@ -10,24 +10,24 @@
 
 import { create } from 'zustand';
 import { uid } from "@/utils/uid";
-import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion, OtherIngredient } from '../../domain/models/Recipe';
-import { recipeRepository } from '../../domain/repositories/RecipeRepository';
-import { FirestoreRecipeRepository } from '../../domain/repositories/FirestoreRecipeRepository';
-import { recipeVersionRepository } from '../../domain/repositories/RecipeVersionRepository';
+import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion, OtherIngredient } from '@/modules/recipe/models/Recipe';
+import { recipeRepository } from '@/modules/recipe/repositories/RecipeRepository';
+import { FirestoreRecipeRepository } from '@/modules/recipe/repositories/FirestoreRecipeRepository';
+import { recipeVersionRepository } from '@/modules/recipe/repositories/RecipeVersionRepository';
 import {
   beerXmlImportService,
   type BeerXmlImportResult,
-} from '../../domain/services/BeerXmlImportService';
-import { hopEnrichmentService } from '../../domain/services/HopEnrichmentService';
-import { toast } from '../../../../stores/toastStore';
-import { useAuthStore, deriveUserState } from '../../../auth/authStore';
-import { canCreateRecipe, RECIPE_LIMIT } from '../../../auth/tierAccess';
+} from '@/modules/recipe/services/BeerXmlImportService';
+import { hopEnrichmentService } from '@/modules/recipe/services/HopEnrichmentService';
+import { toast } from '@/stores/toastStore';
+import { useAuthStore, deriveUserState } from '@/modules/auth/authStore';
+import { canCreateRecipe, RECIPE_LIMIT } from '@/modules/auth/tierAccess';
 import { auth } from '@/config/firebase';
-import { generateShareSlug } from '../../../sharing/slugUtils';
-import { syncPublicIndex, unpublishRecipe } from '../../../sharing/publishService';
-import { usePreferencesStore } from '../../../auth/preferencesStore';
-import { processLabelImage } from '../../../labels/imageProcessor';
-import { uploadLabel as uploadLabelToStorage, deleteLabel as deleteLabelFromStorage } from '../../../labels/labelService';
+import { generateShareSlug } from '@/modules/sharing/slugUtils';
+import { syncPublicIndex, unpublishRecipe } from '@/modules/sharing/publishService';
+import { usePreferencesStore } from '@/modules/auth/preferencesStore';
+import { processLabelImage } from '@/modules/labels/imageProcessor';
+import { uploadLabel as uploadLabelToStorage, deleteLabel as deleteLabelFromStorage } from '@/modules/labels/labelService';
 
 function getRecipeRepo() {
   const user = useAuthStore.getState().user;

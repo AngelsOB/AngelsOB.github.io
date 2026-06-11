@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 /** Describes ONE card click that's eligible to open the preview panel. The
  *  caller supplies how to load the full recipe (so this hook is agnostic to

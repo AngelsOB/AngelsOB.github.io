@@ -27,10 +27,10 @@ import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
 import MashStepModal from "../modals/MashStepModal";
 
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
-import { mashScheduleService } from "@/modules/beta-builder/domain/services/MashScheduleService";
-import type { MashStep } from "@/modules/beta-builder/domain/models/Recipe";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
+import { mashScheduleService } from "@/modules/recipe/services/MashScheduleService";
+import type { MashStep } from "@/modules/recipe/models/Recipe";
 
 // ─── Color band per rest type ────────────────────────────────────
 // Acid (cool) → straw; Beta (sacch low) → honey; Alpha (sacch high) → malt;

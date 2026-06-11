@@ -7,7 +7,7 @@ import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
-import type { OtherIngredientCategory } from "@/modules/beta-builder/domain/models/Recipe";
+import type { OtherIngredientCategory } from "@/modules/recipe/models/Recipe";
 
 const CATEGORY_LABELS: Record<OtherIngredientCategory, string> = {
   "water-agent": "Water Agent",

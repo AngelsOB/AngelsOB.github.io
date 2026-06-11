@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
 import { hsTokens } from "@/modules/hopskip/tokens";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 import { V4Mock, type TabKey } from "../../../../../app/v4/mock/V4Mock";
 import { mapRecipeToV4Mock } from "../../../../../app/v4/lib/mapRecipeToV4Mock";

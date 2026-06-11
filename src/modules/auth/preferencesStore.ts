@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import type { AttenuationModel } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
+import type { AttenuationModel } from "@/modules/recipe/services/RecipeCalculationService";
 
 export type { AttenuationModel };
 

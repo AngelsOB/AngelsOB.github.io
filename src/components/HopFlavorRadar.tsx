@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { HopFlavorProfile } from "../../domain/models/Presets";
-import { HOP_FLAVOR_KEYS } from "../../domain/models/Presets";
+import type { HopFlavorProfile } from "@/modules/recipe/models/Presets";
+import { HOP_FLAVOR_KEYS } from "@/modules/recipe/models/Presets";
 
 type Series = { name: string; flavor: HopFlavorProfile; isTarget?: boolean };
 
@@ -49,7 +49,7 @@ function colorForIndex(index: number, total: number): string {
   return hslToHex(hue, 70, 50);
 }
 
-export default function OLD_HopFlavorRadar({
+export default function HopFlavorRadar({
   series,
   maxValue = 5,
   size = 320,

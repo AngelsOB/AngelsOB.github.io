@@ -9,23 +9,23 @@ import type {
   FermentationStepType,
   Recipe,
   RecipeCalculations,
-} from "@/modules/beta-builder/domain/models/Recipe";
+} from "@/modules/recipe/models/Recipe";
 import type {
   BrewSession,
   GravityLogEntry,
   OgFixChoice,
   SessionActuals,
   SessionStatus,
-} from "@/modules/beta-builder/domain/models/BrewSession";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import { waterChemistryService } from "@/modules/beta-builder/domain/services/WaterChemistryService";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+} from "@/modules/recipe/models/BrewSession";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { waterChemistryService } from "@/modules/recipe/services/WaterChemistryService";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { postBoilVolume } from "@/calculators/boilOff";
 import { dilutionWater } from "@/calculators/dilution";
 import { abvFromOGFG } from "@/calculators/abv";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 
 /**
  * Bundles the brew-mode props that get threaded into every wired cell.
@@ -2660,9 +2660,9 @@ interface WaterMatrixProps {
   spargeSalts: SaltAdditionsObj;
   mashPhAdjustment: RecipeCalculations["mashPhAdjustment"];
   estimatedMashPh: RecipeCalculations["estimatedMashPh"];
-  finalProfile: import("@/modules/beta-builder/domain/services/WaterChemistryService").WaterProfile | null;
+  finalProfile: import("@/modules/recipe/services/WaterChemistryService").WaterProfile | null;
   /** Recomputed final profile from actual salt amounts (Brew Mode). */
-  revisedFinalProfile: import("@/modules/beta-builder/domain/services/WaterChemistryService").WaterProfile | null;
+  revisedFinalProfile: import("@/modules/recipe/services/WaterChemistryService").WaterProfile | null;
   brewMode: BrewMode | null;
 }
 

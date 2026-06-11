@@ -8,7 +8,7 @@
  * Services use this instead of touching localStorage directly.
  */
 
-import { devError } from '../../../../utils/logger';
+import { devError } from '@/utils/logger';
 import type { Recipe, RecipeId } from '../models/Recipe';
 
 /** Result type for loadAll - distinguishes "no data" from "corrupted data" */

@@ -3,14 +3,14 @@
 import { useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useThemeStore, type Palette } from "../stores/useThemeStore";
-import { useRecipeStore } from "../modules/beta-builder/presentation/stores/recipeStore";
-import { recipeCalculationService } from "../modules/beta-builder/domain/services/RecipeCalculationService";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import {
   srmToOklchHue,
   srmToOklchChromaScale,
   srmToOklchLightnessScale,
   srmToBgChromaScale,
-} from "../modules/beta-builder/utils/srmToOklchHue";
+} from "@/modules/recipe/utils/srmToOklchHue";
 
 const DEFAULT_HUE = 65;
 const DEFAULT_CHROMA_SCALE = 1;

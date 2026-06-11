@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 import HSBrowsePreviewPanel from "./HSBrowsePreviewPanel";
 

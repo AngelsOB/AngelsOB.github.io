@@ -3,13 +3,13 @@
  * No React/browser dependencies — safe for both client and server.
  */
 
-import type { Recipe, Fermentable, Hop, RecipeCalculations } from '../beta-builder/domain/models/Recipe';
-import type { HopFlavorProfile } from '../beta-builder/domain/models/Presets';
+import type { Recipe, Fermentable, Hop, RecipeCalculations } from '@/modules/recipe/models/Recipe';
+import type { HopFlavorProfile } from '@/modules/recipe/models/Presets';
 import {
   categorizeFermentable,
   inferType,
   type FermentableGroup,
-} from '../beta-builder/data/fermentablePresets';
+} from '@/modules/recipe/data/fermentablePresets';
 
 export type { FermentableGroup };
 

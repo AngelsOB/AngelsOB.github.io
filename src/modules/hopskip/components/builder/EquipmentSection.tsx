@@ -10,10 +10,10 @@ import HSActionMenu from "../HSActionMenu";
 import EquipmentProfileModal from "../modals/EquipmentProfileModal";
 import CustomEquipmentModal from "../modals/CustomEquipmentModal";
 
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { useEquipmentStore } from "@/modules/beta-builder/presentation/stores/equipmentStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useEquipmentStore } from "@/modules/recipe/stores/equipmentStore";
 import { useHoldToRepeat } from "@/hooks/useHoldToRepeat";
-import type { EquipmentProfile } from "@/modules/beta-builder/domain/models/Equipment";
+import type { EquipmentProfile } from "@/modules/recipe/models/Equipment";
 
 // Equipment is the kit-settings tab. One substrate frame (HS signature),
 // no per-field chrome, click-to-edit values, hover-revealed steppers.

@@ -5,9 +5,9 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 import { useAuthStore } from "../authStore";
-import { useRecipeStore } from "../../beta-builder/presentation/stores/recipeStore";
-import { useEquipmentStore } from "../../beta-builder/presentation/stores/equipmentStore";
-import { useBrewSessionStore } from "../../beta-builder/presentation/stores/brewSessionStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useEquipmentStore } from "@/modules/recipe/stores/equipmentStore";
+import { useBrewSessionStore } from "@/modules/recipe/stores/brewSessionStore";
 
 /**
  * Ensure the users/{userId} document exists (create on first sign-in).

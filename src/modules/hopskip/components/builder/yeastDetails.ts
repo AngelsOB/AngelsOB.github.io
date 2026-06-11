@@ -6,8 +6,8 @@
 import type {
   YeastFlocculation,
   YeastPreset,
-} from "@/modules/beta-builder/domain/models/Presets";
-import type { YeastType } from "@/modules/beta-builder/domain/models/Recipe";
+} from "@/modules/recipe/models/Presets";
+import type { YeastType } from "@/modules/recipe/models/Recipe";
 
 // Categories that ship exclusively/predominantly dry yeast — used only
 // as the category-fallback when a preset has no `form` (legacy custom

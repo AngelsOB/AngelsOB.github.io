@@ -11,7 +11,7 @@ import {
 } from '@/utils/presets';
 import { findBjcpStyleByCode } from '@/utils/bjcp';
 import { getBjcpStyleSpec, srmToEbc } from '@/utils/bjcpSpecs';
-import { inferType as inferFermentableType } from '../../data/fermentablePresets';
+import { inferType as inferFermentableType } from '@/modules/recipe/data/fermentablePresets';
 
 // ============================================================
 // XML primitives

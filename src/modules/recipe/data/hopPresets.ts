@@ -7,8 +7,8 @@
  * Source: src/utils/presets.ts (HOP_PRESETS array)
  */
 
-import type { HopPreset } from "../domain/models/Presets";
-import { HOP_PRESETS as OLD_HOP_PRESETS } from "../../../utils/presets";
+import type { HopPreset } from "@/modules/recipe/models/Presets";
+import { HOP_PRESETS as OLD_HOP_PRESETS } from "@/utils/presets";
 
 // Re-export the hop presets from the old builder
 // They're already in the correct format

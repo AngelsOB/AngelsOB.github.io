@@ -29,7 +29,7 @@ import {
   StageClose,
 } from "./stages/PostTourSections";
 import { useAuthStore } from "@/modules/auth/authStore";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import SignedInHeroV4 from "./SignedInHeroV4";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);

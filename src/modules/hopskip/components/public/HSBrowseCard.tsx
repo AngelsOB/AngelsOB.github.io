@@ -7,20 +7,20 @@ import { doc, setDoc, updateDoc, increment } from "firebase/firestore";
 
 import { db, auth } from "@/config/firebase";
 import { uid } from "@/utils/uid";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import {
   downloadTextFile,
   generateBeerXml,
   generateRecipeMarkdown,
   sanitizeFileName,
-} from "@/modules/beta-builder/presentation/utils/recipeExport";
-import { RecipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
+} from "@/modules/recipe/utils/recipeExport";
+import { RecipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { useUserTier } from "@/modules/auth/useUserTier";
 import { canAccess } from "@/modules/auth/tierAccess";
 import UpgradeModal from "@/modules/auth/components/UpgradeModal";
 import { toast } from "@/stores/toastStore";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 import { hsTokens } from "../../tokens";
 import HSCard from "../HSCard";

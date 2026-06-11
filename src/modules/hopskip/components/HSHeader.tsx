@@ -20,8 +20,8 @@ import FloatingCalculator, {
   widthFor,
   type FloatingCalcId,
 } from "./FloatingCalculator";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { useUnsavedChangesStore } from "@/modules/beta-builder/presentation/stores/unsavedChangesStore";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useUnsavedChangesStore } from "@/modules/recipe/stores/unsavedChangesStore";
 
 interface NavChild {
   /** Used as the menu-item key + accessibility target.

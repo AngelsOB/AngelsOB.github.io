@@ -9,7 +9,7 @@ import { type CSSProperties } from "react";
 import HSCard from "@/modules/hopskip/components/HSCard";
 import HSCardLift from "@/modules/hopskip/components/HSCardLift";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 
 interface Props {
   href: string;

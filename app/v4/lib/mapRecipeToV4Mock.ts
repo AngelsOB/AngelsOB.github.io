@@ -1,9 +1,9 @@
-import type { Recipe, Hop } from "@/modules/beta-builder/domain/models/Recipe";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
+import type { Recipe, Hop } from "@/modules/recipe/models/Recipe";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import {
   waterChemistryService,
   type WaterProfile,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
+} from "@/modules/recipe/services/WaterChemistryService";
 import { getBjcpStyleSpec, type RangeTuple } from "@/utils/bjcpSpecs";
 import { hsTokens } from "@/modules/hopskip/tokens";
 

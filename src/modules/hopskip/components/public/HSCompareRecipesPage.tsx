@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
-import { RecipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
+import { RecipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import {
   type RecipeWithCalcs,
   type FermentableGroup,

@@ -10,7 +10,7 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 import {
   BEER_STYLE_TARGETS,
   type WaterProfile,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
+} from "@/modules/recipe/services/WaterChemistryService";
 
 const ION_FIELDS: Array<{ key: keyof WaterProfile; label: string; hint: string }> = [
   { key: "Ca", label: "Calcium (Ca)", hint: "50–200 ppm typical" },

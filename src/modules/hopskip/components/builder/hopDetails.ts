@@ -5,8 +5,8 @@
 import type {
   HopFlavorProfile,
   HopPreset,
-} from "@/modules/beta-builder/domain/models/Presets";
-import { HOP_FLAVOR_KEYS } from "@/modules/beta-builder/domain/models/Presets";
+} from "@/modules/recipe/models/Presets";
+import { HOP_FLAVOR_KEYS } from "@/modules/recipe/models/Presets";
 
 /**
  * Cosine similarity between two HopFlavorProfile vectors. Returns

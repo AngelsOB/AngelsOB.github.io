@@ -2,7 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "@/config/firebase";
 import { findSeedRecipe, SEED_SLUG_MAP } from "@/data/seed-recipes";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 
 import type { BrowseRecipe } from "./HSBrowseCard";
 

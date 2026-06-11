@@ -5,9 +5,9 @@
 
 import { doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
-import { RecipeCalculationService } from '@/modules/beta-builder/domain/services/RecipeCalculationService';
+import { RecipeCalculationService } from '@/modules/recipe/services/RecipeCalculationService';
 import { generateShareSlug } from './slugUtils';
-import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
+import type { Recipe } from '@/modules/recipe/models/Recipe';
 
 const calcService = new RecipeCalculationService();
 

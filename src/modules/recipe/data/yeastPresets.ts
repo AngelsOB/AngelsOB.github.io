@@ -7,8 +7,8 @@
  * Source: src/utils/presets.ts (YEAST_PRESETS array)
  */
 
-import type { YeastPreset } from "../domain/models/Presets";
-import { YEAST_PRESETS as OLD_YEAST_PRESETS } from "../../../utils/presets";
+import type { YeastPreset } from "@/modules/recipe/models/Presets";
+import { YEAST_PRESETS as OLD_YEAST_PRESETS } from "@/utils/presets";
 
 // Re-export the yeast presets from the old builder
 export const YEAST_PRESETS: YeastPreset[] = OLD_YEAST_PRESETS;

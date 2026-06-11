@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { hsTokens } from "../tokens";
 import HSScriptNote from "./HSScriptNote";
-import { useGuardedLinkClick } from "@/modules/beta-builder/presentation/hooks/useGuardedLinkClick";
+import { useGuardedLinkClick } from "@/modules/recipe/hooks/useGuardedLinkClick";
 
 interface Props {
   caption?: string;

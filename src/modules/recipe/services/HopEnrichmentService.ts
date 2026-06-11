@@ -5,7 +5,7 @@
  * Used during import (BeerXML, JSON) to fill in missing flavor data.
  */
 
-import { HOP_PRESETS, type HopFlavorProfile } from '../../../../utils/presets';
+import { HOP_PRESETS, type HopFlavorProfile } from '@/utils/presets';
 
 /** Case-insensitive map from hop name → flavor profile */
 const hopFlavorLookup = new Map<string, HopFlavorProfile>(

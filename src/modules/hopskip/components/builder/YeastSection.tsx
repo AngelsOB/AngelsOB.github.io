@@ -12,19 +12,19 @@ import CustomYeastModal from "../modals/CustomYeastModal";
 import { LedgerRowMotion, LedgerRowsAnimated } from "./LedgerRowMotion";
 
 import { uid } from "@/utils/uid";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { usePresetStore } from "@/modules/beta-builder/presentation/stores/presetStore";
-import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { usePresetStore } from "@/modules/recipe/stores/presetStore";
+import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
 import { toast } from "@/stores/toastStore";
-import { starterCalculationService } from "@/modules/beta-builder/domain/services/StarterCalculationService";
+import { starterCalculationService } from "@/modules/recipe/services/StarterCalculationService";
 import type {
   Yeast,
   YeastType,
   StarterStep,
   StarterInfo,
-} from "@/modules/beta-builder/domain/models/Recipe";
-import type { YeastPreset } from "@/modules/beta-builder/domain/models/Presets";
-import { getYeastLabFavicon } from "@/modules/beta-builder/presentation/utils/yeastLabIcons";
+} from "@/modules/recipe/models/Recipe";
+import type { YeastPreset } from "@/modules/recipe/models/Presets";
+import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 import { inferDefaultYeastType } from "./yeastDetails";
 import { useYeastHoverPreview } from "./yeastHoverPreview";
 

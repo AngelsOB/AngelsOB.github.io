@@ -7,12 +7,12 @@
  * Source: src/utils/presets.generated.grains.json
  */
 
-import type { FermentablePreset } from "../domain/models/Presets";
+import type { FermentablePreset } from "@/modules/recipe/models/Presets";
 
 // Import the generated grain database
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - JSON import handled by bundler
-import GENERATED_GRAINS_JSON from "../../../utils/presets.generated.grains.json";
+import GENERATED_GRAINS_JSON from "@/utils/presets.generated.grains.json";
 
 // Type-cast the imported JSON to our FermentablePreset type
 export const FERMENTABLE_PRESETS: FermentablePreset[] =

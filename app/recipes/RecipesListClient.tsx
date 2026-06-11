@@ -8,20 +8,20 @@ import HSCard from "@/modules/hopskip/components/HSCard";
 import HSEyebrow from "@/modules/hopskip/components/HSEyebrow";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import HSButton from "@/modules/hopskip/components/HSButton";
-import { useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { recipeCalculationService } from "@/modules/beta-builder/domain/services/RecipeCalculationService";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 import HSPreviewColumn from "@/modules/hopskip/components/public/HSPreviewColumn";
 import { usePreviewState } from "@/modules/hopskip/components/public/usePreviewState";
 import {
   useCanPreview,
   usePreviewWidth,
 } from "@/modules/hopskip/components/public/usePreviewLayout";
-import ReviewImportMatchesModal from "@/modules/beta-builder/presentation/components/ReviewImportMatchesModal";
+import ReviewImportMatchesModal from "@/modules/hopskip/components/ReviewImportMatchesModal";
 import {
   beerXmlImportService,
   type PendingMatch,
-} from "@/modules/beta-builder/domain/services/BeerXmlImportService";
+} from "@/modules/recipe/services/BeerXmlImportService";
 import { toast } from "@/stores/toastStore";
 
 import MyRecipeCard from "./MyRecipeCard";

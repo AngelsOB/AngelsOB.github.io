@@ -9,9 +9,9 @@ import { hsTokens } from "../tokens";
 import HSEyebrow from "./HSEyebrow";
 import HSScriptNote from "./HSScriptNote";
 
-import { isRecipeDirty, useRecipeStore } from "@/modules/beta-builder/presentation/stores/recipeStore";
-import { useRecipeCalculations } from "@/modules/beta-builder/presentation/hooks/useRecipeCalculations";
-import { useBrewSessionStore } from "@/modules/beta-builder/presentation/stores/brewSessionStore";
+import { isRecipeDirty, useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
+import { useBrewSessionStore } from "@/modules/recipe/stores/brewSessionStore";
 import FermentableSection from "@/modules/hopskip/components/builder/FermentableSection";
 import HopSection from "@/modules/hopskip/components/builder/HopSection";
 import MashSection from "@/modules/hopskip/components/builder/MashSection";
@@ -21,19 +21,19 @@ import FermentationSection from "./builder/FermentationSection";
 import HSBrewSheetSection from "@/modules/hopskip/components/builder/HSBrewSheetSection";
 import EquipmentSection from "@/modules/hopskip/components/builder/EquipmentSection";
 import BjcpStylePresetModal from "./modals/BjcpStylePresetModal";
-import UnsavedChangesModal from "@/modules/beta-builder/presentation/components/UnsavedChangesModal";
-import { useUnsavedChangesGuard } from "@/modules/beta-builder/presentation/hooks/useUnsavedChangesGuard";
+import UnsavedChangesModal from "@/modules/hopskip/components/UnsavedChangesModal";
+import { useUnsavedChangesGuard } from "@/modules/recipe/hooks/useUnsavedChangesGuard";
 import BJCPStyleRail from "./BJCPStyleRail";
-import type { Recipe } from "@/modules/beta-builder/domain/models/Recipe";
+import type { Recipe } from "@/modules/recipe/models/Recipe";
 import {
   BEER_STYLE_TARGETS,
   COMMON_WATER_PROFILES,
   getWaterTargetForBjcpStyle,
-} from "@/modules/beta-builder/domain/services/WaterChemistryService";
+} from "@/modules/recipe/services/WaterChemistryService";
 import type {
   SessionActuals,
   SessionStatus,
-} from "@/modules/beta-builder/domain/models/BrewSession";
+} from "@/modules/recipe/models/BrewSession";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { getBjcpStyleSpec } from "@/utils/bjcpSpecs";
 import HSButton from "./HSButton";

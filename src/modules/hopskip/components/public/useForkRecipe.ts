@@ -9,7 +9,7 @@ import { db, auth } from '@/config/firebase';
 import { useAuthStore, deriveUserState } from '@/modules/auth/authStore';
 import { canCreateRecipe, RECIPE_LIMIT } from '@/modules/auth/tierAccess';
 import { toast } from '@/stores/toastStore';
-import type { Recipe } from '@/modules/beta-builder/domain/models/Recipe';
+import type { Recipe } from '@/modules/recipe/models/Recipe';
 
 interface UseForkRecipeOptions {
   recipeId: string;

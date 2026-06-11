@@ -1,11 +1,11 @@
 'use client';
 
-import type { Recipe, RecipeCalculations, Hop, BrewDayStage, BrewDayChecklistItem } from "../../domain/models/Recipe";
-import { recipeCalculationService, RecipeCalculationService } from "../../domain/services/RecipeCalculationService";
-import { beerXmlExportService } from "../../domain/services/BeerXmlExportService";
-import { volumeCalculationService } from "../../domain/services/VolumeCalculationService";
-import { ionDeltaFromSalts, addProfiles, type WaterProfile } from "../../../../utils/water";
-import { mergeChecklist } from "../../domain/services/BrewDayChecklistService";
+import type { Recipe, RecipeCalculations, Hop, BrewDayStage, BrewDayChecklistItem } from "@/modules/recipe/models/Recipe";
+import { recipeCalculationService, RecipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { beerXmlExportService } from "@/modules/recipe/services/BeerXmlExportService";
+import { volumeCalculationService } from "@/modules/recipe/services/VolumeCalculationService";
+import { ionDeltaFromSalts, addProfiles, type WaterProfile } from "@/utils/water";
+import { mergeChecklist } from "@/modules/recipe/services/BrewDayChecklistService";
 
 /* ------------------------------------------------------------------ */
 /*  Unit helpers                                                       */

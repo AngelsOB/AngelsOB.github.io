@@ -6,7 +6,7 @@ import HSCard from "@/modules/hopskip/components/HSCard";
 import HSCardLift from "@/modules/hopskip/components/HSCardLift";
 import HSScriptNote from "@/modules/hopskip/components/HSScriptNote";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import { srmToRgb } from "@/modules/beta-builder/utils/srmColorUtils";
+import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import CompareMockV4 from "../mock/CompareMockV4";
 import { CTA, STAGES } from "../data";
