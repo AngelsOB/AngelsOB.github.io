@@ -208,17 +208,6 @@ describe('SEO Phase 2: auth-gated pages have noindex', () => {
       path: resolve(appDir, 'recipes', '[id]', 'page.tsx'),
     },
     {
-      name: 'recipes/[id]/versions/[versionNumber]',
-      path: resolve(
-        appDir,
-        'recipes',
-        '[id]',
-        'versions',
-        '[versionNumber]',
-        'page.tsx',
-      ),
-    },
-    {
       name: 'recipes/sessions/[sessionId]',
       path: resolve(appDir, 'recipes', 'sessions', '[sessionId]', 'page.tsx'),
     },

@@ -55,6 +55,7 @@
   "exclude": [
     "node_modules",
     "src/modules/beta-builder/disabled",
-    "scripts"
+    "scripts",
+    "quarantine"
   ]
 }
