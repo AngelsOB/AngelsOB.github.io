@@ -9,6 +9,7 @@ import Link from "next/link";
 import { hsTokens } from "@/modules/builder/tokens";
 import HSCard from "@/modules/builder/components/HSCard";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
+import { humanizeDate } from "@/utils/relativeDate";
 import type { Recipe, RecipeCalculations } from "@/modules/recipe/models/Recipe";
 
 interface Props {
@@ -250,7 +251,7 @@ export default function MyRecipeCard({
             }}
           >
             <span style={{ fontFamily: hsTokens.mono, fontVariantNumeric: "tabular-nums" }}>
-              {recipe.updatedAt ? new Date(recipe.updatedAt).toLocaleDateString() : "—"}
+              {recipe.updatedAt ? humanizeDate(recipe.updatedAt) : "—"}
             </span>
           </div>
         </div>

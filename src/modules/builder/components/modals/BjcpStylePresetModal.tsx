@@ -23,6 +23,31 @@ interface Props {
 const CATEGORIES = getBjcpCategories();
 const TOTAL_STYLES = CATEGORIES.reduce((n, c) => n + c.styles.length, 0);
 
+/** The styles homebrewers actually reach for, pinned above the numeric BJCP
+ *  category walk — otherwise "IPA" sits 21 categories deep. Codes resolve
+ *  against the loaded guideline data; missing codes just drop out. */
+const POPULAR_STYLE_CODES = [
+  "21A", // American IPA
+  "21C", // Hazy IPA
+  "18B", // American Pale Ale
+  "18A", // Blonde Ale
+  "10A", // Weissbier
+  "15B", // Irish Stout
+  "16A", // Sweet Stout
+  "20A", // American Porter
+  "7A", // Vienna Lager
+  "5B", // Kölsch
+  "25B", // Saison
+  "1D", // American Wheat Beer
+];
+const POPULAR_STYLES: BjcpStyle[] = POPULAR_STYLE_CODES.map((code) => {
+  for (const cat of CATEGORIES) {
+    const s = cat.styles.find((st) => st.code === code);
+    if (s) return s;
+  }
+  return undefined;
+}).filter((s): s is BjcpStyle => !!s);
+
 export default function BjcpStylePresetModal({
   isOpen,
   onClose,
@@ -135,6 +160,30 @@ export default function BjcpStylePresetModal({
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
+            {!searchQuery.trim() && POPULAR_STYLES.length > 0 ? (
+              <div>
+                <GroupHeader label="Popular styles" />
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "6px 14px 12px",
+                  }}
+                >
+                  {POPULAR_STYLES.map((style) => {
+                    const styleString = `${style.code}. ${style.name}`;
+                    return (
+                      <StyleRow
+                        key={`popular-${style.code}`}
+                        style={style}
+                        active={currentStyle === styleString}
+                        onClick={() => handleSelect(style)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
             {filteredCategories.map((category) => (
               <div key={category.code}>
                 <GroupHeader code={category.code} label={category.name} />
@@ -204,7 +253,7 @@ function SearchIcon() {
   );
 }
 
-function GroupHeader({ code, label }: { code: string; label: string }) {
+function GroupHeader({ code, label }: { code?: string; label: string }) {
   return (
     <h4
       style={{
@@ -224,7 +273,8 @@ function GroupHeader({ code, label }: { code: string; label: string }) {
         borderBottom: `1px solid ${hsTokens.ink}`,
       }}
     >
-      {code} · {label}
+      {code ? `${code} · ` : ""}
+      {label}
     </h4>
   );
 }

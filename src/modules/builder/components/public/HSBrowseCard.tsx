@@ -26,6 +26,7 @@ import { hsTokens } from "../../tokens";
 import HSCard from "../HSCard";
 import HSActionMenu, { type HSActionMenuItem } from "../HSActionMenu";
 import { cardPathFor, loadFullPublicRecipe } from "./loadFullPublicRecipe";
+import { humanizeDate } from "@/utils/relativeDate";
 
 const calcService = new RecipeCalculationService();
 
@@ -671,9 +672,7 @@ export default function HSBrowseCard({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {recipe.publishedAt
-                ? new Date(recipe.publishedAt).toISOString().slice(0, 10)
-                : ""}
+              {recipe.publishedAt ? humanizeDate(recipe.publishedAt) : ""}
             </span>
           </div>
         </div>

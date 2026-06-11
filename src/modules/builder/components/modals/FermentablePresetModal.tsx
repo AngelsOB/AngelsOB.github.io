@@ -40,6 +40,24 @@ const COLOR_OPTIONS: Array<{ id: ColorCategory; label: string }> = [
   { id: "roasted", label: "Roasted (>200°L)" },
 ];
 
+/** Malts every homebrew shop stocks, pinned above the full library so a
+ *  newcomer's first scroll isn't a wall of single-maltster entries. Resolved
+ *  against the live preset list by exact name — missing names just drop out. */
+const COMMON_PICKS = [
+  "Pale 2-Row",
+  "Maris Otter Pale",
+  "Pilsner",
+  "Munich",
+  "Vienna",
+  "Wheat Malt",
+  "Flaked Oats",
+  "Caramel / Crystal 40L",
+  "Caramel / Crystal 60L",
+  "Carapils (Dextrine Malt)",
+  "Chocolate Malt",
+  "Roasted Barley",
+];
+
 function categorizeColor(l: number): ColorCategory {
   if (l < 10) return "light";
   if (l < 50) return "amber";
@@ -110,6 +128,26 @@ export default function FermentablePresetModal({
   }, [presetsGrouped, searchQuery, activeFilters]);
 
   const totalCount = presetsGrouped.reduce((s, g) => s + g.items.length, 0);
+
+  const commonPicks = useMemo(() => {
+    const byName = new Map<string, FermentablePreset>();
+    presetsGrouped.forEach((g) =>
+      g.items.forEach((i) => {
+        if (!byName.has(i.name)) byName.set(i.name, i);
+      })
+    );
+    return COMMON_PICKS.map((n) => byName.get(n)).filter(
+      (p): p is FermentablePreset => !!p
+    );
+  }, [presetsGrouped]);
+
+  // Only pin the common-picks group on the untouched modal — as soon as the
+  // user searches or filters, results speak for themselves.
+  const filtersIdle =
+    !searchQuery.trim() &&
+    !activeFilters.origins.length &&
+    !activeFilters.types.length &&
+    !activeFilters.colors.length;
 
   const toggleFilter = <K extends keyof typeof activeFilters>(
     key: K,
@@ -273,6 +311,20 @@ export default function FermentablePresetModal({
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
+            {filtersIdle && commonPicks.length > 0 ? (
+              <div>
+                <GroupHeader label="Common picks" />
+                <div style={{ display: "flex", flexDirection: "column", padding: "6px 14px 12px" }}>
+                  {commonPicks.map((preset) => (
+                    <PresetRow
+                      key={`common-${preset.name}`}
+                      preset={preset}
+                      onClick={() => handleSelect(preset)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {filteredGrouped.map((group) => (
               <div key={group.label}>
                 <GroupHeader label={group.label} />

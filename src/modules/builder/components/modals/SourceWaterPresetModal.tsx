@@ -111,6 +111,45 @@ export default function SourceWaterPresetModal({
             }}
           />
         </label>
+        <p
+          style={{
+            margin: "10px 2px 0",
+            fontFamily: hsTokens.body,
+            fontSize: 12,
+            lineHeight: 1.5,
+            color: hsTokens.muted,
+          }}
+        >
+          Don&apos;t know your numbers? Most utilities publish a yearly water
+          report. Search your city plus &ldquo;water quality report&rdquo;,
+          then{" "}
+          <button
+            type="button"
+            onClick={() => {
+              handleClose();
+              onCreateCustom();
+            }}
+            style={{
+              display: "inline",
+              padding: 0,
+              margin: 0,
+              background: "none",
+              border: "none",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              lineHeight: "inherit",
+              color: hsTokens.water,
+              fontWeight: 700,
+              textDecoration: "underline",
+              textUnderlineOffset: 2,
+              cursor: "pointer",
+            }}
+          >
+            create a custom source
+          </button>{" "}
+          with what you find. Bottled RO and distilled are already in the
+          list.
+        </p>
       </div>
 
       <HSModalBody padding={0}>

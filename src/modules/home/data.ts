@@ -202,7 +202,8 @@ export const STAGES = {
   },
 
   // ── Stage 11: FAQ ──────────────────────────────────────────────────────
-  // 8 core items + a data-sources entry. JSON-LD generated from this list.
+  // 8 genuine Q&As (SEO surface). JSON-LD generated from this list. Data
+  // attribution lives on the Credits page (linked in the footer), not here.
   faq: {
     h2: "Frequently asked questions",
     items: [
@@ -237,10 +238,6 @@ export const STAGES = {
       {
         q: "My pre-boil gravity is low. What do I do?",
         a: "The brew sheet handles it. Record your pre-boil reading and it suggests recovery options side by side: add DME at flameout, or boil longer. If late hops are in the kettle, it warns you before you boil them further.",
-      },
-      {
-        q: "Where does the hop and ingredient data come from?",
-        a: "Hop facts like alpha acids, oils, and origin come from Kasper Grøntved's open-source HopDatabase (kasperg3 on GitHub), used under the MIT license. The flavor profiles are our own estimates, derived from the growers' published aroma data. Full attribution is on our Credits page.",
       },
     ],
   },

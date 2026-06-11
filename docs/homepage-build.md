@@ -431,9 +431,13 @@ below are the landed design (knobs called out).
   inset: 0` so the body's height is the source of truth, not the in-flow
   content of any one section. **Section internals scroll on overflow:**
   `section-hops` is a flex column with a flex:1 row holding a scrollable
-  bill (overflowY:auto + minHeight:0) on the left and the fixed 112×112
+  bill (overflowY:auto + minHeight:0) on the left and the fixed 151×112
   radar slot on the right — so recipes with many hops scroll the bill
-  without the slot moving (the scene-level radar overlays the slot).
+  without the slot moving (the scene-level radar overlays the slot). The
+  slot is landscape because the full radar SVG reserves 20px side gutters
+  so its axis labels ("Tropical", "Stone fruit") fit inside the card
+  instead of clipping when the radar grows on the hops beat; 151×112 keeps
+  the ring the same on-screen size as the old 112 square.
   `FermentablesSection`'s ledger rows container has the same
   overflowY:auto + minHeight:0 pair so long grain bills scroll while the
   SectionHead + bill-stack stay pinned at the top of the section. Mash /

@@ -105,6 +105,25 @@ const FLAVOR_LABEL: Record<FlavorFilter, string> = {
   resinPine: "pine",
 };
 
+/** Varieties every homebrew shop stocks, pinned above the full library so a
+ *  newcomer isn't dropped into 200+ alphabetical rows. Spans modern American,
+ *  noble, English, and a clean bitterer. Resolved against the live preset
+ *  list by exact name — missing names just drop out. */
+const COMMON_PICKS = [
+  "Citra",
+  "Mosaic",
+  "Simcoe",
+  "Amarillo",
+  "Cascade",
+  "Centennial",
+  "Galaxy",
+  "Nelson Sauvin",
+  "Saaz",
+  "Hallertau Mittelfrüh",
+  "East Kent Goldings",
+  "Magnum",
+];
+
 export default function HopPresetModal({
   isOpen,
   editing,
@@ -167,6 +186,23 @@ export default function HopPresetModal({
   }, [presetsGrouped, searchQuery, activeFilters]);
 
   const totalCount = presetsGrouped.reduce((s, g) => s + g.items.length, 0);
+
+  const commonPicks = useMemo(() => {
+    const byName = new Map<string, HopPreset>();
+    flatLibrary.forEach((p) => {
+      if (!byName.has(p.name)) byName.set(p.name, p);
+    });
+    return COMMON_PICKS.map((n) => byName.get(n)).filter(
+      (p): p is HopPreset => !!p
+    );
+  }, [flatLibrary]);
+
+  // Only pin the common-picks group on the untouched modal — as soon as the
+  // user searches or filters, results speak for themselves.
+  const filtersIdle =
+    !searchQuery.trim() &&
+    !activeFilters.purposes.length &&
+    !activeFilters.flavors.length;
 
   const toggleFilter = <K extends keyof typeof activeFilters>(
     key: K,
@@ -318,6 +354,21 @@ export default function HopPresetModal({
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
+            {filtersIdle && commonPicks.length > 0 ? (
+              <div>
+                <GroupHeader label="Common picks" />
+                <div style={{ display: "flex", flexDirection: "column", padding: "6px 14px 12px" }}>
+                  {commonPicks.map((preset) => (
+                    <PresetRow
+                      key={`common-${preset.name}`}
+                      preset={preset}
+                      onClick={() => handleSelect(preset)}
+                      hoverProps={getTriggerProps(preset)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {filteredGrouped.map((group) => (
               <div key={group.label}>
                 <GroupHeader label={group.label} />

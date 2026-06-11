@@ -4112,10 +4112,23 @@ function HopFlavorRadarSvg({
     return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
   };
 
-  const labelPointAt = (i: number) => {
+  /** Label anchor + position: near-horizontal axes anchor start/end so the
+   *  text grows OUTWARD from the ring (no overlap with the web); top/bottom
+   *  stay middle-anchored. The longest side labels intentionally extend past
+   *  the viewBox — the svg renders with overflow visible and the card's 18px
+   *  padding absorbs them, which keeps the canvas (and so the ring) full
+   *  size instead of shrinking it to make room for label gutters. */
+  const labelLayoutAt = (i: number) => {
     const angle = (Math.PI * 2 * i) / axes - Math.PI / 2;
-    const r = radius + 14;
-    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
+    const cos = Math.cos(angle);
+    const anchor: "start" | "middle" | "end" =
+      cos > 0.25 ? "start" : cos < -0.25 ? "end" : "middle";
+    const r = anchor === "middle" ? radius + 14 : radius + 6;
+    return {
+      lx: cx + r * cos,
+      ly: cy + r * Math.sin(angle),
+      anchor,
+    };
   };
 
   const ringPoints = (mult: number) =>
@@ -4200,7 +4213,16 @@ function HopFlavorRadarSvg({
         width="100%"
         height="auto"
         preserveAspectRatio="xMidYMid meet"
-        style={{ maxWidth: size, display: "block", margin: "0 auto" }}
+        // maxWidth slightly above the viewBox lets the ring render a touch
+        // larger when the side column has room; overflow stays visible so
+        // the start/end-anchored side labels can spill into the card padding
+        // instead of costing canvas (= ring) size.
+        style={{
+          maxWidth: 260,
+          display: "block",
+          margin: "0 auto",
+          overflow: "visible",
+        }}
         aria-label="Estimated hop flavor profile"
       >
         {/* Rings + axes wrapped in a single fading group — the group's
@@ -4331,14 +4353,17 @@ function HopFlavorRadarSvg({
         </g>
         {/* axis labels + invisible hover hit areas. */}
         {HOP_FLAVOR_KEYS.map((k, i) => {
-          const [lx, ly] = labelPointAt(i);
+          const { lx, ly, anchor } = labelLayoutAt(i);
           const labelColor = HOP_FLAVOR_COLOR[k];
+          // Two-word labels ("Stone fruit") stack so neither line outruns
+          // the side gutter.
+          const words = HOP_FLAVOR_LABEL[k].split(" ");
           return (
             <g key={`label-${k}`}>
               <text
                 x={lx}
                 y={ly}
-                textAnchor="middle"
+                textAnchor={anchor}
                 dominantBaseline="middle"
                 style={{
                   fontFamily: hsTokens.body,
@@ -4350,7 +4375,13 @@ function HopFlavorRadarSvg({
                   pointerEvents: "none",
                 }}
               >
-                {HOP_FLAVOR_LABEL[k]}
+                {words.length === 1
+                  ? HOP_FLAVOR_LABEL[k]
+                  : words.map((w, wi) => (
+                      <tspan key={wi} x={lx} dy={wi === 0 ? -5 : 10}>
+                        {w}
+                      </tspan>
+                    ))}
               </text>
               <circle
                 cx={lx}

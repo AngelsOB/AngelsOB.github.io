@@ -22,7 +22,15 @@
  *   - useRecipeStore (updateRecipe, addOtherIngredient, updateOtherIngredient, removeOtherIngredient)
  */
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { hsTokens } from "../../tokens";
@@ -61,6 +69,12 @@ import UpgradeModal from "@/modules/auth/components/UpgradeModal";
 import { uid } from "@/utils/uid";
 
 // ─── Constants ────────────────────────────────────────────────────
+
+/** Per-device "knows water chemistry" flag. Set the first time any recipe
+ *  with stored water chemistry passes through this section (opened or
+ *  edited); read to skip the newcomer explainer on fresh recipes after
+ *  that. localStorage only — never a server round-trip. */
+const WATER_TOUCHED_KEY = "hs-water-chemistry-touched";
 
 const ION_KEYS: Array<keyof WaterProfile> = ["Ca", "Mg", "Na", "Cl", "SO4", "HCO3"];
 const ION_DISPLAY: Record<keyof WaterProfile, string> = {
@@ -272,6 +286,75 @@ function SectionTitle() {
   );
 }
 
+/** Shown while the recipe has no water chemistry at all — the full panel
+ *  (salts, pH, ion bars) is the densest screen in the builder, so untouched
+ *  recipes get the same dashed explainer card the other sections use for
+ *  their empty states. Picking a source (or opting into the panel) writes
+ *  waterChemistry and the real UI takes over permanently. */
+function EmptyState({
+  onPickSource,
+  onShowPanel,
+}: {
+  onPickSource: () => void;
+  onShowPanel: () => void;
+}) {
+  return (
+    <div
+      style={{
+        background: hsTokens.cream2,
+        border: `1.5px dashed ${hsTokens.ink}`,
+        borderRadius: 10,
+        padding: "32px 28px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <HSScriptNote color={hsTokens.water} size={24} rotate={-4}>
+        the water part —
+      </HSScriptNote>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 420,
+          lineHeight: 1.4,
+        }}
+      >
+        Brewing salts nudge your water toward the beer: chloride rounds out
+        malt, sulfate sharpens hops. Pick where your water comes from, and
+        Auto-Calc works out the additions for your target. Skipping this is
+        fine. Plenty of good beer gets brewed on plain tap water.
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <HSButton onClick={onPickSource} color={hsTokens.water} size="md">
+          Pick your source water
+        </HSButton>
+        <HSButton
+          onClick={onShowPanel}
+          color={hsTokens.water}
+          size="md"
+          variant="ghost"
+        >
+          Show the full panel
+        </HSButton>
+      </div>
+    </div>
+  );
+}
+
 // ─── Props ────────────────────────────────────────────────────────
 
 interface Props {
@@ -367,6 +450,13 @@ export default function WaterSection({ recipe, calculations }: Props) {
     },
     [updateRecipe, waterChem]
   );
+
+  // "Show the full panel" from the empty state: persist the implicit RO
+  // default so the section (and the ion-visualizer helper card) render the
+  // real UI from here on.
+  const handleShowPanel = useCallback(() => {
+    updateRecipe({ waterChemistry: { ...waterChem } });
+  }, [updateRecipe, waterChem]);
 
   const handleSwitchToBjcp = useCallback(() => {
     updateRecipe({
@@ -516,11 +606,47 @@ export default function WaterSection({ recipe, calculations }: Props) {
 
   // ─── Render ────────────────────────────────────────────────────
 
+  // Per-user knowledge check. useLayoutEffect (not a render-time read) so
+  // server and first client render agree; it flips before paint, so a
+  // returning brewer never sees the explainer flash.
+  const [userKnowsWater, setUserKnowsWater] = useState(false);
+  useLayoutEffect(() => {
+    try {
+      setUserKnowsWater(window.localStorage.getItem(WATER_TOUCHED_KEY) === "1");
+    } catch {
+      // Storage unavailable — fall back to showing the explainer.
+    }
+  }, []);
+  useEffect(() => {
+    if (!recipe.waterChemistry) return;
+    try {
+      window.localStorage.setItem(WATER_TOUCHED_KEY, "1");
+    } catch {
+      // Best-effort flag; nothing to do if storage is unavailable.
+    }
+  }, [recipe.waterChemistry]);
+
+  // Untouched = this recipe has never stored water chemistry (the section is
+  // running on implicit RO defaults), holds no other ingredients, AND this
+  // device hasn't seen water chemistry before. Any interaction — picking a
+  // source, an auto-calc, "show the full panel" — writes waterChemistry,
+  // which both flips this recipe and sets the per-device flag above.
+  const waterUntouched =
+    !recipe.waterChemistry &&
+    otherIngredients.length === 0 &&
+    !userKnowsWater;
+
   return (
     <section className="hs-water-section" style={sectionFrameStyle}>
       <WaterSectionStyles />
       <SectionTitle />
 
+      {waterUntouched ? (
+        <EmptyState
+          onPickSource={() => setIsSourceModalOpen(true)}
+          onShowPanel={handleShowPanel}
+        />
+      ) : (
       <div className="hs-water-grid">
         {/* Row 1: water plan header — left column only, stops at the column
             boundary so its hairline + AutoCalc don't extend over the aside. */}
@@ -560,6 +686,7 @@ export default function WaterSection({ recipe, calculations }: Props) {
         </div>
 
       </div>
+      )}
 
       {/* Modals */}
       <SourceWaterPresetModal

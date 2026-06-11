@@ -91,6 +91,22 @@ const LINKS: NavLink[] = [
   { href: "/learn", label: "Learn" },
 ];
 
+/** Compact (≤720px) nav: the link row can't fit a phone, so the whole nav
+ *  collapses into one "Menu" trigger reusing the same dropdown panel. Home is
+ *  omitted — the brand mark already links there. Calculators is a plain link
+ *  (PIPs are pointless on a phone, same call as `noMobileDropdown`). */
+const COMPACT_MENU: NavLink = {
+  href: "#menu",
+  label: "Menu",
+  children: [
+    { href: "/recipes", label: "My Recipes" },
+    { href: "/browse", label: "Browse All" },
+    { href: "/recipes/new", label: "New recipe", kind: "create" },
+    { href: "/calculators", label: "Calculators" },
+    { href: "/learn", label: "Learn" },
+  ],
+};
+
 export default function HSHeader() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
@@ -122,6 +138,23 @@ export default function HSHeader() {
   // to an instant teleport so we don't override the user's accessibility
   // setting. Reactive — if they toggle it mid-session, the hook updates.
   const reduceMotion = useReducedMotion();
+
+  // Small-viewport flags — same 1024px breakpoint as the collapse-on-scroll
+  // effect; isCompact (≤720px, the logo-only CSS breakpoint) swaps the whole
+  // link row for the single "Menu" trigger. Declared early because the pill
+  // measurement effects below depend on isCompact.
+  const [isMobile, setIsMobile] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      setIsMobile(window.innerWidth < 1024);
+      setIsCompact(window.innerWidth <= 720);
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   // Which nav link is the cursor over right now (null = not over any). Drives
   // the magnetic-pull lean of the pill toward inactive links on hover.
   // Stored at nav level (mouseLeave on the nav container clears it) so moving
@@ -251,7 +284,9 @@ export default function HSHeader() {
   } | null>(null);
 
   useLayoutEffect(() => {
-    if (activeIdx < 0) {
+    // Compact mode renders a single Menu trigger instead of the link row —
+    // there's no active link to measure, so no pill.
+    if (activeIdx < 0 || isCompact) {
       setPillTarget(null);
       return;
     }
@@ -269,13 +304,13 @@ export default function HSHeader() {
       w: linkRect.width + 4,
       h: linkRect.height + 4,
     });
-  }, [activeIdx, pathname]);
+  }, [activeIdx, pathname, isCompact]);
 
   // Re-measure on window resize and any layout shift that resizes the
   // nav itself (e.g., font load shrinking/widening labels).
   useEffect(() => {
     const remeasure = () => {
-      if (activeIdx < 0) return;
+      if (activeIdx < 0 || isCompact) return;
       const link = linkRefs.current[activeIdx];
       const nav = navRef.current;
       if (!link || !nav) return;
@@ -298,7 +333,7 @@ export default function HSHeader() {
       window.removeEventListener("resize", remeasure);
       observer?.disconnect();
     };
-  }, [activeIdx]);
+  }, [activeIdx, isCompact]);
 
   // ── Recipes dropdown menu ─────────────────────────────────────────────
   // A nav link may carry `children`; its trigger opens a small menu of
@@ -322,14 +357,9 @@ export default function HSHeader() {
   //     PIPs are pointless on a phone-sized screen.
   //   • Recipes (triggerNavigates without noMobileDropdown): falls back to a
   //     button-toggle dropdown because hover-to-open doesn't exist on touch.
-  // Same 1024px breakpoint the collapse-on-scroll effect uses.
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  // (isMobile / isCompact state lives near the top of the component — the
+  // pill-measurement effects depend on isCompact, so it must be declared
+  // before them.)
 
   const cancelClose = () => {
     if (closeTimer.current !== null) {
@@ -692,7 +722,60 @@ export default function HSHeader() {
               </div>
             </motion.div>
           )}
-          {LINKS.map((l, i) => {
+          {isCompact ? (
+            // Phone widths: the four-link row physically can't fit next to the
+            // brand and auth button, so the whole nav becomes one Menu trigger
+            // that opens the same dropdown panel the other triggers use.
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={openHref === COMPACT_MENU.href}
+              onClick={(e) => toggleMenu(COMPACT_MENU.href, e.currentTarget)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                appearance: "none",
+                WebkitAppearance: "none",
+                margin: 0,
+                padding: "6px 14px",
+                background: "transparent",
+                border: "2px solid transparent",
+                borderRadius: 999,
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                color: hsTokens.ink,
+                fontFamily: hsTokens.body,
+                cursor: "pointer",
+              }}
+            >
+              Menu
+              <svg
+                aria-hidden
+                width="9"
+                height="9"
+                viewBox="0 0 10 10"
+                style={{
+                  transition: reduceMotion ? "none" : "transform 180ms ease",
+                  transform:
+                    openHref === COMPACT_MENU.href
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
+                }}
+              >
+                <path
+                  d="M2 3.5 L5 6.5 L8 3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          ) : (
+          LINKS.map((l, i) => {
             const active = isLinkActive(l);
             // Suppress the dropdown entirely on small viewports for items
             // flagged noMobileDropdown — they fall through to the plain Link
@@ -837,11 +920,15 @@ export default function HSHeader() {
                 {l.label}
               </Link>
             );
-          })}
+          })
+          )}
         </nav>
         {openHref &&
           (() => {
-            const openLink = LINKS.find((l) => l.href === openHref);
+            const openLink =
+              openHref === COMPACT_MENU.href
+                ? COMPACT_MENU
+                : LINKS.find((l) => l.href === openHref);
             if (!openLink?.children) return null;
             return (
               <div
@@ -1008,8 +1095,8 @@ export default function HSHeader() {
       <style>{`
         @media (max-width: 720px) {
           /* Compact single row instead of the two-row stack: tighter padding,
-             logo-only brand (drop the wordmark to save width), and a nav that
-             scrolls horizontally if the links don't fit. Pairs with the
+             logo-only brand (drop the wordmark to save width), and the nav
+             collapsed to the single Menu trigger (isCompact). Pairs with the
              collapse-on-scroll above to keep the header off the small screen. */
           .hs-header {
             padding: 8px 16px !important;
@@ -1019,8 +1106,8 @@ export default function HSHeader() {
           .hs-brandmark-word {
             display: none;
           }
-          /* Keep brand · nav · auth all on ONE row — the nav shrinks (and
-             scrolls) so the Sign-in button never wraps to a second line. */
+          /* Keep brand · nav · auth all on ONE row — the Sign-in button never
+             wraps to a second line. */
           .hs-header-right {
             flex: 1 1 auto;
             min-width: 0;
@@ -1034,13 +1121,6 @@ export default function HSHeader() {
           }
           .hs-header-right > :last-child {
             flex-shrink: 0;
-          }
-          .hs-nav-shell nav {
-            overflow-x: auto;
-            scrollbar-width: none;
-          }
-          .hs-nav-shell nav::-webkit-scrollbar {
-            display: none;
           }
         }
         /* Gooey vertical squash on each route change — ported from the old
