@@ -9,15 +9,11 @@ function readSrc(relPath: string): string {
 }
 
 describe('Phase 4 — Internal Linking', () => {
-  describe('Footer links', () => {
-    const footerSrc = readSrc('src/components/Footer.tsx')
+  describe('Footer links (HSFooter)', () => {
+    const footerSrc = readSrc('src/modules/hopskip/components/HSFooter.tsx')
 
-    it('links to Recipe Builder (/recipes/new)', () => {
+    it('links to Start a recipe (/recipes/new)', () => {
       expect(footerSrc).toContain('href: "/recipes/new"')
-    })
-
-    it('links to Browse Recipes (/browse)', () => {
-      expect(footerSrc).toContain('href: "/browse"')
     })
 
     it('links to Calculators (/calculators)', () => {
@@ -29,12 +25,16 @@ describe('Phase 4 — Internal Linking', () => {
       expect(footerSrc).toMatch(/href:\s*"\/recipes"/)
     })
 
+    it('links to Learn (/learn)', () => {
+      expect(footerSrc).toContain('href: "/learn"')
+    })
+
     it('has a "Brew" section', () => {
       expect(footerSrc).toContain('"Brew"')
     })
 
-    it('has an "Account" section', () => {
-      expect(footerSrc).toContain('"Account"')
+    it('has a "Learn" section', () => {
+      expect(footerSrc).toContain('"Learn"')
     })
 
     it('uses aria-label for footer navigation', () => {

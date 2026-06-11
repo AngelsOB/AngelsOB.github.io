@@ -58,6 +58,7 @@ export default function HSFooter() {
 
   return (
     <footer
+      aria-label="Footer navigation"
       style={{
         background: hsTokens.ink,
         color: hsTokens.cream,

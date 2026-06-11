@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { hsTokens } from "@/modules/hopskip/tokens";
-import type { CommunityRecipeCard } from "../_home/lib/communityCard";
+import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import { useReducedMotion } from "./lib/useReducedMotion";
 import { useLenis } from "./lib/scroll";
 import { V4Mock, type TabKey } from "./mock/V4Mock";

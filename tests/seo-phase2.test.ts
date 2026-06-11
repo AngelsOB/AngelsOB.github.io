@@ -208,10 +208,6 @@ describe('SEO Phase 2: auth-gated pages have noindex', () => {
       path: resolve(appDir, 'recipes', '[id]', 'page.tsx'),
     },
     {
-      name: 'recipes/sessions/[sessionId]',
-      path: resolve(appDir, 'recipes', 'sessions', '[sessionId]', 'page.tsx'),
-    },
-    {
       name: 'recipes/new',
       path: resolve(appDir, 'recipes', 'new', 'page.tsx'),
     },
@@ -270,17 +266,16 @@ describe('SEO Phase 2: OG image', () => {
   })
 })
 
-// ── PublicRecipeClient props contract ──────────────────────────────────
+// ── HSPublicRecipeShell props contract ─────────────────────────────────
+// (the client component /r/[slug] hands the server-fetched recipe to)
 
-describe('SEO Phase 2: PublicRecipeClient', () => {
+describe('SEO Phase 2: HSPublicRecipeShell', () => {
   const clientPath = resolve(
     srcDir,
-    'modules',
-    'sharing',
-    'PublicRecipeClient.tsx',
+    'modules/hopskip/components/public/HSPublicRecipeShell.tsx',
   )
 
-  test('is still a client component', () => {
+  test('is a client component', () => {
     const source = readFileSync(clientPath, 'utf-8')
     expect(source).toContain("'use client'")
   })

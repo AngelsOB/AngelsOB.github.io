@@ -1,4 +1,4 @@
-import type { CommunityRecipeCard } from "./_home/lib/communityCard";
+import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import HomeV4 from "./v4/HomeV4";
 import { STAGES } from "./v4/data";
 
