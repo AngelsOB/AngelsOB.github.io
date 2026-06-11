@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import Link from "next/link";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import {
@@ -113,7 +114,7 @@ export default function GettingStartedPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("getting-started")]) }}
       />
       <HSLearnArticle
         title="How To Use Brewing.It"

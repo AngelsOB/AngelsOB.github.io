@@ -17,17 +17,6 @@ export const metadata: Metadata = {
   },
   description:
     "Design homebrewing recipes with precision. Calculate ABV, IBU, SRM, water chemistry, mash pH, and more. Free brewing calculator for all-grain and extract brewers.",
-  keywords: [
-    "homebrewing",
-    "beer recipe",
-    "brewing calculator",
-    "ABV calculator",
-    "IBU calculator",
-    "water chemistry",
-    "mash pH",
-    "BJCP styles",
-    "craft beer",
-  ],
   authors: [{ name: "Brewing.It" }],
   openGraph: {
     type: "website",
@@ -56,6 +45,30 @@ export const metadata: Metadata = {
   },
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it.com";
+
+// Site-level entity schema: who we are (Organization) and what this site is
+// (WebSite). Page-level schemas (Recipe, Article, FAQPage, BreadcrumbList)
+// live on their own routes.
+const siteJsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
+    name: "Brewing.It",
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon-512.png`,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    name: "Brewing.It",
+    url: SITE_URL,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  },
+];
+
 export default function RootLayout({
   children,
 }: {
@@ -64,6 +77,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

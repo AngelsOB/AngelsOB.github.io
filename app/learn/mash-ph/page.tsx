@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
@@ -123,7 +124,7 @@ function PhGaugePreview() {
 export default function MashPhPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("mash-ph")]) }} />
       <HSLearnArticle
         title="Mash pH"
         subtitle="Predicting and adjusting your mash from grain and water chemistry"

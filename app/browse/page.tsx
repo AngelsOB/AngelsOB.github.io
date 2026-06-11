@@ -6,7 +6,8 @@ import type { BrowseRecipe } from "@/modules/builder/components/public/HSBrowseC
 import { hsTokens } from "@/modules/builder/tokens";
 import { SEED_RECIPES, SEED_SLUG_MAP } from "@/data/seed-recipes";
 
-export const dynamic = "force-dynamic";
+// ISR — regenerate at most hourly. (Don't add force-dynamic: it would win
+// over revalidate and make every crawl a full Firestore read.)
 export const revalidate = 3600;
 
 export const metadata: Metadata = {

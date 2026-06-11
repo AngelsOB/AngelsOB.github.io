@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import { hsTokens } from "@/modules/builder/tokens";
 import CarbonationCalculator from "@/modules/builder/components/calculators/CarbonationCalculator";
 import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
@@ -32,7 +33,7 @@ const jsonLd = {
 export default function CarbonationCalcPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("carbonation-calculator")]) }} />
       <HSLearnArticle
         title="Carbonation Calculator"
         subtitle="The right pressure for the right fizz"

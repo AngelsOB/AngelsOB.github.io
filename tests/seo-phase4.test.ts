@@ -16,6 +16,10 @@ describe('Phase 4 — Internal Linking', () => {
       expect(footerSrc).toContain('href: "/recipes/new"')
     })
 
+    it('links to Browse Recipes (/browse)', () => {
+      expect(footerSrc).toContain('href: "/browse"')
+    })
+
     it('links to Calculators (/calculators)', () => {
       expect(footerSrc).toContain('href: "/calculators"')
     })

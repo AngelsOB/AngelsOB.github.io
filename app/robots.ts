@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/recipes/', // auth-gated recipe editor & list
+          '/recipes/', // auth-gated recipe editor & list (public recipes live at /r/)
+          '/account', // auth-gated settings
           '/api/', // API routes
         ],
       },

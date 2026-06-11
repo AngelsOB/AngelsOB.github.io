@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import { hsTokens } from "@/modules/builder/tokens";
 import AbvCalculator from "@/modules/builder/components/calculators/AbvCalculator";
 import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
@@ -48,7 +49,7 @@ export default function AbvCalcPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("abv-calculator")]) }}
       />
       <HSLearnArticle
         title="ABV Calculator"

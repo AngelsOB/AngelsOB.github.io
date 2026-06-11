@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import { hsTokens } from "@/modules/builder/tokens";
 import BoilOffCalculator from "@/modules/builder/components/calculators/BoilOffCalculator";
 import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
@@ -33,7 +34,7 @@ const jsonLd = {
 export default function BoilOffCalcPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("boil-off-calculator")]) }} />
       <HSLearnArticle
         title="Boil-Off Calculator"
         subtitle="How much volume you'll lose, and when to stop boiling"

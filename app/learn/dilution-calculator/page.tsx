@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import { hsTokens } from "@/modules/builder/tokens";
 import DilutionCalculator from "@/modules/builder/components/calculators/DilutionCalculator";
 import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
@@ -33,7 +34,7 @@ const jsonLd = {
 export default function DilutionCalcPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("dilution-calculator")]) }} />
       <HSLearnArticle
         title="Dilution Calculator"
         subtitle="How much water to add when your gravity is too high"

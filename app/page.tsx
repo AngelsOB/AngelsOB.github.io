@@ -6,16 +6,15 @@ export const revalidate = 3600;
 
 async function getCommunityData(): Promise<{
   recipes: CommunityRecipeCard[];
-  total: number;
 }> {
   try {
     const { adminDb } = await import("@/config/firebase-admin");
     const collection = adminDb.collection("publicRecipeIndex");
 
-    const [snapshot, countSnap] = await Promise.all([
-      collection.orderBy("publishedAt", "desc").limit(6).get(),
-      collection.count().get(),
-    ]);
+    const snapshot = await collection
+      .orderBy("publishedAt", "desc")
+      .limit(6)
+      .get();
 
     const recipes: CommunityRecipeCard[] = snapshot.docs.map((doc) => {
       const d = doc.data();
@@ -38,12 +37,9 @@ async function getCommunityData(): Promise<{
       };
     });
 
-    const total =
-      typeof countSnap.data === "function" ? countSnap.data().count ?? 0 : 0;
-
-    return { recipes, total };
+    return { recipes };
   } catch {
-    return { recipes: [], total: 0 };
+    return { recipes: [] };
   }
 }
 
@@ -64,17 +60,14 @@ const faqJsonLd = {
 };
 
 export default async function HopSkipHome() {
-  const { recipes, total } = await getCommunityData();
-  // Floor so the social-proof line never reads "0 recipes" while the public
-  // collection is still small.
-  const recipeCount = total > 0 ? total : 247;
+  const { recipes } = await getCommunityData();
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <Home recipes={recipes} recipeCount={recipeCount} />
+      <Home recipes={recipes} />
     </>
   );
 }

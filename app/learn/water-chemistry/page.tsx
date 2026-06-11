@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import { WaterChemMockup } from "@/modules/builder/components/HSBuilderMockups";
 
@@ -48,7 +49,7 @@ export default function WaterChemistryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("water-chemistry")]) }}
       />
       <HSLearnArticle
         title="Water Chemistry"

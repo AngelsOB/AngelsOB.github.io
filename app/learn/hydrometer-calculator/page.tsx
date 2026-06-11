@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import { hsTokens } from "@/modules/builder/tokens";
 import HydrometerCorrectionCalculator from "@/modules/builder/components/calculators/HydrometerCorrectionCalculator";
 import CalculatorEmbed from "@/modules/builder/components/calculators/CalculatorEmbed";
@@ -32,7 +33,7 @@ const jsonLd = {
 export default function HydrometerCalcPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("hydrometer-calculator")]) }} />
       <HSLearnArticle
         title="Hydrometer Correction"
         subtitle="Because your sample is never the right temperature"

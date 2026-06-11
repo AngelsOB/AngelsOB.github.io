@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
@@ -162,7 +163,7 @@ export default function IbuPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("ibu")]) }}
       />
       <HSLearnArticle
         title="IBU & Bitterness"

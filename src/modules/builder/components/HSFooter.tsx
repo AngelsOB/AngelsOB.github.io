@@ -12,6 +12,9 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
     label: "Brew",
     links: [
       { href: "/recipes", text: "Recipes" },
+      // /browse stays in the footer: it's the site-wide internal link to the
+      // community hub, which links every public recipe (SEO crawl path).
+      { href: "/browse", text: "Browse recipes" },
       { href: "/calculators", text: "Calculators" },
       { href: "/recipes/new", text: "Start a recipe" },
     ],

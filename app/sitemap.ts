@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 3600 // regenerate hourly
+// ISR — regenerate at most hourly. (force-dynamic would override revalidate.)
+export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
@@ -12,6 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/browse` },
     { url: `${BASE_URL}/calculators` },
     { url: `${BASE_URL}/learn` },
+    { url: `${BASE_URL}/privacy` },
+    { url: `${BASE_URL}/terms` },
+    { url: `${BASE_URL}/credits` },
   ]
 
   const learnSlugs = [
@@ -24,16 +27,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${BASE_URL}/learn/${slug}`,
   }))
 
-  // Published recipes (includes seed recipes now that they're in Firestore)
+  // Published recipes (includes seed recipes now that they're in Firestore),
+  // plus a profile page per brewer with at least one public recipe.
   let recipeRoutes: MetadataRoute.Sitemap = []
+  let profileRoutes: MetadataRoute.Sitemap = []
   try {
     const snapshot = await adminDb.collection('publicRecipeIndex').get()
-    recipeRoutes = snapshot.docs.map((doc) => ({
-      url: `${BASE_URL}/r/${doc.data().shareSlug}`,
+
+    recipeRoutes = snapshot.docs.map((doc) => {
+      const d = doc.data()
+      const publishedAt = typeof d.publishedAt === 'string' ? d.publishedAt : undefined
+      return {
+        url: `${BASE_URL}/r/${d.shareSlug}`,
+        ...(publishedAt ? { lastModified: publishedAt } : {}),
+      }
+    })
+
+    const ownerIds = new Set<string>()
+    for (const doc of snapshot.docs) {
+      const ownerId = doc.data().ownerId
+      if (typeof ownerId === 'string' && ownerId) ownerIds.add(ownerId)
+    }
+    profileRoutes = [...ownerIds].map((ownerId) => ({
+      url: `${BASE_URL}/u/${ownerId}`,
     }))
   } catch {
-    // Admin SDK unavailable during build — skip dynamic recipes
+    // Admin SDK unavailable during build — skip dynamic routes
   }
 
-  return [...staticRoutes, ...learnRoutes, ...recipeRoutes]
+  return [...staticRoutes, ...learnRoutes, ...recipeRoutes, ...profileRoutes]
 }

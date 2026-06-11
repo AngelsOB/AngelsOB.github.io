@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 
@@ -45,7 +46,7 @@ const jsonLd = {
 export default function YeastStartersPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("yeast-starters")]) }} />
       <HSLearnArticle
         title="Yeast Starters"
         subtitle="Hitting the right pitch rate, and the science of growing yeast"

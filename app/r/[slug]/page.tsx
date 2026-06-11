@@ -6,6 +6,11 @@ import HSPublicRecipeShell from '@/modules/builder/components/public/HSPublicRec
 import HSCard from '@/modules/builder/components/HSCard'
 import HSScriptNote from '@/modules/builder/components/HSScriptNote'
 import { hsTokens } from '@/modules/builder/tokens'
+import { breadcrumbJsonLd } from '@/utils/seo'
+
+// ISR: cache rendered recipe pages for an hour. Recipes change on republish;
+// displayed ratings may lag up to an hour, which is fine for a share page.
+export const revalidate = 3600
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -96,7 +101,14 @@ export default async function PublicRecipePage({ params }: PageProps) {
   if (!result) return notFound()
 
   const { recipe, calc, ownerName, ownerId, ratingAvg, ratingCount } = result
-  const jsonLd = buildRecipeJsonLd(recipe, calc, ownerName, slug, ratingAvg, ratingCount)
+  const jsonLd = [
+    buildRecipeJsonLd(recipe, calc, ownerName, slug, ratingAvg, ratingCount),
+    breadcrumbJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Browse Recipes', path: '/browse' },
+      { name: recipe.name, path: `/r/${slug}` },
+    ]),
+  ]
 
   return (
     <>

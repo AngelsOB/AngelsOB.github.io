@@ -5,9 +5,12 @@ import { hsTokens } from "@/modules/builder/tokens";
 
 import RecipesHubClient from "./RecipesHubClient";
 
+// Deliberately not indexed: this is an app hub (your recipes + recents), not a
+// content page. The crawlable community surface is /browse and the /r/ pages;
+// robots.txt also disallows /recipes/.
 export const metadata: Metadata = {
   title: "Recipes",
-  alternates: { canonical: "/recipes/all" },
+  robots: { index: false, follow: false },
   description:
     "Your own brews and the community's. Pick up where you left off, or steal an idea.",
 };

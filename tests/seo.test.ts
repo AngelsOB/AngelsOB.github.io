@@ -46,9 +46,9 @@ describe('SEO: robots.txt', () => {
 // ── sitemap config ──────────────────────────────────────────────────────
 
 describe('SEO: sitemap config', () => {
-  test('exports force-dynamic and hourly revalidation', async () => {
+  test('exports hourly ISR revalidation (no force-dynamic, which would override it)', async () => {
     const mod = await import('../app/sitemap')
-    expect(mod.dynamic).toBe('force-dynamic')
+    expect(mod).not.toHaveProperty('dynamic')
     expect(mod.revalidate).toBe(3600)
     expect(typeof mod.default).toBe('function')
   })

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { learnBreadcrumb } from "@/modules/learn/breadcrumbs";
 import HSLearnArticle from "@/modules/builder/components/HSLearnArticle";
 
 export const metadata: Metadata = {
@@ -111,7 +112,7 @@ function ModelComparisonPreview() {
 export default function MashTemperaturePage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, learnBreadcrumb("mash-temperature")]) }} />
       <HSLearnArticle
         title="Mash Temperature"
         subtitle="The biggest lever on your beer's body and finish"

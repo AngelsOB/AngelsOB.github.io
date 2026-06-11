@@ -36,7 +36,6 @@ gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
 interface Props {
   recipes: CommunityRecipeCard[];
-  recipeCount: number;
 }
 
 // Flip to true while tuning to see ScrollTrigger start/end/pin markers.
