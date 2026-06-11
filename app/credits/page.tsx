@@ -23,7 +23,7 @@ export default function CreditsPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8 brew-animate-in">
       <h1
         className="text-3xl font-bold mb-2"
-        style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
+        style={{ fontFamily: "var(--hs-font-display)", letterSpacing: "-0.035em", color: "var(--fg-strong)" }}
       >
         Credits
       </h1>
@@ -117,7 +117,7 @@ function Section({
     <section>
       <h2
         className="text-lg font-bold mb-2"
-        style={{ fontFamily: "'Bitter', serif", color: "var(--fg-strong)" }}
+        style={{ fontFamily: "var(--hs-font-display)", letterSpacing: "-0.035em", color: "var(--fg-strong)" }}
       >
         {title}
       </h2>

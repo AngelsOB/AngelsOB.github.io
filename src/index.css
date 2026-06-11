@@ -3,9 +3,10 @@
 @import "./modules/builder/styles/overrides.css";
 
 @theme {
-  --font-handwritten: "Shadows Into Light", cursive;
-  --font-handwritten-alt: "Rock Salt", cursive;
-  --font-display: "Bitter", serif;
+  /* Historically Shadows Into Light; the HS theme always remapped it to the
+     script font (Caveat), so it now points there directly. Still referenced
+     by classic-era rules below. */
+  --font-handwritten: var(--font-caveat), cursive;
 }
 
 /* Tabular nums globally — fixed-width digits for all numeric displays */

@@ -18,11 +18,12 @@
   --hs-yeast: #ee7755;
   --hs-honey: #ffd97a;
 
-  /* Type families */
-  --hs-font-display: "Archivo Black", "Space Grotesk", system-ui, sans-serif;
-  --hs-font-body: "Space Grotesk", system-ui, sans-serif;
-  --hs-font-script: "Caveat", "Comic Sans MS", cursive;
-  --hs-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  /* Type families — next/font CSS variables (defined in app/layout.tsx) */
+  --hs-font-display: var(--font-archivo-black), var(--font-space-grotesk),
+    system-ui, sans-serif;
+  --hs-font-body: var(--font-space-grotesk), system-ui, sans-serif;
+  --hs-font-script: var(--font-caveat), "Comic Sans MS", cursive;
+  --hs-font-mono: var(--font-ibm-plex-mono), ui-monospace, "SF Mono", monospace;
 
   /* Radius */
   --hs-radius-sm: 6px;

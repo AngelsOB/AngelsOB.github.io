@@ -106,7 +106,7 @@ export default function HopFlavorPage() {
             className="px-5 py-2.5 text-center"
             style={{
               color: "var(--fg-muted)",
-              fontFamily: "'Shadows Into Light', cursive",
+              fontFamily: "var(--hs-font-script)",
               fontSize: "0.85rem",
               background: "color-mix(in oklch, var(--surface) 50%, transparent)",
               borderTop: "1px solid color-mix(in oklch, var(--fg-strong) 5%, transparent)",

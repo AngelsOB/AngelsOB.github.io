@@ -232,7 +232,9 @@ export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill =
               </div>
               <div
                 data-tour="radar-slot"
-                style={{ width: 112, height: 112, flexShrink: 0 }}
+                // Matches the full radar card's aspect (156×116 incl. label
+                // gutters) at the same fitted scale as the old 112 square.
+                style={{ width: 151, height: 112, flexShrink: 0 }}
               />
             </div>
           </div>

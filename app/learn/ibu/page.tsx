@@ -143,7 +143,7 @@ function HopAdditionPreview() {
         className="px-5 py-3 text-xs text-center"
         style={{
           color: "var(--fg-muted)",
-          fontFamily: "'Shadows Into Light', cursive",
+          fontFamily: "var(--hs-font-script)",
           fontSize: "0.85rem",
           background:
             "color-mix(in oklch, var(--surface) 50%, transparent)",

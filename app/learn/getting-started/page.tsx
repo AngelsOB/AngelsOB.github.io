@@ -94,7 +94,7 @@ function StatStripPreview() {
         className="px-5 py-2.5 text-center"
         style={{
           color: "var(--fg-muted)",
-          fontFamily: "'Shadows Into Light', cursive",
+          fontFamily: "var(--hs-font-script)",
           fontSize: "0.85rem",
           background:
             "color-mix(in oklch, var(--surface) 50%, transparent)",
@@ -160,7 +160,7 @@ export default function GettingStartedPage() {
             style={{
               top: "-20px",
               left: "-2px",
-              fontFamily: "var(--font-handwritten)",
+              fontFamily: "var(--hs-font-script)",
               fontSize: "1.8rem",
               color: "var(--brew-danger, oklch(55% 0.2 25))",
               transform: "rotate(-12deg)",
@@ -225,7 +225,7 @@ export default function GettingStartedPage() {
           <div className="relative mb-2">
             <span
               style={{
-                fontFamily: "var(--font-handwritten)",
+                fontFamily: "var(--hs-font-script)",
                 fontSize: "1.1rem",
                 color: "var(--coral-600)",
                 transform: "rotate(-1deg)",

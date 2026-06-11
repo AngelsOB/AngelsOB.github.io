@@ -455,18 +455,6 @@
   --shadow-card: var(--hs-shadow-2);
 }
 
-/* ────────────── Inline-style font remap (LearnArticle etc.) ────────────── */
-
-/* Anything in HS that hardcodes Bitter / Shadows Into Light as the inline
-   font-family flips to HS display / script. */
-.hs-theme [style*="Bitter"] {
-  font-family: var(--hs-font-display) !important;
-  letter-spacing: -0.035em !important;
-}
-.hs-theme [style*="Shadows Into Light"] {
-  font-family: var(--hs-font-script) !important;
-}
-
 /* ────────────── Learn article prose styling ────────────── */
 
 .hs-theme .learn-prose {
@@ -779,8 +767,7 @@
   border: 1px solid color-mix(in oklch, var(--hs-ink) 10%, transparent) !important;
 }
 
-/* Mockup card captions (`Shadows Into Light` cursive) — HS script */
-.hs-theme article div[class*="rounded-2xl"] > div:last-child[style*="Shadows"],
+/* Mockup card captions — HS script */
 .hs-theme article div[class*="rounded-2xl"] > div:last-child[class*="text-center"] {
   background: var(--hs-cream-2) !important;
   border-top: 1.5px solid color-mix(in oklch, var(--hs-ink) 12%, transparent) !important;
@@ -835,8 +822,7 @@
   border-bottom: none !important;
 }
 
-/* Inline h3 / h4 inside callouts often use inline Bitter — the [style*="Bitter"]
-   rule above flips font-family. Also bump size/color to HS. */
+/* Inline h3 / h4 inside callouts — HS display family, sized/colored to HS. */
 .hs-theme .learn-prose div.rounded-xl h3,
 .hs-theme .learn-prose div.rounded-2xl h3 {
   font-family: var(--hs-font-display) !important;
@@ -884,13 +870,6 @@
   color: var(--hs-ink) !important;
   font-family: var(--hs-font-body) !important;
 }
-.hs-theme .brew-theme,
-.hs-theme .brew-theme * {
-  /* Tailwind utility `font-handwritten` -> classic Shadows Into Light.
-     We want anything that explicitly opts into handwritten to use HS
-     script (Caveat). Catch-all rule below; element-specific rules below
-     can opt out. */
-}
 .hs-theme .brew-theme p,
 .hs-theme .brew-theme span,
 .hs-theme .brew-theme label,
@@ -909,15 +888,8 @@
   color: var(--hs-ink) !important;
 }
 
-/* Anything in the classic theme that uses the handwritten font family
-   (via `font-handwritten` Tailwind utility or explicit CSS var) should
-   render in HS script (Caveat). */
-.hs-theme .brew-theme [class*="font-handwritten"],
-.hs-theme .brew-theme [style*="--font-handwritten"],
-.hs-theme .brew-theme [style*="Shadows Into Light"],
-.hs-theme .brew-theme [style*="Rock Salt"] {
-  font-family: var(--hs-font-script) !important;
-}
+/* (--font-handwritten now resolves to the HS script font directly, so no
+   remap is needed for handwritten classic content.) */
 
 /* Numbers / monospace contexts inside classic sections — IBM Plex Mono */
 .hs-theme .brew-theme [class*="font-mono"],

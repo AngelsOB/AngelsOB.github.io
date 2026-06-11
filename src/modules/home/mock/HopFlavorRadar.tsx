@@ -30,7 +30,12 @@ interface Props {
 
 export function HopFlavorRadar({ size, variant, hopName }: Props) {
   const values = hopName ? PROFILES[hopName] ?? BLEND : BLEND;
-  const cx = size / 2;
+  // Full variant reserves side gutters so the start/end-anchored axis labels
+  // ("Tropical", "Stone fruit") fit inside the SVG instead of clipping at its
+  // edges when the radar is grown on the hops beat.
+  const gutterX = variant === "full" ? 20 : 0;
+  const width = size + gutterX * 2;
+  const cx = width / 2;
   const cy = size / 2;
   const innerR = size / 2 - (variant === "full" ? 14 : 6);
   const n = AXES.length;
@@ -49,9 +54,9 @@ export function HopFlavorRadar({ size, variant, hopName }: Props) {
 
   return (
     <svg
-      width={size}
+      width={width}
       height={size}
-      viewBox={`0 0 ${size} ${size}`}
+      viewBox={`0 0 ${width} ${size}`}
       aria-hidden
       style={{ flexShrink: 0, display: "block" }}
     >
@@ -113,7 +118,7 @@ export function HopFlavorRadar({ size, variant, hopName }: Props) {
         AXES.map((label, i) => {
           const [lx, ly] = point(i, 1).map((m, j) =>
             j === 0
-              ? m + (Math.cos(angle(i)) > 0 ? 4 : -4)
+              ? m + (Math.cos(angle(i)) > 0 ? 7 : -7)
               : m + (Math.sin(angle(i)) > 0 ? 4 : -2),
           );
           const a = angle(i);
@@ -128,14 +133,25 @@ export function HopFlavorRadar({ size, variant, hopName }: Props) {
               y={ly}
               textAnchor={anchor}
               dominantBaseline="middle"
-              fontFamily="'Space Grotesk', system-ui, sans-serif"
-              fontSize={6.5}
+              fontSize={5.5}
               fontWeight={800}
               fill={hsTokens.muted}
               letterSpacing="0.06em"
-              style={{ textTransform: "uppercase" }}
+              // fontFamily lives in style, not the SVG presentation attribute -
+              // var() only resolves in CSS properties, not attribute values
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                textTransform: "uppercase",
+              }}
             >
-              {label}
+              {label.includes(" ")
+                ? // Two-word labels stack so neither line outruns the side gutter.
+                  label.split(" ").map((w, wi) => (
+                    <tspan key={wi} x={lx} dy={wi === 0 ? -3 : 6.5}>
+                      {w}
+                    </tspan>
+                  ))
+                : label}
             </text>
           );
         })}

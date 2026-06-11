@@ -23,11 +23,13 @@ export const hsTokens = {
   yeast: "#ee7755",
   honey: "#ffd97a",
 
-  // font families
-  display: '"Archivo Black", "Space Grotesk", system-ui, sans-serif',
-  body: '"Space Grotesk", system-ui, sans-serif',
-  script: '"Caveat", cursive',
-  mono: '"IBM Plex Mono", ui-monospace, monospace',
+  // font families — CSS variables from next/font (defined in app/layout.tsx).
+  // Never reference the family names directly; next/font rewrites them.
+  display:
+    "var(--font-archivo-black), var(--font-space-grotesk), system-ui, sans-serif",
+  body: "var(--font-space-grotesk), system-ui, sans-serif",
+  script: "var(--font-caveat), cursive",
+  mono: "var(--font-ibm-plex-mono), ui-monospace, monospace",
 
   // shadows — use the ink CSS var so they shift to cream in dark mode
   sh1: "2px 2px 0 var(--hs-ink)",

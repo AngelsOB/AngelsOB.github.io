@@ -1,8 +1,53 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+// Bitter, Shadows Into Light, and Rock Salt were dropped here on purpose:
+// inline styles that referenced them were always remapped to the HS fonts by
+// .hs-theme overrides, so they downloaded but never rendered.
+import {
+  Archivo_Black,
+  Caveat,
+  IBM_Plex_Mono,
+  Space_Grotesk,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "../src/index.css";
 import ClientShell from "./ClientShell";
+
+// Self-hosted via next/font: same Google fonts, zero render-blocking
+// requests, size-matched fallbacks. Consumers reference the CSS variables
+// (tokens.ts / tokens.css / index.css) — never the family names directly,
+// since next/font rewrites them.
+const archivoBlack = Archivo_Black({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-archivo-black",
+  display: "swap",
+});
+const caveat = Caveat({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-caveat",
+  display: "swap",
+});
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  variable: "--font-ibm-plex-mono",
+  display: "swap",
+});
+const spaceGrotesk = Space_Grotesk({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const fontVariables = [
+  archivoBlack.variable,
+  caveat.variable,
+  ibmPlexMono.variable,
+  spaceGrotesk.variable,
+].join(" ");
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -75,21 +120,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={fontVariables}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bitter:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Caveat:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Rock+Salt&family=Shadows+Into+Light&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
         />
       </head>
       <body>
