@@ -1,4 +1,4 @@
-// Locked stage copy for the homepage tour. Ported verbatim from app/v3/data.ts.
+// Locked stage copy for the homepage tour (originally ported from the v3 homepage).
 // Source of truth: docs/homepage-v3-copy.md and docs/PRD-008-homepage-v3.md.
 //
 // Voice rule reminder: no em-dashes anywhere except in lowercase script

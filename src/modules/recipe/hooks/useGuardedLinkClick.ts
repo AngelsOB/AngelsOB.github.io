@@ -5,10 +5,9 @@
  * unsaved-changes guard. Used by every top-level nav surface that can
  * navigate AWAY from the recipe editor:
  *
- *   - NavBar (classic /betabuilder UI)
- *   - HSHeader (HopSkip primary nav)
- *   - HSBrandMark (HopSkip logo)
- *   - HSFooter (HopSkip footer links)
+ *   - HSHeader (primary nav)
+ *   - HSBrandMark (logo)
+ *   - HSFooter (footer links)
  *
  * Behavior:
  *   - If the click is a modifier-click (cmd/ctrl/shift/alt) or middle/right

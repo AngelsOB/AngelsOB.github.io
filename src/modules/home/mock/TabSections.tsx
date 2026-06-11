@@ -10,7 +10,7 @@ import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 // At-rest content for the mock's non-hops, non-brewsheet tabs. The mock is a
 // usable mini builder, so clicking Fermentables / Mash / Water / Yeast /
 // Fermentation shows a believable section. These mirror the LIVE homepage
-// mock's section look (app/_home/components/HeroBuilderCard.tsx): a
+// mock's section look (from the old homepage HeroBuilderCard): a
 // display-font section title with a thick accent underline + meta, then the
 // real panel vocabulary — the salts/ion-bar water visualizer, the numbered
 // mash steps + pH gauge, the yeast strain card, and the fermentation journey

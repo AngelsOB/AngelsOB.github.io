@@ -1,8 +1,16 @@
 # v4 Homepage — GSAP Scroll Tour (current build)
 
-Pickup guide for the in-progress homepage rebuild at `/v4`. Supersedes the
-v3 motion implementation. Read this + skim `app/v4/HomeV4.tsx` and
-`app/v4/mock/V4Mock.tsx` and you're productive.
+> **Path mapping (June 2026 cleanup refactor):** the production swap is DONE
+> and the homepage code moved. `app/v4/*` → `src/modules/home/*`
+> (`HomeV4.tsx`, `data.ts`, `mock/`, `stages/`, `lib/`, `SignedInHeroV4.tsx`).
+> `app/page.tsx` (route `/`) is the only entry; the `/v4` and `/v3` routes and
+> `app/_home` are deleted. `src/modules/hopskip` is now `src/modules/builder`,
+> and the beta-builder domain layer is `src/modules/recipe`. Apply those
+> substitutions when reading paths below — everything else still holds.
+
+Pickup guide for the homepage scroll tour. Supersedes the
+v3 motion implementation. Read this + skim `src/modules/home/HomeV4.tsx` and
+`src/modules/home/mock/V4Mock.tsx` and you're productive.
 
 History: the v3 mock (framer-motion, `setTimeout` phase machine) went 26
 iterations and hit architectural walls — see

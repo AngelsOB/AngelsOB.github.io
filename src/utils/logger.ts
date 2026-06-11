@@ -3,7 +3,7 @@
  * All log calls are no-ops in production builds.
  *
  * Usage:
- *   import { devLog, devWarn, devError } from '@utils/logger';
+ *   import { devLog, devWarn, devError } from '@/utils/logger';
  *   devError('[storage]', 'Failed to save:', error);
  */
 

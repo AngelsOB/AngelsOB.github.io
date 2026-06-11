@@ -16,7 +16,7 @@
 import type { Recipe, Fermentable, OtherIngredient } from '../models/Recipe';
 import type { WaterProfile, SaltAdditions } from './WaterChemistryService';
 import { waterChemistryService } from './WaterChemistryService';
-import { devWarn } from '@utils/logger';
+import { devWarn } from '@/utils/logger';
 
 /* ------------------------------------------------------------------ */
 /*  Grain pH classification                                            */

@@ -23,6 +23,9 @@ npm i three three-subdivide @react-three/fiber @react-three/drei @react-three/ra
 npm i -D @types/three
 ```
 
+Also: `can.obj` (the can mesh the loaders fetch from `/can.obj`) was moved
+here from `public/` — move it back to `public/can.obj` when reviving.
+
 ## Files
 
 - `BeerCan3D.tsx` — Three.js can mesh: loads an OBJ can model, subdivides it

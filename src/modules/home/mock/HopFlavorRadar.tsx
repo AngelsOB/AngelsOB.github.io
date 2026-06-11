@@ -3,7 +3,7 @@
 import { hsTokens } from "@/modules/builder/tokens";
 
 // Mini and full hop flavor radar SVG. Lifted verbatim from
-// app/v3/components/mock/sections/HopFlavorRadar.tsx — pure SVG, no
+// the old v3 homepage mock radar — pure SVG, no
 // animation, so it carries over unchanged. GSAP moves its container.
 
 const AXES = [

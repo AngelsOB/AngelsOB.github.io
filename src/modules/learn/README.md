@@ -1,7 +1,10 @@
-# DEPRECATED CLASSIC UI (with one exception)
+# learn
 
-This folder contains the original classic learn-module presentation components: `LearnArticle.tsx`, `LearnNav.tsx`, `FormulaCallout.tsx`, `BuilderMockups.tsx`, `HopRadarDemo.tsx`, `MathBlock.tsx`. These are quarantined — do not modify; do not import from outside `app/betabuilder/`. HS-native replacements ship in Phase 4 under `src/modules/hopskip/components/` (e.g. `HSLearnArticle`, `HSLearnNav`, `HSFormulaCallout`).
+Shared pieces for the `/learn` section. The article/nav UI lives in the
+builder module (`HSLearnArticle`, `HSLearnNav`, `HSFormulaCallout`); this
+module holds what they consume:
 
-**Exception:** `docsConfig.ts` stays active and is consumed by HopSkip as the source of truth for article ordering and metadata. Do NOT mark it deprecated.
-
-See [/HOPSKIP_MIGRATION_PRD.md](/HOPSKIP_MIGRATION_PRD.md) for the migration plan.
+- `docsConfig.ts` — source of truth for article ordering and metadata
+- `MathBlock.tsx` — KaTeX math rendering
+- `HopRadarDemo.tsx` — interactive hop-flavor radar demo for the hop-flavor
+  article (renders the shared `@/components/HopFlavorRadar`)

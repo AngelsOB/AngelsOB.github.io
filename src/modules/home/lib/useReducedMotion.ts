@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer } from "react";
 
-// prefers-reduced-motion hook. Ported from app/v3/components/TourMock.tsx.
+// prefers-reduced-motion hook (originally ported from the v3 homepage mock).
 // In v4 this gates the GSAP pin/scrub forks: when true, the tour renders
 // static states with no ScrollTrigger.
 export function useReducedMotion(): boolean {

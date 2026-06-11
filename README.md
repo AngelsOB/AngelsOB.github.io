@@ -1,6 +1,8 @@
-# Beer App
+# Brewing.It
 
-React + Vite + TypeScript + Tailwind (v4) + GitHub Pages.
+Homebrewing recipe builder & calculators. Next.js (App Router) + Firebase
+(Auth + Firestore) + Stripe, styled with Tailwind v4 + an in-house design
+system (the `HS*` components).
 
 ## Local dev
 
@@ -9,21 +11,27 @@ npm install
 npm run dev
 ```
 
-## Build
+Requires Node 22+. Firebase/Stripe keys go in `.env.local`.
+
+## Checks
 
 ```bash
-npm run build
-npm run preview
+npm run ci        # lint + tests + build
+npm run test:run  # vitest only
 ```
 
-## Deploy to GitHub Pages
+## Layout
 
-1. Push the repo to GitHub (default branch `main`).
-2. In GitHub → Settings → Pages, set Source: GitHub Actions.
-3. On pushes to `main`, the workflow `.github/workflows/deploy.yml` builds and deploys.
-4. Your site: `https://<your-user>.github.io/<repo>/`.
+- `app/` — routes only (thin pages; logic lives in modules)
+- `src/modules/recipe/` — shared domain layer: models, calculation services,
+  Firestore repositories, Zustand stores, ingredient data. No UI.
+- `src/modules/builder/` — the recipe builder UI and HS* design system
+- `src/modules/home/` — the homepage (GSAP scroll tour + signed-in hero)
+- `src/modules/auth|sharing|labels|compare|learn` — feature modules
+- `quarantine/` — parked features (version history UI, 3D can experiment);
+  excluded from compile, each with a README explaining how to revive
+- `docs/` — PRDs and build notes (`docs/archive/` for historical)
 
-Notes
+## Deploy
 
-- Vite `base` is set from `GITHUB_REPOSITORY` in CI to `/<repo>/`.
-- SPA fallback is added (`dist/404.html`) for client routing.
+Production deploys from the `brewtool` remote's `main` branch.
