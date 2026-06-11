@@ -1,6 +1,6 @@
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
-import HomeV4 from "./v4/HomeV4";
-import { STAGES } from "./v4/data";
+import HomeV4 from "@/modules/home/HomeV4";
+import { STAGES } from "@/modules/home/data";
 
 export const revalidate = 3600;
 

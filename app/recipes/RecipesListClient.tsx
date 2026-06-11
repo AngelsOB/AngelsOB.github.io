@@ -24,7 +24,7 @@ import {
 } from "@/modules/recipe/services/BeerXmlImportService";
 import { toast } from "@/stores/toastStore";
 
-import MyRecipeCard from "./MyRecipeCard";
+import MyRecipeCard from "@/modules/builder/components/MyRecipeCard";
 
 type SortKey = "date-desc" | "date-asc" | "name-asc" | "name-desc" | "abv-desc" | "ibu-desc";
 

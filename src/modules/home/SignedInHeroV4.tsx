@@ -10,7 +10,7 @@ import HSButton from "@/modules/builder/components/HSButton";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
-import MyRecipeCard from "../recipes/MyRecipeCard";
+import MyRecipeCard from "@/modules/builder/components/MyRecipeCard";
 import { V4Mock, type TabKey } from "./mock/V4Mock";
 import { mapRecipeToV4Mock } from "./lib/mapRecipeToV4Mock";
 

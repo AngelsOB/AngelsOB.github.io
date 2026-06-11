@@ -7,8 +7,8 @@ import { useGSAP } from "@gsap/react";
 import { hsTokens } from "@/modules/builder/tokens";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 
-import { V4Mock, type TabKey } from "../../../../../app/v4/mock/V4Mock";
-import { mapRecipeToV4Mock } from "../../../../../app/v4/lib/mapRecipeToV4Mock";
+import { V4Mock, type TabKey } from "@/modules/home/mock/V4Mock";
+import { mapRecipeToV4Mock } from "@/modules/home/lib/mapRecipeToV4Mock";
 
 gsap.registerPlugin(useGSAP);
 
@@ -38,7 +38,7 @@ export default function HSBrowsePreviewPanel({
   );
 
   // Place the V4Mock's scene-level layers at home (rest). Ported verbatim from
-  // app/v4/SignedInHeroV4.tsx — without this, brewsheet / radar / water layers
+  // src/modules/home/SignedInHeroV4.tsx — without this, brewsheet / radar / water layers
   // render at (0,0) overlapping the body because they're absolute-positioned by
   // parent GSAP set() calls.
   useGSAP(
