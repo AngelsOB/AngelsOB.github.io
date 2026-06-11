@@ -40,6 +40,7 @@ const jsonLd = {
   author: { "@type": "Organization", name: "Brewing.It" },
   publisher: { "@type": "Organization", name: "Brewing.It" },
   datePublished: "2026-03-23",
+  dateModified: "2026-03-23",
   mainEntityOfPage: {
     "@type": "WebPage",
     "@id": `${process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it.com"}/learn/ibu`,
