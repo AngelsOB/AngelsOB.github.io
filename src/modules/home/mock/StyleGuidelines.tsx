@@ -2,7 +2,7 @@
 
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
-import type { V4MockData } from "../lib/mapRecipeToV4Mock";
+import type { BuilderMockData } from "../lib/mapRecipeToBuilderMock";
 
 // Compact mock of the real builder's BJCPStyleRail: a row of vitals gauges
 // (value vs BJCP style range, marker goes roast when out of range) + an SRM
@@ -57,7 +57,7 @@ function eyebrow(size = 8.5): React.CSSProperties {
   return { fontFamily: hsTokens.body, fontSize: size, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted };
 }
 
-export function StyleGuidelines({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: V4MockData }) {
+export function StyleGuidelines({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: BuilderMockData }) {
   // Sample uses the hardcoded 21A GAUGES. Data mode (signed-in hero) builds the
   // gauges from the recipe's stats + its BJCP style spec. If the style has no
   // spec (custom style), fall back to a tight band around the value so the gauge

@@ -155,7 +155,7 @@
 }
 
 /* ──────────── Preview-mode selection highlight ────────────
-   Selected card (when a slide-in V4Mock preview is open) gets a honey ring
+   Selected card (when a slide-in BuilderMock preview is open) gets a honey ring
    plus a recolored offset shadow at the hover-position. Applied by setting
    data-preview-selected="true" on the .hs-lift-card wrapper. */
 .hs-lift-card[data-preview-selected="true"]::before {

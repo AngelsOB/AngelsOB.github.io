@@ -7,7 +7,7 @@ import {
 import { getBjcpStyleSpec, type RangeTuple } from "@/utils/bjcpSpecs";
 import { hsTokens } from "@/modules/builder/tokens";
 
-// Maps a real Recipe into the data the v4 mock renders. The v4 mock is hardcoded
+// Maps a real Recipe into the data the builder mock renders. The mock is hardcoded
 // to a sample for the marketing tour; when a signed-in user views the homepage,
 // we feed their recipe through this so every tab shows their actual brew. The
 // tour never uses this (it keeps the hardcoded sample), so the beats are
@@ -17,14 +17,14 @@ const KG_TO_LB = 2.20462;
 const G_TO_OZ = 0.0352739619;
 const L_TO_GAL = 0.264172;
 
-export type V4MockGrain = {
+export type BuilderMockGrain = {
   name: string;
   category: string;
   weight: string;
   lb: number;
   srm: number;
 };
-export type V4MockHop = {
+export type BuilderMockHop = {
   name: string;
   amount: string;
   use: string;
@@ -32,7 +32,7 @@ export type V4MockHop = {
   aa: string;
   ibu: number;
 };
-export type V4MockFermStep = {
+export type BuilderMockFermStep = {
   label: string;
   temp: string;
   days: number;
@@ -40,9 +40,9 @@ export type V4MockFermStep = {
   dark: boolean;
   carb: boolean;
 };
-export type V4MockSalt = { short: string; name: string; grams: number };
+export type BuilderMockSalt = { short: string; name: string; grams: number };
 
-export type V4BrewSheetData = {
+export type BrewSheetData = {
   title: string;
   status: string;
   brewData: { label: string; value: string }[];
@@ -54,7 +54,7 @@ export type V4BrewSheetData = {
   mash: string;
 };
 
-export type V4MockData = {
+export type BuilderMockData = {
   name: string;
   style: string;
   batch: string;
@@ -67,9 +67,9 @@ export type V4MockData = {
     ibu?: RangeTuple;
     srm?: RangeTuple;
   } | null;
-  grains: V4MockGrain[];
+  grains: BuilderMockGrain[];
   grainTotalLb: number;
-  hops: V4MockHop[];
+  hops: BuilderMockHop[];
   mash: {
     stepName: string;
     tempF: number;
@@ -82,7 +82,7 @@ export type V4MockData = {
   water: {
     sourceName: string;
     targetName: string;
-    salts: V4MockSalt[];
+    salts: BuilderMockSalt[];
     ions: Record<string, number>;
   };
   yeast: {
@@ -93,8 +93,8 @@ export type V4MockData = {
     flocc: string;
     starter: { sizeText: string; pitchText: string } | null;
   } | null;
-  fermentation: V4MockFermStep[];
-  brewSheet: V4BrewSheetData;
+  fermentation: BuilderMockFermStep[];
+  brewSheet: BrewSheetData;
 };
 
 function classifyGrain(srm: number, name?: string): string {
@@ -182,7 +182,7 @@ function fermColor(type: string): { color: string; dark: boolean } {
   }
 }
 
-export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
+export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
   const calc = recipeCalculationService.calculate(recipe);
 
   // ── Style + ranges ──
@@ -193,7 +193,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
   // ── Grains ── (every fermentable; the mock body scrolls its grain ledger
   // so long bills aren't truncated — see TabSections FermentablesSection)
   const totalGrainKg = recipe.fermentables.reduce((s, f) => s + f.weightKg, 0);
-  const grains: V4MockGrain[] = recipe.fermentables.map((f) => ({
+  const grains: BuilderMockGrain[] = recipe.fermentables.map((f) => ({
     name: f.name,
     category: classifyGrain(f.colorLovibond, f.name),
     weight: fmtLb(f.weightKg),
@@ -201,7 +201,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
     srm: Math.round(f.colorLovibond),
   }));
 
-  // ── Hops ── (every hop; the mock body scrolls the hop bill — see V4Mock
+  // ── Hops ── (every hop; the mock body scrolls the hop bill — see BuilderMock
   // section-hops. Distribute computed total IBU by weight × time × alpha proxy.)
   const totalIbu = Math.max(0, calc.ibu);
   const hopsArr = recipe.hops;
@@ -209,7 +209,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
     (h) => h.grams * (h.alphaAcid / 100) * ((h.timeMinutes ?? 5) + 1),
   );
   const weightSum = weights.reduce((a, b) => a + b, 0);
-  const hops: V4MockHop[] = hopsArr.map((h, i) => ({
+  const hops: BuilderMockHop[] = hopsArr.map((h, i) => ({
     name: h.name,
     amount: fmtOz(h.grams),
     use: hopUse(h),
@@ -235,7 +235,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
   // ── Water ──
   const wc = recipe.waterChemistry;
   const sa = wc?.saltAdditions;
-  const salts: V4MockSalt[] = [
+  const salts: BuilderMockSalt[] = [
     { short: "CaSO₄", name: "Gypsum", grams: round1(sa?.gypsum_g ?? 0) },
     { short: "CaCl₂", name: "Calcium Chloride", grams: round1(sa?.cacl2_g ?? 0) },
     { short: "MgSO₄", name: "Epsom", grams: round1(sa?.epsom_g ?? 0) },
@@ -285,7 +285,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
     : null;
 
   // ── Fermentation ──
-  const fermentation: V4MockFermStep[] = recipe.fermentationSteps.map((s) => {
+  const fermentation: BuilderMockFermStep[] = recipe.fermentationSteps.map((s) => {
     const c = fermColor(s.type);
     return {
       label: s.name || s.type,
@@ -313,7 +313,7 @@ export function mapRecipeToV4Mock(recipe: Recipe): V4MockData {
 
   // ── Brew sheet (real data, no scripted pre-boil miss) ──
   const batchGal = (recipe.batchVolumeL * L_TO_GAL).toFixed(1);
-  const brewSheet: V4BrewSheetData = {
+  const brewSheet: BrewSheetData = {
     title: recipe.name || "Brew sheet.",
     status: "Planned",
     brewData: [

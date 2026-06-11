@@ -16,7 +16,7 @@ interface Props {
   calc: RecipeCalculations;
   tilt?: number;
   /** When omitted, the X delete button is not rendered. Useful for read-only
-   *  surfaces like the v4 signed-in hero. */
+   *  surfaces like the homepage signed-in hero. */
   onDelete?: (recipe: Recipe) => void;
   /** When true, click defers to onPreviewSelect instead of navigating. */
   previewMode?: boolean;

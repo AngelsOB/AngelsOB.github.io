@@ -10,7 +10,7 @@ import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 // captured page. Inner sections share the card and are separated by dashed
 // rules + left accent rails (in lieu of each section having its own card).
 // No interactivity, no calc logic — purely presentational. The calling
-// stage wraps the whole panel in `data-v4-reveal` for the post-tour batch
+// stage wraps the whole panel in `data-tour-reveal` for the post-tour batch
 // fade-in.
 
 type Vitals = {
@@ -84,7 +84,7 @@ const cellAvgStyle: React.CSSProperties = {
 
 // ── Component ────────────────────────────────────────────────────────────
 
-export default function CompareMockV4() {
+export default function CompareMock() {
   return (
     <div
       style={{

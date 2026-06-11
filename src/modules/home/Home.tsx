@@ -9,7 +9,7 @@ import { hsTokens } from "@/modules/builder/tokens";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import { useReducedMotion } from "./lib/useReducedMotion";
 import { useLenis } from "./lib/scroll";
-import { V4Mock, type TabKey } from "./mock/V4Mock";
+import { BuilderMock, type TabKey } from "./mock/BuilderMock";
 import { GRAIN_STEP_LEVELS } from "./mock/TabSections";
 import {
   StageIntro,
@@ -30,7 +30,7 @@ import {
 } from "./stages/PostTourSections";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
-import SignedInHeroV4 from "./SignedInHeroV4";
+import SignedInHero from "./SignedInHero";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
@@ -43,7 +43,7 @@ interface Props {
 const DEV_MARKERS = false;
 
 /**
- * v4 homepage — Phase 0 vertical-slice spike.
+ * The homepage — GSAP scroll tour of the recipe builder.
  *
  * Native scroll (no Lenis yet — that lands in Phase 1). Persistent mock is
  * CSS `position: sticky` in the right column. Two beats:
@@ -58,7 +58,7 @@ const DEV_MARKERS = false;
 // the marketing tour indexable) get the hardcoded scroll tour. Signed-in users
 // get a personalized page: their recipes (hero) + community + learn + faq. The
 // tour itself is never data-driven — user recipes do not flow through the beats.
-export default function HomeV4({ recipes }: Props) {
+export default function Home({ recipes }: Props) {
   const user = useAuthStore((s) => s.user);
   const recipesLoaded = useRecipeStore((s) => s.recipesLoaded);
   const loadRecipes = useRecipeStore((s) => s.loadRecipes);
@@ -70,18 +70,18 @@ export default function HomeV4({ recipes }: Props) {
   // Stay on the tour until auth + recipes resolve (matches SSR, avoids a hydration
   // mismatch), then swap signed-in users to their personalized page.
   if (user && recipesLoaded) {
-    return <HomeV4SignedIn recipes={recipes} />;
+    return <HomeSignedIn recipes={recipes} />;
   }
-  return <HomeV4Tour recipes={recipes} />;
+  return <HomeTour recipes={recipes} />;
 }
 
-// Signed-in homepage: their recipes in the v4 mock + community + learn + faq.
+// Signed-in homepage: their recipes in the builder mock + community + learn + faq.
 // No marketing tour. Reveal elements render at rest (no GSAP batch here), which
 // is fine — they're visible by default.
-function HomeV4SignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
+function HomeSignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
   return (
     <div style={{ background: hsTokens.cream, overflowX: "hidden" }}>
-      <SignedInHeroV4 />
+      <SignedInHero />
       <StageLibraryCommunity recipes={recipes} />
       <StageLearn />
       <StageFAQ />
@@ -89,7 +89,7 @@ function HomeV4SignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
   );
 }
 
-function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
+function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
@@ -181,25 +181,25 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // NOT getBoundingClientRect — so it's independent of the mock's
         // recede transform. Recomputed on every ScrollTrigger refresh.
         const scene = rootRef.current?.querySelector(
-          ".v4-scene",
+          ".tour-scene",
         ) as HTMLElement | null;
         const radarEl = rootRef.current?.querySelector(
-          '[data-v4="radar"]',
+          '[data-tour="radar"]',
         ) as HTMLElement | null;
         const slotEl = rootRef.current?.querySelector(
-          '[data-v4="radar-slot"]',
+          '[data-tour="radar-slot"]',
         ) as HTMLElement | null;
         const bsEl = rootRef.current?.querySelector(
-          '[data-v4="brewsheet"]',
+          '[data-tour="brewsheet"]',
         ) as HTMLElement | null;
         const bodyEl = rootRef.current?.querySelector(
-          '[data-v4="mock-body"]',
+          '[data-tour="mock-body"]',
         ) as HTMLElement | null;
         const waterEl = rootRef.current?.querySelector(
-          '[data-v4="water"]',
+          '[data-tour="water"]',
         ) as HTMLElement | null;
         const waterSlotEl = rootRef.current?.querySelector(
-          '[data-v4="water-slot"]',
+          '[data-tour="water-slot"]',
         ) as HTMLElement | null;
         const home = { x: 0, y: 0, scale: 1 };
         const exploded = { x: 0, y: 0, scale: 2.6 };
@@ -237,11 +237,11 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             const bodyW = bodyEl.offsetWidth; // full body box width
             const restH = bodyEl.offsetHeight; // body height = what fits
             const bsBox = bsEl.querySelector(
-              '[data-v4="bs-box"]',
+              '[data-tour="bs-box"]',
             ) as HTMLElement | null;
             if (bsBox) bsBox.style.width = `${bodyW}px`;
             const innerEl = bsEl.querySelector(
-              '[data-v4="bs-inner"]',
+              '[data-tour="bs-inner"]',
             ) as HTMLElement | null;
             // visual height of the scaled-down (0.82) content
             const fullH = innerEl ? innerEl.offsetHeight * 0.82 : restH;
@@ -271,22 +271,22 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             waterHome.x = wo.x;
             waterHome.y = wo.y;
             waterHome.scale = 1;
-            gsap.set('[data-v4="water"]', { x: wo.x, y: wo.y, scale: 1 });
+            gsap.set('[data-tour="water"]', { x: wo.x, y: wo.y, scale: 1 });
           }
         };
         measure();
-        gsap.set('[data-v4="radar"]', {
+        gsap.set('[data-tour="radar"]', {
           x: home.x,
           y: home.y,
           scale: home.scale,
         });
-        gsap.set('[data-v4="brewsheet"]', {
+        gsap.set('[data-tour="brewsheet"]', {
           x: bsHome.x,
           y: bsHome.y,
           scale: 1,
         });
-        gsap.set('[data-v4="bs-box"]', { width: bsHome.w, height: bsHome.h });
-        gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
+        gsap.set('[data-tour="bs-box"]', { width: bsHome.w, height: bsHome.h });
+        gsap.set('[data-tour="bs-nub"]', { opacity: 0 });
         ScrollTrigger.addEventListener("refreshInit", measure);
 
         // ── Hops beat — HYBRID: grow plays once on enter, collapse follows
@@ -309,13 +309,13 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         hopsGrowTl
           .to({}, { duration: HOPS_LEAD }, 0)
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { scale: 1, xPercent: 0 },
             { scale: 0.84, xPercent: -12, duration: HOPS_GROW * 0.9, ease: "power2.inOut", immediateRender: false },
             HOPS_LEAD,
           )
           .fromTo(
-            '[data-v4="radar"]',
+            '[data-tour="radar"]',
             { x: () => home.x, y: () => home.y, scale: () => home.scale },
             { x: () => exploded.x, y: () => exploded.y, scale: () => exploded.scale, duration: HOPS_GROW, ease: "power2.out", immediateRender: false },
             HOPS_LEAD,
@@ -323,14 +323,14 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           // soft drop shadow via FILTER so the chunky offset boxShadow (the
           // brand backdrop) stays put — both shadows show at once, no swap.
           .fromTo(
-            '[data-v4="radar"] > div',
+            '[data-tour="radar"] > div',
             { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
             { filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))", duration: HOPS_GROW, ease: "none", immediateRender: false },
             HOPS_LEAD,
           )
           // the rest of the builder dims to emphasize the visualizer
           .fromTo(
-            ".v4-dim",
+            ".tour-dim",
             { opacity: 1 },
             { opacity: 0.4, duration: HOPS_GROW * 0.85, ease: "none", immediateRender: false },
             HOPS_LEAD,
@@ -341,25 +341,25 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         const hopsCollapseTl = gsap.timeline({ paused: true });
         hopsCollapseTl
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { scale: 0.84, xPercent: -12 },
             { scale: 1, xPercent: 0, duration: 0.8, ease: "power2.out", immediateRender: false },
             0,
           )
           .fromTo(
-            ".v4-dim",
+            ".tour-dim",
             { opacity: 0.4 },
             { opacity: 1, duration: 0.8, ease: "none", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="radar"]',
+            '[data-tour="radar"]',
             { x: () => exploded.x, y: () => exploded.y, scale: () => exploded.scale },
             { x: () => home.x, y: () => home.y, scale: () => home.scale, duration: 1, ease: "power2.in", immediateRender: false },
             0.18,
           )
           .fromTo(
-            '[data-v4="radar"] > div',
+            '[data-tour="radar"] > div',
             { filter: "drop-shadow(0 18px 26px rgba(0,0,0,0.22))" },
             { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.85, ease: "none", immediateRender: false },
             0.18,
@@ -378,7 +378,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // exit so a fresh downward approach replays it. Its active range spans
         // the whole beat so activeTab stays "hops" across the collapse too.
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="hops"]',
+          trigger: '[data-tour-stage="hops"]',
           start: "top 45%",
           end: "bottom 30%",
           markers: DEV_MARKERS,
@@ -389,10 +389,10 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           onLeaveBack: () => {
             hopsGrowTl.pause(0);
             hopsCollapseTl.pause(0);
-            gsap.set('[data-v4="mock"]', { scale: 1, xPercent: 0 });
-            gsap.set(".v4-dim", { opacity: 1 });
-            gsap.set('[data-v4="radar"]', { x: home.x, y: home.y, scale: home.scale });
-            gsap.set('[data-v4="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-tour="mock"]', { scale: 1, xPercent: 0 });
+            gsap.set(".tour-dim", { opacity: 1 });
+            gsap.set('[data-tour="radar"]', { x: home.x, y: home.y, scale: home.scale });
+            gsap.set('[data-tour="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
           },
         });
 
@@ -401,7 +401,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // timeline; before this range it's untouched, so the radar stays
         // exploded where the grow left it. start/end are the hold-length knobs.
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="hops"]',
+          trigger: '[data-tour-stage="hops"]',
           start: "bottom 78%",
           end: "bottom 38%",
           markers: DEV_MARKERS,
@@ -460,7 +460,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         });
 
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="grains"]',
+          trigger: '[data-tour-stage="grains"]',
           start: "top 60%",
           end: "bottom 35%",
           markers: DEV_MARKERS,
@@ -480,7 +480,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         });
 
         // ── Water "solve" beat — the section BREAKS OUT (spread + grow). At
-        //    rest it's integrated in the mock (the [data-v4="water"] layer is
+        //    rest it's integrated in the mock (the [data-tour="water"] layer is
         //    transparent over the body, framed by the body border). On enter the
         //    mock recedes + dims and the three INNER pieces spread apart and grow
         //    INDIVIDUALLY — controls lift above, salts pull left, ion-viz pulls
@@ -499,13 +499,13 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         const waterGrowTl = gsap.timeline({ paused: true });
         waterGrowTl
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { scale: 1, xPercent: 0 },
             { scale: 0.84, xPercent: -10, duration: 0.7, ease: "power2.inOut", immediateRender: false },
             0,
           )
           .fromTo(
-            ".v4-dim",
+            ".tour-dim",
             { opacity: 1 },
             { opacity: 0.35, duration: 0.7, ease: "none", immediateRender: false },
             0,
@@ -513,7 +513,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           // the "Water." header RECEDES with the mock (fades + shrinks back), so
           // only the data pieces come to the forefront.
           .fromTo(
-            '[data-v4="water-header"]',
+            '[data-tour="water-header"]',
             { x: 0, scale: 1, opacity: 1 },
             { x: -16, scale: 0.9, opacity: 0.25, duration: 0.6, ease: "power2.inOut", immediateRender: false },
             0,
@@ -524,26 +524,26 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           // ion panels) so adjacent panels can't overlap. They stay centred, not
           // scattered. (Was pushing controls up + panels down → dispersed.)
           .fromTo(
-            '[data-v4="water-controls"]',
+            '[data-tour="water-controls"]',
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
             { y: -240, scale: 1.1, filter: "drop-shadow(0 9px 16px rgba(0,0,0,0.16))", duration: 0.5, ease: "power2.out", immediateRender: false },
             0.08,
           )
           .fromTo(
-            '[data-v4="water-salts"]',
+            '[data-tour="water-salts"]',
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
             { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false },
             0.14,
           )
           .fromTo(
-            '[data-v4="water-ions"]',
+            '[data-tour="water-ions"]',
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
             { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false },
             0.2,
           )
           // Auto-Calc "press" once the pieces are out — squash, then spring back.
-          .to('[data-v4="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.86 + WATER_LEAD)
-          .to('[data-v4="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.96 + WATER_LEAD)
+          .to('[data-tour="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.86 + WATER_LEAD)
+          .to('[data-tour="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.96 + WATER_LEAD)
           // the solve: salts count up + ion bars fill as the button springs back
           .fromTo(
             waterProxy,
@@ -556,37 +556,37 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         const waterCollapseTl = gsap.timeline({ paused: true });
         waterCollapseTl
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { scale: 0.84, xPercent: -10 },
             { scale: 1, xPercent: 0, duration: 0.8, ease: "power2.out", immediateRender: false },
             0,
           )
           .fromTo(
-            ".v4-dim",
+            ".tour-dim",
             { opacity: 0.35 },
             { opacity: 1, duration: 0.8, ease: "none", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="water-header"]',
+            '[data-tour="water-header"]',
             { x: -16, scale: 0.9, opacity: 0.25 },
             { x: 0, scale: 1, opacity: 1, duration: 0.8, ease: "power2.out", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="water-controls"]',
+            '[data-tour="water-controls"]',
             { y: -240, scale: 1.1, filter: "drop-shadow(0 9px 16px rgba(0,0,0,0.16))" },
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="water-salts"]',
+            '[data-tour="water-salts"]',
             { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))" },
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="water-ions"]',
+            '[data-tour="water-ions"]',
             { y: -240, scale: 1.1, filter: "drop-shadow(0 13px 22px rgba(0,0,0,0.2))" },
             { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))", duration: 0.8, ease: "power2.in", immediateRender: false },
             0,
@@ -596,7 +596,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // spread out empty, then press Auto-Calc + solve. Reset on a scroll-up
         // exit so a fresh downward approach replays.
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="water"]',
+          trigger: '[data-tour-stage="water"]',
           start: "top 45%",
           end: "bottom 30%",
           markers: DEV_MARKERS,
@@ -613,13 +613,13 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             waterCollapseTl.pause(0);
             waterProxy.fill = 1;
             setWaterFill(1);
-            gsap.set('[data-v4="mock"]', { scale: 1, xPercent: 0 });
-            gsap.set(".v4-dim", { opacity: 1 });
-            gsap.set('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 });
-            gsap.set('[data-v4="water-controls"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-            gsap.set('[data-v4="water-salts"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-            gsap.set('[data-v4="water-ions"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-            gsap.set('[data-v4="water-autocalc"]', { scale: 1 });
+            gsap.set('[data-tour="mock"]', { scale: 1, xPercent: 0 });
+            gsap.set(".tour-dim", { opacity: 1 });
+            gsap.set('[data-tour="water-header"]', { x: 0, scale: 1, opacity: 1 });
+            gsap.set('[data-tour="water-controls"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-tour="water-salts"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-tour="water-ions"]', { x: 0, y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+            gsap.set('[data-tour="water-autocalc"]', { scale: 1 });
           },
         });
 
@@ -627,7 +627,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // scroll. Manual progress() on the paused timeline (same reason as hops:
         // a scrub-linked tween would hold-render its spread `from` during grow).
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="water"]',
+          trigger: '[data-tour-stage="water"]',
           start: "bottom 78%",
           end: "bottom 38%",
           markers: DEV_MARKERS,
@@ -691,7 +691,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           setHonestActive(false);
         };
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="honest"]',
+          trigger: '[data-tour-stage="honest"]',
           start: "top 55%",
           end: "bottom 40%",
           markers: DEV_MARKERS,
@@ -719,7 +719,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         bsGrowTl
           // mock chrome scales DOWN + slides LEFT and dims as the sheet pulls out
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { opacity: 1, scale: 1, xPercent: 0 },
             { opacity: 0.32, scale: 0.82, xPercent: -14, duration: 1.0, ease: "power2.inOut", immediateRender: false },
             0,
@@ -729,20 +729,20 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           // switch; GSAP only moves + scales it. Function-based measured values,
           // invalidated on refresh.
           .fromTo(
-            '[data-v4="brewsheet"]',
+            '[data-tour="brewsheet"]',
             { x: () => bsHome.x, y: () => bsHome.y, scale: 1 },
             { x: () => bsExploded.x, y: () => bsExploded.y, scale: () => bsExploded.scale, duration: 1.2, ease: "power2.out", immediateRender: false },
             0.1,
           )
           .fromTo(
-            '[data-v4="bs-box"]',
+            '[data-tour="bs-box"]',
             { height: () => bsHome.h },
             { height: () => bsExploded.h, duration: 1.2, ease: "power2.out", immediateRender: false },
             0.1,
           )
           // the "Brew sheet" tab nub lifts out above the box
           .fromTo(
-            '[data-v4="bs-nub"]',
+            '[data-tour="bs-nub"]',
             { opacity: 0 },
             { opacity: 1, duration: 0.5, ease: "none", immediateRender: false },
             0.5,
@@ -757,7 +757,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         // approach replays it. Dwell on the big sheet = the brewsheet stage
         // height (no pin now), so make that stage tall.
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="brewsheet"]',
+          trigger: '[data-tour-stage="brewsheet"]',
           start: "top 50%",
           end: "bottom 35%",
           markers: DEV_MARKERS,
@@ -767,10 +767,10 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           onEnter: () => bsGrowTl.restart(),
           onLeaveBack: () => {
             bsGrowTl.pause(0);
-            gsap.set('[data-v4="mock"]', { opacity: 1, scale: 1, xPercent: 0 });
-            gsap.set('[data-v4="brewsheet"]', { x: bsHome.x, y: bsHome.y, scale: 1 });
-            gsap.set('[data-v4="bs-box"]', { height: bsHome.h });
-            gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
+            gsap.set('[data-tour="mock"]', { opacity: 1, scale: 1, xPercent: 0 });
+            gsap.set('[data-tour="brewsheet"]', { x: bsHome.x, y: bsHome.y, scale: 1 });
+            gsap.set('[data-tour="bs-box"]', { height: bsHome.h });
+            gsap.set('[data-tour="bs-nub"]', { opacity: 0 });
           },
         });
 
@@ -789,17 +789,17 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       //    tab so the mock morphs section-by-section. (Fill beats land next.)
       mm.add("(max-width: 1024px)", () => {
         const scene = rootRef.current?.querySelector(
-          ".v4-scene",
+          ".tour-scene",
         ) as HTMLElement | null;
         if (!scene) return;
         const q = (sel: string) =>
           rootRef.current?.querySelector(sel) as HTMLElement | null;
-        const radar = q('[data-v4="radar"]');
-        const slot = q('[data-v4="radar-slot"]');
-        const bodyEl = q('[data-v4="mock-body"]');
-        const bsEl = q('[data-v4="brewsheet"]');
-        const waterEl = q('[data-v4="water"]');
-        const waterSlot = q('[data-v4="water-slot"]');
+        const radar = q('[data-tour="radar"]');
+        const slot = q('[data-tour="radar-slot"]');
+        const bodyEl = q('[data-tour="mock-body"]');
+        const bsEl = q('[data-tour="brewsheet"]');
+        const waterEl = q('[data-tour="water"]');
+        const waterSlot = q('[data-tour="water-slot"]');
         const offsetWithin = (el: HTMLElement, anc: HTMLElement) => {
           let x = 0;
           let y = 0;
@@ -841,10 +841,10 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           if (bsEl && bodyEl) {
             const bo = offsetWithin(bodyEl, scene);
             const bsBox = bsEl.querySelector(
-              '[data-v4="bs-box"]',
+              '[data-tour="bs-box"]',
             ) as HTMLElement | null;
             const inner = bsEl.querySelector(
-              '[data-v4="bs-inner"]',
+              '[data-tour="bs-inner"]',
             ) as HTMLElement | null;
             bsHomeH.v = bodyEl.offsetHeight;
             bsFullH.v = inner ? inner.offsetHeight * 0.82 + 6 : bodyEl.offsetHeight;
@@ -856,7 +856,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             }
             gsap.set(bsEl, { x: bo.x, y: bo.y, scale: 1 });
             const nub = bsEl.querySelector(
-              '[data-v4="bs-nub"]',
+              '[data-tour="bs-nub"]',
             ) as HTMLElement | null;
             if (nub) gsap.set(nub, { opacity: 0 });
             // Publish the LIFTED sheet's on-screen bottom (scene px × the mock's
@@ -865,7 +865,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
               const renderScale =
                 bsBox.getBoundingClientRect().height / bsBox.offsetHeight;
               rootRef.current?.style.setProperty(
-                "--v4-bs-grown-h",
+                "--tour-bs-grown-h",
                 `${Math.round((bsExploded.y + bsFullH.v) * renderScale)}px`,
               );
             }
@@ -894,13 +894,13 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             0.3,
           )
           .fromTo(
-            '[data-v4="radar"] > div',
+            '[data-tour="radar"] > div',
             { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" },
             { filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.22))", duration: 0.8, ease: "none", immediateRender: false },
             0.3,
           )
           .fromTo(
-            ".v4-dim",
+            ".tour-dim",
             { opacity: 1 },
             { opacity: 0.4, duration: 0.55, ease: "none", immediateRender: false },
             0.3,
@@ -908,44 +908,44 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         const resetRadar = () => {
           radarGrowTl.pause(0);
           gsap.set(radar, { x: radarHome.x, y: radarHome.y, scale: radarHome.scale });
-          gsap.set('[data-v4="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-          gsap.set(".v4-dim", { opacity: 1 });
+          gsap.set('[data-tour="radar"] > div', { filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set(".tour-dim", { opacity: 1 });
         };
 
         const bsGrowTl = gsap.timeline({ paused: true });
         bsGrowTl
           // the mock fades back AND slides left as the brew sheet disconnects...
           .fromTo(
-            '[data-v4="mock"]',
+            '[data-tour="mock"]',
             { opacity: 1, xPercent: 0 },
             { opacity: 0.32, xPercent: -12, duration: 0.7, ease: "power2.inOut", immediateRender: false },
             0,
           )
           // ...and rises (y up) while growing to its full height.
           .fromTo(
-            '[data-v4="brewsheet"]',
+            '[data-tour="brewsheet"]',
             { y: () => bsHome.y },
             { y: () => bsExploded.y, duration: 0.9, ease: "power2.out", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="bs-box"]',
+            '[data-tour="bs-box"]',
             { height: () => bsHomeH.v },
             { height: () => bsFullH.v, duration: 0.9, ease: "power2.out", immediateRender: false },
             0,
           )
           .fromTo(
-            '[data-v4="bs-nub"]',
+            '[data-tour="bs-nub"]',
             { opacity: 0 },
             { opacity: 1, duration: 0.4, ease: "none", immediateRender: false },
             0.35,
           );
         const resetBs = () => {
           bsGrowTl.pause(0);
-          gsap.set('[data-v4="mock"]', { opacity: 1, xPercent: 0 });
-          gsap.set('[data-v4="brewsheet"]', { y: bsHome.y });
-          gsap.set('[data-v4="bs-box"]', { height: bsHomeH.v });
-          gsap.set('[data-v4="bs-nub"]', { opacity: 0 });
+          gsap.set('[data-tour="mock"]', { opacity: 1, xPercent: 0 });
+          gsap.set('[data-tour="brewsheet"]', { y: bsHome.y });
+          gsap.set('[data-tour="bs-box"]', { height: bsHomeH.v });
+          gsap.set('[data-tour="bs-nub"]', { opacity: 0 });
         };
 
         const invalidateReveals = () => {
@@ -990,13 +990,13 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         const WLIFT = -40;
         const waterTl = gsap.timeline({ paused: true });
         waterTl
-          .fromTo(".v4-dim", { opacity: 1 }, { opacity: 0.4, duration: 0.5, ease: "none", immediateRender: false }, 0)
-          .fromTo('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 }, { x: -8, scale: 0.92, opacity: 0.3, duration: 0.5, ease: "power2.inOut", immediateRender: false }, 0)
-          .fromTo('[data-v4="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 8px 15px rgba(0,0,0,0.16))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.06)
-          .fromTo('[data-v4="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.12)
-          .fromTo('[data-v4="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.18)
-          .to('[data-v4="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.66)
-          .to('[data-v4="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.76)
+          .fromTo(".tour-dim", { opacity: 1 }, { opacity: 0.4, duration: 0.5, ease: "none", immediateRender: false }, 0)
+          .fromTo('[data-tour="water-header"]', { x: 0, scale: 1, opacity: 1 }, { x: -8, scale: 0.92, opacity: 0.3, duration: 0.5, ease: "power2.inOut", immediateRender: false }, 0)
+          .fromTo('[data-tour="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 8px 15px rgba(0,0,0,0.16))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.06)
+          .fromTo('[data-tour="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.12)
+          .fromTo('[data-tour="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" }, { y: WLIFT, scale: 1.13, filter: "drop-shadow(0 11px 19px rgba(0,0,0,0.2))", duration: 0.5, ease: "power2.out", immediateRender: false }, 0.18)
+          .to('[data-tour="water-autocalc"]', { scale: 0.86, duration: 0.1, ease: "power2.in" }, 0.66)
+          .to('[data-tour="water-autocalc"]', { scale: 1, duration: 0.24, ease: "back.out(2.6)" }, 0.76)
           .fromTo(
             waterProxy,
             { fill: 0 },
@@ -1008,12 +1008,12 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           waterProxy.fill = 1;
           setWaterFill(1);
           if (waterEl) gsap.set(waterEl, { overflow: "hidden" });
-          gsap.set('[data-v4="water-header"]', { x: 0, scale: 1, opacity: 1 });
-          gsap.set('[data-v4="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-          gsap.set('[data-v4="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-          gsap.set('[data-v4="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
-          gsap.set('[data-v4="water-autocalc"]', { scale: 1 });
-          gsap.set(".v4-dim", { opacity: 1 });
+          gsap.set('[data-tour="water-header"]', { x: 0, scale: 1, opacity: 1 });
+          gsap.set('[data-tour="water-controls"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-tour="water-salts"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-tour="water-ions"]', { y: 0, scale: 1, filter: "drop-shadow(0 0 0 rgba(0,0,0,0))" });
+          gsap.set('[data-tour="water-autocalc"]', { scale: 1 });
+          gsap.set(".tour-dim", { opacity: 1 });
         };
 
         // Honest numbers: mash temp sweeps, FG/ABV lag it, the temp chip grows.
@@ -1051,7 +1051,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
 
         // Per-stage triggers: switch the tab + drive that section's beat.
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="grains"]',
+          trigger: '[data-tour-stage="grains"]',
           start: "top 60%",
           end: "bottom 40%",
           markers: DEV_MARKERS,
@@ -1066,7 +1066,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           },
         });
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="hops"]',
+          trigger: '[data-tour-stage="hops"]',
           start: "top 55%",
           end: "bottom 35%",
           markers: DEV_MARKERS,
@@ -1079,7 +1079,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           onLeaveBack: resetRadar,
         });
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="water"]',
+          trigger: '[data-tour-stage="water"]',
           start: "top 55%",
           end: "bottom 35%",
           markers: DEV_MARKERS,
@@ -1102,7 +1102,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           onLeaveBack: resetWater,
         });
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="honest"]',
+          trigger: '[data-tour-stage="honest"]',
           start: "top 55%",
           end: "bottom 40%",
           markers: DEV_MARKERS,
@@ -1115,7 +1115,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           onLeaveBack: honestStop,
         });
         ScrollTrigger.create({
-          trigger: '[data-v4-stage="brewsheet"]',
+          trigger: '[data-tour-stage="brewsheet"]',
           start: "top 55%",
           end: "bottom 35%",
           markers: DEV_MARKERS,
@@ -1136,12 +1136,12 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       });
 
       // Post-tour stages — single play-once fade-up on enter for any
-      // `[data-v4-reveal]` block. Light: no scrub, no scroll-jack. Fires on every
+      // `[data-tour-reveal]` block. Light: no scrub, no scroll-jack. Fires on every
       // viewport (the post-tour grid is full-width on mobile + desktop), so it
       // lives OUTSIDE the desktop `mm.add` above. Reduced-motion users skip this
       // path entirely via the early-return above, so elements stay at their
       // natural CSS opacity 1 (no invisibility trap).
-      const reveals = gsap.utils.toArray<HTMLElement>("[data-v4-reveal]");
+      const reveals = gsap.utils.toArray<HTMLElement>("[data-tour-reveal]");
       if (reveals.length) {
         gsap.set(reveals, { opacity: 0, y: 16 });
         ScrollTrigger.batch(reveals, {
@@ -1171,17 +1171,17 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       //    the final state on re-splits so a resize past the section never
       //    re-fires the animation.
       const splitTargets = gsap.utils.toArray<HTMLElement>(
-        "[data-v4-split-reveal]",
+        "[data-tour-split-reveal]",
       );
       const splitInstances: SplitText[] = [];
       splitTargets.forEach((el) => {
-        const mode = el.dataset.v4SplitMode === "words" ? "words" : "lines";
+        const mode = el.dataset.tourSplitMode === "words" ? "words" : "lines";
         let revealed = false;
         const instance = SplitText.create(el, {
           type: mode === "words" ? "words,lines" : "lines",
           mask: "lines",
-          linesClass: "v4-split-line",
-          wordsClass: "v4-split-word",
+          linesClass: "tour-split-line",
+          wordsClass: "tour-split-word",
           autoSplit: true,
           onSplit: (self) => {
             const tgs = mode === "words" ? self.words : self.lines;
@@ -1211,7 +1211,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       });
 
       // Scroll cue (hero) fades out over the first ~200px of scroll, then is gone.
-      const cueEl = rootRef.current?.querySelector('[data-v4="scrollcue"]');
+      const cueEl = rootRef.current?.querySelector('[data-tour="scrollcue"]');
       if (cueEl) {
         gsap.to(cueEl, {
           opacity: 0,
@@ -1239,17 +1239,17 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   );
 
   // Mobile mock scale: publish the mock's natural (unscaled) height so the CSS
-  // can reclaim exactly the space `transform: scale` frees (see .v4-mock-scale).
+  // can reclaim exactly the space `transform: scale` frees (see .tour-mock-scale).
   // offsetHeight ignores the transform, so it's the true layout height; a
   // ResizeObserver keeps it fresh as the active tab's content changes.
   useEffect(() => {
     const el = rootRef.current?.querySelector(
-      ".v4-mock-scale",
+      ".tour-mock-scale",
     ) as HTMLElement | null;
     if (!el) return;
     const publish = () =>
       rootRef.current?.style.setProperty(
-        "--v4-mock-natural-h",
+        "--tour-mock-natural-h",
         `${el.offsetHeight}px`,
       );
     publish();
@@ -1274,14 +1274,14 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
     () => (
       <>
         <div
-          className="v4-hero-col"
+          className="tour-hero-col"
           style={{ minWidth: 0, gridColumn: 1, gridRow: 1 }}
         >
           <StageIntro />
         </div>
         {/* Opening (the chaos) sits ABOVE the mock — full-width, no mock yet. */}
         <div
-          className="v4-intro-col"
+          className="tour-intro-col"
           style={{ minWidth: 0, gridColumn: 1, gridRow: 2 }}
         >
           <StageOpening />
@@ -1290,7 +1290,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
             overlaps this block (row 3); on desktop the mock column spans every
             row, so it's present from the top as before. */}
         <div
-          className="v4-narr-col"
+          className="tour-narr-col"
           style={{ minWidth: 0, gridColumn: 1, gridRow: 3 }}
         >
           <StageGrains />
@@ -1322,7 +1322,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       <ScrollCue reduced={reducedMotion} />
 
       <div
-        className="v4-tour"
+        className="tour-layout"
         style={{
           maxWidth: 1600,
           margin: "0 auto",
@@ -1344,7 +1344,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         {tourText}
 
         <div
-          className="v4-tour-right v4-mock-col"
+          className="tour-right tour-mock-col"
           style={{
             position: "relative",
             minWidth: 0,
@@ -1353,7 +1353,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           }}
         >
           <div
-            className="v4-sticky-mock"
+            className="tour-sticky-mock"
             style={{
               position: "sticky",
               top: "clamp(112px, calc(50vh - 290px), 280px)",
@@ -1363,12 +1363,12 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
                 so the narrative scrolls cleanly UNDER it (no text spilling beside
                 the card), with a soft fade at its bottom edge so text fades out
                 rather than hard-cutting. */}
-            <div className="v4-mock-band" aria-hidden />
+            <div className="tour-mock-band" aria-hidden />
             {/* Scale wrapper — a no-op on desktop (scale 1); mobile shrinks the
                 whole mock to fit a phone (see CSS). transform:scale keeps the
                 offsetLeft/Top measurements transform-independent. */}
-            <div className="v4-mock-scale">
-              <V4Mock
+            <div className="tour-mock-scale">
+              <BuilderMock
                 activeTab={activeTab}
                 onSelectTab={setActiveTabAndStop}
                 grainFill={grainFill}
@@ -1401,7 +1401,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: clip; }
 
-        @keyframes v4-scrollcue {
+        @keyframes tour-scrollcue {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(6px); }
         }
@@ -1410,16 +1410,16 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
            padding so descenders ('g', 'y', 'p') don't get clipped on the
            tight-leading display heads (lineHeight: 0.96 on the hero h1).
            Negative margin neutralizes it so the visual layout is unchanged. */
-        .v4-split-line {
+        .tour-split-line {
           padding-bottom: 0.18em;
           margin-bottom: -0.18em;
         }
 
         /* The mock band is mobile-only (the desktop tour has the radar/water beats). */
-        .v4-mock-band { display: none; }
+        .tour-mock-band { display: none; }
 
         @media (max-width: 1024px) {
-          .v4-tour {
+          .tour-layout {
             grid-template-columns: 1fr !important;
             grid-template-rows: auto auto auto !important;
             gap: 0 !important;
@@ -1431,8 +1431,8 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
                the 7-tab bar fits properly), then scales down by scale. Both feed
                the mock AND the narrative's left offset so they stay aligned.
                Smaller scale = smaller mock + wider text. */
-            --v4-mock-design-w: 520px;
-            --v4-mock-scale: 0.37;
+            --tour-mock-design-w: 520px;
+            --tour-mock-scale: 0.37;
           }
           /* Mobile single column: the mock and narrative share row 2 (overlapping)
              so the mock can stick at the top while the FULL-WIDTH narrative scrolls
@@ -1441,7 +1441,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
              across). pointer-events:none on the (full-width, mostly-transparent)
              column so touches reach the scrolling narrative; only the mock card
              re-enables them, over its visual area. */
-          .v4-mock-col {
+          .tour-mock-col {
             grid-column: 1 !important;
             /* Row 3 = grains onward, so the mock only appears + sticks once the
                reader passes the hero (row 1) and the opening (row 2). */
@@ -1453,7 +1453,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
              visual box + a feather, centred on it, with a radial mask so the blur
              fades out at the edges — text scrolling under blurs/fades near the
              card rather than hard-cutting. Sits behind the mock card (DOM order). */
-          .v4-mock-band {
+          .tour-mock-band {
             display: block;
             position: absolute;
             left: 50%;
@@ -1462,7 +1462,7 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
                tail below it. Full page width so nothing spills beside the card. */
             top: -200px;
             width: 100vw;
-            height: calc(var(--v4-mock-natural-h, 600px) * var(--v4-mock-scale) + 260px);
+            height: calc(var(--tour-mock-natural-h, 600px) * var(--tour-mock-scale) + 260px);
             transform: translateX(-50%);
             pointer-events: none;
             background: ${hsTokens.cream};
@@ -1482,32 +1482,32 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
               transparent 100%
             );
           }
-          .v4-mock-col [data-v4="mock"] {
+          .tour-mock-col [data-tour="mock"] {
             pointer-events: auto;
           }
           /* Pin the body to a constant height so the mock (and therefore the
              masking band, which is sized from the mock's height) doesn't jump as
              the active tab — and its content height — changes on scroll. Sized to
              fit the tallest section (water) so nothing bleeds past it. */
-          .v4-mock-col [data-v4="mock-body"] {
+          .tour-mock-col [data-tour="mock-body"] {
             height: 200px !important;
             min-height: 0 !important;
           }
           /* The water section is a SCENE-LEVEL layer (not inside the body's
              overflow), so on mobile — where there's no break-out — clip it to
              itself so it can't bleed below the mock card. */
-          .v4-mock-col [data-v4="water"] {
+          .tour-mock-col [data-tour="water"] {
             overflow: hidden;
           }
-          .v4-narr-col {
+          .tour-narr-col {
             z-index: 1;
           }
           /* Opening sits ABOVE the mock band (which extends upward), so the band
              never covers the opening copy as the mock spawns past it. */
-          .v4-intro-col {
+          .tour-intro-col {
             z-index: 5;
           }
-          .v4-sticky-mock {
+          .tour-sticky-mock {
             position: sticky !important;
             /* Stick a little below the top (padding from the page edge), just
                under the (collapsing) header — when it hides on scroll,
@@ -1523,29 +1523,29 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
              the scale frees (natural height × (scale − 1)), derived from the
              JS-measured natural height so the sticky element hugs the visual mock
              exactly (no tall empty gap) at any scale. */
-          .v4-mock-scale {
+          .tour-mock-scale {
             /* Render at a FIXED design width (wide enough for the 7-tab bar to
                sit properly), THEN scale down — rather than rendering at the narrow
                column width, where the tabs overflowed the card. */
-            width: var(--v4-mock-design-w, 520px);
-            transform: scale(var(--v4-mock-scale));
+            width: var(--tour-mock-design-w, 520px);
+            transform: scale(var(--tour-mock-scale));
             transform-origin: top center;
             /* Centre the (wider-than-column) box so the scaled mock sits centred
                in the single column; the overflow past the column is clipped by
                the root. */
             position: relative;
-            left: calc((100% - var(--v4-mock-design-w, 520px)) / 2);
+            left: calc((100% - var(--tour-mock-design-w, 520px)) / 2);
             /* Reclaim the vertical space the scale frees so the footprint equals
                the visual height. */
             margin-bottom: calc(
-              var(--v4-mock-natural-h, 600px) * (var(--v4-mock-scale) - 1)
+              var(--tour-mock-natural-h, 600px) * (var(--tour-mock-scale) - 1)
             );
           }
           /* Single column: full-width narrative that scrolls UP and passes behind
              the top-stuck mock (covered only where the mock card sits).
              (Trigger timing keys off these section heights in the mobile GSAP
              branch.) */
-          .v4-narr-col section {
+          .tour-narr-col section {
             padding-left: 0 !important;
             padding-right: 0 !important;
             min-height: 72vh !important;
@@ -1556,22 +1556,22 @@ function HomeV4Tour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           /* First narrative block (grains): clear the mock's height + a gap so the
              mock spawns in the space between the opening and the grains copy
              instead of landing on top of it. */
-          .v4-narr-col section:first-child {
+          .tour-narr-col section:first-child {
             padding-top: calc(
-              var(--v4-mock-natural-h, 600px) * var(--v4-mock-scale) + 80px
+              var(--tour-mock-natural-h, 600px) * var(--tour-mock-scale) + 80px
             ) !important;
           }
           /* Last narrative block (brew sheet): the sheet grows tall on its beat,
              so push its copy clear of the grown sheet (measured height + a gap)
              so they don't overlap. */
-          .v4-narr-col section:last-child {
+          .tour-narr-col section:last-child {
             justify-content: flex-start !important;
-            padding-top: calc(var(--v4-bs-grown-h, 480px) + 56px) !important;
+            padding-top: calc(var(--tour-bs-grown-h, 480px) + 56px) !important;
             min-height: 124vh !important;
           }
           /* The narrative is full-width now, but keep the big tour type a notch
              down on mobile so headlines stay tidy. */
-          .v4-narr-col section h2 {
+          .tour-narr-col section h2 {
             font-size: clamp(19px, 5.6vw, 25px) !important;
             line-height: 1.12 !important;
           }
@@ -1587,7 +1587,7 @@ function ScrollCue({ reduced }: { reduced: boolean }) {
   if (reduced) return null;
   return (
     <div
-      data-v4="scrollcue"
+      data-tour="scrollcue"
       aria-hidden
       style={{
         position: "fixed",
@@ -1604,7 +1604,7 @@ function ScrollCue({ reduced }: { reduced: boolean }) {
     >
       {/* Inner element bounces (translateY); the outer keeps the centering
           transform + the GSAP-driven fade, so the two never fight. */}
-      <div style={{ animation: "v4-scrollcue 1.7s ease-in-out infinite" }}>
+      <div style={{ animation: "tour-scrollcue 1.7s ease-in-out infinite" }}>
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
           <path
             d="M6 9l6 6 6-6"

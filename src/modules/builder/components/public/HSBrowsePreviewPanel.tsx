@@ -7,8 +7,8 @@ import { useGSAP } from "@gsap/react";
 import { hsTokens } from "@/modules/builder/tokens";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 
-import { V4Mock, type TabKey } from "@/modules/home/mock/V4Mock";
-import { mapRecipeToV4Mock } from "@/modules/home/lib/mapRecipeToV4Mock";
+import { BuilderMock, type TabKey } from "@/modules/home/mock/BuilderMock";
+import { mapRecipeToBuilderMock } from "@/modules/home/lib/mapRecipeToBuilderMock";
 
 gsap.registerPlugin(useGSAP);
 
@@ -33,28 +33,28 @@ export default function HSBrowsePreviewPanel({
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
 
   const data = useMemo(
-    () => (full ? mapRecipeToV4Mock(full) : undefined),
+    () => (full ? mapRecipeToBuilderMock(full) : undefined),
     [full],
   );
 
-  // Place the V4Mock's scene-level layers at home (rest). Ported verbatim from
-  // src/modules/home/SignedInHeroV4.tsx — without this, brewsheet / radar / water layers
+  // Place the BuilderMock's scene-level layers at home (rest). Ported verbatim from
+  // src/modules/home/SignedInHero.tsx — without this, brewsheet / radar / water layers
   // render at (0,0) overlapping the body because they're absolute-positioned by
   // parent GSAP set() calls.
   useGSAP(
     () => {
       const scene = rootRef.current?.querySelector(
-        ".v4-scene",
+        ".tour-scene",
       ) as HTMLElement | null;
       if (!scene) return;
       const q = (sel: string) =>
         rootRef.current?.querySelector(sel) as HTMLElement | null;
-      const radar = q('[data-v4="radar"]');
-      const slot = q('[data-v4="radar-slot"]');
-      const bodyEl = q('[data-v4="mock-body"]');
-      const bsEl = q('[data-v4="brewsheet"]');
-      const waterEl = q('[data-v4="water"]');
-      const waterSlot = q('[data-v4="water-slot"]');
+      const radar = q('[data-tour="radar"]');
+      const slot = q('[data-tour="radar-slot"]');
+      const bodyEl = q('[data-tour="mock-body"]');
+      const bsEl = q('[data-tour="brewsheet"]');
+      const waterEl = q('[data-tour="water"]');
+      const waterSlot = q('[data-tour="water-slot"]');
       const offsetWithin = (el: HTMLElement, anc: HTMLElement) => {
         let x = 0;
         let y = 0;
@@ -75,7 +75,7 @@ export default function HSBrowsePreviewPanel({
         if (bsEl && bodyEl) {
           const bo = offsetWithin(bodyEl, scene);
           const bsBox = bsEl.querySelector(
-            '[data-v4="bs-box"]',
+            '[data-tour="bs-box"]',
           ) as HTMLElement | null;
           if (bsBox) {
             bsBox.style.width = `${bodyEl.offsetWidth}px`;
@@ -83,7 +83,7 @@ export default function HSBrowsePreviewPanel({
           }
           gsap.set(bsEl, { x: bo.x, y: bo.y, scale: 1 });
           const nub = bsEl.querySelector(
-            '[data-v4="bs-nub"]',
+            '[data-tour="bs-nub"]',
           ) as HTMLElement | null;
           if (nub) gsap.set(nub, { opacity: 0 });
         }
@@ -122,9 +122,9 @@ export default function HSBrowsePreviewPanel({
         position: "sticky",
         top: 92,
         minWidth: 0,
-        ["--v4-mock-design-w" as string]: "100%",
-        ["--v4-mock-scale" as string]: "1",
-        ["--v4-mock-body-h" as string]: "320px",
+        ["--tour-mock-design-w" as string]: "100%",
+        ["--tour-mock-scale" as string]: "1",
+        ["--tour-mock-body-h" as string]: "320px",
       }}
     >
       {error && !data ? (
@@ -133,7 +133,7 @@ export default function HSBrowsePreviewPanel({
         <PreviewSkeleton onClose={onClose} />
       ) : (
         <div style={{ opacity: loading ? 0.55 : 1, transition: "opacity 180ms ease" }}>
-          <V4Mock
+          <BuilderMock
             activeTab={activeTab}
             onSelectTab={setActiveTab}
             data={data}

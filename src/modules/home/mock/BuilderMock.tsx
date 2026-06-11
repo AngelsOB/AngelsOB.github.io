@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { hsTokens } from "@/modules/builder/tokens";
 import { HopFlavorRadar } from "./HopFlavorRadar";
-import BrewSheetPanelV4 from "./BrewSheetPanelV4";
+import BrewSheetPanel from "./BrewSheetPanel";
 import { TabSection, SectionHead, WaterSection } from "./TabSections";
 import { StyleGuidelines } from "./StyleGuidelines";
-import type { V4MockData } from "../lib/mapRecipeToV4Mock";
+import type { BuilderMockData } from "../lib/mapRecipeToBuilderMock";
 
 // A simplified version of the real recipe builder. Clickable tabs switch the
 // body to that section (the mock is usable at rest). The tour then drives the
@@ -17,10 +17,10 @@ import type { V4MockData } from "../lib/mapRecipeToV4Mock";
 //   - GSAP owns the pull-out TRANSFORMS (x/y/scale) — different CSS props.
 //
 // Named scene elements (GSAP targets):
-//   - [data-v4="mock"]        the cream builder card (chrome + body)
-//   - [data-v4="section-hops"] the hop bill (recedes/dims behind the radar)
-//   - [data-v4="radar"]       the HopVisualizer — pulls out on the Hops beat
-//   - [data-v4="brewsheet"]   the brew sheet — the whole section pulls out
+//   - [data-tour="mock"]        the cream builder card (chrome + body)
+//   - [data-tour="section-hops"] the hop bill (recedes/dims behind the radar)
+//   - [data-tour="radar"]       the HopVisualizer — pulls out on the Hops beat
+//   - [data-tour="brewsheet"]   the brew sheet — the whole section pulls out
 
 export type TabKey =
   | "fermentables"
@@ -90,7 +90,7 @@ interface Props {
   /** When set, the mock renders THIS recipe instead of the hardcoded sample
    *  (the signed-in hero). The tour leaves it undefined, so the beats keep
    *  using the sample and are unaffected. */
-  data?: V4MockData;
+  data?: BuilderMockData;
   /** When set, the chrome's right-hand pill becomes an "Open recipe →" Link
    *  to this href (matches the live homepage HeroBuilderCard). When unset
    *  the chrome shows the decorative "Save recipe →" pill (the tour). */
@@ -101,17 +101,17 @@ interface Props {
   onClose?: () => void;
 }
 
-export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref, onClose }: Props) {
+export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref, onClose }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
   const waterActive = activeTab === "water";
   const otherActive = !hopsActive && !brewsheetActive && !waterActive;
 
   return (
-    <div className="v4-scene" style={{ position: "relative", width: "100%" }}>
+    <div className="tour-scene" style={{ position: "relative", width: "100%" }}>
       {/* ── The builder card ─────────────────────────────────────────── */}
       <div
-        data-v4="mock"
+        data-tour="mock"
         style={{
           position: "relative",
           zIndex: 1,
@@ -123,16 +123,16 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
           transformOrigin: "center center",
         }}
       >
-        <div className="v4-dim">
+        <div className="tour-dim">
           <MockHeader data={data} openHref={openHref} onClose={onClose} />
         </div>
-        <div className="v4-dim">
+        <div className="tour-dim">
           <MockStats grainFill={grainFill} fgShift={fgShift} data={data} />
         </div>
-        <div className="v4-dim">
+        <div className="tour-dim">
           <StyleGuidelines grainFill={grainFill} fgShift={fgShift} data={data} />
         </div>
-        <div className="v4-dim">
+        <div className="tour-dim">
           <MockTabBar active={activeTab} onSelect={onSelectTab} data={data} />
         </div>
 
@@ -142,7 +142,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
             panel's top edge) with side + bottom borders, like the real
             builder's active-section box. */}
         <div
-          data-v4="mock-body"
+          data-tour="mock-body"
           style={{
             position: "relative",
             // FIXED height (not minHeight): TabSections is designed for a
@@ -157,7 +157,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
             // overflow via overflowY:auto + minHeight:0 in the flex chain.
             // CSS var so callers (e.g. browse preview) can give the mock more
             // vertical room without forking the component.
-            height: "var(--v4-mock-body-h, 240px)",
+            height: "var(--tour-mock-body-h, 240px)",
             // When the brew sheet is active it provides its own box outline,
             // so drop the body border here to avoid a double outline.
             borderLeft: brewsheetActive ? "none" : `2px solid ${hsTokens.ink}`,
@@ -177,7 +177,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
               slot on the right — so recipes with many hops scroll the bill
               without moving the slot (which the scene-level radar overlays). */}
           <div
-            data-v4="section-hops"
+            data-tour="section-hops"
             style={{
               position: "absolute",
               inset: 0,
@@ -192,7 +192,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
               flexDirection: "column",
             }}
           >
-            <div className="v4-dim">
+            <div className="tour-dim">
               <SectionHead
                 title="Hops."
                 meta={`${data ? data.hops.length : 3} in the bill`}
@@ -214,7 +214,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
               }}
             >
               <div
-                className="v4-dim"
+                className="tour-dim"
                 style={{
                   flex: 1,
                   minWidth: 0,
@@ -231,18 +231,18 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
                 <HopBillTable data={data} />
               </div>
               <div
-                data-v4="radar-slot"
+                data-tour="radar-slot"
                 style={{ width: 112, height: 112, flexShrink: 0 }}
               />
             </div>
           </div>
 
-          {/* Water: a scene-level [data-v4="water"] pop-out group renders the
+          {/* Water: a scene-level [data-tour="water"] pop-out group renders the
               card over this slot (like the hops radar). The slot just marks the
               body area for measuring; the body drops its border when water-active
               so the popped card's own border shows. */}
           <div
-            data-v4="section-water"
+            data-tour="section-water"
             style={{
               position: "absolute",
               inset: 0,
@@ -251,7 +251,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
               pointerEvents: "none",
             }}
           >
-            <div data-v4="water-slot" style={{ position: "absolute", inset: 0 }} />
+            <div data-tour="water-slot" style={{ position: "absolute", inset: 0 }} />
           </div>
 
           {/* Other sections (fermentables / mash / yeast / fermentation) — real
@@ -273,11 +273,11 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
       {/* Explode layer — scene-level. Focal content lives here so it can be
           pulled OUT independently while the mock recedes. */}
       <div
-        data-v4="explode-layer"
+        data-tour="explode-layer"
         style={{ position: "absolute", inset: 0, zIndex: 5, pointerEvents: "none" }}
       >
         <div
-          data-v4="radar"
+          data-tour="radar"
           style={{
             position: "absolute",
             top: 0,
@@ -310,7 +310,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
           mock) so the pieces aren't clipped by the body + don't recede with it.
           pointer-events auto so the big salt +/- stay clickable (the "flex"). */}
       <div
-        data-v4="water"
+        data-tour="water"
         style={{
           position: "absolute",
           top: 0,
@@ -331,7 +331,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
       {/* Brew sheet — the whole section. Visible when its tab is active;
           grows out of its body slot on the brewsheet beat (GSAP transforms). */}
       <div
-        data-v4="brewsheet"
+        data-tour="brewsheet"
         style={{
           position: "absolute",
           top: 0,
@@ -351,7 +351,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
             it (fades in during the beat), like grabbing the tab and pulling the
             whole section out. */}
         <div
-          data-v4="bs-nub"
+          data-tour="bs-nub"
           style={{
             position: "absolute",
             bottom: "100%",
@@ -387,7 +387,7 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
         {/* The bordered box — its HEIGHT grows to reveal content (a real box
             getting bigger, not an unmask). */}
         <div
-          data-v4="bs-box"
+          data-tour="bs-box"
           style={{
             overflow: "hidden",
             background: hsTokens.cream,
@@ -399,14 +399,14 @@ export function V4Mock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, f
           {/* Scaled-down so MORE fits in the collapsed box (and the exploded
               box fits the viewport at full width). */}
           <div
-            data-v4="bs-inner"
+            data-tour="bs-inner"
             style={{
               width: "122%",
               transform: "scale(0.82)",
               transformOrigin: "0 0",
             }}
           >
-            <BrewSheetPanelV4 framed={false} data={data?.brewSheet} />
+            <BrewSheetPanel framed={false} data={data?.brewSheet} />
           </div>
         </div>
       </div>
@@ -421,7 +421,7 @@ function MockHeader({
   openHref,
   onClose,
 }: {
-  data?: V4MockData;
+  data?: BuilderMockData;
   openHref?: string;
   onClose?: () => void;
 }) {
@@ -608,7 +608,7 @@ function GhostPill({
   );
 }
 
-function MockStats({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: V4MockData }) {
+function MockStats({ grainFill = 1, fgShift = 0, data }: { grainFill?: number; fgShift?: number; data?: BuilderMockData }) {
   // SRM isn't a stat cell here — the color lives in the Style Guidelines bar.
   // FG (and therefore ABV) respond to the honest-numbers beat's mash-temp sweep:
   // higher mash temp means less fermentable wort, so FG rises and ABV falls.
@@ -698,7 +698,7 @@ function MockTabBar({
 }: {
   active: TabKey;
   onSelect: (key: TabKey) => void;
-  data?: V4MockData;
+  data?: BuilderMockData;
 }) {
   const countFor = (key: TabKey, fallback?: number): number | undefined => {
     if (!data) return fallback;
@@ -761,7 +761,7 @@ function TabButton({
   return (
     <button
       type="button"
-      data-v4-tab={tab.key}
+      data-tour-tab={tab.key}
       onClick={() => onSelect(tab.key)}
       style={{
         display: "inline-flex",
@@ -813,7 +813,7 @@ function TabButton({
   );
 }
 
-function HopBillTable({ data }: { data?: V4MockData }) {
+function HopBillTable({ data }: { data?: BuilderMockData }) {
   const rows = data
     ? data.hops.map((h) => ({
         name: h.name,

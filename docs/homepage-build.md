@@ -1,22 +1,28 @@
-# v4 Homepage — GSAP Scroll Tour (current build)
+# Homepage — GSAP Scroll Tour (current build)
 
-> **Path mapping (June 2026 cleanup refactor):** the production swap is DONE
-> and the homepage code moved. `app/v4/*` → `src/modules/home/*`
-> (`HomeV4.tsx`, `data.ts`, `mock/`, `stages/`, `lib/`, `SignedInHeroV4.tsx`).
-> `app/page.tsx` (route `/`) is the only entry; the `/v4` and `/v3` routes and
-> `app/_home` are deleted. `src/modules/hopskip` is now `src/modules/builder`,
-> and the beta-builder domain layer is `src/modules/recipe`. Apply those
-> substitutions when reading paths below — everything else still holds.
+> **Name mapping (June 2026 cleanup refactor):** this doc was written while
+> the homepage was the "v4" experiment at `app/v4/`. The production swap is
+> DONE, the code moved to `src/modules/home/`, and the v4 tags were dropped
+> from all names. When reading paths and names below, substitute:
+> `app/v4/*` → `src/modules/home/*`; `HomeV4` → `Home`; `V4Mock` →
+> `BuilderMock`; `SignedInHeroV4` → `SignedInHero`; `mapRecipeToV4Mock` →
+> `mapRecipeToBuilderMock`; `BrewSheetPanelV4`/`CompareMockV4` → same names
+> without the V4 suffix; `data-v4-*` attributes → `data-tour-*`; `v4-*`
+> classes → `tour-*` (special case `v4-tour` → `tour-layout`); `--v4-*` CSS
+> vars → `--tour-*`; `V4BrewSheetData` → `BrewSheetData`. Also
+> `src/modules/hopskip` → `src/modules/builder` and the beta-builder domain
+> layer → `src/modules/recipe`. `app/page.tsx` (route `/`) is the only entry;
+> `/v4`, `/v3`, and `app/_home` are deleted. Everything else still holds.
 
 Pickup guide for the homepage scroll tour. Supersedes the
-v3 motion implementation. Read this + skim `src/modules/home/HomeV4.tsx` and
-`src/modules/home/mock/V4Mock.tsx` and you're productive.
+v3 motion implementation. Read this + skim `src/modules/home/Home.tsx` and
+`src/modules/home/mock/BuilderMock.tsx` and you're productive.
 
 History: the v3 mock (framer-motion, `setTimeout` phase machine) went 26
 iterations and hit architectural walls — see
-[`v3-homepage-build-debrief.md`](./v3-homepage-build-debrief.md) and
-[`v3-mock-ideal-architecture.md`](./v3-mock-ideal-architecture.md). v4 keeps
-the validated *scene-graph discipline* from the ideal-arch doc and rebuilds
+[`archive/v3-homepage-build-debrief.md`](./archive/v3-homepage-build-debrief.md) and
+[`archive/v3-mock-ideal-architecture.md`](./archive/v3-mock-ideal-architecture.md). v4 kept
+the validated *scene-graph discipline* from the ideal-arch doc and rebuilt
 the motion on GSAP. The original v4 plan is
 `~/.claude/plans/yeah-lets-get-working-cozy-bumblebee.md`.
 

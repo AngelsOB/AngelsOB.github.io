@@ -8,11 +8,11 @@ import HSScriptNote from "@/modules/builder/components/HSScriptNote";
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
-import CompareMockV4 from "../mock/CompareMockV4";
+import CompareMock from "../mock/CompareMock";
 import { CTA, STAGES } from "../data";
 
-// Below-tour stages — full-width, no sticky mock. Reveals are wired in HomeV4
-// via a single ScrollTrigger.batch on `[data-v4-reveal]` (play-once-on-enter).
+// Below-tour stages — full-width, no sticky mock. Reveals are wired in Home
+// via a single ScrollTrigger.batch on `[data-tour-reveal]` (play-once-on-enter).
 // Order: Compare → Library + Community → What else → Learn → FAQ → Close.
 
 function StageEyebrow({
@@ -47,7 +47,7 @@ export function StageCompare() {
   const s = STAGES.compare;
   return (
     <section
-      data-v4-stage="compare"
+      data-tour-stage="compare"
       style={{
         position: "relative",
         zIndex: 2,
@@ -55,7 +55,7 @@ export function StageCompare() {
       }}
     >
       <div
-        className="v4-compare-grid"
+        className="tour-compare-grid"
         style={{
           maxWidth: 1100,
           margin: "0 auto",
@@ -65,7 +65,7 @@ export function StageCompare() {
           alignItems: "center",
         }}
       >
-        <div data-v4-reveal>
+        <div data-tour-reveal>
           <StageEyebrow>{s.h2}</StageEyebrow>
           <p
             style={{
@@ -96,13 +96,13 @@ export function StageCompare() {
             </p>
           ))}
         </div>
-        <div data-v4-reveal>
-          <CompareMockV4 />
+        <div data-tour-reveal>
+          <CompareMock />
         </div>
       </div>
       <style>{`
         @media (max-width: 900px) {
-          .v4-compare-grid {
+          .tour-compare-grid {
             grid-template-columns: 1fr !important;
             max-width: 640px !important;
           }
@@ -122,7 +122,7 @@ export function StageLibraryCommunity({
   const s = STAGES.library;
   return (
     <section
-      data-v4-stage="library"
+      data-tour-stage="library"
       style={{
         position: "relative",
         zIndex: 2,
@@ -131,7 +131,7 @@ export function StageLibraryCommunity({
     >
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div
-          data-v4-reveal
+          data-tour-reveal
           style={{
             display: "flex",
             alignItems: "flex-end",
@@ -195,7 +195,7 @@ export function StageLibraryCommunity({
 
         {recipes.length > 0 ? (
           <div
-            className="v4-community-grid"
+            className="tour-community-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
@@ -203,7 +203,7 @@ export function StageLibraryCommunity({
             }}
           >
             {recipes.slice(0, 6).map((recipe) => (
-              <div key={recipe.shareSlug} data-v4-reveal>
+              <div key={recipe.shareSlug} data-tour-reveal>
                 <CommunityCard recipe={recipe} />
               </div>
             ))}
@@ -212,10 +212,10 @@ export function StageLibraryCommunity({
       </div>
       <style>{`
         @media (max-width: 1024px) {
-          .v4-community-grid { grid-template-columns: 1fr 1fr !important; }
+          .tour-community-grid { grid-template-columns: 1fr 1fr !important; }
         }
         @media (max-width: 640px) {
-          .v4-community-grid { grid-template-columns: 1fr !important; }
+          .tour-community-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </section>
@@ -414,7 +414,7 @@ export function StageWhatElse() {
   const s = STAGES.whatElse;
   return (
     <section
-      data-v4-stage="what-else"
+      data-tour-stage="what-else"
       style={{
         position: "relative",
         zIndex: 2,
@@ -422,7 +422,7 @@ export function StageWhatElse() {
       }}
     >
       <div
-        data-v4-reveal
+        data-tour-reveal
         style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}
       >
         <StageEyebrow>{s.h2}</StageEyebrow>
@@ -458,7 +458,7 @@ export function StageWhatElse() {
 export function StageLearn() {
   return (
     <section
-      data-v4-stage="learn"
+      data-tour-stage="learn"
       style={{
         position: "relative",
         zIndex: 2,
@@ -482,7 +482,7 @@ export function StageLearn() {
         {STAGES.learn.h2}
       </h2>
       <div
-        data-v4-reveal
+        data-tour-reveal
         style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}
       >
         <HSScriptNote color={hsTokens.yeast} size={26} rotate={-4}>
@@ -540,7 +540,7 @@ export function StageLearn() {
 export function StageFAQ() {
   return (
     <section
-      data-v4-stage="faq"
+      data-tour-stage="faq"
       style={{
         position: "relative",
         zIndex: 2,
@@ -548,12 +548,12 @@ export function StageFAQ() {
       }}
     >
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <div data-v4-reveal>
+        <div data-tour-reveal>
           <StageEyebrow>{STAGES.faq.h2}</StageEyebrow>
         </div>
         <div style={{ marginTop: 28 }}>
           {STAGES.faq.items.map((item) => (
-            <div key={item.q} data-v4-reveal>
+            <div key={item.q} data-tour-reveal>
               <FAQItem q={item.q} a={item.a} />
             </div>
           ))}
@@ -630,7 +630,7 @@ export function StageClose() {
   const s = STAGES.close;
   return (
     <section
-      data-v4-stage="close"
+      data-tour-stage="close"
       style={{
         position: "relative",
         zIndex: 2,
@@ -638,7 +638,7 @@ export function StageClose() {
       }}
     >
       <div
-        data-v4-reveal
+        data-tour-reveal
         style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}
       >
         <h2

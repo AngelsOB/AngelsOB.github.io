@@ -3,7 +3,7 @@
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { STAGES } from "../data";
-import type { V4BrewSheetData } from "../lib/mapRecipeToV4Mock";
+import type { BrewSheetData } from "../lib/mapRecipeToBuilderMock";
 
 // Small-scale, presentational mirror of the live builder's brew sheet
 // (src/modules/builder/components/builder/HSBrewSheetSection.tsx). It copies
@@ -18,19 +18,19 @@ import type { V4BrewSheetData } from "../lib/mapRecipeToV4Mock";
 // 3-col stat strip, 01 Ingredients) so the panel fits the mock's body slot.
 // `framed` (default true) draws the panel's own card; the mock passes
 // framed={false} because its body panel already supplies the border/bg.
-export default function BrewSheetPanelV4({
+export default function BrewSheetPanel({
   compact = false,
   framed = true,
   data,
 }: {
   compact?: boolean;
   framed?: boolean;
-  data?: V4BrewSheetData;
+  data?: BrewSheetData;
 }) {
   // Sample/tour uses the hardcoded panel (with the scripted pre-boil miss). Data
   // mode (signed-in hero) renders the recipe's real brew sheet and drops the miss.
   const samplePanel = STAGES.brewSheet.panel;
-  const panel: V4BrewSheetData = data ?? {
+  const panel: BrewSheetData = data ?? {
     title: samplePanel.title,
     status: samplePanel.status,
     brewData: samplePanel.brewData.map((r) => ({ ...r })),

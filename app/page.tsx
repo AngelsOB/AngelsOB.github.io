@@ -1,5 +1,5 @@
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
-import HomeV4 from "@/modules/home/HomeV4";
+import Home from "@/modules/home/Home";
 import { STAGES } from "@/modules/home/data";
 
 export const revalidate = 3600;
@@ -74,7 +74,7 @@ export default async function HopSkipHome() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <HomeV4 recipes={recipes} recipeCount={recipeCount} />
+      <Home recipes={recipes} recipeCount={recipeCount} />
     </>
   );
 }

@@ -14,7 +14,7 @@ interface Props {
   full: Recipe | null;
   loading: boolean;
   error: string | null;
-  /** Open-target href used by the V4Mock's "Open recipe →" pill. Read once
+  /** Open-target href used by the BuilderMock's "Open recipe →" pill. Read once
    *  per render; stable across the selection lifetime. */
   cardPath: string;
   /** Animated target width in pixels. Comes from `usePreviewWidth()`. */
@@ -23,7 +23,7 @@ interface Props {
   onRetry?: () => void;
 }
 
-/** The slide-in right-side column that hosts the V4Mock preview panel.
+/** The slide-in right-side column that hosts the BuilderMock preview panel.
  *  Shared across /browse, /recipes, /recipes/all. The column itself animates
  *  width + marginLeft + opacity; the inner panel additionally translates +
  *  fades to give a secondary "lands after the column lands" beat. */

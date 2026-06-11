@@ -11,18 +11,18 @@ import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 import MyRecipeCard from "@/modules/builder/components/MyRecipeCard";
-import { V4Mock, type TabKey } from "./mock/V4Mock";
-import { mapRecipeToV4Mock } from "./lib/mapRecipeToV4Mock";
+import { BuilderMock, type TabKey } from "./mock/BuilderMock";
+import { mapRecipeToBuilderMock } from "./lib/mapRecipeToBuilderMock";
 
 const RECIPE_TILTS = [-0.4, 0.3, -0.5, 0.4, -0.3];
 
 gsap.registerPlugin(useGSAP);
 
-// Signed-in hero: the user's recent recipes (left) + the v4 mock showing the
+// Signed-in hero: the user's recent recipes (left) + the builder mock showing the
 // selected recipe (right). It's the SAME mock the tour uses, but static — no
 // beats. We position the mock's scene-level layers (radar / water / brew sheet)
 // at their rest "home" so every tab renders correctly without the tour's GSAP.
-export default function SignedInHeroV4() {
+export default function SignedInHero() {
   const router = useRouter();
   const recipes = useRecipeStore((s) => s.recipes);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -40,13 +40,13 @@ export default function SignedInHeroV4() {
   const selected =
     recent.find((r) => r.id === selectedId) ?? recent[0] ?? recipes[0];
   const data = useMemo(
-    () => (selected ? mapRecipeToV4Mock(selected) : undefined),
+    () => (selected ? mapRecipeToBuilderMock(selected) : undefined),
     [selected],
   );
   const [activeTab, setActiveTab] = useState<TabKey>("fermentables");
 
   // Click-twice-to-open pattern: first click selects (drives the right-side
-  // V4Mock), second click on the already-selected card navigates to the
+  // BuilderMock), second click on the already-selected card navigates to the
   // builder. Mirrors the preview interaction on /recipes — same affordance.
   const handleCardClick = useCallback(
     (r: Recipe) => {
@@ -64,17 +64,17 @@ export default function SignedInHeroV4() {
   useGSAP(
     () => {
       const scene = rootRef.current?.querySelector(
-        ".v4-scene",
+        ".tour-scene",
       ) as HTMLElement | null;
       if (!scene) return;
       const q = (sel: string) =>
         rootRef.current?.querySelector(sel) as HTMLElement | null;
-      const radar = q('[data-v4="radar"]');
-      const slot = q('[data-v4="radar-slot"]');
-      const bodyEl = q('[data-v4="mock-body"]');
-      const bsEl = q('[data-v4="brewsheet"]');
-      const waterEl = q('[data-v4="water"]');
-      const waterSlot = q('[data-v4="water-slot"]');
+      const radar = q('[data-tour="radar"]');
+      const slot = q('[data-tour="radar-slot"]');
+      const bodyEl = q('[data-tour="mock-body"]');
+      const bsEl = q('[data-tour="brewsheet"]');
+      const waterEl = q('[data-tour="water"]');
+      const waterSlot = q('[data-tour="water-slot"]');
       const offsetWithin = (el: HTMLElement, anc: HTMLElement) => {
         let x = 0;
         let y = 0;
@@ -95,7 +95,7 @@ export default function SignedInHeroV4() {
         if (bsEl && bodyEl) {
           const bo = offsetWithin(bodyEl, scene);
           const bsBox = bsEl.querySelector(
-            '[data-v4="bs-box"]',
+            '[data-tour="bs-box"]',
           ) as HTMLElement | null;
           if (bsBox) {
             bsBox.style.width = `${bodyEl.offsetWidth}px`;
@@ -103,7 +103,7 @@ export default function SignedInHeroV4() {
           }
           gsap.set(bsEl, { x: bo.x, y: bo.y, scale: 1 });
           const nub = bsEl.querySelector(
-            '[data-v4="bs-nub"]',
+            '[data-tour="bs-nub"]',
           ) as HTMLElement | null;
           if (nub) gsap.set(nub, { opacity: 0 });
         }
@@ -160,7 +160,7 @@ export default function SignedInHeroV4() {
   return (
     <div ref={rootRef} style={{ position: "relative" }}>
       <div
-        className="v4-signedin-hero"
+        className="tour-signedin-hero"
         style={{
           maxWidth: 1600,
           margin: "0 auto",
@@ -192,7 +192,7 @@ export default function SignedInHeroV4() {
             Pick up where you left off.
           </h1>
           <div
-            className="v4-signedin-recipes-grid"
+            className="tour-signedin-recipes-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -253,9 +253,9 @@ export default function SignedInHeroV4() {
           </div>
         </div>
 
-        {/* Right — the v4 mock, static, showing the selected recipe */}
+        {/* Right — the builder mock, static, showing the selected recipe */}
         <div style={{ position: "relative", minWidth: 0 }}>
-          <V4Mock
+          <BuilderMock
             activeTab={activeTab}
             onSelectTab={setActiveTab}
             data={data}
@@ -265,10 +265,10 @@ export default function SignedInHeroV4() {
       </div>
       <style>{`
         @media (max-width: 1024px) {
-          .v4-signedin-hero { grid-template-columns: 1fr !important; gap: 28px !important; }
+          .tour-signedin-hero { grid-template-columns: 1fr !important; gap: 28px !important; }
         }
         @media (max-width: 640px) {
-          .v4-signedin-recipes-grid { grid-template-columns: 1fr !important; }
+          .tour-signedin-recipes-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

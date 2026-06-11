@@ -476,7 +476,7 @@ export default function HSHeader() {
   // On small screens the sticky header eats scarce vertical space, so hide it
   // on scroll-down and reveal it on scroll-up (a standard mobile pattern).
   // Also publishes its occupied height to --hs-header-peek (0 while hidden) so
-  // sticky page content — e.g. the v4 tour mock — can sit just below it and
+  // sticky page content — e.g. the homepage tour mock — can sit just below it and
   // rise into the freed space when it collapses. No-op above 1024px (the
   // header stays put on desktop, where there's room).
   const headerRef = useRef<HTMLElement | null>(null);

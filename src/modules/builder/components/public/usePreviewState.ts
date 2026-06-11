@@ -14,7 +14,7 @@ export interface PreviewSelection {
   /** Where to navigate when the card is clicked a second time or the mock's
    *  Open-recipe pill is pressed. */
   openHref: string;
-  /** Resolver for the full Recipe used by the V4Mock data mapper. */
+  /** Resolver for the full Recipe used by the BuilderMock data mapper. */
   loadFull: () => Promise<Recipe | null>;
 }
 
@@ -31,7 +31,7 @@ export function usePreviewState({ canPreview, disabled }: Options) {
   const [selection, setSelection] = useState<PreviewSelection | null>(null);
   // `full` is intentionally NOT cleared when `selection` changes — that's the
   // morph: we keep showing the previous recipe in the panel until the new
-  // recipe's full data lands, so the V4Mock reconciles in place instead of
+  // recipe's full data lands, so the BuilderMock reconciles in place instead of
   // flashing to a skeleton between recipes.
   const [full, setFull] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(false);

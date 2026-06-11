@@ -4,8 +4,8 @@ import { useState } from "react";
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
-import type { TabKey } from "./V4Mock";
-import type { V4MockData } from "../lib/mapRecipeToV4Mock";
+import type { TabKey } from "./BuilderMock";
+import type { BuilderMockData } from "../lib/mapRecipeToBuilderMock";
 
 // At-rest content for the mock's non-hops, non-brewsheet tabs. The mock is a
 // usable mini builder, so clicking Fermentables / Mash / Water / Yeast /
@@ -28,7 +28,7 @@ const YEAST = hsTokens.yeast;
 const HONEY = hsTokens.honey;
 const HOPS = hsTokens.hops;
 
-export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive = false, data }: { active: TabKey; grainFill?: number; tempShift?: number; honestActive?: boolean; data?: V4MockData }) {
+export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive = false, data }: { active: TabKey; grainFill?: number; tempShift?: number; honestActive?: boolean; data?: BuilderMockData }) {
   switch (active) {
     case "fermentables":
       return <FermentablesSection grainFill={grainFill} data={data} />;
@@ -39,7 +39,7 @@ export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive 
     case "fermentation":
       return <FermentationSection data={data} />;
     default:
-      // water is a scene-level pop-out (rendered by V4Mock), not in-body.
+      // water is a scene-level pop-out (rendered by BuilderMock), not in-body.
       return null;
   }
 }
@@ -136,7 +136,7 @@ const GRAIN_TOTAL = GRAINS.reduce((s, g) => s + g.lb, 0);
 // Cumulative weight fraction of the bill AFTER each grain is added — the step
 // levels for the grains "live math" beat. The base malt is most of the bill, so
 // it makes a big jump and the specialty malts add small bumps (each grain moves
-// the numbers by its own contribution). Shared with HomeV4's staircase timeline
+// the numbers by its own contribution). Shared with Home's staircase timeline
 // so the grain reveal here stays in sync with the number steps.
 // e.g. [0.87, 0.97, 1.0] for 9.0 / 1.0 / 0.3 lb.
 export const GRAIN_STEP_LEVELS = (() => {
@@ -144,7 +144,7 @@ export const GRAIN_STEP_LEVELS = (() => {
   return GRAINS.map((g) => (acc += g.lb) / GRAIN_TOTAL);
 })();
 
-function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data?: V4MockData }) {
+function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data?: BuilderMockData }) {
   // Sample uses the hardcoded GRAINS + staircase; data mode (signed-in hero)
   // uses the recipe's grain bill. grainFill is 1 in data mode, so every grain
   // reveals fully. Cumulative weight fractions are computed from whichever bill.
@@ -237,7 +237,7 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
 
 // ─── Mash — numbered steps + pH gauge ────────────────────────────────────────
 
-function MashSection({ tempShift = 0, honestActive = false, data }: { tempShift?: number; honestActive?: boolean; data?: V4MockData }) {
+function MashSection({ tempShift = 0, honestActive = false, data }: { tempShift?: number; honestActive?: boolean; data?: BuilderMockData }) {
   const m = data?.mash ?? null;
   // Sample: the honest-numbers beat sweeps the mash temp (tempShift); FG follows
   // it with a lag. Data mode: show the recipe's mash step (tempShift is 0).
@@ -345,7 +345,7 @@ const ION_META: IonMeta[] = [
   { key: "HCO3", label: "HCO₃", color: hsTokens.muted, max: 150, tMin: 0, tMax: 60 },
 ];
 
-export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data?: V4MockData["water"] }) {
+export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data?: BuilderMockData["water"] }) {
   const [salts, setSalts] = useState<number[]>(SALT_DEFAULTS);
   const autoCalc = () => setSalts(SALT_DEFAULTS);
   // Sample/tour: the salts animate up to SALT_DEFAULTS on the solve beat, and the
@@ -379,11 +379,11 @@ export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data
   return (
     <SectionBody gap={7}>
       {/* header RECEDES with the mock on the beat (it's not a breakout piece) */}
-      <div data-v4="water-header" style={{ transformOrigin: "left center", willChange: "transform" }}>
+      <div data-tour="water-header" style={{ transformOrigin: "left center", willChange: "transform" }}>
         <SectionHead title="Water." meta={meta} underline={WATER} />
       </div>
       {/* source -> target + Auto-Calc — lifts above on the beat */}
-      <div data-v4="water-controls" style={{ display: "flex", alignItems: "center", gap: 6, transformOrigin: "center center", willChange: "transform" }}>
+      <div data-tour="water-controls" style={{ display: "flex", alignItems: "center", gap: 6, transformOrigin: "center center", willChange: "transform" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: hsTokens.paper, border: `2px solid ${INK}`, borderRadius: 999, fontFamily: hsTokens.body, fontSize: 10.5, fontWeight: 600, color: INK }}>
           <span style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted }}>Source</span>
           {sourceName}
@@ -394,7 +394,7 @@ export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data
         </span>
         <button
           type="button"
-          data-v4="water-autocalc"
+          data-tour="water-autocalc"
           onClick={readOnly ? undefined : autoCalc}
           style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", background: HONEY, border: `2px solid ${INK}`, borderRadius: 999, boxShadow: "2px 2px 0 var(--hs-ink)", fontFamily: hsTokens.body, fontSize: 11, fontWeight: 800, color: INK, cursor: readOnly ? "default" : "pointer", whiteSpace: "nowrap", transformOrigin: "center center" }}
         >
@@ -404,7 +404,7 @@ export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data
       {/* 2-col: interactive salts | ion bars */}
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.05fr)", gap: 9, flex: 1, minHeight: 0 }}>
         {/* salts — +/- recompute the profile (pops LEFT + grows on the beat) */}
-        <div data-v4="water-salts" style={{ display: "flex", flexDirection: "column", gap: 4, transformOrigin: "right center", willChange: "transform" }}>
+        <div data-tour="water-salts" style={{ display: "flex", flexDirection: "column", gap: 4, transformOrigin: "right center", willChange: "transform" }}>
           {SALT_DEFS.map((s, i) => (
             <div key={s.short} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", alignItems: "center", gap: 6, padding: "4px 6px 4px 8px", background: hsTokens.cream, border: `1.5px solid ${INK}`, borderRadius: 8 }}>
               <div style={{ minWidth: 0 }}>
@@ -420,7 +420,7 @@ export function WaterSection({ waterFill = 1, data }: { waterFill?: number; data
           ))}
         </div>
         {/* ion bars (pops RIGHT + grows on the beat) */}
-        <div data-v4="water-ions" style={{ background: hsTokens.cream2, border: `2px solid ${INK}`, borderRadius: 10, padding: "7px 9px 8px", boxShadow: "2px 2px 0 var(--hs-ink)", display: "flex", flexDirection: "column", transformOrigin: "left center", willChange: "transform" }}>
+        <div data-tour="water-ions" style={{ background: hsTokens.cream2, border: `2px solid ${INK}`, borderRadius: 10, padding: "7px 9px 8px", boxShadow: "2px 2px 0 var(--hs-ink)", display: "flex", flexDirection: "column", transformOrigin: "left center", willChange: "transform" }}>
           <div style={{ fontSize: 7.5, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: hsTokens.muted, marginBottom: 4 }}>Profile · ppm</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, justifyContent: "center" }}>
             {ION_META.map((m) => (
@@ -464,7 +464,7 @@ function IonBar({ label, value, color, max, tMin, tMax }: { label: string; value
 
 // ─── Yeast — strain card + starter ───────────────────────────────────────────
 
-function YeastSection({ data }: { data?: V4MockData }) {
+function YeastSection({ data }: { data?: BuilderMockData }) {
   const y = data?.yeast ?? null;
   const name = y?.name ?? "WLP001 · California Ale";
   // Data mode: show just the laboratory (matches the real builder, which
@@ -602,7 +602,7 @@ const FERM_STEPS = [
 // the real JourneySegment.
 const CARB_STRIPE = "repeating-linear-gradient(135deg, transparent 0 6px, rgba(0,0,0,0.06) 6px 7px)";
 
-function FermentationSection({ data }: { data?: V4MockData }) {
+function FermentationSection({ data }: { data?: BuilderMockData }) {
   const steps = data && data.fermentation.length ? data.fermentation : FERM_STEPS;
   const total = steps.reduce((s, st) => s + st.days, 0) || 1;
   const packageDay = steps.filter((s) => !s.carb).reduce((s, st) => s + st.days, 0);
