@@ -485,7 +485,7 @@ export default function HSHeader() {
   // The homepage tour pins a mock just under the header, so a mid-page scroll-up
   // that reveals the header would shove it around. There the header shows ONLY
   // near the top; everywhere else keeps the standard reveal-on-scroll-up feel.
-  const tourHeader = pathname === "/" || pathname === "/v4";
+  const tourHeader = pathname === "/";
   useEffect(() => {
     const COLLAPSE_MAX = 1024;
     let lastY = window.scrollY;

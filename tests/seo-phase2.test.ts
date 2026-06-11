@@ -263,12 +263,7 @@ describe('SEO Phase 2: OG image', () => {
   })
 
   test('exports alt, size, and contentType constants', () => {
-    // /r/[slug] re-exports these from the betabuilder OG image, where the
-    // constants are actually defined.
-    const source = readFileSync(
-      resolve(appDir, 'betabuilder', 'r', '[slug]', 'opengraph-image.tsx'),
-      'utf-8',
-    )
+    const source = readFileSync(ogImagePath, 'utf-8')
     expect(source).toContain('export const alt')
     expect(source).toContain('export const size')
     expect(source).toContain('export const contentType')
