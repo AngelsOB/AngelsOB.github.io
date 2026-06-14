@@ -41,8 +41,10 @@ import HSForkButton from "./public/HSForkButton";
 import HSRatingStars from "./public/HSRatingStars";
 import dynamic from "next/dynamic";
 import BuilderTitleBar from "./builder/BuilderTitleBar";
+import BrewersNotesButton from "./builder/BrewersNotesButton";
+import { isSectionEmpty } from "./builder/sectionEmpty";
 
-const HelperCardMorph = dynamic(() => import("./builder/HelperCardMorph"), {
+const SideColumnMorph = dynamic(() => import("./builder/SideColumnMorph"), {
   ssr: false,
 });
 const MainSectionMorph = dynamic(() => import("./builder/MainSectionMorph"), {
@@ -486,6 +488,11 @@ export default function HopSkipBuilder({
     fermentation: currentRecipe.fermentationSteps.length,
   };
 
+  // Live (recompute every render) — drives the full-width collapse when a
+  // section is empty/intro. Never memoize on activeTab alone, never key on it.
+  const sectionEmpty =
+    activeTab !== "brewsheet" && isSectionEmpty(activeTab, currentRecipe);
+
   const bjcpSpec = getBjcpStyleSpec(currentRecipe.style?.split(".")[0]?.trim());
 
   return (
@@ -545,14 +552,18 @@ export default function HopSkipBuilder({
             const isDirty = isRecipeDirty(currentRecipe, savedSnapshot);
             return (
               <>
-                <ShareToggle
-                  isPublic={currentRecipe.isPublic !== false}
-                  onToggle={() =>
-                    updateRecipe({
-                      isPublic: currentRecipe.isPublic === false,
-                    })
-                  }
-                />
+                {/* Signed-out recipes are local-only and can't be shared —
+                    the toggle appears once the user signs in. */}
+                {viewerUid ? (
+                  <ShareToggle
+                    isPublic={currentRecipe.isPublic !== false}
+                    onToggle={() =>
+                      updateRecipe({
+                        isPublic: currentRecipe.isPublic === false,
+                      })
+                    }
+                  />
+                ) : null}
                 <div style={{ position: "relative" }}>
                   <button
                     type="button"
@@ -591,6 +602,15 @@ export default function HopSkipBuilder({
           borderBottom: isEquipmentOpen ? "none" : `2px solid ${hsTokens.ink}`,
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 280 }}>
         <HSScriptNote
           color={isShared ? hsTokens.water : hsTokens.yeast}
           size={28}
@@ -834,6 +854,19 @@ export default function HopSkipBuilder({
               <span>Style ranges</span>
             </label>
           ) : null}
+        </div>
+          </div>
+          <div style={{ flexShrink: 0, marginRight: "10%" }}>
+            <BrewersNotesButton
+              notes={currentRecipe.notes ?? ""}
+              tags={currentRecipe.tags ?? []}
+              onNotesChange={(v) => updateRecipe({ notes: v || undefined })}
+              onTagsChange={(v) =>
+                updateRecipe({ tags: v.length ? v : undefined })
+              }
+              readOnly={isShared}
+            />
+          </div>
         </div>
       </section>
 
@@ -1440,7 +1473,9 @@ export default function HopSkipBuilder({
         <div
           className={`hs-builder-grid${
             activeTab === "brewsheet" ? " is-brewsheet" : ""
-          }${isShared ? " brew-read-only" : ""}`}
+          }${sectionEmpty ? " section-empty" : ""}${
+            isShared ? " brew-read-only" : ""
+          }`}
           data-tab={activeTab}
         >
           {activeTab !== "brewsheet"
@@ -1492,22 +1527,10 @@ export default function HopSkipBuilder({
             </MainSectionMorph>
           </div>
 
-          {activeTab !== "brewsheet" ? (
-            <div className="hs-builder-side">
-              <HelperCardMorph
-                activeTab={activeTab}
-                notes={currentRecipe.notes ?? ""}
-                tags={currentRecipe.tags ?? []}
-                onNotesChange={(v) =>
-                  updateRecipe({ notes: v || undefined })
-                }
-                onTagsChange={(v) =>
-                  updateRecipe({ tags: v.length ? v : undefined })
-                }
-                readOnly={isShared}
-              />
-            </div>
-          ) : null}
+          <SideColumnMorph
+            show={!sectionEmpty && activeTab !== "brewsheet"}
+            activeTab={activeTab}
+          />
         </div>
       </section>
 

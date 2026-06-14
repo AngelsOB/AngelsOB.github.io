@@ -10,6 +10,7 @@ import {
   inferType,
   type FermentableGroup,
 } from '@/modules/recipe/data/fermentablePresets';
+import { resolveCanonicalGrain } from '@/modules/recipe/data/canonicalGrains';
 
 export type { FermentableGroup };
 
@@ -74,74 +75,13 @@ export type MeanRecipeData = {
  *       "Thomas Fawcett - Maris Otter Pale Ale Malt" → "Maris Otter"
  *       "Weyermann - Roasted Barley" → "Roasted Barley"
  *       "Briess - Pale Ale Malt 2-Row" → "Pale Ale Malt 2-Row"
+ *
+ * The rules live in the canonical grain table (canonicalGrains.ts), shared
+ * with the paste-a-recipe importer. Output parity with the original inline
+ * implementation is locked by tests/canonicalGrains.test.ts.
  */
 export function normalizeGrainName(name: string): string {
-  // Strip maltster prefix (e.g., "Briess - ", "Crisp Malting - ", "Weyermann - ")
-  let normalized = name.replace(/^[A-Za-z\s&'.]+\s*[-–—]\s*/, '');
-
-  // Remove qualifiers like "Finest", "Premium", "Best", "Extra"
-  normalized = normalized.replace(/\b(Finest|Premium|Best|Extra|Superior)\s+/gi, '');
-
-  // Normalize Maris Otter variants — anything containing "maris otter" is "Maris Otter"
-  if (/maris\s*otter/i.test(normalized)) return 'Maris Otter';
-
-  // Normalize "Pale Ale Malt" variants
-  if (/^pale\s+ale\s+malt/i.test(normalized)) return 'Pale Ale Malt';
-
-  // Normalize 2-Row / Two-Row variants
-  if (/\b(2-row|two[- ]row)\b/i.test(normalized) && !/pilsner|vienna|munich/i.test(normalized)) {
-    return '2-Row Pale Malt';
-  }
-
-  // Normalize Pilsner variants
-  if (/^pilsner/i.test(normalized) || /^pils\b/i.test(normalized)) return 'Pilsner Malt';
-
-  // Normalize Munich variants
-  if (/^munich/i.test(normalized)) {
-    const colorMatch = normalized.match(/(\d+)\s*°?L/i);
-    return colorMatch ? `Munich Malt ${colorMatch[1]}L` : 'Munich Malt';
-  }
-
-  // Normalize Vienna
-  if (/^vienna/i.test(normalized)) return 'Vienna Malt';
-
-  // Normalize Crystal/Caramel with color
-  const crystalMatch = normalized.match(/^(?:crystal|caramel)\s*(?:malt\s*)?(\d+)\s*°?L?/i);
-  if (crystalMatch) return `Crystal ${crystalMatch[1]}L`;
-
-  // Normalize Roasted Barley variants
-  if (/roasted\s*barley/i.test(normalized)) return 'Roasted Barley';
-
-  // Normalize Chocolate Malt variants
-  if (/^(?:pale\s+)?chocolate(?:\s+malt)?$/i.test(normalized)) return 'Chocolate Malt';
-
-  // Normalize Black Malt / Black Barley / Black Patent
-  if (/^black\s*(malt|patent)/i.test(normalized)) return 'Black Malt';
-  if (/^black\s*barley/i.test(normalized)) return 'Black Barley';
-
-  // Normalize Flaked variants
-  const flakedMatch = normalized.match(/^flaked\s+(\w+)/i);
-  if (flakedMatch) return `Flaked ${flakedMatch[1].charAt(0).toUpperCase() + flakedMatch[1].slice(1).toLowerCase()}`;
-
-  // Normalize Victory Malt
-  if (/^victory/i.test(normalized)) return 'Victory Malt';
-
-  // Normalize Biscuit Malt
-  if (/^biscuit/i.test(normalized)) return 'Biscuit Malt';
-
-  // Normalize Melanoidin Malt
-  if (/^melanoidin/i.test(normalized)) return 'Melanoidin Malt';
-
-  // Normalize Aromatic Malt
-  if (/^aromatic/i.test(normalized)) return 'Aromatic Malt';
-
-  // Normalize Wheat Malt
-  if (/^wheat\s*(malt)?$/i.test(normalized)) return 'Wheat Malt';
-
-  // Normalize Carapils / Dextrine
-  if (/^cara\s*pils/i.test(normalized) || /^dextrin/i.test(normalized)) return 'CaraPils / Dextrine';
-
-  return normalized.trim();
+  return resolveCanonicalGrain(name).canonical;
 }
 
 // ── Grain categorization ─────────────────────────────────────────────────

@@ -227,10 +227,11 @@ class BeerXmlImportService {
         const timeMin = toNumber(text(h, 'TIME'));
 
         let type: Hop['type'] = 'boil';
+        const isFlameout = use.includes('flameout');
         if (use.includes('dry')) type = 'dry hop';
         else if (use.includes('mash')) type = 'mash';
         else if (use.includes('first')) type = 'first wort';
-        else if (use.includes('aroma') || use.includes('whirlpool') || use.includes('flameout'))
+        else if (use.includes('aroma') || use.includes('whirlpool') || isFlameout)
           type = 'whirlpool';
 
         const importedName = text(h, 'NAME') || 'Hop';
@@ -261,8 +262,18 @@ class BeerXmlImportService {
             grams: amountG,
             type,
             timeMinutes: type === 'boil' || type === 'first wort' ? timeMin : undefined,
-            whirlpoolTimeMinutes: type === 'whirlpool' ? timeMin : undefined,
-            temperatureC: type === 'whirlpool' ? toNumber(text(h, 'TEMPERATURE')) : undefined,
+            // Stand time: respect an explicit positive TIME, else default so a
+            // 0-min flameout still isomerizes (flameout ~10 min, whirlpool ~15).
+            whirlpoolTimeMinutes:
+              type === 'whirlpool'
+                ? (timeMin && timeMin > 0 ? timeMin : isFlameout ? 10 : 15)
+                : undefined,
+            // Temperature: use XML TEMPERATURE if present, else hot for flameout
+            // (~99 °C) and a cooler default for whirlpool/aroma (~85 °C).
+            temperatureC:
+              type === 'whirlpool'
+                ? (toNumber(text(h, 'TEMPERATURE')) ?? (isFlameout ? 99 : 85))
+                : undefined,
             dryHopStartDay: type === 'dry hop' ? 7 : undefined,
             dryHopDays: type === 'dry hop' ? 3 : undefined,
           })

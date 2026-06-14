@@ -1,8 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import ModalOverlay from '@/components/ModalOverlay';
-import Button from '../../../components/Button';
+
+import HSModal, {
+  HSModalBody,
+  HSModalFooter,
+  HSModalHeader,
+} from '@/modules/builder/components/modals/HSModal';
+import HSButton from '@/modules/builder/components/HSButton';
+import { hsTokens } from '@/modules/builder/tokens';
 import { startCheckout } from '../stripeCheckout';
 
 interface UpgradeModalProps {
@@ -12,6 +18,12 @@ interface UpgradeModalProps {
   reason?: string;
 }
 
+const BENEFITS = [
+  'Unlimited cloud recipes',
+  'BeerXML & Markdown export',
+  'Buy a solo dev a pint — 🍺 Cheers!',
+];
+
 export default function UpgradeModal({ isOpen, onClose, reason }: UpgradeModalProps) {
   const [plan, setPlan] = useState<'monthly' | 'annual'>('monthly');
   const [loading, setLoading] = useState(false);
@@ -19,61 +31,101 @@ export default function UpgradeModal({ isOpen, onClose, reason }: UpgradeModalPr
   async function handleUpgrade() {
     setLoading(true);
     await startCheckout(plan);
-    // If we're still here, checkout redirect failed — re-enable the button
+    // If we're still here, the checkout redirect failed — re-enable the button.
     setLoading(false);
   }
 
+  const planButton = (id: 'monthly' | 'annual', label: React.ReactNode) => {
+    const active = plan === id;
+    return (
+      <button
+        type="button"
+        onClick={() => setPlan(id)}
+        style={{
+          flex: 1,
+          appearance: 'none',
+          margin: 0,
+          padding: '9px 14px',
+          background: active ? hsTokens.ink : 'transparent',
+          color: active ? hsTokens.paper : hsTokens.muted,
+          border: `2px solid ${hsTokens.ink}`,
+          borderRadius: 999,
+          fontFamily: hsTokens.body,
+          fontWeight: 700,
+          fontSize: 13,
+          cursor: 'pointer',
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
+
   return (
-    <ModalOverlay isOpen={isOpen} onClose={onClose} size="sm">
-      <div className="p-6 text-center">
-        <div className="text-4xl mb-3">⭐</div>
-        <h2 className="text-xl font-bold mb-2">Upgrade to Premium</h2>
-        {reason && (
-          <p className="text-[var(--brew-text-secondary)] mb-4">
+    <HSModal isOpen={isOpen} onClose={onClose} size="sm" accent={hsTokens.malt}>
+      <HSModalHeader kicker="go premium —" title="Upgrade to Premium" onClose={onClose} />
+      <HSModalBody>
+        {reason ? (
+          <p
+            style={{
+              fontFamily: hsTokens.body,
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: hsTokens.muted,
+              margin: '0 0 16px',
+            }}
+          >
             {reason}
           </p>
-        )}
-        <ul className="text-left text-sm text-[var(--brew-text-secondary)] mb-5 space-y-1.5 pl-4">
-          <li>✓ Unlimited cloud recipes</li>
-          <li>✓ BeerXML &amp; Markdown export</li>
-          {/* <li>✓ Auto water salt calculator</li> */}
-          {/* <li>✓ Enhanced brew mode</li> */}
-          <li>✓ Buy a solo dev a pint — 🍺 Cheers!</li>
+        ) : null}
+
+        <ul
+          style={{
+            listStyle: 'none',
+            margin: '0 0 18px',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {BENEFITS.map((b) => (
+            <li
+              key={b}
+              style={{
+                fontFamily: hsTokens.body,
+                fontSize: 14,
+                color: hsTokens.ink,
+                display: 'flex',
+                gap: 8,
+              }}
+            >
+              <span aria-hidden style={{ color: hsTokens.hops, fontWeight: 700 }}>
+                ✓
+              </span>
+              {b}
+            </li>
+          ))}
         </ul>
 
-        {/* Plan toggle */}
-        <div className="flex rounded-lg border border-[rgb(var(--border))] overflow-hidden mb-5 text-sm">
-          <button
-            onClick={() => setPlan('monthly')}
-            className={`flex-1 py-2 px-3 transition-colors cursor-pointer ${
-              plan === 'monthly'
-                ? 'bg-[var(--brew-accent-600)] text-white font-medium'
-                : 'text-[var(--brew-text-secondary)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]'
-            }`}
-          >
-            $1.99/mo
-          </button>
-          <button
-            onClick={() => setPlan('annual')}
-            className={`flex-1 py-2 px-3 transition-colors cursor-pointer ${
-              plan === 'annual'
-                ? 'bg-[var(--brew-accent-600)] text-white font-medium'
-                : 'text-[var(--brew-text-secondary)] hover:bg-[color-mix(in_oklch,var(--fg-strong)_6%,transparent)]'
-            }`}
-          >
-            $19.99/yr <span className="text-xs opacity-75">(save ~$4)</span>
-          </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {planButton('monthly', '$1.99/mo')}
+          {planButton(
+            'annual',
+            <>
+              $19.99/yr <span style={{ fontSize: 11, opacity: 0.75 }}>(save ~$4)</span>
+            </>,
+          )}
         </div>
-
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={onClose} fullWidth disabled={loading}>
-            Not Now
-          </Button>
-          <Button variant="neon" onClick={handleUpgrade} fullWidth loading={loading}>
-            Upgrade
-          </Button>
-        </div>
-      </div>
-    </ModalOverlay>
+      </HSModalBody>
+      <HSModalFooter align="end">
+        <HSButton variant="ghost" onClick={onClose} disabled={loading}>
+          Not now
+        </HSButton>
+        <HSButton variant="solid" color={hsTokens.malt} onClick={handleUpgrade} disabled={loading}>
+          {loading ? 'Redirecting…' : 'Upgrade'}
+        </HSButton>
+      </HSModalFooter>
+    </HSModal>
   );
 }

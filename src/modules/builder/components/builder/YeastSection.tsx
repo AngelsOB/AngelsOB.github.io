@@ -237,7 +237,33 @@ export default function YeastSection() {
     portal: hoverPortal,
     getTriggerProps: getHoverTriggerProps,
     clear: clearHoverPreview,
-  } = useYeastHoverPreview(libraryFlat);
+  } = useYeastHoverPreview(libraryFlat, {
+    // Clicking a "Same strain" / "Substitutes" chip in the hover panel
+    // swaps that card's strain in place — same field updates as a
+    // picker-modal swap (carries the starter over, re-infers its packaging
+    // type), minus the modal.
+    onSelect: (chosen, yeastId) => {
+      const inferredType = inferDefaultYeastType(chosen);
+      const existing = yeasts.find((y) => y.id === yeastId);
+      const nextStarter: StarterInfo = existing?.starter
+        ? { ...existing.starter, yeastType: inferredType }
+        : {
+            yeastType: inferredType,
+            packs: 1,
+            mfgDate: "",
+            slurryLiters: 0,
+            slurryBillionPerMl: 1,
+            steps: [],
+          };
+      updateYeast(yeastId, {
+        name: chosen.name,
+        attenuation: chosen.attenuationPercent ?? 0.75,
+        laboratory: chosen.category,
+        starter: nextStarter,
+      });
+      toast.success(`Swapped to ${chosen.name}`);
+    },
+  });
 
   // Hide the card hover preview when the swap picker opens — the cursor
   // hasn't physically left the card boundary, so mouseLeave doesn't fire
@@ -705,7 +731,8 @@ function StrainLedger({
   presetByName: Map<string, YeastPreset>;
   recipeAbv: number | null;
   getHoverTriggerProps: (
-    preset: YeastPreset | null | undefined
+    preset: YeastPreset | null | undefined,
+    context?: string
   ) => HoverTriggerProps;
   onSwap: (id: string) => void;
   onRemove: (id: string) => void;
@@ -743,7 +770,10 @@ function StrainLedger({
                 mfgDate={mfgDate}
                 preset={presetByName.get(r.yeast.name) ?? null}
                 recipeAbv={recipeAbv}
-                hoverProps={getHoverTriggerProps(presetByName.get(r.yeast.name))}
+                hoverProps={getHoverTriggerProps(
+                  presetByName.get(r.yeast.name),
+                  r.yeast.id
+                )}
                 onSwap={() => onSwap(r.yeast.id)}
                 onRemove={() => onRemove(r.yeast.id)}
                 onAttenuationChange={(v) => onAttenuationChange(r.yeast.id, v)}

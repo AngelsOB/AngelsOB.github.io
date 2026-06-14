@@ -8,6 +8,7 @@ import HSScriptNote from "@/modules/builder/components/HSScriptNote";
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
+import FeedbackForm from "@/modules/feedback/FeedbackForm";
 import CompareMock from "../mock/CompareMock";
 import { CTA, STAGES } from "../data";
 
@@ -685,6 +686,64 @@ export function StageClose() {
         >
           {s.footer}
         </p>
+      </div>
+    </section>
+  );
+}
+
+// ── Feedback (last thing above the footer) ────────────────────────────────
+export function StageFeedback() {
+  return (
+    <section
+      data-tour-stage="feedback"
+      style={{
+        position: "relative",
+        zIndex: 2,
+        padding: "clamp(32px, 5vw, 56px) clamp(20px, 4vw, 56px) clamp(56px, 8vw, 96px)",
+      }}
+    >
+      <div
+        data-tour-reveal
+        style={{ maxWidth: 540, margin: "0 auto", textAlign: "center" }}
+      >
+        <StageEyebrow>Got a minute?</StageEyebrow>
+        <h2
+          style={{
+            fontFamily: hsTokens.display,
+            fontSize: "clamp(28px, 3.5vw, 44px)",
+            letterSpacing: "-0.03em",
+            lineHeight: 1.05,
+            color: hsTokens.ink,
+            margin: "10px 0 12px",
+          }}
+        >
+          Tell me what you think
+        </h2>
+        <p
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 16,
+            lineHeight: 1.6,
+            color: hsTokens.muted,
+            margin: "0 auto",
+            maxWidth: 460,
+          }}
+        >
+          Found a bug, want a feature, or just want to say hi? It goes straight to me.
+        </p>
+        <div
+          style={{
+            marginTop: 28,
+            textAlign: "left",
+            background: hsTokens.paper,
+            border: `2px solid ${hsTokens.ink}`,
+            borderRadius: 16,
+            boxShadow: hsTokens.sh3,
+            padding: "clamp(20px, 3vw, 28px)",
+          }}
+        >
+          <FeedbackForm />
+        </div>
       </div>
     </section>
   );

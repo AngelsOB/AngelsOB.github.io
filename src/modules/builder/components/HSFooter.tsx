@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { hsTokens } from "../tokens";
 import HSScriptNote from "./HSScriptNote";
 import { useUnsavedChangesStore } from "@/modules/recipe/stores/unsavedChangesStore";
+import { useFeedbackStore } from "@/modules/feedback/feedbackStore";
 
 const COLS: { label: string; links: { href: string; text: string }[] }[] = [
   {
@@ -39,6 +40,7 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
 
 export default function HSFooter() {
   const router = useRouter();
+  const openFeedback = useFeedbackStore((s) => s.open);
   // Footer link click handler that routes through the unsaved-changes guard
   // when the recipe editor is mounted with dirty edits.
   const handleFooterClick = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -152,6 +154,27 @@ export default function HSFooter() {
                   </Link>
                 </li>
               ))}
+              {/* Feedback opens the global modal, so it's a button (not a route). */}
+              {col.label === "About" ? (
+                <li>
+                  <button
+                    type="button"
+                    onClick={openFeedback}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      color: hsTokens.cream,
+                      fontFamily: hsTokens.body,
+                      fontSize: 13,
+                      textAlign: "left",
+                    }}
+                  >
+                    Feedback
+                  </button>
+                </li>
+              ) : null}
             </ul>
           </div>
         ))}

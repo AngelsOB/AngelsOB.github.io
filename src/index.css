@@ -3946,58 +3946,6 @@ body {
       0 0 0 2px color-mix(in oklch, var(--brew-accent-400) 25%, transparent);
   }
 
-  /* Modal — frosted glass, elevated, section-tinted */
-  .brew-modal {
-    @apply overflow-hidden rounded-2xl backdrop-blur-xl;
-    background:
-      radial-gradient(
-        ellipse 140% 100% at 5% -10%,
-        color-mix(in oklch, var(--brew-accent-100) 50%, transparent),
-        transparent 65%
-      ),
-      radial-gradient(
-        ellipse 110% 80% at 100% 110%,
-        color-mix(in oklch, var(--brew-accent-100) 35%, transparent),
-        transparent 60%
-      ),
-      linear-gradient(
-        165deg,
-        color-mix(in oklch, var(--brew-accent-50) 40%, transparent) 0%,
-        color-mix(in oklch, var(--brew-accent-50) 15%, transparent) 50%,
-        transparent 100%
-      ),
-      color-mix(in oklch, var(--brew-card) 88%, transparent);
-    border: 1px solid color-mix(in oklch, var(--brew-accent-200) 30%, rgb(var(--brew-border) / 0.6));
-    border-top: 3px solid var(--brew-accent-500);
-    box-shadow:
-      var(--shadow-elevated),
-      inset 0 1px 0 rgb(255 255 255 / 0.08);
-  }
-  .dark .brew-modal {
-    background:
-      radial-gradient(
-        ellipse 140% 100% at 5% -10%,
-        color-mix(in oklch, var(--brew-accent-900) 50%, transparent),
-        transparent 65%
-      ),
-      radial-gradient(
-        ellipse 110% 80% at 100% 110%,
-        color-mix(in oklch, var(--brew-accent-900) 30%, transparent),
-        transparent 60%
-      ),
-      linear-gradient(
-        165deg,
-        color-mix(in oklch, var(--brew-accent-950) 45%, transparent) 0%,
-        color-mix(in oklch, var(--brew-accent-950) 20%, transparent) 50%,
-        transparent 100%
-      ),
-      color-mix(in oklch, var(--brew-card) 75%, transparent);
-    border-color: color-mix(in oklch, var(--brew-accent-800) 20%, rgb(255 255 255 / 0.08));
-    box-shadow:
-      var(--shadow-elevated),
-      inset 0 1px 0 rgb(255 255 255 / 0.05);
-  }
-
   /* SRM color swatch — data-driven color, chrome is themed */
   .brew-srm-swatch {
     @apply relative overflow-hidden rounded-xl p-4 text-center;
@@ -5638,32 +5586,6 @@ body {
   }
   .starter-add-faded:hover {
     opacity: 0.9;
-  }
-}
-
-/* Modal entrance animations */
-@keyframes modal-backdrop-in {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0);
-  }
-  to {
-    opacity: 1;
-    backdrop-filter: blur(4px);
-  }
-}
-
-@keyframes modal-scale-in {
-  from {
-    opacity: 0;
-    transform: translate(var(--modal-dx, 0px), var(--modal-dy, 0px)) scale(0.6);
-  }
-  40% {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
   }
 }
 

@@ -18,6 +18,8 @@ import {
   beerXmlImportService,
   type BeerXmlImportResult,
 } from '@/modules/recipe/services/BeerXmlImportService';
+import { parseRecipeText as parseRecipeTextToDraft } from '@/modules/recipe/services/recipeTextParser';
+import { textRecipeImportService } from '@/modules/recipe/services/textRecipeImportService';
 import { hopEnrichmentService } from '@/modules/recipe/services/HopEnrichmentService';
 import { toast } from '@/stores/toastStore';
 import { useAuthStore, deriveUserState } from '@/modules/auth/authStore';
@@ -81,6 +83,12 @@ type RecipeStore = {
   error: string | null;
   /** True once recipes have been fetched from Firestore/localStorage this session */
   recipesLoaded: boolean;
+  /**
+   * IDs of recipes that live in THIS device's localStorage. When signed in,
+   * these are recipes created while signed out — shown alongside cloud
+   * recipes but not shareable until they migrate to Firestore on save.
+   */
+  localRecipeIds: Set<string>;
 
   // Actions (like your manager methods)
   loadRecipes: (force?: boolean) => void;
@@ -97,6 +105,11 @@ type RecipeStore = {
    * Does NOT persist — call `commitImportedRecipe` once the user resolves matches.
    */
   parseBeerXml: (xml: string) => BeerXmlImportResult | null;
+  /**
+   * Parse free-form pasted recipe text (book/forum/notes) and surface
+   * low-confidence preset matches for review. Does NOT persist.
+   */
+  parseRecipeText: (text: string) => BeerXmlImportResult | null;
   /** Persist a recipe that came from an import flow (post-review). */
   commitImportedRecipe: (recipe: Recipe) => Promise<Recipe | null>;
   importFromJson: (json: string) => Recipe | null;
@@ -143,6 +156,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   isLoading: false,
   error: null,
   recipesLoaded: false,
+  localRecipeIds: new Set<string>(),
 
   // Load all recipes with stale-while-revalidate pattern
   loadRecipes: (force?: boolean) => {
@@ -155,11 +169,28 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         set({ isLoading: true, error: null });
       }
 
+      // Recipes created while signed out still live in this device's
+      // localStorage — show them alongside cloud recipes. They migrate to
+      // Firestore the next time the user saves them (see saveCurrentRecipe).
+      // Normalized to private: sharing a local recipe is an explicit
+      // post-sign-in opt-in, never inherited from the signed-out default.
+      const localResult = recipeRepository.loadAllSafe();
+      const localRecipes = (localResult.ok ? localResult.data : []).map(
+        (r) => ({ ...r, isPublic: false }),
+      );
+      set({ localRecipeIds: new Set(localRecipes.map((r) => r.id)) });
+      const withLocal = (cloud: Recipe[]) => {
+        const cloudIds = new Set(cloud.map((r) => r.id));
+        return [...cloud, ...localRecipes.filter((r) => !cloudIds.has(r.id))]
+          .filter((r) => !deletedIds.has(r.id))
+          .sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
+      };
+
       firestoreRepo.loadAllWithCache(
         // Cache hit callback — show stale data immediately
         (cachedRecipes) => {
           set({
-            recipes: cachedRecipes.filter((r) => !deletedIds.has(r.id)),
+            recipes: withLocal(cachedRecipes),
             isLoading: false,
             recipesLoaded: true,
           });
@@ -168,7 +199,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         // Network response — update with fresh data
         (freshRecipes) => {
           set({
-            recipes: freshRecipes.filter((r) => !deletedIds.has(r.id)),
+            recipes: withLocal(freshRecipes),
             isLoading: false,
             recipesLoaded: true,
           });
@@ -185,7 +216,12 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     set({ isLoading: true, error: null });
     const result = recipeRepository.loadAllSafe();
     if (result.ok) {
-      set({ recipes: result.data, isLoading: false, recipesLoaded: true });
+      set({
+        recipes: result.data,
+        isLoading: false,
+        recipesLoaded: true,
+        localRecipeIds: new Set(result.data.map((r) => r.id)),
+      });
     } else {
       // Data is corrupted but still in localStorage
       const rawData = result.rawData;
@@ -221,7 +257,18 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       return;
     }
 
-    // 3. Need to fetch — show loading
+    // 3. Local (this-device) recipes live in localStorage even when signed
+    // in — they were created while signed out and never reached Firestore.
+    // Signed-in views normalize them to private: sharing is an explicit
+    // opt-in that happens after the recipe migrates to the cloud on save.
+    const local = recipeRepository.loadById(id);
+    if (local) {
+      const normalized = useAuthStore.getState().user ? { ...local, isPublic: false } : local;
+      set({ currentRecipe: normalized, savedSnapshot: normalized, isLoading: false, error: null });
+      return;
+    }
+
+    // 4. Need to fetch — show loading
     set({ isLoading: true, error: null });
 
     const firestoreRepo = getRecipeRepo();
@@ -255,21 +302,17 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       return;
     }
 
-    try {
-      const recipe = recipeRepository.loadById(id);
-      if (recipe) {
-        set({ currentRecipe: recipe, savedSnapshot: recipe, isLoading: false, error: null });
-      } else {
-        set({ error: 'Recipe not found', isLoading: false });
-      }
-    } catch {
-      set({ error: 'Failed to load recipe', isLoading: false });
-    }
+    // Signed out and not in localStorage (checked in step 3 above).
+    set({ error: 'Recipe not found', isLoading: false });
   },
 
   // Create a new recipe with defaults
   createNewRecipe: () => {
-    const defaultPublic = usePreferencesStore.getState().defaultRecipePublic;
+    // Signed-out recipes live in localStorage and can't be shared — they stay
+    // private until the user signs in and flips the share toggle (the recipe
+    // then migrates to the cloud on save).
+    const user = useAuthStore.getState().user;
+    const defaultPublic = user ? usePreferencesStore.getState().defaultRecipePublic : false;
     const newRecipe: Recipe = {
       id: uid(),
       // Empty by default so the "Untitled recipe" placeholder shows.
@@ -308,30 +351,39 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     set({ currentRecipe: newRecipe, savedSnapshot: newRecipe });
   },
 
-  // Duplicate an existing recipe
+  // Duplicate an existing recipe. The copy starts unshared — it must earn
+  // its own slug when published (never inherit the original's).
   duplicateRecipe: (id: RecipeId) => {
     set({ isLoading: true, error: null });
+    const makeDuplicate = (original: Recipe): Recipe => ({
+      ...original,
+      id: uid(),
+      name: `${original.name} (Copy)`,
+      currentVersion: 1,
+      parentRecipeId: undefined,
+      parentVersionNumber: undefined,
+      isPublic: false,
+      shareSlug: undefined,
+      publishedAt: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
-      firestoreRepo.loadByIdAsync(id).then(async (original) => {
+      firestoreRepo.loadByIdAsync(id).then(async (remote) => {
+        // Local (this-device) recipes aren't in Firestore — the copy still
+        // goes to the cloud since the user is signed in.
+        const original = remote ?? recipeRepository.loadById(id);
         if (!original) {
           set({ error: 'Recipe not found', isLoading: false });
           return;
         }
-        const duplicate: Recipe = {
-          ...original,
-          id: uid(),
-          name: `${original.name} (Copy)`,
-          currentVersion: 1,
-          parentRecipeId: undefined,
-          parentVersionNumber: undefined,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+        const duplicate = makeDuplicate(original);
         if (!checkRecipeLimit()) { set({ isLoading: false }); return; }
         await firestoreRepo.saveNewAsync(duplicate);
         useAuthStore.getState().adjustRecipeCount(1);
-        set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, isLoading: false });
+        set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, savedSnapshot: duplicate, isLoading: false });
+        toast.success(`Duplicated "${original.name}"`);
       }).catch(() => set({ error: 'Failed to duplicate recipe', isLoading: false }));
       return;
     }
@@ -342,20 +394,12 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         return;
       }
 
-      // Create a copy with new ID and updated timestamps
-      const duplicate: Recipe = {
-        ...original,
-        id: uid(),
-        name: `${original.name} (Copy)`,
-        currentVersion: 1,
-        parentRecipeId: undefined,
-        parentVersionNumber: undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
+      const duplicate = makeDuplicate(original);
       recipeRepository.save(duplicate);
-      set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, isLoading: false });
+      const localRecipeIds = new Set(get().localRecipeIds);
+      localRecipeIds.add(duplicate.id);
+      set({ recipes: [...get().recipes, duplicate], currentRecipe: duplicate, savedSnapshot: duplicate, isLoading: false, localRecipeIds });
+      toast.success(`Duplicated "${original.name}"`);
     } catch {
       set({ error: 'Failed to duplicate recipe', isLoading: false });
     }
@@ -389,6 +433,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
     const firestoreRepo = getRecipeRepo();
     if (firestoreRepo) {
+      // A recipe still in localStorage was created while signed out — this
+      // save migrates it to the cloud (new Firestore doc, then the local
+      // copy is removed).
+      const isLocal = recipeRepository.loadById(current.id) !== null;
+
       // Auto-generate slug for public recipes that don't have one
       let recipeToSave = current;
       const needsSlug = current.isPublic !== false && !current.shareSlug;
@@ -403,7 +452,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
 
       // Detect new vs update — new recipes use saveNewAsync (transactional, increments recipeCount)
-      const isNew = !get().recipes.some((r) => r.id === recipeToSave.id);
+      const isNew = isLocal || !get().recipes.some((r) => r.id === recipeToSave.id);
 
       // Belt-and-suspenders: UI disables save button, but guard here too
       if (isNew && !checkRecipeLimit()) return false;
@@ -422,6 +471,17 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         console.error('[Firestore] Failed to save recipe:', err);
         set({ savedSnapshot: prevSnapshot, error: 'Failed to save recipe' });
         return false;
+      }
+
+      // Migration complete — drop the localStorage copy. If the delete
+      // throws, the merge in loadRecipes shadows the stale local copy anyway.
+      if (isLocal) {
+        try {
+          recipeRepository.delete(recipeToSave.id);
+        } catch { /* cloud copy is saved; stale local copy is shadowed */ }
+        const localRecipeIds = new Set(get().localRecipeIds);
+        localRecipeIds.delete(recipeToSave.id);
+        set({ localRecipeIds });
       }
 
       // Update local array instead of re-fetching from Firestore
@@ -477,7 +537,10 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     deletedIds.add(id);
 
     const user = useAuthStore.getState().user;
-    if (user) {
+    // Local (this-device) recipes never went through the API — delete them
+    // from localStorage even when signed in.
+    const isLocal = recipeRepository.loadById(id) !== null;
+    if (user && !isLocal) {
       // Server-side delete via admin SDK (bypasses Firestore security rules)
       auth.currentUser?.getIdToken().then((token) =>
         fetch('/api/recipes/delete', {
@@ -501,6 +564,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
 
     try {
       recipeRepository.delete(id);
+      const localRecipeIds = new Set(get().localRecipeIds);
+      localRecipeIds.delete(id);
+      set({ localRecipeIds });
     } catch {
       // Rollback on failure
       deletedIds.delete(id);
@@ -531,6 +597,19 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     }
   },
 
+  // Parse pasted recipe text without persisting; caller resolves matches then commits.
+  parseRecipeText: (text: string) => {
+    try {
+      const draft = parseRecipeTextToDraft(text);
+      const result = textRecipeImportService.fromDraft(draft);
+      set({ error: null });
+      return result;
+    } catch {
+      set({ error: 'Failed to parse recipe text' });
+      return null;
+    }
+  },
+
   // Persist a recipe coming from the import flow (after match review).
   commitImportedRecipe: async (recipe: Recipe) => {
     const firestoreRepo = getRecipeRepo();
@@ -547,9 +626,13 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
     }
     try {
-      recipeRepository.save(recipe);
-      set({ recipes: [...get().recipes, recipe], error: null });
-      return recipe;
+      // Signed-out imports are local-only and can't be shared — keep private.
+      const localRecipe: Recipe = { ...recipe, isPublic: false };
+      recipeRepository.save(localRecipe);
+      const localRecipeIds = new Set(get().localRecipeIds);
+      localRecipeIds.add(localRecipe.id);
+      set({ recipes: [...get().recipes, localRecipe], error: null, localRecipeIds });
+      return localRecipe;
     } catch {
       set({ error: 'Failed to save imported recipe' });
       return null;
@@ -569,6 +652,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       const hops = Array.isArray(parsed.hops)
         ? hopEnrichmentService.enrichHops(parsed.hops)
         : parsed.hops;
+      const firestoreRepo = getRecipeRepo();
       const recipe: Recipe = {
         ...parsed,
         hops,
@@ -576,10 +660,14 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         currentVersion: 1,
         parentRecipeId: undefined,
         parentVersionNumber: undefined,
+        // Never inherit share state from exported JSON — an import is a new,
+        // unpublished recipe (and signed-out imports can't be shared at all).
+        shareSlug: undefined,
+        publishedAt: undefined,
+        isPublic: firestoreRepo ? parsed.isPublic : false,
         createdAt: now,
         updatedAt: now,
       };
-      const firestoreRepo = getRecipeRepo();
       if (firestoreRepo) {
         if (!checkRecipeLimit()) return null;
         firestoreRepo.saveNewAsync(recipe).then(() => {
@@ -588,7 +676,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         });
       } else {
         recipeRepository.save(recipe);
-        set({ recipes: [...get().recipes, recipe] });
+        const localRecipeIds = new Set(get().localRecipeIds);
+        localRecipeIds.add(recipe.id);
+        set({ recipes: [...get().recipes, recipe], localRecipeIds });
       }
       set({ error: null });
       return recipe;

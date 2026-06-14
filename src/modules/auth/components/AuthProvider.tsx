@@ -8,6 +8,8 @@ import { useAuthStore } from "../authStore";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useEquipmentStore } from "@/modules/recipe/stores/equipmentStore";
 import { useBrewSessionStore } from "@/modules/recipe/stores/brewSessionStore";
+import { hydrateLastUsedSource } from "@/modules/recipe/services/sourceWaterPrefs";
+import { usePreferencesStore } from "@/modules/auth/preferencesStore";
 
 /**
  * Ensure the users/{userId} document exists (create on first sign-in).
@@ -55,6 +57,10 @@ export default function AuthProvider({
       unsubSnapshotRef.current = null;
 
       if (user) {
+        // Load this user's calculation/sharing preferences (FG model, etc.)
+        // from userPreferences/{uid}. Independent of the users/{uid} doc.
+        usePreferencesStore.getState().loadPreferences(user.uid);
+
         // Ensure user doc exists, then subscribe to real-time updates
         ensureUserDoc(user.uid, user.displayName, user.email, user.photoURL)
           .then((userRef) => {
@@ -68,6 +74,10 @@ export default function AuthProvider({
                   subscriptionCurrentPeriodEnd: data.subscriptionCurrentPeriodEnd ?? null,
                   stripeCustomerId: data.stripeCustomerId ?? null,
                 });
+                // Per-user prefs piggyback on the same snapshot: adopt the
+                // account's last-used source water when it's fresher than
+                // this device's copy (cross-device continuity).
+                hydrateLastUsedSource(data);
               }
             });
           })

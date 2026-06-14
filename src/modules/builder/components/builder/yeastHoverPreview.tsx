@@ -59,6 +59,10 @@ type Placement = "above" | "below" | "cursor-right";
 type AnchorState = {
   rect: DOMRect;
   preset: YeastPreset;
+  // Opaque caller token (the builder passes the hovered card's strain id)
+  // echoed back to `onSelect` when a chip is clicked, so the consumer
+  // knows which strain to swap. Undefined for the passive picker preview.
+  context?: string;
 };
 
 export type UseYeastHoverPreviewOptions = {
@@ -79,6 +83,16 @@ export type UseYeastHoverPreviewOptions = {
    *    modal pickers: doesn't obscure rows above the cursor.
    */
   placement?: "anchored" | "cursor-right";
+  /**
+   * When provided (anchored placement only), the panel becomes
+   * interactive: the cursor can travel onto it without dismissing it,
+   * and each "Same strain"/"Substitutes" chip that resolves to a library
+   * preset turns into a button that calls this with the chosen preset
+   * plus the `context` passed to `getTriggerProps`. The builder cards
+   * wire this to swap the hovered strain in place. Omitted by the picker
+   * modal, which leaves the panel a passive, cursor-following preview.
+   */
+  onSelect?: (chosen: YeastPreset, context: string) => void;
 };
 
 /**
@@ -174,8 +188,43 @@ export function useYeastHoverPreview(
   // the mouse event — we do NOT call getBoundingClientRect() in any
   // deferred callback (e.currentTarget can be null/stale across React
   // boundaries by the time a setTimeout fires).
-  const showNow = useCallback((rect: DOMRect, preset: YeastPreset) => {
-    setAnchor({ rect, preset });
+  const showNow = useCallback(
+    (rect: DOMRect, preset: YeastPreset, context?: string) => {
+      setAnchor({ rect, preset, context });
+    },
+    []
+  );
+
+  // Panel-hover bridge (interactive mode). When the cursor leaves the
+  // trigger and lands on the panel itself, `cancelHide` keeps it open;
+  // leaving the panel re-arms the same dismiss + warmup-cooldown the
+  // trigger's mouseLeave uses.
+  const cancelHide = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (cooldownTimerRef.current !== null) {
+      window.clearTimeout(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = window.setTimeout(() => {
+      setAnchor(null);
+      hideTimerRef.current = null;
+    }, HIDE_DELAY_MS);
+    if (cooldownTimerRef.current !== null) {
+      window.clearTimeout(cooldownTimerRef.current);
+    }
+    cooldownTimerRef.current = window.setTimeout(() => {
+      warmedUpRef.current = false;
+      cooldownTimerRef.current = null;
+    }, WARMUP_COOLDOWN_MS);
   }, []);
 
   // Update cursor + derive tilt from velocity. Called from mouseEnter
@@ -200,7 +249,7 @@ export function useYeastHoverPreview(
   }, []);
 
   const getTriggerProps = useCallback(
-    (preset: YeastPreset | null | undefined) => {
+    (preset: YeastPreset | null | undefined, context?: string) => {
       if (!preset || !hasYeastDetails(preset)) return {} as const;
       return {
         onMouseEnter: (e: React.MouseEvent) => {
@@ -232,7 +281,7 @@ export function useYeastHoverPreview(
           // Instant when warmed up OR when caller asked for no dwell.
           if (warmedUpRef.current || delay <= 0) {
             warmedUpRef.current = true;
-            showNow(rect, preset);
+            showNow(rect, preset, context);
             return;
           }
           // First (or post-cooldown) hover — dwell, then mark warm and
@@ -240,7 +289,7 @@ export function useYeastHoverPreview(
           // branch above as long as the cooldown doesn't fire.
           showTimerRef.current = window.setTimeout(() => {
             warmedUpRef.current = true;
-            showNow(rect, preset);
+            showNow(rect, preset, context);
             showTimerRef.current = null;
           }, delay);
         },
@@ -302,6 +351,23 @@ export function useYeastHoverPreview(
       : "below";
   }, [anchor, placementMode]);
 
+  // Interactive only in anchored placement (builder cards) — the
+  // cursor-following picker preview can't be hovered onto, so it stays
+  // a passive panel even if a stray onSelect were ever passed.
+  const interactive =
+    Boolean(options.onSelect) && placementMode === "anchored";
+
+  // Chip click → swap. Echoes the anchored card's context back to the
+  // consumer, then tears the panel down (the card's content just changed
+  // underneath it).
+  const handleSelect = useCallback(
+    (chosen: YeastPreset) => {
+      if (anchor?.context != null) options.onSelect?.(chosen, anchor.context);
+      clear();
+    },
+    [anchor, options, clear]
+  );
+
   // The portal renders to `document.body`, which is outside the
   // builder's LazyMotion wrapper — so we mount our own here, otherwise
   // the `m.div` children inside PreviewFrame have no animation features
@@ -322,6 +388,10 @@ export function useYeastHoverPreview(
                 cursorX={cursorX}
                 cursorY={cursorY}
                 tilt={tilt}
+                interactive={interactive}
+                onPanelEnter={cancelHide}
+                onPanelLeave={scheduleHide}
+                onSelect={interactive ? handleSelect : undefined}
               />
             </LazyMotion>
           ) : null,
@@ -353,6 +423,10 @@ function PreviewFrame({
   cursorX,
   cursorY,
   tilt,
+  interactive,
+  onPanelEnter,
+  onPanelLeave,
+  onSelect,
 }: {
   preset: YeastPreset;
   library: YeastPreset[];
@@ -361,6 +435,10 @@ function PreviewFrame({
   cursorX: number;
   cursorY: number;
   tilt: number;
+  interactive?: boolean;
+  onPanelEnter?: () => void;
+  onPanelLeave?: () => void;
+  onSelect?: (chosen: YeastPreset) => void;
 }) {
   // Cursor-right mode (modal pickers) — panel hovers to the side of
   // the cursor with no connector. Doesn't obscure the rows above/below
@@ -453,7 +531,17 @@ function PreviewFrame({
         font: "inherit",
       }}
     >
+      {/* Hover-intent bridge only — the real interactive elements are the
+          native button chips inside. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
+        // Interactive mode re-enables pointer events on the panel (the
+        // wrapper above stays `none`) so the cursor can travel up the
+        // connector strip onto the card without the trigger's mouseLeave
+        // dismissing it. The full-width connector row doubles as the
+        // hover bridge between trigger and card.
+        onMouseEnter={interactive ? onPanelEnter : undefined}
+        onMouseLeave={interactive ? onPanelLeave : undefined}
         style={{
           // Center on the motion x point, flip up if above. Static
           // transform here composes with the parent's motion-driven
@@ -463,6 +551,7 @@ function PreviewFrame({
           flexDirection: above ? "column" : "column-reverse",
           alignItems: "center",
           width: PANEL_WIDTH,
+          pointerEvents: interactive ? "auto" : undefined,
         }}
       >
         <m.div
@@ -489,7 +578,11 @@ function PreviewFrame({
             transformOrigin: above ? "bottom center" : "top center",
           }}
         >
-          <YeastPreviewBody preset={preset} library={library} />
+          <YeastPreviewBody
+            preset={preset}
+            library={library}
+            onSelect={onSelect}
+          />
         </m.div>
         <m.div
           initial={{ scaleY: 0, opacity: 0 }}
@@ -518,9 +611,12 @@ function PreviewFrame({
 export function YeastPreviewBody({
   preset,
   library,
+  onSelect,
 }: {
   preset: YeastPreset;
   library: YeastPreset[];
+  /** When set, chips that resolve to a library preset become swap buttons. */
+  onSelect?: (chosen: YeastPreset) => void;
 }) {
   const favicon = getYeastLabFavicon(preset.category);
   const typeLabel = formatStrainType(preset.type);
@@ -620,15 +716,17 @@ export function YeastPreviewBody({
       {peers.length > 0 ? (
         <PreviewRefChips
           label="Same strain"
-          items={peers.map((p) => p.name)}
+          items={peers.map((p) => ({ name: p.name, preset: p }))}
           accent={hsTokens.yeast}
+          onSelect={onSelect}
         />
       ) : null}
       {subs.length > 0 ? (
         <PreviewRefChips
           label="Substitutes"
-          items={subs.map((s) => s.name)}
+          items={subs.map((s) => ({ name: s.name, preset: s.preset }))}
           accent={hsTokens.muted}
+          onSelect={onSelect}
         />
       ) : null}
     </>
@@ -678,11 +776,18 @@ function PreviewRefChips({
   label,
   items,
   accent,
+  onSelect,
 }: {
   label: string;
-  items: string[];
+  items: Array<{ name: string; preset: YeastPreset | null }>;
   accent: string;
+  /** When set, items with a resolved preset become swap buttons. */
+  onSelect?: (chosen: YeastPreset) => void;
 }) {
+  // Only advertise "tap to swap" if at least one chip is actually
+  // clickable (resolves to a library preset). Names with no preset still
+  // render as plain text the brewer can look up elsewhere.
+  const anyClickable = Boolean(onSelect) && items.some((i) => i.preset);
   return (
     <div style={{ marginTop: 10 }}>
       <div
@@ -696,7 +801,7 @@ function PreviewRefChips({
           marginBottom: 5,
         }}
       >
-        {label}
+        {anyClickable ? `${label} — tap to swap` : label}
       </div>
       <div
         style={{
@@ -705,36 +810,76 @@ function PreviewRefChips({
           gap: 4,
         }}
       >
-        {items.map((name) => (
-          <span
-            key={name}
-            style={{
-              // Cream (more saturated than cream-2) reads cleanly against
-              // the panel's paper background — cream-2 was nearly the
-              // same tone and the chips disappeared into the panel.
-              background: hsTokens.cream,
-              border: `1px solid ${hsTokens.ink}55`,
-              borderRadius: 999,
-              padding: "2px 9px",
-              fontFamily: hsTokens.body,
-              fontSize: 10,
-              fontWeight: 600,
-              color: hsTokens.ink,
-              letterSpacing: "0.01em",
-              lineHeight: 1.4,
-              // Allow long strain names to wrap inside the chip so a
-              // single bus-name like "OYL-016 Extra Special (formerly
-              // British Ale VIII)" doesn't overflow the panel.
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              maxWidth: "100%",
-            }}
-          >
-            {name}
-          </span>
+        {items.map((item) => (
+          <RefChip
+            key={item.name}
+            name={item.name}
+            preset={item.preset}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+/** One strain pill. Plain text unless it resolves to a library preset
+ *  AND the panel is interactive — then it's a swap button with a
+ *  yeast-accent hover fill. */
+function RefChip({
+  name,
+  preset,
+  onSelect,
+}: {
+  name: string;
+  preset: YeastPreset | null;
+  onSelect?: (chosen: YeastPreset) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const clickable = Boolean(onSelect && preset);
+  const base: CSSProperties = {
+    // Cream (more saturated than cream-2) reads cleanly against the
+    // panel's paper background — cream-2 was nearly the same tone and the
+    // chips disappeared into the panel.
+    background: clickable && hovered ? hsTokens.yeast : hsTokens.cream,
+    border: `1px solid ${clickable && hovered ? hsTokens.yeast : `${hsTokens.ink}55`}`,
+    borderRadius: 999,
+    padding: "2px 9px",
+    fontFamily: hsTokens.body,
+    fontSize: 10,
+    fontWeight: 600,
+    color: clickable && hovered ? hsTokens.paper : hsTokens.ink,
+    letterSpacing: "0.01em",
+    lineHeight: 1.4,
+    // Allow long strain names to wrap inside the chip so a single
+    // bus-name like "OYL-016 Extra Special (formerly British Ale VIII)"
+    // doesn't overflow the panel.
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    maxWidth: "100%",
+    transition: "background 120ms ease, color 120ms ease, border-color 120ms ease",
+  };
+
+  if (!clickable) return <span style={base}>{name}</span>;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect?.(preset as YeastPreset)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={`Swap to ${name}`}
+      style={{
+        ...base,
+        margin: 0,
+        cursor: "pointer",
+        textAlign: "left",
+        appearance: "none",
+        WebkitAppearance: "none",
+      }}
+    >
+      {name}
+    </button>
   );
 }
 

@@ -286,6 +286,8 @@ function buildHopGroups(
   mode: GroupMode,
   og: number,
   batchVolumeGal: number,
+  boilGravity: number,
+  boilTimeMin: number,
   overrides?: Record<string, GroupAssignment>
 ): HopGroup[] {
   const map = new Map<string, HopGroup>();
@@ -316,7 +318,9 @@ function buildHopGroups(
     group.totalIbu += recipeCalculationService.calculateSingleHopIBU(
       h,
       og,
-      batchVolumeGal
+      batchVolumeGal,
+      boilGravity,
+      boilTimeMin
     );
   }
 
@@ -417,7 +421,22 @@ export default function HopSection() {
     portal: hoverPortal,
     getTriggerProps: getHopHoverTriggerProps,
     clear: clearHopHoverPreview,
-  } = useHopHoverPreview(flatHopLibrary);
+  } = useHopHoverPreview(flatHopLibrary, {
+    // Clicking a "Similar hops" chip in the hover panel swaps that row's
+    // hop in place — same field updates as a picker-modal swap, minus
+    // the modal. The row's grams/time/usage are preserved by the partial
+    // updateHop.
+    onSelect: (chosen, hopId) => {
+      const flavor =
+        chosen.flavor ?? hopEnrichmentService.getFlavorByName(chosen.name);
+      updateHop(hopId, {
+        name: chosen.name,
+        alphaAcid: chosen.alphaAcidPercent,
+        flavor,
+      });
+      toast.success(`Swapped to ${chosen.name}`);
+    },
+  });
 
   // Hide the hover preview when the swap picker opens — the cursor
   // hasn't physically left the trigger boundary, so mouseLeave doesn't
@@ -615,6 +634,11 @@ export default function HopSection() {
               totalGrams={totalGrams}
               og={calculations?.og ?? 1.05}
               batchVolumeGal={(currentRecipe?.batchVolumeL ?? 20) * 0.264172}
+              boilGravity={
+                ((calculations?.preBoilGravity ?? calculations?.og ?? 1.05) +
+                  (calculations?.og ?? 1.05)) /
+                2
+              }
               boilTimeMin={currentRecipe?.equipment?.boilTimeMin ?? 60}
               onExtendBoil={(min) => {
                 if (!currentRecipe) return;
@@ -655,16 +679,19 @@ export default function HopSection() {
                 // data so legacy/custom hops still get a preview as
                 // long as we have a flavor vector for them.
                 const fromLib = hopPresetByName.get(hop.name);
-                if (fromLib) return getHopHoverTriggerProps(fromLib);
+                if (fromLib) return getHopHoverTriggerProps(fromLib, hop.id);
                 const flavor =
                   hop.flavor ??
                   hopEnrichmentService.getFlavorByName(hop.name);
                 if (!flavor) return {};
-                return getHopHoverTriggerProps({
-                  name: hop.name,
-                  alphaAcidPercent: hop.alphaAcid,
-                  flavor,
-                });
+                return getHopHoverTriggerProps(
+                  {
+                    name: hop.name,
+                    alphaAcidPercent: hop.alphaAcid,
+                    flavor,
+                  },
+                  hop.id
+                );
               }}
             />
           </div>
@@ -1089,6 +1116,7 @@ function Ledger({
   totalGrams,
   og,
   batchVolumeGal,
+  boilGravity,
   boilTimeMin,
   onExtendBoil,
   onGramsChange,
@@ -1111,6 +1139,9 @@ function Ledger({
   totalGrams: number;
   og: number;
   batchVolumeGal: number;
+  /** Average boil gravity (Tinseth bigness factor); used for kettle additions
+   *  so per-row IBU matches the brew-sheet total. */
+  boilGravity: number;
   boilTimeMin: number;
   onExtendBoil: (newBoilMin: number) => void;
   onGramsChange: (id: string, v: number) => void;
@@ -1135,6 +1166,8 @@ function Ledger({
     groupMode,
     og,
     batchVolumeGal,
+    boilGravity,
+    boilTimeMin,
     assignments
   );
   const grandIbu = groups.reduce((sum, g) => sum + g.totalIbu, 0);
@@ -1173,7 +1206,9 @@ function Ledger({
     const ibuContribution = recipeCalculationService.calculateSingleHopIBU(
       h,
       og,
-      batchVolumeGal
+      batchVolumeGal,
+      boilGravity,
+      boilTimeMin
     );
     return (
       <LedgerRowMotion key={h.id}>
@@ -1205,7 +1240,9 @@ function Ledger({
     const ibuContribution = recipeCalculationService.calculateSingleHopIBU(
       h,
       og,
-      batchVolumeGal
+      batchVolumeGal,
+      boilGravity,
+      boilTimeMin
     );
     return (
       <LedgerRowMotion key={h.id}>

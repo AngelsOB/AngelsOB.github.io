@@ -73,7 +73,14 @@ This approach matches BeerSmith and Brewfather, which both track per-ingredient 
 
 ### Layer 2 — Effective Attenuation
 
-Starting from the yeast's stated base attenuation (typically 0.75 for a standard ale yeast), the user can select one of three models for computing mash-temperature effects:
+> **Superseded (June 2026).** The lineup is now **two** models — `kinetic` (default; a Brandam-style
+> mash simulation with β-amylase, α-amylase, and limit dextrinase, validated to ~±2 FG points against
+> ~30 real batches) and `linear` (the Grainfather formula, for parity with other apps). The detailed
+> three-model description below (Linear / Enzyme / ODE with log-space damping) is historical. See
+> `docs/calculations-audit.md` and `RecipeCalculationService.ts` for the current method, and
+> `AttenuationModelValidation.test.ts` for the validation dataset + benchmark.
+
+Starting from the yeast's stated base attenuation (typically 0.75 for a standard ale yeast), the model computes mash-temperature effects on fermentability:
 
 #### Model A: Linear (default)
 

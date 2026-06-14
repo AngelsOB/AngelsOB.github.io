@@ -32,6 +32,14 @@ import {
   useState,
 } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+
+import {
+  persistLastUsedSource,
+  readLastUsedSource,
+  type StoredSource,
+} from "@/modules/recipe/services/sourceWaterPrefs";
+import { springSupersoft } from "../../motion";
 
 import { hsTokens } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
@@ -61,6 +69,7 @@ import {
 } from "@/modules/recipe/services/WaterChemistryService";
 import { optimizeSaltAdditions } from "@/modules/recipe/services/WaterSaltOptimizer";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { isWaterIntro } from "./sectionEmpty";
 import { useRecipeCalculations } from "@/modules/recipe/hooks/useRecipeCalculations";
 // TODO: Re-enable premium gating once Stripe is live (mirrors classic)
 // import { useUserTier } from "@/modules/auth/useUserTier";
@@ -70,11 +79,11 @@ import { uid } from "@/utils/uid";
 
 // ─── Constants ────────────────────────────────────────────────────
 
-/** Per-device "knows water chemistry" flag. Set the first time any recipe
- *  with stored water chemistry passes through this section (opened or
- *  edited); read to skip the newcomer explainer on fresh recipes after
- *  that. localStorage only — never a server round-trip. */
-const WATER_TOUCHED_KEY = "hs-water-chemistry-touched";
+/** Shared framer layoutId: the intro's big "Auto-Calc the salts" CTA and the
+ *  plan header's compound Auto-Calc button swap under this id, so completing
+ *  the intro visibly morphs the big button into its permanent home in the
+ *  header — teaching where the control lives for next time. */
+const AUTOCALC_MORPH_ID = "hs-water-autocalc-morph";
 
 const ION_KEYS: Array<keyof WaterProfile> = ["Ca", "Mg", "Na", "Cl", "SO4", "HCO3"];
 const ION_DISPLAY: Record<keyof WaterProfile, string> = {
@@ -286,18 +295,34 @@ function SectionTitle() {
   );
 }
 
-/** Shown while the recipe has no water chemistry at all — the full panel
- *  (salts, pH, ion bars) is the densest screen in the builder, so untouched
- *  recipes get the same dashed explainer card the other sections use for
- *  their empty states. Picking a source (or opting into the panel) writes
- *  waterChemistry and the real UI takes over permanently. */
-function EmptyState({
+/** Intro shown until the recipe has BOTH a chosen source and an explicit
+ *  target. The salt inputs stay hidden behind the two picks, which doubles
+ *  as the Auto-Calc tutorial: the primary CTA computes the additions and
+ *  reveals the panel in one beat. */
+function IntroState({
+  sourceName,
+  targetName,
+  targetSuggestion,
+  hasStyle,
+  bothSelected,
   onPickSource,
-  onShowPanel,
+  onPickTarget,
+  onAutoCalc,
+  onManual,
 }: {
+  sourceName: string | null;
+  targetName: string | null;
+  targetSuggestion: string;
+  /** Whether the recipe has a beer style set — gates the auto-detect
+   *  suggestion so we never claim "from your style" without one. */
+  hasStyle: boolean;
+  bothSelected: boolean;
   onPickSource: () => void;
-  onShowPanel: () => void;
+  onPickTarget: () => void;
+  onAutoCalc: () => void;
+  onManual: () => void;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
     <div
       style={{
@@ -309,11 +334,11 @@ function EmptyState({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 14,
+        gap: 16,
       }}
     >
       <HSScriptNote color={hsTokens.water} size={24} rotate={-4}>
-        the water part —
+        the water salts —
       </HSScriptNote>
       <p
         style={{
@@ -321,15 +346,62 @@ function EmptyState({
           fontSize: 15,
           color: hsTokens.muted,
           margin: 0,
-          maxWidth: 420,
+          maxWidth: 440,
           lineHeight: 1.4,
         }}
       >
-        Brewing salts nudge your water toward the beer: chloride rounds out
-        malt, sulfate sharpens hops. Pick where your water comes from, and
-        Auto-Calc works out the additions for your target. Skipping this is
-        fine. Plenty of good beer gets brewed on plain tap water.
+        Where your water starts, and where the style wants it to end up.
+        Chloride rounds out malt; sulfate sharpens hops.
       </p>
+      <div
+        style={{
+          display: "flex",
+          // Bottom-aligned so the two pills stay level even when only one
+          // column carries a script note above its button.
+          alignItems: "flex-end",
+          gap: 14,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <IntroPick eyebrow="Source" selected={!!sourceName} onClick={onPickSource}>
+          {sourceName ? (
+            <>
+              <DropletGlyph color={hsTokens.cream} />
+              {sourceName}
+            </>
+          ) : (
+            "Select your source"
+          )}
+        </IntroPick>
+        <span
+          aria-hidden
+          style={{
+            fontFamily: hsTokens.body,
+            fontSize: 20,
+            color: hsTokens.muted,
+            lineHeight: 1,
+            // Optically centers the arrow on the bottom-aligned pill row.
+            marginBottom: 11,
+          }}
+        >
+          →
+        </span>
+        <IntroPick
+          eyebrow="Target"
+          selected={!!targetName}
+          note={
+            targetName
+              ? undefined
+              : hasStyle
+                ? "auto-detected from your style. confirm or change it —"
+                : "set a beer style up top and we'll suggest one"
+          }
+          onClick={onPickTarget}
+        >
+          {targetName ?? (hasStyle ? targetSuggestion : "Select your target")}
+        </IntroPick>
+      </div>
       <div
         style={{
           display: "flex",
@@ -339,18 +411,112 @@ function EmptyState({
           justifyContent: "center",
         }}
       >
-        <HSButton onClick={onPickSource} color={hsTokens.water} size="md">
-          Pick your source water
-        </HSButton>
+        <motion.div
+          layoutId={AUTOCALC_MORPH_ID}
+          transition={reduceMotion ? { duration: 0 } : springSupersoft}
+          style={{ display: "inline-flex", borderRadius: 999 }}
+        >
+          <HSButton
+            onClick={onAutoCalc}
+            color={hsTokens.water}
+            size="md"
+            disabled={!bothSelected}
+          >
+            Auto-Calc the salts
+          </HSButton>
+        </motion.div>
         <HSButton
-          onClick={onShowPanel}
+          onClick={onManual}
           color={hsTokens.water}
           size="md"
           variant="ghost"
+          disabled={!bothSelected}
         >
-          Show the full panel
+          I&apos;ll set them myself
         </HSButton>
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 12,
+          color: hsTokens.muted,
+          margin: 0,
+        }}
+      >
+        {bothSelected
+          ? "Auto-Calc picks the salt additions that land closest to your target."
+          : "Pick both to unlock the salt additions."}
+      </p>
+    </div>
+  );
+}
+
+/** One half of the intro's Source → Target pair: an eyebrow caption over a
+ *  pill that reads dashed/outlined until chosen, filled water-blue after. */
+function IntroPick({
+  eyebrow,
+  selected,
+  note,
+  onClick,
+  children,
+}: {
+  eyebrow: string;
+  selected: boolean;
+  note?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+          color: hsTokens.muted,
+        }}
+      >
+        {eyebrow}
+      </span>
+      {note ? (
+        <HSScriptNote color={hsTokens.muted} size={14} rotate={-2}>
+          {note}
+        </HSScriptNote>
+      ) : null}
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "10px 18px",
+          background: selected ? hsTokens.water : hsTokens.paper,
+          color: selected ? hsTokens.cream : hsTokens.ink,
+          border: selected
+            ? `2px solid ${hsTokens.ink}`
+            : `2px dashed ${hsTokens.ink}`,
+          borderRadius: 999,
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+          cursor: "pointer",
+          boxShadow: selected ? hsTokens.sh2 : "none",
+          transition: "background 120ms ease, box-shadow 120ms ease",
+        }}
+      >
+        {children}
+      </button>
     </div>
   );
 }
@@ -400,6 +566,39 @@ export default function WaterSection({ recipe, calculations }: Props) {
     () => recipe.otherIngredients ?? [],
     [recipe.otherIngredients]
   );
+
+  // ─── Intro gate ────────────────────────────────────────────────
+  // The salt panel stays hidden until the recipe has BOTH a chosen source
+  // and an explicit target. All state is derived from the recipe object
+  // (already in memory) plus the device's lastUsedSource — no extra reads.
+  const [lastUsedSource, setLastUsedSource] = useState<StoredSource | null>(
+    null
+  );
+  useLayoutEffect(() => {
+    // Read after mount (not during render) so SSR and first client render
+    // agree; useLayoutEffect flips it before paint, so a returning brewer
+    // never sees the intro flash.
+    setLastUsedSource(readLastUsedSource());
+  }, []);
+
+  // Source counts as chosen when the recipe stores a named source, or — on
+  // recipes with no water data yet — when this device remembers one.
+  const storedSourceName = recipe.waterChemistry?.sourceProfileName ?? null;
+  const introSourceName =
+    storedSourceName ??
+    (!recipe.waterChemistry ? (lastUsedSource?.name ?? null) : null);
+  // Target counts as chosen only when explicitly pinned (BJCP pick or custom
+  // profile) — the style auto-detect alone doesn't dismiss the intro.
+  const targetSelected =
+    !!waterChem.targetStyleName || !!waterChem.customTargetProfile;
+
+  // Live, no latch (shared with the grid's section-empty collapse via
+  // isWaterIntro, so the two never disagree): the intro stays up until salts
+  // exist or it's explicitly dismissed. Picking source/target alone keeps the
+  // intro mounted through the Auto-Calc beat — only Auto-Calc (writes salts)
+  // or "I'll set them myself" (sets introDismissed) leaves it.
+  const showIntro = isWaterIntro(recipe);
+
   const isCustomTarget = !!waterChem.customTargetProfile;
   const bjcpKey = getWaterTargetForBjcpStyle(recipe.style || "");
   const bjcpTarget =
@@ -447,16 +646,27 @@ export default function WaterSection({ recipe, calculations }: Props) {
           sourceProfileName: name,
         },
       });
+      // Keep the running per-device (and account) default current.
+      persistLastUsedSource(name, profile);
     },
     [updateRecipe, waterChem]
   );
 
-  // "Show the full panel" from the empty state: persist the implicit RO
-  // default so the section (and the ion-visualizer helper card) render the
-  // real UI from here on.
-  const handleShowPanel = useCallback(() => {
-    updateRecipe({ waterChemistry: { ...waterChem } });
-  }, [updateRecipe, waterChem]);
+  /** Base object for target writes. On recipes with no stored water data it
+   *  adopts the device's last-used source (the intro shows it pre-selected),
+   *  and otherwise leaves "no source chosen yet" intact — sourceProfileName
+   *  stays unset so the intro's source pick remains the user's own. */
+  const targetWriteBase = useCallback(() => {
+    if (recipe.waterChemistry) return waterChem;
+    if (lastUsedSource) {
+      return {
+        ...waterChem,
+        sourceProfile: lastUsedSource.profile,
+        sourceProfileName: lastUsedSource.name,
+      };
+    }
+    return { ...waterChem, sourceProfileName: undefined };
+  }, [recipe.waterChemistry, waterChem, lastUsedSource]);
 
   const handleSwitchToBjcp = useCallback(() => {
     updateRecipe({
@@ -477,26 +687,26 @@ export default function WaterSection({ recipe, calculations }: Props) {
       if (!BEER_STYLE_TARGETS[styleName]) return;
       updateRecipe({
         waterChemistry: {
-          ...waterChem,
+          ...targetWriteBase(),
           targetStyleName: styleName,
           customTargetProfile: undefined,
         },
       });
     },
-    [updateRecipe, waterChem]
+    [updateRecipe, targetWriteBase]
   );
 
   const handleCustomTargetSave = useCallback(
     (profile: WaterProfile, name: string) => {
       updateRecipe({
         waterChemistry: {
-          ...waterChem,
+          ...targetWriteBase(),
           targetStyleName: name,
           customTargetProfile: profile,
         },
       });
     },
-    [updateRecipe, waterChem]
+    [updateRecipe, targetWriteBase]
   );
 
   const handleSaltChange = useCallback(
@@ -544,6 +754,47 @@ export default function WaterSection({ recipe, calculations }: Props) {
     updateRecipe,
     waterChem,
   ]);
+
+  // Intro CTAs — Auto-Calc is the headline path (computes the salts AND
+  // reveals the panel in one beat); the ghost path reveals without salts.
+  // Both persist their exit on the recipe (salts / introDismissed) so the
+  // panel sticks and the grid's section-empty state agrees. The upgrade-modal
+  // bounce leaves the intro in place.
+  const handleIntroAutoCalc = useCallback(() => {
+    if (!canAutoCalc) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    // Compute salts when the water volumes are available; persist the
+    // dismissal regardless so the panel stays even before salts land.
+    let saltAdditions = waterChem.saltAdditions;
+    if (calculations) {
+      const totalWaterL = calculations.mashWaterL + calculations.spargeWaterL;
+      if (totalWaterL > 0) {
+        saltAdditions = optimizeSaltAdditions(
+          waterChem.sourceProfile,
+          effectiveTargetProfile,
+          totalWaterL,
+          { includeBakingSoda }
+        ).salts;
+      }
+    }
+    updateRecipe({
+      waterChemistry: { ...waterChem, saltAdditions, introDismissed: true },
+    });
+  }, [
+    canAutoCalc,
+    calculations,
+    effectiveTargetProfile,
+    includeBakingSoda,
+    updateRecipe,
+    waterChem,
+  ]);
+  const handleIntroManual = useCallback(() => {
+    updateRecipe({
+      waterChemistry: { ...waterChem, introDismissed: true },
+    });
+  }, [updateRecipe, waterChem]);
 
   const handleAddIngredient = useCallback(
     (name: string, category: OtherIngredientCategory) => {
@@ -606,46 +857,36 @@ export default function WaterSection({ recipe, calculations }: Props) {
 
   // ─── Render ────────────────────────────────────────────────────
 
-  // Per-user knowledge check. useLayoutEffect (not a render-time read) so
-  // server and first client render agree; it flips before paint, so a
-  // returning brewer never sees the explainer flash.
-  const [userKnowsWater, setUserKnowsWater] = useState(false);
-  useLayoutEffect(() => {
-    try {
-      setUserKnowsWater(window.localStorage.getItem(WATER_TOUCHED_KEY) === "1");
-    } catch {
-      // Storage unavailable — fall back to showing the explainer.
-    }
-  }, []);
-  useEffect(() => {
-    if (!recipe.waterChemistry) return;
-    try {
-      window.localStorage.setItem(WATER_TOUCHED_KEY, "1");
-    } catch {
-      // Best-effort flag; nothing to do if storage is unavailable.
-    }
-  }, [recipe.waterChemistry]);
-
-  // Untouched = this recipe has never stored water chemistry (the section is
-  // running on implicit RO defaults), holds no other ingredients, AND this
-  // device hasn't seen water chemistry before. Any interaction — picking a
-  // source, an auto-calc, "show the full panel" — writes waterChemistry,
-  // which both flips this recipe and sets the per-device flag above.
-  const waterUntouched =
-    !recipe.waterChemistry &&
-    otherIngredients.length === 0 &&
-    !userKnowsWater;
-
   return (
     <section className="hs-water-section" style={sectionFrameStyle}>
       <WaterSectionStyles />
       <SectionTitle />
 
-      {waterUntouched ? (
-        <EmptyState
-          onPickSource={() => setIsSourceModalOpen(true)}
-          onShowPanel={handleShowPanel}
-        />
+      {showIntro ? (
+        <>
+          <IntroState
+            sourceName={introSourceName}
+            targetName={targetSelected ? effectiveTargetName : null}
+            targetSuggestion={bjcpKey}
+            hasStyle={!!recipe.style?.trim()}
+            bothSelected={!!introSourceName && targetSelected}
+            onPickSource={() => setIsSourceModalOpen(true)}
+            onPickTarget={() => setIsTargetModalOpen(true)}
+            onAutoCalc={handleIntroAutoCalc}
+            onManual={handleIntroManual}
+          />
+          {/* Additional items live OUTSIDE the salts gate — finings/spices/oak
+              don't require a water plan, and this block is the only way to add
+              them. Collapsed to its header row here so the intro stays the
+              single empty card on the tab. */}
+          <OtherIngredientsBlock
+            ingredients={otherIngredients}
+            onOpenPicker={() => setIsIngredientPickerOpen(true)}
+            onUpdate={updateOtherIngredient}
+            onRemove={removeOtherIngredient}
+            collapsedWhenEmpty
+          />
+        </>
       ) : (
       <div className="hs-water-grid">
         {/* Row 1: water plan header — left column only, stops at the column
@@ -767,6 +1008,7 @@ function WaterPlanHeaderRow({
   includeBakingSoda: boolean;
   onToggleBakingSoda: (v: boolean) => void;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
     <div
       style={{
@@ -805,12 +1047,21 @@ function WaterPlanHeaderRow({
           marginRight: 4,
         }}
       />
-      <AutoCalcCompoundButton
-        onAutoCalculate={onAutoCalculate}
-        canAutoCalc={canAutoCalc}
-        includeBakingSoda={includeBakingSoda}
-        onToggleBakingSoda={onToggleBakingSoda}
-      />
+      {/* Morph landing spot: when the intro's big Auto-Calc CTA completes,
+          framer glides it into this compound button so the user sees where
+          the control lives from now on. */}
+      <motion.div
+        layoutId={AUTOCALC_MORPH_ID}
+        transition={reduceMotion ? { duration: 0 } : springSupersoft}
+        style={{ display: "inline-flex", borderRadius: 999 }}
+      >
+        <AutoCalcCompoundButton
+          onAutoCalculate={onAutoCalculate}
+          canAutoCalc={canAutoCalc}
+          includeBakingSoda={includeBakingSoda}
+          onToggleBakingSoda={onToggleBakingSoda}
+        />
+      </motion.div>
     </div>
   );
 }
@@ -1589,16 +1840,29 @@ function OtherIngredientsBlock({
   onOpenPicker,
   onUpdate,
   onRemove,
+  collapsedWhenEmpty = false,
 }: {
   ingredients: OtherIngredient[];
   onOpenPicker: () => void;
   onUpdate: (id: string, updates: Partial<OtherIngredient>) => void;
   onRemove: (id: string) => void;
+  /** While the water intro is on screen, the block renders header-row only
+   *  (eyebrow + count + Add) so the intro stays the single empty card; the
+   *  full dashed empty state appears once the intro completes. Added items
+   *  always render regardless. */
+  collapsedWhenEmpty?: boolean;
 }) {
   const count = ingredients.length;
+  const reduceMotion = useReducedMotion();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div
+      {/* Shared layoutId: this same header row renders in the intro branch
+          (collapsed) and the full panel, so completing the intro glides it
+          from under the intro card down to its permanent spot instead of
+          teleporting. */}
+      <motion.div
+        layoutId="hs-water-other-head-morph"
+        transition={reduceMotion ? { duration: 0 } : springSupersoft}
         className="hs-water-other-head"
         style={{
           display: "flex",
@@ -1624,10 +1888,24 @@ function OtherIngredientsBlock({
         <HSButton onClick={onOpenPicker} color={hsTokens.water} size="sm">
           + Add
         </HSButton>
-      </div>
+      </motion.div>
 
       {count === 0 ? (
-        <EmptyOtherIngredients onAdd={onOpenPicker} />
+        collapsedWhenEmpty ? null : (
+          // Trails the header's glide slightly so the card reads as arriving
+          // with it rather than popping in beside it.
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              reduceMotion
+                ? { duration: 0 }
+                : { duration: 0.24, ease: "easeOut", delay: 0.12 }
+            }
+          >
+            <EmptyOtherIngredients onAdd={onOpenPicker} />
+          </motion.div>
+        )
       ) : (
         <div
           className="hs-water-other-ledger"
@@ -1655,6 +1933,9 @@ function OtherIngredientsBlock({
 }
 
 function EmptyOtherIngredients({ onAdd }: { onAdd: () => void }) {
+  // Same dashed-card recipe as the other sections' empty states
+  // (fermentables, the water intro): cream2, 1.5px dashed ink, script
+  // kicker, 15px muted body, primary CTA.
   return (
     <div
       style={{
@@ -1662,37 +1943,30 @@ function EmptyOtherIngredients({ onAdd }: { onAdd: () => void }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 10,
-        padding: "26px 16px",
+        gap: 14,
+        padding: "32px 28px",
         background: hsTokens.cream2,
-        backgroundImage: dashedBorderBg(hsTokens.ink, {
-          dash: 10,
-          gap: 7,
-          strokeWidth: 1.5,
-          radius: 14,
-        }),
-        backgroundRepeat: "no-repeat",
-        border: "none",
-        borderRadius: 14,
+        border: `1.5px dashed ${hsTokens.ink}`,
+        borderRadius: 10,
         textAlign: "center",
       }}
     >
-      <HSScriptNote color={hsTokens.water} size={18} rotate={-3}>
+      <HSScriptNote color={hsTokens.water} size={24} rotate={-4}>
         additional items —
       </HSScriptNote>
       <p
         style={{
           fontFamily: hsTokens.body,
-          fontSize: 13,
+          fontSize: 15,
           color: hsTokens.muted,
           margin: 0,
-          maxWidth: 360,
+          maxWidth: 380,
           lineHeight: 1.4,
         }}
       >
         Finings, spices, water agents, oak — anything beyond grain, hops, yeast, and salts.
       </p>
-      <HSButton onClick={onAdd} color={hsTokens.water} size="sm">
+      <HSButton onClick={onAdd} color={hsTokens.water} size="md">
         + Add an ingredient
       </HSButton>
     </div>
@@ -2726,15 +3000,6 @@ function Eyebrow({
       {children}
     </span>
   );
-}
-
-function dashedBorderBg(
-  color: string,
-  opts: { dash: number; gap: number; strokeWidth: number; radius: number }
-) {
-  const { dash, gap, strokeWidth, radius } = opts;
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'><rect width='100%' height='100%' rx='${radius}' ry='${radius}' fill='none' stroke='${color}' stroke-width='${strokeWidth}' stroke-dasharray='${dash} ${gap}'/></svg>`;
-  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
 }
 
 // ─── Section CSS ──────────────────────────────────────────────────

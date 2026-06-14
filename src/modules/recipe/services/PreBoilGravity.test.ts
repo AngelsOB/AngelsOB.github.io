@@ -176,15 +176,17 @@ describe('Pre-boil gravity consistency', () => {
     const postBoilSugar = (calc.og - 1) * postBoilColdL;
     expect(preBoilSugar).toBeCloseTo(postBoilSugar, 6);
 
-    // OG should still be ~1.055 (unchanged by this fix)
-    expect(calc.og).toBeCloseTo(1.055, 2);
+    // OG is now measured at the cold post-boil volume (~23.9 L), not the
+    // packaged 19 L. With 4.9 L of losses that drops OG from the old
+    // batch-volume value (~1.055) to ~1.044.
+    expect(calc.og).toBeCloseTo(1.044, 2);
 
-    // Pre-boil gravity should be higher than old value (~1.039)
-    // Old: 1 + (0.055 × 19) / 27.2 ≈ 1.038
-    // New: 1 + (0.055 × 23.9) / 27.2 ≈ 1.048
-    expect(preBoilGravity).toBeGreaterThan(1.042);
+    // Pre-boil gravity dilutes that OG back over the larger pre-boil volume.
+    //   New:           1 + (0.0438 × 23.9) / 27.2 ≈ 1.0385
+    //   Old batch-vol: 1 + (0.0438 × 19)   / 27.2 ≈ 1.0306
+    expect(preBoilGravity).toBeGreaterThan(1.035);
 
-    // Large losses (4.9L) create a big gap between old and new formula
+    // Large losses (4.9L) keep a clear gap between the corrected and old formula
     const oldPreBoilGravity = 1 + ((calc.og - 1) * recipe.batchVolumeL) / calc.preBoilVolumeL;
     expect(preBoilGravity - oldPreBoilGravity).toBeGreaterThan(0.005);
   });

@@ -54,6 +54,7 @@ import { usePresetStore } from "@/modules/recipe/stores/presetStore";
 import { toast } from "@/stores/toastStore";
 import { fermentableCalculationService } from "@/modules/recipe/services/FermentableCalculationService";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { usePreferencesStore } from "@/modules/auth/preferencesStore";
 import type { Fermentable } from "@/modules/recipe/models/Recipe";
 import type { FermentablePreset } from "@/modules/recipe/models/Presets";
 import { getFermentability } from "@/modules/recipe/data/fermentablePresets";
@@ -108,6 +109,8 @@ export default function FermentableSection() {
   const removeFermentable = useRecipeStore((s) => s.removeFermentable);
   const reorderFermentables = useRecipeStore((s) => s.reorderFermentables);
 
+  const attenuationModel = usePreferencesStore((s) => s.attenuationModel);
+
   const fermentablePresetsGrouped = usePresetStore((s) => s.fermentablePresetsGrouped);
   const loadFermentablePresets = usePresetStore((s) => s.loadFermentablePresets);
   const saveFermentablePreset = usePresetStore((s) => s.saveFermentablePreset);
@@ -136,7 +139,7 @@ export default function FermentableSection() {
         abv,
         currentRecipe.batchVolumeL,
         currentRecipe.equipment.mashEfficiencyPercent || 75,
-        recipeCalculationService.getEffectiveAttenuation(currentRecipe)
+        recipeCalculationService.getEffectiveAttenuation(currentRecipe, attenuationModel)
       );
       updated.forEach((f) => {
         const cur = currentRecipe.fermentables.find((cf) => cf.id === f.id);
@@ -145,7 +148,7 @@ export default function FermentableSection() {
         }
       });
     },
-    [currentRecipe, updateFermentable]
+    [currentRecipe, updateFermentable, attenuationModel]
   );
 
   const handleTargetABVChange = useCallback((v: number) => {
@@ -220,7 +223,7 @@ export default function FermentableSection() {
   useEffect(() => {
     if (mode !== "percent" || !currentRecipe) return;
     const og = recipeCalculationService.calculateOG(currentRecipe);
-    const fg = recipeCalculationService.calculateFG(currentRecipe);
+    const fg = recipeCalculationService.calculateFG(currentRecipe, { attenuationModel });
     setTargetABV(parseFloat(recipeCalculationService.calculateABV(og, fg).toFixed(1)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);

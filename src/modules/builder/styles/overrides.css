@@ -399,22 +399,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ────────────── MODALS ────────────── */
-
-.hs-theme .brew-modal {
-  background: var(--hs-paper) !important;
-  background-image: none !important;
-  border: 2px solid var(--hs-ink) !important;
-  border-top: 7px solid var(--hs-malt) !important;
-  border-radius: var(--hs-radius-lg) !important;
-  box-shadow: var(--hs-shadow-4) !important;
-}
-.hs-theme .brew-modal::before,
-.hs-theme .brew-modal::after {
-  display: none !important;
-  content: none !important;
-}
-
 /* ────────────── FLAVOR RADAR softening ────────────── */
 
 .hs-theme .recharts-polar-grid line,
@@ -1126,6 +1110,18 @@
   border-radius: 0;
   box-shadow: none;
   padding: 0;
+}
+/* Empty/intro sections collapse to a single full-width column — the helper
+   side column springs out (SideColumnMorph's AnimatePresence). Keep the paper
+   frame (unlike .is-brewsheet); only the track count changes, so the main
+   column FLIP-grows to fill. Deliberately NO `display: none` on
+   .hs-builder-side — the popLayout exit needs the leaving column to stay
+   paintable; its position:absolute clone sits outside grid flow anyway. */
+.hs-theme .hs-builder-grid.section-empty {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "title"
+    "main";
 }
 .hs-theme .hs-builder-title { grid-area: title; }
 .hs-theme .hs-builder-main {

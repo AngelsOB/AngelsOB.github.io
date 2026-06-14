@@ -77,7 +77,7 @@ describe('Recipe Calculation Service', () => {
     });
 
     test('calculates OG for standard pale ale grist', () => {
-      // 5kg pale malt × 37 PPG × 75% eff / 5.28 gal ≈ 1.058
+      // 5kg pale malt × 37 PPG × 75% eff / post-boil volume ≈ 1.053
       const recipe = createTestRecipe({
         batchVolumeL: 20,
         fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
@@ -85,6 +85,25 @@ describe('Recipe Calculation Service', () => {
       const og = recipeCalculationService.calculateOG(recipe);
       expect(og).toBeGreaterThan(1.050);
       expect(og).toBeLessThan(1.070);
+    });
+
+    test('OG is measured at post-boil volume — bigger losses dilute OG', () => {
+      // Same grist, but more kettle loss => larger cold post-boil volume =>
+      // the extract is divided by a bigger denominator => lower OG. This only
+      // holds because OG references post-boil volume, not packaged volume.
+      const base = createTestRecipe({
+        batchVolumeL: 20,
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+        equipment: { ...createTestRecipe().equipment, kettleLossLiters: 0 },
+      });
+      const lossy = createTestRecipe({
+        batchVolumeL: 20,
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+        equipment: { ...createTestRecipe().equipment, kettleLossLiters: 4 },
+      });
+      expect(recipeCalculationService.calculateOG(lossy)).toBeLessThan(
+        recipeCalculationService.calculateOG(base)
+      );
     });
 
     test('higher grain weight yields higher OG', () => {
@@ -189,6 +208,95 @@ describe('Recipe Calculation Service', () => {
       // Lactose should result in higher FG
       expect(lactoseFG).toBeGreaterThan(normalFG);
     });
+
+    const lager = { id: 'y1', name: 'WLP860', attenuation: 0.72, type: 'lager', lab: 'WL', labId: 'WLP860' } as Yeast;
+    const singleInfusion = (T: number, yeast: Yeast = lager) =>
+      createTestRecipe({
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+        yeasts: [yeast],
+        mashSteps: [{ id: 's1', name: 'sacch', temperatureC: T, durationMinutes: 60 }] as Recipe['mashSteps'],
+      });
+
+    test('linear: lower saccharification rest ferments further (lower FG)', () => {
+      const low = recipeCalculationService.calculateFG(singleInfusion(63), { attenuationModel: 'linear' });
+      const high = recipeCalculationService.calculateFG(singleInfusion(70), { attenuationModel: 'linear' });
+      expect(low).toBeLessThan(high);
+    });
+
+    test('linear formula: Grainfather 0.0225/°C off the 67.5°C neutral point', () => {
+      const eff = (T: number) => recipeCalculationService.getEffectiveAttenuation(singleInfusion(T), 'linear');
+      expect(eff(67.5)).toBeCloseTo(0.72, 4);
+      expect(eff(63)).toBeCloseTo(0.72 - 0.0225 * (63 - 67.5), 4); // ~0.821
+      expect(eff(70)).toBeCloseTo(0.72 - 0.0225 * (70 - 67.5), 4); // ~0.664
+    });
+
+    test('linear uses the LOWEST saccharification rest (Grainfather convention)', () => {
+      // A 63/30 + 70/30 step mash → lowest in-window rest is 63°C (not the average).
+      const step = createTestRecipe({
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+        yeasts: [lager],
+        mashSteps: [
+          { id: 's1', name: 'beta', temperatureC: 63, durationMinutes: 30 },
+          { id: 's2', name: 'alpha', temperatureC: 70, durationMinutes: 30 },
+        ] as Recipe['mashSteps'],
+      });
+      const eff = recipeCalculationService.getEffectiveAttenuation(step, 'linear');
+      expect(eff).toBeCloseTo(0.72 - 0.0225 * (63 - 67.5), 3); // lowest rest 63°C → ~0.821
+    });
+
+    test('linear: very hot mash (>72.5°C) reads dextrinous, not nominal', () => {
+      const hot = recipeCalculationService.getEffectiveAttenuation(singleInfusion(74), 'linear');
+      expect(hot).toBeLessThan(0.72); // regression: used to fall back to nominal
+    });
+
+    test('no mash steps (extract) → neutral nominal attenuation (both models)', () => {
+      const us05 = { id: 'y1', name: 'US-05', attenuation: 0.81, type: 'ale', lab: 'T', labId: 'T1' } as Yeast;
+      const recipe = createTestRecipe({ fermentables: [createFermentable({ weightKg: 5 })], yeasts: [us05], mashSteps: [] });
+      expect(recipeCalculationService.getEffectiveAttenuation(recipe, 'linear')).toBeCloseTo(0.81, 4);
+      expect(recipeCalculationService.getEffectiveAttenuation(recipe, 'kinetic')).toBeCloseTo(0.81, 2);
+    });
+
+    test('kinetic (default) anchors at 67.5°C and is monotonic in mash temp', () => {
+      expect(recipeCalculationService.getEffectiveAttenuation(singleInfusion(67.5), 'kinetic')).toBeCloseTo(0.72, 2);
+      const aa = (T: number) => recipeCalculationService.getEffectiveAttenuation(singleInfusion(T), 'kinetic');
+      expect(aa(64)).toBeGreaterThan(aa(68)); // cooler mash → more fermentable
+      expect(aa(68)).toBeGreaterThan(aa(72));
+    });
+
+    test('Märzen HochKurz step mash: OG matches, both models give a plausible FG', () => {
+      const y = (v: number) => Math.round((v / 100) * 46);
+      const marzen = createTestRecipe({
+        batchVolumeL: 20.5,
+        fermentables: [
+          createFermentable({ id: 'f1', name: 'Pilsner', weightKg: 2.722, colorLovibond: 2, ppg: y(78.91) }),
+          createFermentable({ id: 'f2', name: 'Munich', weightKg: 2.268, colorLovibond: 6, ppg: y(80.43) }),
+          createFermentable({ id: 'f3', name: 'Munich II', weightKg: 0.907, colorLovibond: 10, ppg: y(80.43) }),
+          createFermentable({ id: 'f4', name: 'Melanoidin', weightKg: 0.113, colorLovibond: 27, ppg: y(75) }),
+        ],
+        yeasts: [lager],
+        mashSteps: [
+          { id: 's1', name: 'acid', temperatureC: 55, durationMinutes: 10 },
+          { id: 's2', name: 'beta', temperatureC: 63, durationMinutes: 30 },
+          { id: 's3', name: 'alpha', temperatureC: 70, durationMinutes: 30 },
+          { id: 's4', name: 'out', temperatureC: 76, durationMinutes: 15 },
+        ] as Recipe['mashSteps'],
+        equipment: { ...createTestRecipe().equipment, mashEfficiencyPercent: 66, kettleLossLiters: 0, chillerLossLiters: 1, fermenterLossLiters: 0 },
+      });
+      const og = recipeCalculationService.calculateOG(marzen);
+      expect(og).toBeCloseTo(1.056, 2);  // OG matches Brewfather / the real beer
+
+      // Real batch finished 1.011 (80.4%). The kinetic model predicts ~76% (FG ~1.013,
+      // population-typical for a 63/70 step); the linear model uses the lowest rest
+      // (63°C, Grainfather) so it over-credits to ~82% (FG ~1.010). Both plausible.
+      for (const model of ['kinetic', 'linear'] as const) {
+        const fg = recipeCalculationService.calculateFG(marzen, { attenuationModel: model });
+        const abv = recipeCalculationService.calculateABV(og, fg);
+        expect(fg).toBeGreaterThan(1.008);
+        expect(fg).toBeLessThan(1.016);
+        expect(abv).toBeGreaterThan(5.2);
+        expect(abv).toBeLessThan(6.2);
+      }
+    });
   });
 
   describe('calculateABV', () => {
@@ -280,6 +388,40 @@ describe('Recipe Calculation Service', () => {
 
       // FWH gets +20 minutes bonus, so should have higher IBU
       expect(fwhIBU).toBeGreaterThan(boilIBU);
+    });
+
+    test('first wort hops use the full boil time even when timeMinutes is unset (regression)', () => {
+      // The builder creates FWH with timeMinutes cleared. The old code read that
+      // as 0 and computed tinseth(0 + 20) — roughly half the correct value.
+      const fwh = createTestRecipe({
+        hops: [createHop({ type: 'first wort', timeMinutes: undefined })],
+      });
+      const boil20 = createTestRecipe({
+        hops: [createHop({ type: 'boil', timeMinutes: 20 })],
+      });
+      const boil60 = createTestRecipe({
+        hops: [createHop({ type: 'boil', timeMinutes: 60 })],
+      });
+
+      const fwhIBU = recipeCalculationService.calculateIBU(fwh, 1.05);
+      const boil20IBU = recipeCalculationService.calculateIBU(boil20, 1.05);
+      const boil60IBU = recipeCalculationService.calculateIBU(boil60, 1.05);
+
+      // FWH steeps the whole boil (boilTime + 20), so it beats a 60-min boil
+      // addition and sits far above the old half-strength (~20 min) value.
+      expect(fwhIBU).toBeGreaterThan(boil60IBU);
+      expect(fwhIBU).toBeGreaterThan(boil20IBU * 1.6);
+    });
+
+    test('boil-gravity averaging raises IBU vs using post-boil OG', () => {
+      const recipe = createTestRecipe({
+        hops: [createHop({ type: 'boil', timeMinutes: 60 })],
+      });
+      // A lower average boil gravity reduces Tinseth's bigness suppression, so
+      // passing the boil average yields more IBU than passing OG alone.
+      const withAveraging = recipeCalculationService.calculateIBU(recipe, 1.06, 1.045);
+      const withOgOnly = recipeCalculationService.calculateIBU(recipe, 1.06, 1.06);
+      expect(withAveraging).toBeGreaterThan(withOgOnly);
     });
 
     test('handles whirlpool hops with temperature adjustment', () => {

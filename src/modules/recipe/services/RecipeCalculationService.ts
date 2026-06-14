@@ -11,8 +11,9 @@ import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
 import { mashScheduleService } from './MashScheduleService';
 import { inferFermentability, inferType } from '@/modules/recipe/data/fermentablePresets';
+import { abvFromOGFG } from '@/calculators/abv';
 
-export type AttenuationModel = 'linear' | 'enzyme_kinetics' | 'brandam_ode';
+export type AttenuationModel = 'kinetic' | 'linear';
 
 export type CalcOptions = {
   attenuationModel?: AttenuationModel;
@@ -26,7 +27,6 @@ export class RecipeCalculationService {
     const og = this.calculateOG(recipe);
     const fg = this.calculateFG(recipe, options);
     const abv = this.calculateABV(og, fg);
-    const ibu = this.calculateIBU(recipe, og);
     const srm = this.calculateSRM(recipe);
 
     // Volume calculations
@@ -34,6 +34,17 @@ export class RecipeCalculationService {
     const mashWaterL = volumeCalculationService.calculateMashWater(recipe);
     const spargeWaterL = volumeCalculationService.calculateSpargeWater(recipe);
     const totalWaterL = volumeCalculationService.calculateTotalWater(recipe);
+
+    // Pre-boil gravity: dilute OG back to pre-boil volume.
+    const postBoilColdL = volumeCalculationService.calculatePostBoilVolume(recipe);
+    const preBoilGravity = preBoilVolumeL > 0
+      ? 1 + ((og - 1) * postBoilColdL) / preBoilVolumeL
+      : og;
+
+    // IBU uses the *average* boil gravity (Tinseth's bigness factor expects the
+    // mean wort gravity over the boil), not the post-boil OG.
+    const boilGravity = (preBoilGravity + og) / 2;
+    const ibu = this.calculateIBU(recipe, og, boilGravity);
 
     // Nutrition (per 355 ml / 12 oz serving)
     const { calories, carbsG } = this.calculateNutrition(og, fg);
@@ -61,14 +72,6 @@ export class RecipeCalculationService {
         )
       : null;
 
-    // Pre-boil gravity: dilute OG back to pre-boil volume
-    const boilOffL = (recipe.equipment.boilOffRateLPerHour * recipe.equipment.boilTimeMin) / 60;
-    const shrinkageFactor = 1 + recipe.equipment.coolingShrinkagePercent / 100;
-    const postBoilColdL = Math.max(0, (preBoilVolumeL - boilOffL) / shrinkageFactor);
-    const preBoilGravity = preBoilVolumeL > 0
-      ? 1 + ((og - 1) * postBoilColdL) / preBoilVolumeL
-      : og;
-
     return {
       og,
       fg,
@@ -89,31 +92,52 @@ export class RecipeCalculationService {
   }
 
   /**
-   * Calculate Original Gravity
-   * Formula: OG = 1 + (total gravity points / batch volume in gallons)
+   * Gravity points per the post-boil volume, split by fermentability.
    *
-   * Mash efficiency is applied to grains and mashable adjuncts. Sugars and
+   * Shared by calculateOG and calculateFG so they always use the same extract
+   * total and the same denominator — they can't drift apart. Points are scaled
+   * so that gravity = 1 + points / 1000.
+   *
+   * The denominator is the cold post-boil volume (where all the extract is
+   * dissolved), NOT the smaller packaged volume — see calculatePostBoilVolume.
+   * Mash efficiency is applied to grains and mashable adjuncts; sugars and
    * extracts dissolve completely and use 100% efficiency.
    */
-  calculateOG(recipe: Recipe): number {
+  private gravityPointsSplit(recipe: Recipe): { fermentablePts: number; nonFermentablePts: number } {
     const { fermentables, batchVolumeL, equipment } = recipe;
+    const postBoilGal = volumeCalculationService.calculatePostBoilVolume(recipe) * 0.264172;
 
-    if (fermentables.length === 0 || batchVolumeL <= 0) {
-      return 1.0;
+    if (fermentables.length === 0 || batchVolumeL <= 0 || postBoilGal <= 0) {
+      return { fermentablePts: 0, nonFermentablePts: 0 };
     }
 
-    const batchVolumeGal = batchVolumeL * 0.264172; // liters to gallons
     const mashEfficiency = equipment.mashEfficiencyPercent / 100;
+    let fermentablePts = 0;
+    let nonFermentablePts = 0;
 
-    const totalGravityPoints = fermentables.reduce((sum, fermentable) => {
-      const weightLbs = fermentable.weightKg * 2.20462; // kg to lbs
-      const efficiency = this.getEfficiency(fermentable, mashEfficiency);
-      const points = fermentable.ppg * weightLbs * efficiency;
-      return sum + points;
-    }, 0);
+    for (const f of fermentables) {
+      const weightLbs = f.weightKg * 2.20462; // kg to lbs
+      const efficiency = this.getEfficiency(f, mashEfficiency);
+      const pts = (f.ppg * weightLbs * efficiency) / postBoilGal;
+      const ferm = this.getFermentability(f);
+      fermentablePts += pts * ferm;
+      nonFermentablePts += pts * (1 - ferm);
+    }
 
-    const gravityPoints = totalGravityPoints / batchVolumeGal;
-    return 1 + gravityPoints / 1000;
+    return { fermentablePts, nonFermentablePts };
+  }
+
+  /**
+   * Calculate Original Gravity
+   * Formula: OG = 1 + (total gravity points / post-boil volume in gallons)
+   *
+   * Measured against the cold post-boil volume, matching Brewfather. Mash
+   * efficiency is applied to grains and mashable adjuncts; sugars and extracts
+   * dissolve completely and use 100% efficiency.
+   */
+  calculateOG(recipe: Recipe): number {
+    const { fermentablePts, nonFermentablePts } = this.gravityPointsSplit(recipe);
+    return 1 + (fermentablePts + nonFermentablePts) / 1000;
   }
 
   /**
@@ -127,42 +151,21 @@ export class RecipeCalculationService {
    *     Applied only to the fermentable share.
    *
    * FG = 1 + (nonFermentablePts + fermentablePts × (1 − effAtt)) / 1000
+   *
+   * `effAtt` is the wort's apparent attenuation, set by the mash (see the model
+   * implementations). The non-fermentable share (lactose, maltodextrin, part of
+   * crystal/specialty) is held back regardless of model.
    */
   calculateFG(recipe: Recipe, options?: CalcOptions): number {
-    const { fermentables, batchVolumeL, equipment } = recipe;
-
-    // --- 1. Split gravity points by fermentability ---
-    const batchVolumeGal = batchVolumeL * 0.264172;
-    const mashEfficiency = equipment.mashEfficiencyPercent / 100;
-
-    let fermentablePts = 0;
-    let nonFermentablePts = 0;
-
-    if (fermentables.length > 0 && batchVolumeGal > 0) {
-      for (const f of fermentables) {
-        const weightLbs = f.weightKg * 2.20462;
-        const efficiency = this.getEfficiency(f, mashEfficiency);
-        const pts = (f.ppg * weightLbs * efficiency) / batchVolumeGal;
-        const ferm = this.getFermentability(f);
-        fermentablePts += pts * ferm;
-        nonFermentablePts += pts * (1 - ferm);
-      }
-    }
+    // --- 1. Split gravity points by fermentability (shared with calculateOG) ---
+    const { fermentablePts, nonFermentablePts } = this.gravityPointsSplit(recipe);
 
     const totalPts = fermentablePts + nonFermentablePts;
     // Guard: if no gravity points, nothing to attenuate
     if (totalPts <= 0) return 1.0;
 
-    // --- 2. Effective attenuation (yeast + process adjustments) ---
-    const model = options?.attenuationModel ?? 'linear';
-    let effAtt: number;
-    if (model === 'brandam_ode') {
-      effAtt = this.computeEffectiveAttenuationODE(recipe);
-    } else if (model === 'enzyme_kinetics') {
-      effAtt = this.computeEffectiveAttenuationEnzyme(recipe);
-    } else {
-      effAtt = this.computeEffectiveAttenuation(recipe);
-    }
+    // --- 2. Effective attenuation (mash-aware) ---
+    const effAtt = this.computeEffectiveAttenuation(recipe, options?.attenuationModel);
 
     return 1 + (nonFermentablePts + fermentablePts * (1 - effAtt)) / 1000;
   }
@@ -189,278 +192,178 @@ export class RecipeCalculationService {
     return mashEfficiency;
   }
 
-  /**
-   * Compute effective attenuation from yeast base + mash adjustments.
-   *
-   * Factors: mash temperature (ref 67 °C, ~1%/°C per Braukaiser) and
-   * mash duration (ref 60 min, capped ±3%). Result clamped to [0.60, 0.95].
-   *
-   * Reference temperature of 67 °C is the midpoint of the beta-/alpha-amylase
-   * activity balance observed in Braukaiser's single-infusion mash experiments.
-   *
-   * Fermentation temperature, fermentation duration, and decoction bonuses
-   * were removed — fermentation has a terminal gravity determined by wort
-   * composition, not time or temp, and controlled experiments (Brulosophy)
-   * found no measurable attenuation difference from decoction with modern malts.
-   */
-  getEffectiveAttenuation(recipe: Recipe): number {
-    return this.computeEffectiveAttenuation(recipe);
+  /** Yeast's published apparent attenuation (fraction). Defaults to 0.75. */
+  private nominalAttenuation(recipe: Recipe): number {
+    return recipe.yeasts.length > 0 ? recipe.yeasts[0].attenuation : 0.75;
   }
 
-  private computeEffectiveAttenuation(recipe: Recipe): number {
+  // "Brewer's window": the saccharification-rest range that sets wort
+  // fermentability. 67.5 °C is the neutral point where a yeast reaches exactly
+  // its published attenuation (Brewfather/Grainfather convention).
+  private static readonly MASH_WINDOW = { lo: 62.5, hi: 72.5, center: 67.5 };
+
+  /**
+   * Lowest saccharification rest inside the brewer's window (62.5–72.5 °C) — the
+   * rest that governs fermentability in the simple Linear model (Grainfather
+   * convention). Sub-rests (protein/ferulic) and the mash-out are ignored.
+   *
+   * No in-window rest: a sub-saccharification rest (55–62.5 °C) clamps up to the
+   * floor; an all-too-hot mash (>72.5 °C) clamps to the ceiling (so a 74 °C mash
+   * reads dextrinous, not neutral); otherwise falls back to the neutral 67.5 °C.
+   */
+  private saccharificationTempC(recipe: Recipe): number {
+    const { lo, hi, center } = RecipeCalculationService.MASH_WINDOW;
+    const temps = recipe.mashSteps
+      .map((s) => s.temperatureC)
+      .filter((t): t is number => t != null);
+
+    const inWindow = temps.filter((t) => t >= lo && t <= hi);
+    if (inWindow.length > 0) return Math.min(...inWindow);
+    if (temps.some((t) => t >= 55 && t < lo)) return lo;
+    if (temps.length > 0 && temps.every((t) => t > hi)) return hi;
+    return center;
+  }
+
+  /**
+   * Public accessor for the effective apparent attenuation under a given model
+   * (defaults to kinetic). Used by the builder's weight↔ABV back-calc.
+   */
+  getEffectiveAttenuation(recipe: Recipe, model?: AttenuationModel): number {
+    return this.computeEffectiveAttenuation(recipe, model);
+  }
+
+  /** Dispatch to the selected attenuation model (default: kinetic). */
+  private computeEffectiveAttenuation(recipe: Recipe, model: AttenuationModel = 'kinetic'): number {
+    if (model === 'linear') return this.computeEffectiveAttenuationLinear(recipe);
+    return this.computeEffectiveAttenuationKinetic(recipe);
+  }
+
+  /**
+   * Linear apparent attenuation — the simple "matches other apps" model.
+   *
+   * The Grainfather/Brewfather-style published formula: scale the yeast's
+   * attenuation linearly off the neutral 67.5 °C point using the lowest
+   * saccharification rest.
+   *
+   *   effAtt = nominal − 0.0225 × (T_sacch − 67.5),  clamped to [0.50, 0.95]
+   *
+   * Provided for parity with other brewing software (it reproduces Grainfather's
+   * documented calc — the only competitor mash-temp formula that's actually
+   * published; Brewfather and Brewers Friend also move FG with mash temp but don't
+   * disclose their formulas). On our measured-FG dataset
+   * it's less accurate than the kinetic model (MAE ~6 % vs ~4.7 %) — it over-credits
+   * a low single rest and a straight line over-predicts at very low mash temps.
+   */
+  private computeEffectiveAttenuationLinear(recipe: Recipe): number {
+    const nominal = this.nominalAttenuation(recipe);
+    const tSacch = this.saccharificationTempC(recipe);
+    const effAtt = nominal - 0.0225 * (tSacch - RecipeCalculationService.MASH_WINDOW.center);
+    return Math.max(0.5, Math.min(0.95, effAtt));
+  }
+
+  /**
+   * Kinetic attenuation model (default) — a Brandam-style mash simulation.
+   *
+   * Simulates the mash via forward Euler (0.5 min steps) over four sugar pools:
+   *   Starch        →(α)→ fermentable + β-convertible dextrin + branched limit dextrin
+   *   Starch, Dc    →(β)→ fermentable (maltose)
+   *   limit dextrin →(LD)→ β-convertible dextrin   (debranching)
+   * α yields a fermentable-rich spectrum (floor); branched limit dextrins are
+   * unfermentable until **limit dextrinase** debranches them — the strongest
+   * fermentability driver (r=0.84; Stenholm & Home 1999), active ~61 °C, dead by
+   * ~67 °C. β retains a 13 % thermostable isoform (De Schepper 2022). Enzyme
+   * survival uses **in-mash decay (Muller 1991)**, not buffer Arrhenius rates.
+   * Fermentable sugar accumulates and never reverts, so a low maltose rest is
+   * "banked" across a step mash.
+   *
+   * The simulated fermentable fraction is the wort's attenuation limit (AL).
+   * Apparent attenuation maps AL against the 67.5 °C reference through an *asymmetric*
+   * reach: a cool/maltose-rich wort is nearly fully fermented (reach compressed toward
+   * the limit), a hot/maltotriose-heavy wort falls short of it (reach amplified away) —
+   * the gap is the well-known incomplete uptake of maltotriose, widening with mash temp.
+   * The two blend smoothly (logistic, no kink); see the mapping comment for the mechanism.
+   * Calibrated against ~33 real measured-FG beers (single infusions + step mashes, all
+   * real ale/lager data kept in); clean-data MAE ~4.3 % apparent attenuation, hot-region
+   * bias ~0. Least-certain region: the very hot (≥71 °C) end, where the magnitude rests
+   * on ~3 batches and the yeast strain matters more than the mash.
+   *
+   * Sources: Brandam et al. (2003); Muller (1991, J. Inst. Brew.); De Schepper
+   * et al. (2022); Stenholm & Home (1999, limit dextrinase); Laus et al. (2022,
+   * isothermal fermentability vs temperature, 55–80 °C); Stewart (maltotriose uptake);
+   * Braukaiser/Woodland single-infusion data; Brulosophy/BYO measured-FG dataset.
+   */
+  private computeEffectiveAttenuationKinetic(recipe: Recipe): number {
     const baseAtt = recipe.yeasts.length > 0
       ? recipe.yeasts[0].attenuation
       : 0.75;
 
-    // Mash adjustments
-    const MASH_TEMP_REF_C = 67; // Braukaiser midpoint of the brewer's window
-    let stepTimeTotal = 0;
-    let tempAdjAcc = 0;
-    for (const step of recipe.mashSteps) {
-      const t = Math.max(0, step.durationMinutes || 0);
-      stepTimeTotal += t;
-      // Braukaiser research: ~1% attenuation change per °C (6% over 64→70°C)
-      tempAdjAcc += (MASH_TEMP_REF_C - (step.temperatureC || MASH_TEMP_REF_C)) * 0.01 * t;
-    }
-    const avgTempAdj = stepTimeTotal > 0 ? tempAdjAcc / stepTimeTotal : 0;
-    const totalMashTime = stepTimeTotal > 0 ? stepTimeTotal : 60;
-    const mashTimeAdj = Math.max(-0.03, Math.min(0.03, ((totalMashTime - 60) / 15) * 0.005));
+    // --- Catalytic rate constants (min⁻¹ at optimal temp). Brandam-inspired form,
+    // but magnitudes are calibrated to the measured-FG dataset, not Brandam's buffer
+    // values (see AttenuationModelValidation.test.ts). ---
+    const KA_REF = 0.11;  // α-amylase: starch → dextrins
+    const KB_REF = 0.050; // β-amylase: starch/dextrins → fermentable
 
-    return Math.max(0.6, Math.min(0.95,
-      baseAtt + avgTempAdj + mashTimeAdj,
-    ));
-  }
-
-  /**
-   * Enzyme kinetics attenuation model.
-   *
-   * Models α- and β-amylase as competing enzymes with:
-   *   1. Temperature-dependent catalytic activity (Gaussian curves)
-   *   2. Arrhenius thermal inactivation (first-order, from mashing experiments)
-   *   3. Residual thermostable β-amylase fraction (fractional conversion)
-   *   4. Accumulated denaturation across mash steps
-   *
-   * The ratio of β-amylase work to total work determines the fermentable
-   * fraction of wort sugars. This raw ratio is mapped to effective
-   * attenuation through log-space damping to match the empirical ~1%/°C
-   * observed by Braukaiser in the brewing range (64-72°C), while allowing
-   * natural acceleration at extreme temperatures.
-   *
-   * Behaviour:
-   *   62–72°C  ~1%/°C    (matches Braukaiser single-infusion data)
-   *   72–80°C  ~2–5%/°C  (β-amylase denaturing rapidly)
-   *   80°C+    att → 0   (β dead, only residual trace + α producing dextrins)
-   *   < 60°C   flattens  (β dominates, diminishing returns)
-   *
-   * Sources:
-   *   - Brandam et al., "A kinetic model for the mashing process" (2003)
-   *     Arrhenius denaturation parameters from mashing experiments:
-   *     β-amylase: A=7.6e60, Ea=410.7 kJ/mol; α-amylase: A=6.9e30, Ea=224.2 kJ/mol
-   *   - De Schepper et al., J. Am. Soc. Brew. Chem. (2022)
-   *     β-amylase fractional conversion: 13% thermostable residual
-   *   - Evans et al., "Impact of Thermostability of α-Amylase, β-Amylase,
-   *     and Limit Dextrinase on Potential Wort Fermentability" (2003)
-   *     Validates: α-amylase retains ~100% activity after 1 hr at 65°C
-   *   - Braukaiser, "Effect of Mash Parameters on Fermentability" (2009)
-   *     Empirical calibration target: ~1% attenuation change per °C
-   */
-  private computeEffectiveAttenuationEnzyme(recipe: Recipe): number {
-    const baseAtt = recipe.yeasts.length > 0
-      ? recipe.yeasts[0].attenuation
-      : 0.75;
-
-    // --- Enzyme catalytic activity: Gaussian temperature optima ---
+    // Gaussian catalytic activity
     const betaActivity  = (T: number) => Math.exp(-0.5 * ((T - 63) / 5) ** 2);
     const alphaActivity = (T: number) => Math.exp(-0.5 * ((T - 70) / 6) ** 2);
+    // Limit dextrinase: debranching enzyme, optimum ~61 °C, near-dead above ~67 °C
+    // (Stenholm & Home 1999). It's the single strongest predictor of wort
+    // fermentability (r=0.84, beating α and β) — it cleaves the α-1,6 branch
+    // points β-amylase can't, turning limit dextrin back into β-convertible chains.
+    const ldActivity = (T: number) => Math.exp(-0.5 * ((T - 61) / 3.5) ** 2);
 
-    // --- Arrhenius thermal inactivation ---
-    // kd(T) = A × exp(-Ea / (R × T_K))   [min⁻¹]
-    // Parameters from Brandam et al. (2003), calibrated from mashing experiments.
-    const R_GAS = 8.314; // J/(mol·K)
-
-    // β-amylase: very temperature-sensitive, denatures rapidly above 65°C
-    //   Half-lives: ~38 hr at 60°C, ~2 hr at 67°C, ~33 min at 70°C, ~14 min at 72°C
-    const BETA_KD_A  = 7.6e60;   // pre-exponential factor
-    const BETA_KD_EA = 410700;   // activation energy (J/mol)
-
-    // 13% of β-amylase is a thermostable isoform that resists denaturation
-    // (De Schepper et al. 2022 — fractional conversion inactivation model)
+    // In-mash thermal inactivation, anchored to Muller (1991) directly-measured
+    // first-order decay constants: k₆₅ = 0.0434 min⁻¹ (β, 16-min half-life),
+    // 0.0163 min⁻¹ (α, 43-min half-life). The buffer-measured Brandam/De Schepper
+    // Arrhenius rates leave β fully active for an hour at 67 °C — wrong for a
+    // substrate-protected mash, and it flattens the fermentability spread. β has
+    // the steeper thermal cliff (dies hard >67 °C); α survives toward ~78 °C.
+    // 13 % of β is a thermostable isoform that resists denaturation (De Schepper 2022).
     const BETA_RESIDUAL = 0.13;
-
-    // α-amylase: very thermostable, essentially immortal at mashing temps
-    //   Half-lives: ~82 hr at 67°C, ~8 hr at 80°C, ~33 min at 90°C
-    //   Evans (2003): retains ~100% after 1 hr at 65°C during mashing
-    const ALPHA_KD_A  = 6.9e30;
-    const ALPHA_KD_EA = 224200;
-
-    const betaKd  = (T: number) => BETA_KD_A  * Math.exp(-BETA_KD_EA  / (R_GAS * (T + 273.15)));
-    const alphaKd = (T: number) => ALPHA_KD_A * Math.exp(-ALPHA_KD_EA / (R_GAS * (T + 273.15)));
-
-    // --- Accumulate enzyme work across mash steps ---
-    //
-    // "Work" = ∫ activity(T) × surviving_fraction(t) dt
-    //
-    // For β-amylase with residual fraction f_res:
-    //   surviving(t) = f_res + (1 - f_res) × labile_remaining × exp(-kd × t)
-    //   ∫₀ᵗ surviving(s) ds = f_res × t + labile × (1 - exp(-kd×t)) / kd
-    //
-    // Denaturation accumulates across steps: if 50% of labile β-amylase
-    // died in step 1 at 65°C, step 2 at 72°C starts with only 50%.
-
-    let betaWork = 0;
-    let alphaWork = 0;
-    let betaLabile  = 1.0; // surviving labile β fraction (relative to initial)
-    let alphaLabile = 1.0; // surviving α fraction
-
-    const steps = recipe.mashSteps.length > 0
-      ? recipe.mashSteps
-      : [{ temperatureC: 67, durationMinutes: 60 }];
-
-    for (const step of steps) {
-      const T = step.temperatureC ?? 67;
-      const t = Math.max(0, step.durationMinutes ?? 0);
-      if (t <= 0) continue;
-
-      const bRate = betaActivity(T);
-      const aRate = alphaActivity(T);
-      const bKd = betaKd(T);
-      const aKd = alphaKd(T);
-
-      // β-amylase work: residual (always active) + labile (decaying)
-      const bLabileInt = bKd * t > 1e-6
-        ? (1 - Math.exp(-bKd * t)) / bKd
-        : t; // Taylor approx when kd≈0
-      betaWork += bRate * (BETA_RESIDUAL * t + betaLabile * (1 - BETA_RESIDUAL) * bLabileInt);
-
-      // α-amylase work: no residual fraction (already extremely thermostable)
-      const aLabileInt = aKd * t > 1e-6
-        ? (1 - Math.exp(-aKd * t)) / aKd
-        : t;
-      alphaWork += aRate * alphaLabile * aLabileInt;
-
-      // Update surviving labile fractions for next step
-      betaLabile  *= Math.exp(-bKd * t);
-      alphaLabile *= Math.exp(-aKd * t);
-    }
-
-    const totalWork = betaWork + alphaWork;
-    if (totalWork <= 0) return 0;
-
-    const fermentableFraction = betaWork / totalWork;
-
-    // --- Reference: 67°C / 60 min single infusion ---
-    const refBKd = betaKd(67);
-    const refAKd = alphaKd(67);
-    const refBLabileInt = refBKd * 60 > 1e-6
-      ? (1 - Math.exp(-refBKd * 60)) / refBKd
-      : 60;
-    const refBetaWork  = betaActivity(67) * (BETA_RESIDUAL * 60 + (1 - BETA_RESIDUAL) * refBLabileInt);
-    const refALabileInt = refAKd * 60 > 1e-6
-      ? (1 - Math.exp(-refAKd * 60)) / refAKd
-      : 60;
-    const refAlphaWork = alphaActivity(67) * refALabileInt;
-    const refFraction  = refBetaWork / (refBetaWork + refAlphaWork);
-
-    // --- Log-space damping with variable sensitivity ---
-    //
-    // Maps the enzyme work ratio to effective attenuation. The raw ratio
-    // changes ~7%/°C (too steep). Log-space compression + sensitivity
-    // tuning matches the empirical ~1%/°C:
-    //
-    //   logRatio    = ln(fraction / refFraction)
-    //   sensitivity = BASE_S + ACCEL × logRatio²
-    //   scaledAtt   = baseAtt × exp(logRatio × sensitivity)
-    //
-    // BASE_S gives ~1.3%/°C at the 67°C reference. ACCEL adds a quadratic
-    // term that accelerates the curve at extreme temps where enzymes
-    // denature rapidly.
-
-    if (fermentableFraction <= 0) return 0;
-
-    const BASE_S = 0.10;   // calibrated for ~1.3%/°C at 67°C (empirical median ~2.5%/°C; conservative)
-    const ACCEL  = 0.008;  // quadratic acceleration at extremes
-
-    const logRatio    = Math.log(fermentableFraction / refFraction);
-    const sensitivity = BASE_S + ACCEL * logRatio * logRatio;
-    const scaledAtt   = baseAtt * Math.exp(logRatio * sensitivity);
-
-    return Math.max(0, Math.min(0.95, scaledAtt));
-  }
-
-  /**
-   * Full ODE kinetics attenuation model (Brandam et al. 2003).
-   *
-   * Unlike the enzyme_kinetics model which computes a work *ratio*,
-   * this model directly simulates the mash by tracking sugar species:
-   *   Starch →(α)→ Dextrins (non-fermentable)
-   *   Starch →(β)→ Fermentable sugars (maltose)
-   *   Dextrins →(β)→ Fermentable sugars
-   *
-   * Enzyme denaturation uses the same Arrhenius parameters (Brandam),
-   * and β-amylase retains 13% thermostable fraction (De Schepper 2022).
-   *
-   * The simulation is solved via semi-analytical Euler: enzyme survival
-   * is computed analytically (exact exponential decay), while sugar
-   * concentrations are updated with forward Euler at 0.5 min steps.
-   *
-   * Output: the fraction of total sugar that is fermentable (F), normalized
-   * against a 67°C/60min reference, then mapped to effective attenuation
-   * via log-space damping (same technique as enzyme_kinetics model).
-   *
-   * Advantages over enzyme_kinetics model:
-   *   - Tracks substrate depletion (enzymes compete for finite starch)
-   *   - Models the α→β pipeline (α produces dextrins that β then converts)
-   *   - More physically accurate step mash behavior
-   *
-   * Sources:
-   *   - Brandam et al., "A kinetic model for the mashing process" (2003)
-   *     Rate constants: ka=0.07 min⁻¹ (α), kb=0.02 min⁻¹ (β)
-   *   - De Schepper et al., J. Am. Soc. Brew. Chem. (2022) — 13% residual β
-   *   - Evans et al. (2003) — α-amylase thermostability validation
-   */
-  private computeEffectiveAttenuationODE(recipe: Recipe): number {
-    const baseAtt = recipe.yeasts.length > 0
-      ? recipe.yeasts[0].attenuation
-      : 0.75;
-
-    // --- Brandam catalytic rate constants (min⁻¹ at optimal temp) ---
-    const KA_REF = 0.07;  // α-amylase: starch → dextrins
-    const KB_REF = 0.02;  // β-amylase: starch/dextrins → fermentable
-
-    // Gaussian catalytic activity (same as enzyme_kinetics)
-    const betaActivity  = (T: number) => Math.exp(-0.5 * ((T - 63) / 5) ** 2);
-    const alphaActivity = (T: number) => Math.exp(-0.5 * ((T - 70) / 6) ** 2);
-
-    // Arrhenius denaturation (same parameters as enzyme_kinetics)
-    const R_GAS = 8.314;
-    const BETA_KD_A  = 7.6e60,  BETA_KD_EA = 410700, BETA_RESIDUAL = 0.13;
-    const ALPHA_KD_A = 6.9e30,  ALPHA_KD_EA = 224200;
-
-    const betaKd  = (T: number) => BETA_KD_A  * Math.exp(-BETA_KD_EA  / (R_GAS * (T + 273.15)));
-    const alphaKd = (T: number) => ALPHA_KD_A * Math.exp(-ALPHA_KD_EA / (R_GAS * (T + 273.15)));
+    const betaKd  = (T: number) => 0.0434 * Math.exp(0.23 * (T - 65));
+    const alphaKd = (T: number) => 0.0163 * Math.exp(0.103 * (T - 65));
+    // Limit dextrinase thermal decay: stable to ~62.5 °C, ~60 % surviving 1 h at
+    // 65 °C, near-total loss approaching 70 °C (Stenholm & Home 1999).
+    const ldKd    = (T: number) => 0.0085 * Math.exp(0.45  * (T - 65));
 
     // --- ODE solver: semi-analytical Euler ---
     const DT = 0.5; // time step (minutes)
 
+    // α-amylase is an endo-enzyme: it yields a fermentable-rich spectrum
+    // (maltose/maltotriose/glucose), NOT pure dextrin. ALPHA_FERM is the
+    // fermentable share of α's output — it sets the high-temperature floor (an
+    // α-only mash still ferments ~62%). Of the non-fermentable remainder, CONV_FRAC
+    // is β-convertible dextrin and the rest is branch-limited dextrin β can never
+    // reach — this caps the low-temperature limit (~86%). These two constants are
+    // what make wort fermentability vary ~2%/°C instead of the raw enzyme swing.
+    const ALPHA_FERM = 0.62;
+    const CONV_FRAC = 0.40;  // β-reachable share of α's dextrin output; the rest
+                             // is α-1,6 branch-limited, reachable only via LD
+    const KLD_REF = 0.28;    // limit dextrinase debranching rate (min⁻¹ at optimum)
+
     const simulateMash = (
       mashSteps: Array<{ temperatureC?: number; durationMinutes?: number }>
     ): number => {
-      let S = 1.0;  // starch (normalized, all available)
-      let D = 0;    // dextrins (non-fermentable)
-      let F = 0;    // fermentable sugars
+      let S = 1.0;   // unconverted starch
+      let Dc = 0;    // β-convertible dextrin
+      let Dl = 0;    // limit (branched) dextrin — fermentable only once debranched
+      let F = 0;     // fermentable sugar
 
       let alphaLabile = 1.0;
       let betaLabile  = 1.0;
+      let ldLabile    = 1.0;
 
       for (const step of mashSteps) {
-        const T = step.temperatureC ?? 67;
+        const T = step.temperatureC ?? RecipeCalculationService.MASH_WINDOW.center;
         const totalTime = Math.max(0, step.durationMinutes ?? 0);
         if (totalTime <= 0) continue;
 
         const aAct = alphaActivity(T);
         const bAct = betaActivity(T);
+        const ldAct = ldActivity(T);
         const aKd  = alphaKd(T);
         const bKd  = betaKd(T);
+        const ldKdT = ldKd(T);
 
         const nSteps = Math.max(1, Math.ceil(totalTime / DT));
         const dt = totalTime / nSteps;
@@ -471,79 +374,95 @@ export class RecipeCalculationService {
           // Analytical enzyme survival at time t within this step
           const alpha = alphaLabile * Math.exp(-aKd * t);
           const betaSurv = BETA_RESIDUAL + (1 - BETA_RESIDUAL) * betaLabile * Math.exp(-bKd * t);
+          const ldSurv = ldLabile * Math.exp(-ldKdT * t);
 
-          // Effective catalytic rates
           const ka = KA_REF * aAct * alpha;
           const kb = KB_REF * bAct * betaSurv;
+          const kld = KLD_REF * ldAct * ldSurv;
 
-          // Sugar species changes (Euler step)
-          // dS/dt = -(ka + kb) * S
-          // dD/dt = ka * S - kb * D
-          // dF/dt = kb * (S + D)
-          const dS = (ka + kb) * S * dt;
-          const dDfromStarch = ka * S * dt;
-          const dDtaken = kb * D * dt;
-          const dFfromStarch = kb * S * dt;
-          const dFfromDextrin = dDtaken;
+          // α on starch → fermentable + convertible dextrin + limit dextrin
+          const aFlux = ka * S * dt;
+          // β on starch → maltose; β on convertible dextrin → maltose
+          const bFromS = kb * S * dt;
+          const bFromDc = kb * Dc * dt;
+          // limit dextrinase debranches limit dextrin → β-convertible dextrin
+          const ldFlux = Math.min(Dl, kld * Dl * dt);
 
-          S = Math.max(0, S - dS);
-          D = Math.max(0, D + dDfromStarch - dDtaken);
-          F = Math.max(0, F + dFfromStarch + dFfromDextrin);
+          S  = Math.max(0, S - aFlux - bFromS);
+          Dc = Math.max(0, Dc + aFlux * (1 - ALPHA_FERM) * CONV_FRAC - bFromDc + ldFlux);
+          Dl = Math.max(0, Dl + aFlux * (1 - ALPHA_FERM) * (1 - CONV_FRAC) - ldFlux);
+          F  = Math.max(0, F + aFlux * ALPHA_FERM + bFromS + bFromDc);
         }
 
-        // Carry over enzyme denaturation for next step
+        // Carry over enzyme denaturation for next step (banked across the mash)
         alphaLabile *= Math.exp(-aKd * totalTime);
         betaLabile  *= Math.exp(-bKd * totalTime);
+        ldLabile    *= Math.exp(-ldKdT * totalTime);
       }
 
-      // Fermentable fraction of ALL sugar (including unconverted starch as non-fermentable)
-      // S + D + F = 1.0 by conservation, so total = 1
-      return F;
+      // Fermentable fraction of all extract (S + Dc + Dl + F = 1). Fermentable
+      // sugar accumulates and never reverts, so a low β-rest is "banked" even if
+      // later steps run hot — the physical basis for step-mash fermentability.
+      return F + S * ALPHA_FERM; // treat any residual starch as if α-converted
     };
 
+    const center = RecipeCalculationService.MASH_WINDOW.center;
     const steps = recipe.mashSteps.length > 0
       ? recipe.mashSteps
-      : [{ temperatureC: 67, durationMinutes: 60 }];
+      : [{ temperatureC: center, durationMinutes: 60 }];
 
-    const actualF = simulateMash(steps);
-    const refF = simulateMash([{ temperatureC: 67, durationMinutes: 60 }]);
+    const actualAL = simulateMash(steps);
+    const refAL = simulateMash([{ temperatureC: center, durationMinutes: 60 }]);
+    if (refAL <= 0 || actualAL <= 0) return baseAtt;
 
-    if (refF <= 0) return 0;
-    if (actualF <= 0) return 0;
-
-    // --- Log-space damping (same technique as enzyme_kinetics model) ---
-    //
-    // The raw ODE fermentable fraction changes ~8–10%/°C — far steeper
-    // than the empirical ~1%/°C (Braukaiser). This is intrinsic to the
-    // enzyme rate constants: α produces dextrins 3.5× faster than β
-    // produces fermentable sugars, so small changes in the β/α balance
-    // cause large swings in the output ratio.
-    //
-    // Log-space damping compresses the ratio to match reality while
-    // preserving the ODE model's advantages (substrate depletion,
-    // α→β pipeline, accumulated denaturation).
-    const logRatio = Math.log(actualF / refF);
-    const BASE_S = 0.10;   // calibrated for ~1.3%/°C at 67°C (empirical median ~2.5%/°C; conservative)
-    const ACCEL  = 0.008;  // quadratic acceleration at extremes
-    const sensitivity = BASE_S + ACCEL * logRatio * logRatio;
-    const effAtt = baseAtt * Math.exp(logRatio * sensitivity);
-
-    return Math.max(0, Math.min(0.95, effAtt));
+    // Map the wort's attenuation-limit ratio to apparent attenuation, anchored so the
+    // 67.5 °C reference returns the yeast's published number. Real attenuation is always
+    // ≤ the wort's chemical limit, and the GAP is set by the sugar spectrum — which mash
+    // temperature controls:
+    //   • cool mash (β-amylase) → maltose-rich → fermented fast & fully → AA ≈ limit;
+    //   • hot mash (α-amylase, β denatured) → more maltotriose + dextrins → maltotriose is
+    //     taken up last and often incompletely (AGT1; strain-dependent, "maltotriose-negative"
+    //     is a known trait — Stewart), dextrins not at all → AA pulls progressively *below*
+    //     the limit.
+    // So the reach gain is asymmetric: a fermentable (cool, ratio > 1) wort is compressed
+    // toward the limit (GAIN_FERMENTABLE < 1); a dextriny (hot, ratio < 1) wort falls away
+    // from it (GAIN_DEXTRINOUS > 1). The two blend with a logistic in d = ratio − 1, so the
+    // slope is continuous (no kink at the reference — that point is just our anchor). The
+    // DIRECTION is mechanistic (the flat/proportional hot side wrongly assumes constant
+    // reach); the MAGNITUDE is calibrated to the measured beers, like every rate above.
+    // Calibrated to ~33 measured-FG beers; clean-data MAE ~4.3 %, hot-region bias ~0 (the
+    // earlier proportional hot side ran +6–10 high on 71–73 °C lagers). Hot end rests on ~3
+    // single-infusion batches, so it's the least-certain region — now unbiased, not high.
+    const ratio = actualAL / refAL;
+    const d = ratio - 1;
+    const GAIN_FERMENTABLE = 0.45; // cool/maltose-rich wort: yeast nearly reaches the limit
+    const GAIN_DEXTRINOUS = 1.60;  // hot/maltotriose-heavy wort: yeast falls short of it
+    const GAIN_WIDTH = 0.06;       // logistic transition half-width (≈ β-denaturation band)
+    const gain = GAIN_FERMENTABLE + (GAIN_DEXTRINOUS - GAIN_FERMENTABLE) / (1 + Math.exp(d / GAIN_WIDTH));
+    const scaled = 1 + d * gain;
+    return Math.max(0.5, Math.min(0.95, baseAtt * scaled));
   }
 
   /**
    * Calculate Alcohol By Volume
    * Formula: ABV = (OG - FG) × 131.25
+   *
+   * Delegates to the shared `abvFromOGFG` helper (`@/calculators/abv`) so the
+   * formula lives in exactly one place and the two implementations can't drift.
    */
   calculateABV(og: number, fg: number): number {
-    return (og - fg) * 131.25;
+    return abvFromOGFG(og, fg);
   }
 
   /**
-   * Calculate IBU using Tinseth formula
+   * Calculate IBU using Tinseth formula.
+   *
+   * `boilGravity` is the average wort gravity over the boil (Tinseth's bigness
+   * factor expects the mean, not the post-boil OG). Defaults to `og` for callers
+   * that don't compute it.
    */
-  calculateIBU(recipe: Recipe, og: number): number {
-    const { hops, batchVolumeL } = recipe;
+  calculateIBU(recipe: Recipe, og: number, boilGravity: number = og): number {
+    const { hops, batchVolumeL, equipment } = recipe;
 
     if (hops.length === 0 || batchVolumeL <= 0) {
       return 0;
@@ -552,7 +471,7 @@ export class RecipeCalculationService {
     const batchVolumeGal = batchVolumeL * 0.264172;
 
     const totalIBU = hops.reduce((sum, hop) => {
-      const ibu = this.calculateSingleHopIBU(hop, og, batchVolumeGal);
+      const ibu = this.calculateSingleHopIBU(hop, og, batchVolumeGal, boilGravity, equipment.boilTimeMin);
       return sum + ibu;
     }, 0);
 
@@ -560,9 +479,19 @@ export class RecipeCalculationService {
   }
 
   /**
-   * Calculate IBU contribution from a single hop addition
+   * Calculate IBU contribution from a single hop addition.
+   *
+   * Kettle additions (boil, first wort, mash) use `boilGravity` (boil average);
+   * whirlpool uses `og` since it happens after the boil. `boilTimeMin` anchors
+   * first-wort hops to the full boil duration.
    */
-  calculateSingleHopIBU(hop: Hop, og: number, batchVolumeGal: number): number {
+  calculateSingleHopIBU(
+    hop: Hop,
+    og: number,
+    batchVolumeGal: number,
+    boilGravity: number = og,
+    boilTimeMin: number = 60,
+  ): number {
     const { alphaAcid, grams, type, timeMinutes = 0, temperatureC = 80, whirlpoolTimeMinutes } = hop;
 
     // --- Dry hop: humulinone dissolution model (not Tinseth) ---
@@ -607,12 +536,16 @@ export class RecipeCalculationService {
 
     switch (type) {
       case 'boil':
-        utilization = this.tinsethUtilization(timeMinutes, og);
+        utilization = this.tinsethUtilization(timeMinutes, boilGravity);
         break;
       case 'first wort':
-        utilization = this.tinsethUtilization(timeMinutes + 20, og); // FWH gets bonus time
+        // FWH steeps for the entire boil, so anchor utilization to the full boil
+        // time (the per-hop time is intentionally unset for FWH). The +20 min
+        // bonus reflects extra isomerization during lauter/heat-up.
+        utilization = this.tinsethUtilization(boilTimeMin + 20, boilGravity);
         break;
       case 'whirlpool': {
+        // Post-boil addition: wort is at OG by now, so use og (not the boil average).
         // Use whirlpoolTimeMinutes if available, fallback to timeMinutes for backward compatibility
         const wpTime = whirlpoolTimeMinutes ?? timeMinutes ?? 15;
         utilization = this.whirlpoolUtilization(wpTime, temperatureC, og);
@@ -621,7 +554,7 @@ export class RecipeCalculationService {
       case 'mash':
         // BeerSmith approach: -80% reduction vs equivalent boil (i.e. 20% of boil utilization)
         // Mash temps (~65°C) are well below isomerization threshold; minimal carryover
-        utilization = this.tinsethUtilization(timeMinutes || 5, og) * 0.20;
+        utilization = this.tinsethUtilization(timeMinutes || 5, boilGravity) * 0.20;
         break;
     }
 

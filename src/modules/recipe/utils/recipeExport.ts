@@ -304,6 +304,10 @@ export const generateRecipeMarkdown = (
     lines.push("_No hops_");
   } else {
     const batchGalForIbu = (recipe.batchVolumeL || 1) * 0.264172;
+    // Match the brew-sheet total: kettle additions use the average boil gravity
+    // and the recipe's boil time (so FWH anchors to the full boil).
+    const boilGravityForIbu = ((calc.preBoilGravity ?? calc.og) + calc.og) / 2;
+    const boilTimeMinForIbu = recipe.equipment.boilTimeMin;
     const calcService = new RecipeCalculationService();
 
     // Sort: FW → boil (longest first) → whirlpool → mash → dry hop (by day, then name)
@@ -329,7 +333,7 @@ export const generateRecipeMarkdown = (
 
     sorted.forEach((h) => {
       const oz = gToOz(h.grams);
-      const hopIbu = calcService.calculateSingleHopIBU(h, calc.og, batchGalForIbu);
+      const hopIbu = calcService.calculateSingleHopIBU(h, calc.og, batchGalForIbu, boilGravityForIbu, boilTimeMinForIbu);
       lines.push(
         `| ${h.name} | ${fmt(h.grams, 0)} g (${fmt(oz, 2)} oz) | ${fmt(h.alphaAcid, 1)}% | ${formatHopUse(h)} | ${formatHopTime(h)} | ${fmt(hopIbu, 1)} |`
       );

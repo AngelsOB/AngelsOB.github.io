@@ -330,6 +330,11 @@ export type Recipe = {
       SO4: number;
       HCO3: number;
     };
+    /** Set once the user leaves the water intro via "I'll set them myself".
+     *  Lets the section stay in the working panel without any salts/source/
+     *  target set. Picking source/target or running Auto-Calc does not need
+     *  this flag (salts present → intro already gone). */
+    introDismissed?: boolean;
   };
 
   /** Fermentation schedule - list of fermentation steps */

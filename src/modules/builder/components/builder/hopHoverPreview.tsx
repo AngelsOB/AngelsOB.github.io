@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
 
 import { LazyMotion, domMax, m } from "framer-motion";
@@ -51,6 +52,10 @@ type Placement = "above" | "below" | "cursor-right";
 type AnchorState = {
   rect: DOMRect;
   preset: HopPreset;
+  // Opaque caller token (the builder passes the hovered row's id) echoed
+  // back to `onSelect` when a chip is clicked, so the consumer knows which
+  // row to swap. Undefined for passive surfaces (the picker modal).
+  context?: string;
 };
 
 export type UseHopHoverPreviewOptions = {
@@ -71,6 +76,16 @@ export type UseHopHoverPreviewOptions = {
    *    for modal pickers: doesn't obscure rows above the cursor.
    */
   placement?: "anchored" | "cursor-right";
+  /**
+   * When provided (anchored placement only), the panel becomes
+   * interactive: the cursor can travel onto it without dismissing it,
+   * and each "Similar hops" chip turns into a button that calls this
+   * with the chosen preset plus the `context` passed to
+   * `getTriggerProps`. The builder rows wire this to swap the hovered
+   * hop in place. Omitted by the picker modal, which leaves the panel a
+   * passive, cursor-following preview.
+   */
+  onSelect?: (chosen: HopPreset, context: string) => void;
 };
 
 /**
@@ -144,8 +159,43 @@ export function useHopHoverPreview(
     warmedUpRef.current = false;
   }, [cancelTimers]);
 
-  const showNow = useCallback((rect: DOMRect, preset: HopPreset) => {
-    setAnchor({ rect, preset });
+  const showNow = useCallback(
+    (rect: DOMRect, preset: HopPreset, context?: string) => {
+      setAnchor({ rect, preset, context });
+    },
+    []
+  );
+
+  // Panel-hover bridge (interactive mode). When the cursor leaves the
+  // trigger and lands on the panel itself, `cancelHide` keeps it open;
+  // leaving the panel re-arms the same dismiss + warmup-cooldown the
+  // trigger's mouseLeave uses.
+  const cancelHide = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    if (cooldownTimerRef.current !== null) {
+      window.clearTimeout(cooldownTimerRef.current);
+      cooldownTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = window.setTimeout(() => {
+      setAnchor(null);
+      hideTimerRef.current = null;
+    }, HIDE_DELAY_MS);
+    if (cooldownTimerRef.current !== null) {
+      window.clearTimeout(cooldownTimerRef.current);
+    }
+    cooldownTimerRef.current = window.setTimeout(() => {
+      warmedUpRef.current = false;
+      cooldownTimerRef.current = null;
+    }, WARMUP_COOLDOWN_MS);
   }, []);
 
   const updateCursor = useCallback((clientX: number, clientY: number) => {
@@ -163,7 +213,7 @@ export function useHopHoverPreview(
   }, []);
 
   const getTriggerProps = useCallback(
-    (preset: HopPreset | null | undefined) => {
+    (preset: HopPreset | null | undefined, context?: string) => {
       if (!preset || !hasHopDetails(preset)) return {} as const;
       return {
         onMouseEnter: (e: React.MouseEvent) => {
@@ -193,7 +243,7 @@ export function useHopHoverPreview(
           // Instant when warmed up OR when caller asked for no dwell.
           if (warmedUpRef.current || delay <= 0) {
             warmedUpRef.current = true;
-            showNow(rect, preset);
+            showNow(rect, preset, context);
             return;
           }
           // First (or post-cooldown) hover — dwell, then mark warm and
@@ -201,7 +251,7 @@ export function useHopHoverPreview(
           // branch above as long as the cooldown doesn't fire.
           showTimerRef.current = window.setTimeout(() => {
             warmedUpRef.current = true;
-            showNow(rect, preset);
+            showNow(rect, preset, context);
             showTimerRef.current = null;
           }, delay);
         },
@@ -258,6 +308,23 @@ export function useHopHoverPreview(
       : "below";
   }, [anchor, placementMode]);
 
+  // Interactive only in anchored placement (builder rows) — the
+  // cursor-following picker preview can't be hovered onto, so it stays
+  // a passive panel even if a stray onSelect were ever passed.
+  const interactive =
+    Boolean(options.onSelect) && placementMode === "anchored";
+
+  // Chip click → swap. Echoes the anchored row's context back to the
+  // consumer, then tears the panel down (the row's content just changed
+  // underneath it).
+  const handleSelect = useCallback(
+    (chosen: HopPreset) => {
+      if (anchor?.context != null) options.onSelect?.(chosen, anchor.context);
+      clear();
+    },
+    [anchor, options, clear]
+  );
+
   // Mount our own LazyMotion inside the portal — the portal target
   // (document.body) is outside the builder's wrapper, so motion
   // children would otherwise have no animation features. Match the
@@ -276,6 +343,10 @@ export function useHopHoverPreview(
                 cursorX={cursorX}
                 cursorY={cursorY}
                 tilt={tilt}
+                interactive={interactive}
+                onPanelEnter={cancelHide}
+                onPanelLeave={scheduleHide}
+                onSelect={interactive ? handleSelect : undefined}
               />
             </LazyMotion>
           ) : null,
@@ -294,6 +365,10 @@ function PreviewFrame({
   cursorX,
   cursorY,
   tilt,
+  interactive,
+  onPanelEnter,
+  onPanelLeave,
+  onSelect,
 }: {
   preset: HopPreset;
   library: HopPreset[];
@@ -302,6 +377,10 @@ function PreviewFrame({
   cursorX: number;
   cursorY: number;
   tilt: number;
+  interactive?: boolean;
+  onPanelEnter?: () => void;
+  onPanelLeave?: () => void;
+  onSelect?: (chosen: HopPreset) => void;
 }) {
   // Cursor-right mode — panel hovers to the side of the cursor with
   // no connector. Used by the picker modal so the panel doesn't sit
@@ -385,13 +464,24 @@ function PreviewFrame({
         font: "inherit",
       }}
     >
+      {/* Hover-intent bridge only — the real interactive elements are the
+          native button chips inside. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
+        // Interactive mode re-enables pointer events on the panel (the
+        // wrapper above stays `none`) so the cursor can travel up the
+        // connector strip onto the card without the trigger's mouseLeave
+        // dismissing it. The full-width connector row doubles as the
+        // hover bridge between trigger and card.
+        onMouseEnter={interactive ? onPanelEnter : undefined}
+        onMouseLeave={interactive ? onPanelLeave : undefined}
         style={{
           transform: above ? "translate(-50%, -100%)" : "translate(-50%, 0)",
           display: "flex",
           flexDirection: above ? "column" : "column-reverse",
           alignItems: "center",
           width: PANEL_WIDTH,
+          pointerEvents: interactive ? "auto" : undefined,
         }}
       >
         <m.div
@@ -408,7 +498,7 @@ function PreviewFrame({
             transformOrigin: above ? "bottom center" : "top center",
           }}
         >
-          <HopPreviewBody preset={preset} library={library} />
+          <HopPreviewBody preset={preset} library={library} onSelect={onSelect} />
         </m.div>
         <m.div
           initial={{ scaleY: 0, opacity: 0 }}
@@ -464,9 +554,12 @@ function dominantAxis(flavor: HopFlavorProfile): string {
 export function HopPreviewBody({
   preset,
   library,
+  onSelect,
 }: {
   preset: HopPreset;
   library: HopPreset[];
+  /** When set, the "Similar hops" chips become swap buttons. */
+  onSelect?: (chosen: HopPreset) => void;
 }) {
   // Hooks first — early-returning before useMemo would violate the
   // rules-of-hooks (call order must be stable across renders).
@@ -650,7 +743,11 @@ export function HopPreviewBody({
       ) : null}
 
       {similar.length > 0 ? (
-        <PreviewSimilarChips items={similar} accent={hsTokens.muted} />
+        <PreviewSimilarChips
+          items={similar}
+          accent={hsTokens.muted}
+          onSelect={onSelect}
+        />
       ) : null}
     </>
   );
@@ -823,9 +920,12 @@ function PreviewMiniRadar({
 function PreviewSimilarChips({
   items,
   accent,
+  onSelect,
 }: {
   items: SimilarHop[];
   accent: string;
+  /** When set, each chip is a button that swaps the hovered hop for it. */
+  onSelect?: (chosen: HopPreset) => void;
 }) {
   return (
     <div style={{ marginTop: 10 }}>
@@ -840,7 +940,7 @@ function PreviewSimilarChips({
           marginBottom: 5,
         }}
       >
-        Similar hops
+        {onSelect ? "Similar hops — tap to swap" : "Similar hops"}
       </div>
       <div
         style={{
@@ -850,43 +950,81 @@ function PreviewSimilarChips({
         }}
       >
         {items.map(({ hop }) => (
-          <span
-            key={hop.name}
-            style={{
-              display: "inline-flex",
-              alignItems: "baseline",
-              gap: 5,
-              background: hsTokens.cream,
-              border: `1px solid ${hsTokens.ink}55`,
-              borderRadius: 999,
-              padding: "2px 9px",
-              fontFamily: hsTokens.body,
-              fontSize: 10,
-              fontWeight: 600,
-              color: hsTokens.ink,
-              letterSpacing: "0.01em",
-              lineHeight: 1.4,
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              maxWidth: "100%",
-            }}
-          >
-            <span>{hop.name}</span>
-            {typeof hop.alphaAcidPercent === "number" ? (
-              <span
-                style={{
-                  fontFamily: hsTokens.mono,
-                  fontSize: 9,
-                  color: hsTokens.muted,
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {hop.alphaAcidPercent.toFixed(1)}%
-              </span>
-            ) : null}
-          </span>
+          <SimilarChip key={hop.name} hop={hop} onSelect={onSelect} />
         ))}
       </div>
     </div>
+  );
+}
+
+/** One "similar hop" pill. Static text by default; a swap button (with a
+ *  hop-accent hover fill) when `onSelect` is provided by the interactive
+ *  builder panel. */
+function SimilarChip({
+  hop,
+  onSelect,
+}: {
+  hop: HopPreset;
+  onSelect?: (chosen: HopPreset) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const clickable = Boolean(onSelect);
+  const base: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "baseline",
+    gap: 5,
+    background: clickable && hovered ? hsTokens.hops : hsTokens.cream,
+    border: `1px solid ${clickable && hovered ? hsTokens.hops : `${hsTokens.ink}55`}`,
+    borderRadius: 999,
+    padding: "2px 9px",
+    fontFamily: hsTokens.body,
+    fontSize: 10,
+    fontWeight: 600,
+    color: clickable && hovered ? hsTokens.paper : hsTokens.ink,
+    letterSpacing: "0.01em",
+    lineHeight: 1.4,
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    maxWidth: "100%",
+    transition: "background 120ms ease, color 120ms ease, border-color 120ms ease",
+  };
+  const body = (
+    <>
+      <span>{hop.name}</span>
+      {typeof hop.alphaAcidPercent === "number" ? (
+        <span
+          style={{
+            fontFamily: hsTokens.mono,
+            fontSize: 9,
+            color: clickable && hovered ? hsTokens.paper : hsTokens.muted,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {hop.alphaAcidPercent.toFixed(1)}%
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (!clickable) return <span style={base}>{body}</span>;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect?.(hop)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={`Swap to ${hop.name}`}
+      style={{
+        ...base,
+        margin: 0,
+        cursor: "pointer",
+        textAlign: "left",
+        appearance: "none",
+        WebkitAppearance: "none",
+      }}
+    >
+      {body}
+    </button>
   );
 }

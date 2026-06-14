@@ -7,6 +7,18 @@ import type { AttenuationModel } from "@/modules/recipe/services/RecipeCalculati
 
 export type { AttenuationModel };
 
+/**
+ * Map a stored attenuation-model value to a current one. The lineup is now just
+ * 'kinetic' (default) and 'linear'. Retired ids map to the nearest survivor:
+ * the old kinetic models → 'kinetic'; the old formula/flat models → 'linear';
+ * anything unrecognized → the default 'kinetic'.
+ */
+function migrateAttenuationModel(value: unknown): AttenuationModel {
+  if (value === 'kinetic' || value === 'linear') return value;
+  if (value === 'mash_adjusted' || value === 'simple') return 'linear';
+  return 'kinetic'; // 'brandam_ode', 'enzyme_kinetics', unknown → kinetic
+}
+
 type PreferencesState = {
   defaultRecipePublic: boolean;
   attenuationModel: AttenuationModel;
@@ -18,7 +30,7 @@ type PreferencesState = {
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   defaultRecipePublic: true,
-  attenuationModel: "linear" as AttenuationModel,
+  attenuationModel: "kinetic" as AttenuationModel,
   isLoaded: false,
 
   loadPreferences: (userId: string) => {
@@ -29,7 +41,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
           const data = snap.data();
           set({
             defaultRecipePublic: data.defaultRecipePublic ?? true,
-            attenuationModel: data.attenuationModel ?? "linear",
+            attenuationModel: migrateAttenuationModel(data.attenuationModel),
             isLoaded: true,
           });
         } else {

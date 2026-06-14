@@ -91,5 +91,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null
                           && request.auth.uid == userId;
     }
+
+    // Feedback: write-only via the admin SDK (app/api/feedback). Fully locked
+    // from the client so anonymous visitors can submit through the server route
+    // without an open client-write rule. Same for the per-IP rate-limit counters.
+    match /feedback/{id} {
+      allow read, write: if false;
+    }
+    match /feedbackRateLimits/{id} {
+      allow read, write: if false;
+    }
   }
 }

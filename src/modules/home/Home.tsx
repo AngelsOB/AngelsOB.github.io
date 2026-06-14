@@ -27,6 +27,7 @@ import {
   StageLearn,
   StageFAQ,
   StageClose,
+  StageFeedback,
 } from "./stages/PostTourSections";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
@@ -84,6 +85,7 @@ function HomeSignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
       <StageLibraryCommunity recipes={recipes} />
       <StageLearn />
       <StageFAQ />
+      <StageFeedback />
     </div>
   );
 }
@@ -1392,6 +1394,7 @@ function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
       <StageLearn />
       <StageFAQ />
       <StageClose />
+      <StageFeedback />
 
       <style>{`
         /* Lenis smooth-scroll recommended baseline */

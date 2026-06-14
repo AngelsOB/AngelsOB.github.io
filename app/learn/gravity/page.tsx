@@ -208,7 +208,7 @@ export default function GravityPage() {
               Mash temperature is the biggest lever on final gravity. Lower
               temps favor beta-amylase (more fermentable sugars, lower FG).
               Higher temps favor alpha-amylase (more dextrins, higher FG,
-              fuller body). We offer three models for this. See the{" "}
+              fuller body). Our default Kinetic model simulates this. See the{" "}
               <a href="/learn/mash-temperature" className="text-[var(--coral-500)] hover:underline font-medium">
                 mash temperature
               </a>{" "}

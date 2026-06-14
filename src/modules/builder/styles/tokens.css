@@ -173,6 +173,9 @@
   align-items: stretch;
 }
 .hs-preview-col { min-width: 0; }
-@media (max-width: 1024px) {
+/* Keep in sync with PREVIEW_MIN_WIDTH in
+   src/modules/builder/components/public/usePreviewLayout.ts. Below it, card
+   clicks navigate instead of opening the (too-cramped) preview column. */
+@media (max-width: 1199px) {
   .hs-preview-col { display: none !important; }
 }

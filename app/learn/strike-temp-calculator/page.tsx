@@ -72,8 +72,8 @@ export default function StrikeTempCalcPage() {
         <p className="text-sm leading-relaxed">
           The calculation is simple: more grain relative to water means you need
           hotter strike water. Colder grain means you need hotter water. This
-          calculator uses Palmer&apos;s heat balance equation — the same one
-          BeerSmith and Brewfather use.
+          calculator uses Palmer&apos;s heat balance equation, the standard one
+          across brewing software.
         </p>
 
         <div className="my-6">

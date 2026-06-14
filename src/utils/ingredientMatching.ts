@@ -333,7 +333,13 @@ export function matchGrain(name: string): MatchResult<GrainPreset> {
     const cColor = extractColorNumber(preset.name);
     if (qColor !== null && cColor !== null && Math.abs(qColor - cColor) > 10) continue;
 
-    const score = nameSimilarity(name, preset.name);
+    let score = nameSimilarity(name, preset.name);
+    // Color agreement is a strong positive signal: "Crystal 160L" should
+    // prefer "Extra Dark Crystal 160L" over a color-less "Dark Crystal Malt"
+    // that happens to share more name tokens.
+    if (qColor !== null && cColor !== null && Math.abs(qColor - cColor) <= 5) {
+      score = Math.min(1, score + 0.2);
+    }
     if (score >= REVIEW_FLOOR) {
       scored.push({ preset, presetName: preset.name, score });
     }

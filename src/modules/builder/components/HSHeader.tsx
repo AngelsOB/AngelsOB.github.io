@@ -22,18 +22,26 @@ import FloatingCalculator, {
 } from "./FloatingCalculator";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useUnsavedChangesStore } from "@/modules/recipe/stores/unsavedChangesStore";
+import { useImportStore } from "@/modules/recipe/stores/importStore";
 
 interface NavChild {
   /** Used as the menu-item key + accessibility target.
-   *  When `kind: "calc"`, the value is the FloatingCalcId, not a route. */
+   *  When `kind: "calc"`, the value is the FloatingCalcId, not a route.
+   *  When `kind: "action"` or this item has `children`, the value is a
+   *  non-route sentinel (e.g. "#import", "#new"). */
   href: string;
   label: string;
   /** Optional accent dot to render before the label. */
   accent?: string;
   /** "link" (default) navigates to href. "calc" opens a floating PIP.
    *  "create" navigates but renders with a "+" badge in place of the dot to
-   *  signal a primary new-item action. */
-  kind?: "link" | "calc" | "create";
+   *  signal a primary new-item action. "action" fires a handler instead of
+   *  navigating (keyed off href — e.g. "#import" opens the Import modal). */
+  kind?: "link" | "calc" | "create" | "action";
+  /** When present, this item is a submenu parent: on desktop it opens a hover
+   *  flyout of these children; on touch/small viewports it's flattened into
+   *  them (the parent row disappears, children render inline). */
+  children?: NavChild[];
 }
 
 interface NavLink {
@@ -71,9 +79,16 @@ const LINKS: NavLink[] = [
     label: "Recipes",
     triggerNavigates: true,
     children: [
-      { href: "/recipes", label: "My Recipes" },
       { href: "/browse", label: "Browse All" },
-      { href: "/recipes/new", label: "New recipe", kind: "create" },
+      { href: "/recipes", label: "My Recipes" },
+      {
+        href: "#new",
+        label: "New",
+        children: [
+          { href: "/recipes/new", label: "Create new blank", kind: "create" },
+          { href: "#import", label: "Import", kind: "action" },
+        ],
+      },
     ],
   },
   {
@@ -99,9 +114,10 @@ const COMPACT_MENU: NavLink = {
   href: "#menu",
   label: "Menu",
   children: [
-    { href: "/recipes", label: "My Recipes" },
     { href: "/browse", label: "Browse All" },
-    { href: "/recipes/new", label: "New recipe", kind: "create" },
+    { href: "/recipes", label: "My Recipes" },
+    { href: "/recipes/new", label: "Create new blank", kind: "create" },
+    { href: "#import", label: "Import", kind: "action" },
     { href: "/calculators", label: "Calculators" },
     { href: "/learn", label: "Learn" },
   ],
@@ -111,6 +127,7 @@ export default function HSHeader() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const currentRecipe = useRecipeStore((s) => s.currentRecipe);
+  const openImport = useImportStore((s) => s.open);
 
   /**
    * Click handler for the primary nav Links — routes through the unsaved-
@@ -345,12 +362,66 @@ export default function HSHeader() {
   // toggles. Escape / outside-press / scroll / resize / route-change close it.
   const navShellRef = useRef<HTMLDivElement | null>(null);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
+  // The nested submenu flyout is a SIBLING of the main panel, so the
+  // outside-press handler needs its own ref to avoid treating clicks inside
+  // it as "outside" (which would dismiss the menu before the click lands).
+  const subMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const openTriggerRef = useRef<HTMLElement | null>(null);
   const closeTimer = useRef<number | null>(null);
   const [openHref, setOpenHref] = useState<string | null>(null);
   const [menuLeft, setMenuLeft] = useState(0);
   // Width fits the longest calculator title with a leading accent dot.
   const MENU_W = 260;
+
+  // ── Nested submenu (desktop hover flyout) ──────────────────────────────
+  // A menu item that itself carries `children` (currently just "New") opens a
+  // second panel beside the first on hover. The flyout is a SIBLING of the
+  // main panel (not a child) so the main panel's overflow:hidden can't clip
+  // it; we measure the parent row to anchor it, opening to the LEFT (the panel
+  // is right-aligned in the header, so there's room) and flipping right only
+  // if the left edge would clip the viewport. On touch the submenu is instead
+  // flattened inline (see effectiveChildren below), so this is desktop-only.
+  const subCloseTimer = useRef<number | null>(null);
+  const [openSubHref, setOpenSubHref] = useState<string | null>(null);
+  const [submenuPos, setSubmenuPos] = useState<{ left: number; top: number }>({
+    left: 0,
+    top: 0,
+  });
+  const SUBMENU_W = 240;
+  const cancelSubClose = () => {
+    if (subCloseTimer.current !== null) {
+      clearTimeout(subCloseTimer.current);
+      subCloseTimer.current = null;
+    }
+  };
+  const scheduleSubClose = () => {
+    cancelSubClose();
+    subCloseTimer.current = window.setTimeout(() => setOpenSubHref(null), 140);
+  };
+  const openSubmenu = (href: string, rowEl: HTMLElement | null) => {
+    cancelSubClose();
+    const shell = navShellRef.current;
+    if (rowEl && shell) {
+      const r = rowEl.getBoundingClientRect();
+      const s = shell.getBoundingClientRect();
+      // Open to the left of the panel; flip right if that would clip the
+      // viewport's left edge.
+      let left = r.left - s.left - SUBMENU_W - 8;
+      if (r.left - SUBMENU_W - 8 < 8) left = r.right - s.left + 8;
+      setSubmenuPos({ left, top: r.top - s.top });
+    }
+    setOpenSubHref(href);
+  };
+  const toggleSubmenu = (href: string, rowEl: HTMLElement | null) => {
+    if (openSubHref === href) {
+      cancelSubClose();
+      setOpenSubHref(null);
+    } else openSubmenu(href, rowEl);
+  };
+  // Any time the parent menu closes, drop the submenu with it.
+  useEffect(() => {
+    if (!openHref) setOpenSubHref(null);
+  }, [openHref]);
 
   // Small-viewport flag — drives per-link trigger behavior swaps:
   //   • Calculators (noMobileDropdown): becomes a plain Link → /calculators.
@@ -476,7 +547,8 @@ export default function HSHeader() {
       const t = e.target as Node;
       if (
         openTriggerRef.current?.contains(t) ||
-        menuPanelRef.current?.contains(t)
+        menuPanelRef.current?.contains(t) ||
+        subMenuPanelRef.current?.contains(t)
       )
         return;
       setOpenHref(null);
@@ -494,10 +566,11 @@ export default function HSHeader() {
     };
   }, [openHref]);
 
-  // Clear a pending close timer on unmount.
+  // Clear pending close timers on unmount.
   useEffect(
     () => () => {
       if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+      if (subCloseTimer.current !== null) clearTimeout(subCloseTimer.current);
     },
     []
   );
@@ -930,152 +1003,284 @@ export default function HSHeader() {
                 ? COMPACT_MENU
                 : LINKS.find((l) => l.href === openHref);
             if (!openLink?.children) return null;
+
+            // On touch/small viewports there's no hover, so a nested submenu
+            // (e.g. "New") is flattened into its children inline — the parent
+            // row disappears and its children render directly in the panel.
+            const effectiveChildren: NavChild[] = isMobile
+              ? openLink.children.flatMap((c) => c.children ?? [c])
+              : openLink.children;
+
+            const makeItemStyle = (ci: number, active: boolean) => ({
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "11px 16px",
+              fontFamily: hsTokens.body,
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.01em",
+              color: hsTokens.ink,
+              textDecoration: "none",
+              background: active ? hsTokens.cream2 : "transparent",
+              boxShadow: active ? `inset 3px 0 0 ${hsTokens.malt}` : "none",
+              borderTop: ci > 0 ? `1px solid ${hsTokens.cream2}` : "none",
+              border: "none",
+              width: "100%",
+              textAlign: "left" as const,
+              cursor: "pointer",
+            });
+
+            // For "create"/"action" items, render a tiny badge instead of the
+            // accent dot — same footprint, but reads as a primary action
+            // ("+" = new blank, "↓" = import) rather than a category swatch.
+            const renderLeading = (c: NavChild) => {
+              if (c.kind === "create" || c.kind === "action") {
+                return (
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 999,
+                      background: hsTokens.malt,
+                      border: `1.5px solid ${hsTokens.ink}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: hsTokens.ink,
+                      fontFamily: hsTokens.body,
+                      fontWeight: 800,
+                      fontSize: 13,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {c.kind === "create" ? "+" : "↓"}
+                  </span>
+                );
+              }
+              if (c.accent) {
+                return (
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: 999,
+                      background: c.accent,
+                      border: `1px solid ${hsTokens.ink}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                );
+              }
+              return null;
+            };
+
+            // Leaf item — a calc PIP, an action (Import), or a plain link.
+            const renderLeaf = (c: NavChild, ci: number) => {
+              const isCalc = c.kind === "calc";
+              // When sitting on the parent's exact hub path (e.g. /recipes/all),
+              // no child highlights as active — they're alternative destinations
+              // from the hub. Also sidesteps the prefix match where "/recipes"
+              // would catch "/recipes/all". Calc/action items never highlight.
+              const childActive =
+                !isCalc &&
+                c.kind !== "action" &&
+                pathname !== openLink.href &&
+                (pathname === c.href || pathname.startsWith(c.href + "/"));
+              const itemStyle = makeItemStyle(ci, childActive);
+              const leading = renderLeading(c);
+              if (isCalc) {
+                return (
+                  <button
+                    type="button"
+                    key={c.href}
+                    role="menuitem"
+                    onClick={() => {
+                      openFloatingCalc(c.href as FloatingCalcId);
+                      closeMenu();
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = hsTokens.cream2;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                    style={itemStyle}
+                  >
+                    {leading}
+                    <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                  </button>
+                );
+              }
+              if (c.kind === "action") {
+                return (
+                  <button
+                    type="button"
+                    key={c.href}
+                    role="menuitem"
+                    onClick={() => {
+                      if (c.href === "#import") openImport();
+                      closeMenu();
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = hsTokens.cream2;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                    style={itemStyle}
+                  >
+                    {leading}
+                    <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                  </button>
+                );
+              }
+              return (
+                <Link
+                  key={c.href}
+                  href={c.href}
+                  role="menuitem"
+                  onClick={(e) => {
+                    handleNavLinkClick(c.href)(e);
+                    closeMenu();
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = hsTokens.cream2;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = childActive
+                      ? hsTokens.cream2
+                      : "transparent";
+                  }}
+                  style={itemStyle}
+                >
+                  {leading}
+                  <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                </Link>
+              );
+            };
+
+            // Submenu parent (desktop only — mobile flattens it away). A right
+            // chevron + a hover flyout of its children.
+            const renderParent = (c: NavChild, ci: number) => {
+              const open = openSubHref === c.href;
+              return (
+                <button
+                  type="button"
+                  key={c.href}
+                  role="menuitem"
+                  aria-haspopup="menu"
+                  aria-expanded={open}
+                  onClick={(e) => toggleSubmenu(c.href, e.currentTarget)}
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === "mouse") openSubmenu(c.href, e.currentTarget);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === "mouse") scheduleSubClose();
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = hsTokens.cream2;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!open) e.currentTarget.style.background = "transparent";
+                  }}
+                  style={{ ...makeItemStyle(ci, false), background: open ? hsTokens.cream2 : "transparent" }}
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                  <svg
+                    aria-hidden
+                    width="9"
+                    height="9"
+                    viewBox="0 0 10 10"
+                    style={{ flexShrink: 0, color: hsTokens.muted }}
+                  >
+                    <path
+                      d="M3.5 2 L6.5 5 L3.5 8"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              );
+            };
+
+            const subParent = openSubHref
+              ? openLink.children.find((c) => c.href === openSubHref)
+              : null;
+
             return (
-              <div
-                ref={menuPanelRef}
-                role="menu"
-                aria-label={openLink.label}
-                className="hs-nav-menu"
-                onPointerEnter={(e) => {
-                  if (e.pointerType === "mouse") cancelClose();
-                }}
-                onPointerLeave={(e) => {
-                  if (e.pointerType === "mouse") scheduleClose();
-                }}
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 8px)",
-                  left: menuLeft,
-                  width: MENU_W,
-                  background: hsTokens.paper,
-                  border: `2px solid ${hsTokens.ink}`,
-                  borderRadius: 12,
-                  boxShadow: hsTokens.sh3,
-                  zIndex: 40,
-                  overflow: "hidden",
-                  fontFamily: hsTokens.body,
-                }}
-              >
-                {openLink.children.map((c, ci) => {
-                  const isCalc = c.kind === "calc";
-                  // When sitting on the parent's exact hub path (e.g.
-                  // /recipes/all), no child should highlight as active —
-                  // they're alternative destinations from the hub. This also
-                  // sidesteps the otherwise-incorrect prefix match where
-                  // "/recipes" would catch "/recipes/all".
-                  const childActive =
-                    !isCalc &&
-                    pathname !== openLink.href &&
-                    (pathname === c.href || pathname.startsWith(c.href + "/"));
-                  const itemStyle = {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "11px 16px",
+              <>
+                <div
+                  ref={menuPanelRef}
+                  role="menu"
+                  aria-label={openLink.label}
+                  className="hs-nav-menu"
+                  onPointerEnter={(e) => {
+                    if (e.pointerType === "mouse") cancelClose();
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === "mouse") scheduleClose();
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: menuLeft,
+                    width: MENU_W,
+                    background: hsTokens.paper,
+                    border: `2px solid ${hsTokens.ink}`,
+                    borderRadius: 12,
+                    boxShadow: hsTokens.sh3,
+                    zIndex: 40,
+                    overflow: "hidden",
                     fontFamily: hsTokens.body,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: "0.01em",
-                    color: hsTokens.ink,
-                    textDecoration: "none",
-                    background: childActive ? hsTokens.cream2 : "transparent",
-                    boxShadow: childActive
-                      ? `inset 3px 0 0 ${hsTokens.malt}`
-                      : "none",
-                    borderTop:
-                      ci > 0 ? `1px solid ${hsTokens.cream2}` : "none",
-                    border: "none",
-                    width: "100%",
-                    textAlign: "left" as const,
-                    cursor: "pointer",
-                  };
-                  // For "create" items, render a tiny "+" badge instead of
-                  // the accent dot — same footprint, but reads as a primary
-                  // new-item action rather than a category swatch.
-                  const leading =
-                    c.kind === "create" ? (
-                      <span
-                        aria-hidden
-                        style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: 999,
-                          background: hsTokens.malt,
-                          border: `1.5px solid ${hsTokens.ink}`,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: hsTokens.ink,
-                          fontFamily: hsTokens.body,
-                          fontWeight: 800,
-                          fontSize: 13,
-                          lineHeight: 1,
-                          flexShrink: 0,
-                        }}
-                      >
-                        +
-                      </span>
-                    ) : c.accent ? (
-                      <span
-                        aria-hidden
-                        style={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: 999,
-                          background: c.accent,
-                          border: `1px solid ${hsTokens.ink}`,
-                          flexShrink: 0,
-                        }}
-                      />
-                    ) : null;
-                  if (isCalc) {
-                    return (
-                      <button
-                        type="button"
-                        key={c.href}
-                        role="menuitem"
-                        onClick={() => {
-                          openFloatingCalc(c.href as FloatingCalcId);
-                          closeMenu();
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = hsTokens.cream2;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "transparent";
-                        }}
-                        style={itemStyle}
-                      >
-                        {leading}
-                        <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
-                      </button>
-                    );
-                  }
-                  return (
-                    <Link
-                      key={c.href}
-                      href={c.href}
-                      role="menuitem"
-                      onClick={(e) => {
-                        handleNavLinkClick(c.href)(e);
-                        closeMenu();
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = hsTokens.cream2;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = childActive
-                          ? hsTokens.cream2
-                          : "transparent";
-                      }}
-                      style={itemStyle}
-                    >
-                      {leading}
-                      <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+                  }}
+                >
+                  {effectiveChildren.map((c, ci) =>
+                    c.children ? renderParent(c, ci) : renderLeaf(c, ci),
+                  )}
+                </div>
+                {!isMobile && subParent?.children ? (
+                  <div
+                    ref={subMenuPanelRef}
+                    role="menu"
+                    aria-label={subParent.label}
+                    className="hs-nav-menu"
+                    onPointerEnter={(e) => {
+                      if (e.pointerType === "mouse") {
+                        cancelClose();
+                        cancelSubClose();
+                      }
+                    }}
+                    onPointerLeave={(e) => {
+                      if (e.pointerType === "mouse") {
+                        scheduleClose();
+                        scheduleSubClose();
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: submenuPos.top,
+                      left: submenuPos.left,
+                      width: SUBMENU_W,
+                      background: hsTokens.paper,
+                      border: `2px solid ${hsTokens.ink}`,
+                      borderRadius: 12,
+                      boxShadow: hsTokens.sh3,
+                      zIndex: 41,
+                      overflow: "hidden",
+                      fontFamily: hsTokens.body,
+                    }}
+                  >
+                    {subParent.children.map((c, ci) => renderLeaf(c, ci))}
+                  </div>
+                ) : null}
+              </>
             );
           })()}
         </div>

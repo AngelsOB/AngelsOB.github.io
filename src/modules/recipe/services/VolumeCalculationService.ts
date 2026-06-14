@@ -48,6 +48,25 @@ export class VolumeCalculationService {
   }
 
   /**
+   * Calculate the cold post-boil volume — the volume in which all the extract is
+   * actually dissolved at the end of the boil (after boil-off and cooling shrinkage,
+   * before kettle/chiller/fermenter losses are drawn off).
+   *
+   * This is the correct reference volume for OG/FG: trub, chiller, and fermenter
+   * losses remove wort at constant concentration, so they don't change gravity.
+   * Measuring against the smaller packaged volume (batchVolumeL) overstates OG.
+   *
+   * Formula: (preBoilVolume − boilOff) / shrinkageFactor  (= batchVolume + losses)
+   */
+  calculatePostBoilVolume(recipe: Recipe): number {
+    const { equipment } = recipe;
+    const preBoilL = this.calculatePreBoilVolume(recipe);
+    const boilOffL = (equipment.boilOffRateLPerHour * equipment.boilTimeMin) / 60;
+    const shrinkageFactor = 1 + equipment.coolingShrinkagePercent / 100;
+    return Math.max(0, (preBoilL - boilOffL) / shrinkageFactor);
+  }
+
+  /**
    * Calculate mash water volume (strike water)
    *
    * Formula: totalGrainKg × mashThickness + deadspace

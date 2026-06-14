@@ -36,10 +36,17 @@ export function usePreviewWidth(): number {
   return width;
 }
 
+/** Min viewport width for the side-by-side preview. Below this, card clicks
+ *  navigate straight to the recipe. The preview column is min 440px (+28px
+ *  margin); engaging it any narrower than this squeezes the 2-col grid into
+ *  unreadable ~220px cards — the panel "pops" but is uselessly cramped, which
+ *  reads as a broken click. At 1200px the grid still gets ~290px cards.
+ *  IMPORTANT: keep in sync with the `.hs-preview-col` hide breakpoint in
+ *  `src/modules/builder/styles/tokens.css`. */
+export const PREVIEW_MIN_WIDTH = 1200;
+
 /** Whether the viewport is wide enough for the side-by-side preview. Below
- *  this threshold, card clicks should navigate directly instead. Matches the
- *  existing /browse 2-col grid breakpoint so the responsive story is
- *  consistent across pages. */
+ *  this threshold, card clicks should navigate directly instead. */
 export function useCanPreview(): boolean {
-  return useMediaQuery("(min-width: 1025px)");
+  return useMediaQuery(`(min-width: ${PREVIEW_MIN_WIDTH}px)`);
 }

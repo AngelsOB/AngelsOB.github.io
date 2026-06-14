@@ -7,6 +7,7 @@ import { hsTokens } from "../tokens";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { useUserTier } from "@/modules/auth/useUserTier";
 import { toast } from "@/stores/toastStore";
+import SettingsModal from "@/modules/auth/components/SettingsModal";
 
 export default function HSAuthButton() {
   const user = useAuthStore((s) => s.user);
@@ -17,6 +18,7 @@ export default function HSAuthButton() {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -279,6 +281,23 @@ export default function HSAuthButton() {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setSettingsOpen(true);
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = hsTokens.cream2;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+            }}
+            style={itemStyle}
+          >
+            Settings
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               void signOut();
             }}
             onMouseEnter={(e) => {
@@ -297,6 +316,8 @@ export default function HSAuthButton() {
           </button>
         </div>
       ) : null}
+
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

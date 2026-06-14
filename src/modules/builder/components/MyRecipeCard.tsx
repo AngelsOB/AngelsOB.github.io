@@ -5,20 +5,35 @@
 
 import { type CSSProperties } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { hsTokens } from "@/modules/builder/tokens";
 import HSCard from "@/modules/builder/components/HSCard";
+import HSActionMenu, { type HSActionMenuItem } from "@/modules/builder/components/HSActionMenu";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { humanizeDate } from "@/utils/relativeDate";
+import {
+  downloadTextFile,
+  generateBeerXml,
+  generateRecipeMarkdown,
+  sanitizeFileName,
+} from "@/modules/recipe/utils/recipeExport";
+import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
+import { useUserTier } from "@/modules/auth/useUserTier";
+import { canAccess } from "@/modules/auth/tierAccess";
+import { toast } from "@/stores/toastStore";
 import type { Recipe, RecipeCalculations } from "@/modules/recipe/models/Recipe";
 
 interface Props {
   recipe: Recipe;
   calc: RecipeCalculations;
   tilt?: number;
-  /** When omitted, the X delete button is not rendered. Useful for read-only
-   *  surfaces like the homepage signed-in hero. */
+  /** When omitted, the "..." action menu is not rendered. Useful for
+   *  read-only surfaces like the homepage signed-in hero. */
   onDelete?: (recipe: Recipe) => void;
+  /** True when the recipe lives only in this device's localStorage (created
+   *  while signed out). Shows an "on this device" badge. */
+  isLocal?: boolean;
   /** When true, click defers to onPreviewSelect instead of navigating. */
   previewMode?: boolean;
   /** True when THIS card is the currently-previewed one (honey highlight). */
@@ -37,15 +52,92 @@ export default function MyRecipeCard({
   calc,
   tilt = 0,
   onDelete,
+  isLocal,
   previewMode,
   isPreviewSelected,
   anyPreviewSelected,
   onPreviewSelect,
 }: Props) {
+  const router = useRouter();
+  const duplicateRecipe = useRecipeStore((s) => s.duplicateRecipe);
+  const { userState } = useUserTier();
+  const exportAllowed = canAccess("export", userState);
   const previewActive = !!(previewMode && isPreviewSelected);
   const shrink = !!(previewMode && anyPreviewSelected && !isPreviewSelected);
   const srm = calc.srm ?? 0;
   const href = `/recipes/${recipe.id}`;
+
+  // Share links only exist for published cloud recipes.
+  const sharePath =
+    recipe.isPublic !== false && recipe.shareSlug ? `/r/${recipe.shareSlug}` : null;
+
+  function handleExport(format: "markdown" | "json" | "beerxml" | "copy-md") {
+    if (!exportAllowed) return;
+    try {
+      const filename = sanitizeFileName(recipe.name || "untitled-recipe");
+      switch (format) {
+        case "markdown":
+          downloadTextFile(`${filename}.md`, generateRecipeMarkdown(recipe, calc));
+          break;
+        case "copy-md":
+          void navigator.clipboard
+            .writeText(generateRecipeMarkdown(recipe, calc))
+            .then(() => toast.success("Markdown copied to clipboard"));
+          break;
+        case "json":
+          downloadTextFile(`${filename}.json`, JSON.stringify(recipe, null, 2), "application/json");
+          break;
+        case "beerxml":
+          downloadTextFile(`${filename}.xml`, generateBeerXml(recipe), "text/xml");
+          break;
+      }
+    } catch {
+      toast.error("Export failed");
+    }
+  }
+
+  const menuItems: HSActionMenuItem[] = [
+    { label: "Duplicate", onClick: () => duplicateRecipe(recipe.id) },
+    {
+      label: "Copy Share Link",
+      disabled: !sharePath,
+      onClick: () => {
+        navigator.clipboard.writeText(`${window.location.origin}${sharePath}`);
+        toast.success("Share link copied");
+      },
+    },
+    {
+      label: "Export Markdown",
+      separator: true,
+      disabled: !exportAllowed,
+      onClick: () => handleExport("markdown"),
+    },
+    {
+      label: "Copy Markdown",
+      disabled: !exportAllowed,
+      onClick: () => handleExport("copy-md"),
+    },
+    {
+      label: "Export JSON",
+      disabled: !exportAllowed,
+      onClick: () => handleExport("json"),
+    },
+    {
+      label: "Export BeerXML",
+      disabled: !exportAllowed,
+      onClick: () => handleExport("beerxml"),
+    },
+    ...(onDelete
+      ? [
+          {
+            label: "Delete",
+            separator: true,
+            destructive: true,
+            onClick: () => onDelete(recipe),
+          } satisfies HSActionMenuItem,
+        ]
+      : []),
+  ];
 
   const wrapperStyle: CSSProperties = {
     position: "relative",
@@ -60,23 +152,27 @@ export default function MyRecipeCard({
   };
 
   function handleClick(e: React.MouseEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest("button, a")) return;
+    if ((e.target as HTMLElement).closest("button, a, [role=menu], [role=menuitem]")) return;
     if (previewMode && onPreviewSelect) {
       e.preventDefault();
       onPreviewSelect(recipe);
       return;
     }
-    // Default: bubble to the invisible <Link> overlay below.
+    // The HSCard (position:relative + tilt transform) paints above the overlay
+    // <Link>, so the link itself never receives the click. Navigate
+    // programmatically, the same way HSBrowseCard does.
+    router.push(href);
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key !== "Enter") return;
-    if ((e.target as HTMLElement).closest("button, a")) return;
+    if ((e.target as HTMLElement).closest("button, a, [role=menu], [role=menuitem]")) return;
     if (previewMode && onPreviewSelect) {
       e.preventDefault();
       onPreviewSelect(recipe);
       return;
     }
+    router.push(href);
   }
 
   const stats: { label: string; value: string; accent: string }[] = [
@@ -253,41 +349,51 @@ export default function MyRecipeCard({
             <span style={{ fontFamily: hsTokens.mono, fontVariantNumeric: "tabular-nums" }}>
               {recipe.updatedAt ? humanizeDate(recipe.updatedAt) : "—"}
             </span>
+            {isLocal ? (
+              <span
+                title="Saved only in this browser — open and save it to move it to your account."
+                style={{
+                  fontFamily: hsTokens.body,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: hsTokens.muted,
+                  border: `1px solid color-mix(in oklch, ${hsTokens.ink} 25%, transparent)`,
+                  borderRadius: 999,
+                  padding: "2px 8px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                On this device
+              </span>
+            ) : null}
           </div>
         </div>
       </HSCard>
 
       {onDelete ? (
-        <button
-          type="button"
-          aria-label="Delete recipe"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pure-handler wrapper to stop card click bubbling; HSActionMenu trigger handles its own keyboard. Mirrors HSBrowseCard.
+        <div
+          style={{ position: "absolute", top: 10, right: 10, zIndex: 25 }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onDelete(recipe);
-          }}
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            width: 28,
-            height: 28,
-            border: `1.5px solid ${hsTokens.ink}`,
-            background: hsTokens.paper,
-            borderRadius: 999,
-            cursor: "pointer",
-            color: hsTokens.ink,
-            fontFamily: hsTokens.body,
-            fontWeight: 700,
-            fontSize: 14,
-            lineHeight: 1,
-            padding: 0,
-            boxShadow: hsTokens.sh1,
-            zIndex: 25,
           }}
         >
-          ×
-        </button>
+          <HSActionMenu
+            triggerTitle="Recipe actions"
+            triggerAriaLabel="Recipe actions"
+            trigger={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            }
+            items={menuItems}
+          />
+        </div>
       ) : null}
     </div>
   );
