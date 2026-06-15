@@ -24,9 +24,9 @@ interface StylePreset {
 
 const STYLE_CATEGORIES: Record<string, string[]> = {
   "Hoppy Ales": ["West Coast IPA", "American IPA", "American Pale Ale", "NEIPA / Hazy IPA", "English IPA"],
-  Lagers: ["Pilsner", "German Pilsner", "Munich Helles"],
-  "Dark Ales": ["Stout / Porter", "Irish Stout", "Brown Ale"],
-  "Belgian & Other": ["Belgian Ale", "Blonde / Cream Ale", "Balanced"],
+  Lagers: ["Pilsner", "German Pilsner", "Munich Helles", "Amber / Dark Lager"],
+  "Dark & Strong Ales": ["Stout / Porter", "Irish Stout", "Brown Ale", "Malty Strong / Barleywine"],
+  "Belgian & Other": ["Belgian Ale", "Blonde / Cream Ale", "Wheat / Witbier", "Balanced"],
 };
 
 function buildPresets(): { groups: { label: string; items: StylePreset[] }[]; all: StylePreset[] } {
