@@ -31,8 +31,8 @@ const STICKY_NOTE =
   "color-mix(in srgb, var(--hs-cream-2) 48%, var(--hs-honey))";
 
 // Square-ish footprints, post-it style. The note morphs between them in place.
-const COLLAPSED_W = 150;
-const COLLAPSED_H = 130;
+const COLLAPSED_W = 176;
+const COLLAPSED_H = 152;
 const EXPANDED_W = 340;
 const EXPANDED_H = 340;
 

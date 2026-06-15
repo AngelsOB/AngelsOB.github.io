@@ -1,13 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  AnimatePresence,
-  LazyMotion,
-  domMax,
-  m,
-  useReducedMotion,
-} from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { dur, easeStandard } from "../../motion";
 
@@ -31,12 +25,12 @@ interface Props {
  * The main builder column. Two motions, deliberately split so they don't
  * fight over the element's transform:
  *
- *   - Outer `m.div layout` (NOT keyed): FLIP-animates the column's box when
+ *   - Outer `motion.div layout` (NOT keyed): FLIP-animates the column's box when
  *     the grid flips between full-width (a section's empty/intro state) and
  *     the 1.6fr 2-column track. Glides on a smooth easeOut (no spring bounce);
  *     `transformOrigin: left top` so it grows/shrinks toward the grid's left
  *     anchor rather than the centre.
- *   - Inner keyed `m.div` (`layout="position"`): the directional tab slide, a
+ *   - Inner keyed `motion.div` (`layout="position"`): the directional tab slide, a
  *     cross-fade that coordinates with the sidebar morph via `popLayout` (the
  *     outgoing section is position:absolute'd so the incoming one claims its
  *     space immediately). Only its position participates in layout, so the
@@ -52,29 +46,27 @@ export default function MainSectionMorph({
 }: Props) {
   const reduced = useReducedMotion();
   return (
-    <LazyMotion features={domMax} strict>
-      <m.div
-        layout
-        transition={{ layout: reduced ? { duration: 0 } : SMOOTH }}
-        style={{ minWidth: 0, transformOrigin: "left top" }}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          <m.div
-            key={activeTab}
-            layout="position"
-            className={`hs-section-frame brew-theme${
-              isShared ? " brew-read-only" : ""
-            }`}
-            initial={{ opacity: 0, x: direction === "right" ? 14 : -14 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction === "right" ? -14 : 14 }}
-            transition={{ duration: 0.125, ease: EASE }}
-            style={{ position: "relative", minWidth: 0 }}
-          >
-            {children}
-          </m.div>
-        </AnimatePresence>
-      </m.div>
-    </LazyMotion>
+    <motion.div
+      layout
+      transition={{ layout: reduced ? { duration: 0 } : SMOOTH }}
+      style={{ minWidth: 0, transformOrigin: "left top" }}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={activeTab}
+          layout="position"
+          className={`hs-section-frame brew-theme${
+            isShared ? " brew-read-only" : ""
+          }`}
+          initial={{ opacity: 0, x: direction === "right" ? 14 : -14 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: direction === "right" ? -14 : 14 }}
+          transition={{ duration: 0.125, ease: EASE }}
+          style={{ position: "relative", minWidth: 0 }}
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
   );
 }

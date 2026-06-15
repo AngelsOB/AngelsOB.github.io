@@ -856,7 +856,7 @@ export default function HopSkipBuilder({
           ) : null}
         </div>
           </div>
-          <div style={{ flexShrink: 0, marginRight: "10%" }}>
+          <div style={{ flexShrink: 0, marginRight: "10%", marginTop: 18 }}>
             <BrewersNotesButton
               notes={currentRecipe.notes ?? ""}
               tags={currentRecipe.tags ?? []}
