@@ -16,6 +16,8 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
       // community hub, which links every public recipe (SEO crawl path).
       { href: "/browse", text: "Browse recipes" },
       { href: "/calculators", text: "Calculators" },
+      { href: "/calculators/abv", text: "ABV calculator" },
+      { href: "/calculators/ibu", text: "IBU calculator" },
       { href: "/recipes/new", text: "Start a recipe" },
     ],
   },

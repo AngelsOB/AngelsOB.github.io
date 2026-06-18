@@ -123,7 +123,7 @@ export default function GravityPage() {
       <HSLearnArticle
         title="Gravity & ABV"
         subtitle="How your grain bill becomes alcohol"
-        relatedLearn={["/learn/mash-temperature", "/learn/abv-calculator"]}
+        relatedLearn={["/learn/mash-temperature", "/calculators/abv"]}
       >
         <p className="text-base leading-relaxed">
           Gravity is the density of your wort. It tells you how much sugar is
@@ -231,7 +231,7 @@ export default function GravityPage() {
           The 131.25 constant comes from the well-established relationship
           between gravity drop and ethanol production. For the full breakdown,
           see the{" "}
-          <a href="/learn/abv-calculator" className="text-[var(--coral-500)] hover:underline font-medium">
+          <a href="/calculators/abv" className="text-[var(--coral-500)] hover:underline font-medium">
             ABV calculator
           </a>{" "}
           page.

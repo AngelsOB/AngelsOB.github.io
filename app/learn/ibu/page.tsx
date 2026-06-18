@@ -169,7 +169,7 @@ export default function IbuPage() {
       <HSLearnArticle
         title="IBU & Bitterness"
         subtitle="What it means, how it works, and what makes our approach different"
-        relatedLearn={["/learn/hop-flavor", "/learn/gravity"]}
+        relatedLearn={["/calculators/ibu", "/learn/hop-flavor", "/learn/gravity"]}
       >
         {/* ── What IBU Is ── */}
         <p className="text-base leading-relaxed">
@@ -184,6 +184,17 @@ export default function IbuPage() {
           change, or remove a hop addition. Boil hops, whirlpool hops, first
           wort hops, dry hops. They all contribute, and the builder tracks
           every one of them.
+        </p>
+
+        <p className="text-sm leading-relaxed">
+          Want to crunch a specific hop bill on its own?{" "}
+          <a
+            href="/calculators/ibu"
+            className="text-[var(--coral-500)] hover:underline font-medium"
+          >
+            Use the interactive IBU calculator
+          </a>
+          .
         </p>
 
         <HopAdditionPreview />

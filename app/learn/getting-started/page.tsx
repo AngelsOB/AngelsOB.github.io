@@ -319,14 +319,14 @@ export default function GettingStartedPage() {
           <div className="text-sm space-y-2" style={{ color: "var(--fg-muted)" }}>
             <p>
               <strong>Pre-boil gravity too high?</strong> Use the{" "}
-              <Link href="/learn/dilution-calculator" className="text-[var(--coral-500)] hover:underline font-medium">
+              <Link href="/calculators/dilution" className="text-[var(--coral-500)] hover:underline font-medium">
                 dilution calculator
               </Link>{" "}
               to figure out how much water to add.
             </p>
             <p>
               <strong>Pre-boil gravity too low?</strong> Use the{" "}
-              <Link href="/learn/boil-off-calculator" className="text-[var(--coral-500)] hover:underline font-medium">
+              <Link href="/calculators/boil-off" className="text-[var(--coral-500)] hover:underline font-medium">
                 boil-off calculator
               </Link>{" "}
               to see how much longer to boil, or add DME.

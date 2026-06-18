@@ -6,6 +6,7 @@ import HSScriptNote from "./HSScriptNote";
 import HSEyebrow from "./HSEyebrow";
 import HSCard from "./HSCard";
 import { learnNav } from "@/modules/learn/docsConfig";
+import { resolveCalculatorLink } from "@/modules/calculators/calculatorsMeta";
 
 interface Props {
   /** Article title — rendered in display font */
@@ -23,6 +24,10 @@ interface Props {
 }
 
 function resolveLearnLink(href: string) {
+  // Calculator pages live outside docsConfig (their own /calculators section),
+  // so resolve those first to allow learn↔calculator cross-links.
+  const calc = resolveCalculatorLink(href);
+  if (calc) return calc;
   for (const section of learnNav) {
     for (const link of section.links) {
       if (link.href === href) return link;

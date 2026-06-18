@@ -1,5 +1,8 @@
 import type { MetadataRoute } from 'next'
 
+import { allLearnRoutes } from '@/modules/learn/docsConfig'
+import { calculatorSlugs } from '@/modules/calculators/calculatorsMeta'
+
 // ISR — regenerate at most hourly. (force-dynamic would override revalidate.)
 export const revalidate = 3600
 
@@ -17,14 +20,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/credits` },
   ]
 
-  const learnSlugs = [
-    'getting-started', 'ibu', 'gravity', 'water-chemistry', 'mash-ph',
-    'mash-temperature', 'yeast-starters', 'hop-flavor',
-    'abv-calculator', 'dilution-calculator', 'boil-off-calculator',
-    'carbonation-calculator', 'hydrometer-calculator', 'strike-temp-calculator',
-  ]
-  const learnRoutes: MetadataRoute.Sitemap = learnSlugs.map((slug) => ({
-    url: `${BASE_URL}/learn/${slug}`,
+  // Each calculator's own tool-first page (registry-driven).
+  const calculatorRoutes: MetadataRoute.Sitemap = calculatorSlugs.map((slug) => ({
+    url: `${BASE_URL}/calculators/${slug}`,
+  }))
+
+  // Learn articles, sourced from docsConfig so the list never drifts.
+  const learnRoutes: MetadataRoute.Sitemap = allLearnRoutes.map((href) => ({
+    url: `${BASE_URL}${href}`,
   }))
 
   // Published recipes (includes seed recipes now that they're in Firestore),
@@ -55,5 +58,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Admin SDK unavailable during build — skip dynamic routes
   }
 
-  return [...staticRoutes, ...learnRoutes, ...recipeRoutes, ...profileRoutes]
+  return [
+    ...staticRoutes,
+    ...calculatorRoutes,
+    ...learnRoutes,
+    ...recipeRoutes,
+    ...profileRoutes,
+  ]
 }

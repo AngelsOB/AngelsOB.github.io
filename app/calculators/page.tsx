@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import CalculatorsClient from "./CalculatorsClient";
+import { hsTokens } from "@/modules/builder/tokens";
+import Glyph from "@/modules/builder/components/Glyph";
+import HSCard from "@/modules/builder/components/HSCard";
+import HSEyebrow from "@/modules/builder/components/HSEyebrow";
+import { CALCULATORS_META } from "@/modules/calculators/calculatorsMeta";
 import { breadcrumbJsonLd } from "@/utils/seo";
 
 export const metadata: Metadata = {
@@ -25,31 +30,15 @@ export const metadata: Metadata = {
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it.com";
 
-// Each calculator also has a standalone page under /learn with the formula
-// explained — those are the canonical landing pages for calculator queries.
 const itemListJsonLd = {
   "@context": "https://schema.org",
   "@type": "ItemList",
   name: "Brewing Calculators",
-  itemListElement: [
-    { name: "ABV Calculator", path: "/learn/abv-calculator" },
-    { name: "IBU Calculator", path: "/learn/ibu" },
-    { name: "Boil-Off Calculator", path: "/learn/boil-off-calculator" },
-    { name: "Dilution Calculator", path: "/learn/dilution-calculator" },
-    { name: "Carbonation Calculator", path: "/learn/carbonation-calculator" },
-    {
-      name: "Hydrometer Temperature Correction Calculator",
-      path: "/learn/hydrometer-calculator",
-    },
-    {
-      name: "Strike Water Temperature Calculator",
-      path: "/learn/strike-temp-calculator",
-    },
-  ].map((item, i) => ({
+  itemListElement: CALCULATORS_META.map((c, i) => ({
     "@type": "ListItem",
     position: i + 1,
-    name: item.name,
-    url: `${BASE_URL}${item.path}`,
+    name: c.appName,
+    url: `${BASE_URL}/calculators/${c.slug}`,
   })),
 };
 
@@ -61,14 +50,113 @@ const jsonLd = [
   ]),
 ];
 
-export default function CalculatorsPage() {
+/**
+ * The /calculators directory: a clean overview that ranks for the category
+ * search ("brewing/homebrew calculators") and routes to each tool. No embedded
+ * calculator — each card opens its own tool-first page.
+ */
+export default function CalculatorsHubPage() {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <CalculatorsClient />
+      <div>
+        <div style={{ marginBottom: 22 }}>
+          <HSEyebrow>All calculators</HSEyebrow>
+          <h1
+            style={{
+              fontFamily: hsTokens.display,
+              fontSize: 28,
+              letterSpacing: "-0.035em",
+              lineHeight: 1.05,
+              color: hsTokens.ink,
+              margin: "6px 0 0",
+            }}
+          >
+            Brewing Calculators
+          </h1>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gap: 14,
+            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          }}
+        >
+          {CALCULATORS_META.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/calculators/${c.slug}`}
+              style={{
+                display: "block",
+                height: "100%",
+                textDecoration: "none",
+                color: hsTokens.ink,
+              }}
+            >
+              <HSCard
+                shadow={3}
+                accent={c.accent}
+                padding="16px 18px 18px"
+                style={{ height: "100%" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 10,
+                  }}
+                >
+                  <div
+                    aria-hidden
+                    style={{
+                      width: 34,
+                      height: 34,
+                      background: c.accent,
+                      border: `2px solid ${hsTokens.ink}`,
+                      borderRadius: 999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Glyph kind={c.glyph} size={18} color={hsTokens.ink} />
+                  </div>
+                  <HSEyebrow>{c.eyebrow}</HSEyebrow>
+                </div>
+                <div
+                  style={{
+                    fontFamily: hsTokens.display,
+                    fontSize: 18,
+                    letterSpacing: "-0.03em",
+                    lineHeight: 1.1,
+                    color: hsTokens.ink,
+                    marginBottom: 6,
+                  }}
+                >
+                  {c.label}
+                </div>
+                <p
+                  style={{
+                    fontFamily: hsTokens.body,
+                    fontSize: 12.5,
+                    lineHeight: 1.5,
+                    color: hsTokens.muted,
+                    margin: 0,
+                  }}
+                >
+                  {c.blurb}
+                </p>
+              </HSCard>
+            </Link>
+          ))}
+        </div>
+      </div>
     </>
   );
 }

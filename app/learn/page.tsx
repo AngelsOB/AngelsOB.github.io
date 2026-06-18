@@ -178,32 +178,6 @@ export default function HopSkipLearnIndex() {
           ))}
         </div>
       </section>
-
-      <div
-        style={{
-          marginTop: 40,
-          padding: "16px 18px",
-          background: hsTokens.cream2,
-          border: `1.5px dashed color-mix(in oklch, ${hsTokens.ink} 22%, transparent)`,
-          borderRadius: 12,
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          flexWrap: "wrap",
-          color: hsTokens.muted,
-          fontSize: 13,
-          fontFamily: hsTokens.body,
-        }}
-      >
-        <HSScriptNote color={hsTokens.muted} size={18} rotate={-3}>
-          heads up —
-        </HSScriptNote>
-        <span style={{ flex: 1, minWidth: 240 }}>
-          Individual article pages still render in the classic theme. Sidebar links jump to
-          the classic article for now &mdash; we&rsquo;ll bring those over once the rest of
-          the HS preview is locked in.
-        </span>
-      </div>
     </article>
   );
 }

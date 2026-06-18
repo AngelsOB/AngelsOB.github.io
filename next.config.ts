@@ -18,6 +18,37 @@ const nextConfig: NextConfig = {
         destination: "/r/irish-stout",
         permanent: true,
       },
+      // Calculators moved out of /learn into their own tool-first section.
+      {
+        source: "/learn/abv-calculator",
+        destination: "/calculators/abv",
+        permanent: true,
+      },
+      {
+        source: "/learn/dilution-calculator",
+        destination: "/calculators/dilution",
+        permanent: true,
+      },
+      {
+        source: "/learn/boil-off-calculator",
+        destination: "/calculators/boil-off",
+        permanent: true,
+      },
+      {
+        source: "/learn/carbonation-calculator",
+        destination: "/calculators/carbonation",
+        permanent: true,
+      },
+      {
+        source: "/learn/hydrometer-calculator",
+        destination: "/calculators/hydrometer",
+        permanent: true,
+      },
+      {
+        source: "/learn/strike-temp-calculator",
+        destination: "/calculators/strike-temp",
+        permanent: true,
+      },
     ];
   },
 };

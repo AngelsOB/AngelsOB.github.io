@@ -9,6 +9,9 @@ export interface LearnSection {
   links: LearnLink[];
 }
 
+// Note: the standalone calculators used to live here under a "Calculators"
+// section. They now have their own tool-first section at /calculators/[slug];
+// the old /learn/*-calculator URLs 301 there (see next.config.ts).
 export const learnNav: LearnSection[] = [
   {
     title: "Getting Started",
@@ -65,47 +68,6 @@ export const learnNav: LearnSection[] = [
         label: "Hop Flavor Radar",
         description:
           "A 9-axis flavor model that maps hop character beyond IBU — citrus, tropical, resin, and more.",
-      },
-    ],
-  },
-  {
-    title: "Calculators",
-    links: [
-      {
-        href: "/learn/strike-temp-calculator",
-        label: "Strike Water Temp",
-        description:
-          "Calculate the strike water temperature for your mash from target temp, grain temp, and mash thickness.",
-      },
-      {
-        href: "/learn/abv-calculator",
-        label: "ABV Calculator",
-        description:
-          "Calculate alcohol by volume from original and final gravity readings.",
-      },
-      {
-        href: "/learn/dilution-calculator",
-        label: "Dilution",
-        description:
-          "Figure out how much water to add to hit your target gravity.",
-      },
-      {
-        href: "/learn/boil-off-calculator",
-        label: "Boil-Off",
-        description:
-          "Calculate post-boil volume from pre-boil measurements and target OG.",
-      },
-      {
-        href: "/learn/carbonation-calculator",
-        label: "Carbonation",
-        description:
-          "Find the right PSI for your desired CO₂ volumes at serving temperature.",
-      },
-      {
-        href: "/learn/hydrometer-calculator",
-        label: "Hydrometer Correction",
-        description:
-          "Correct gravity readings for sample temperature differences.",
       },
     ],
   },
