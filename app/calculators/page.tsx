@@ -83,7 +83,7 @@ export default function CalculatorsHubPage() {
           style={{
             display: "grid",
             gap: 14,
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
           }}
         >
           {CALCULATORS_META.map((c) => (

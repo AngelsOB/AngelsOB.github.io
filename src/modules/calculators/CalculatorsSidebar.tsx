@@ -31,7 +31,10 @@ export default function CalculatorsSidebar() {
 
   return (
     <LazyMotion features={domMax} strict>
-      <aside style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <aside
+        className="calc-catalog"
+        style={{ display: "flex", flexDirection: "column", gap: 14 }}
+      >
         {CALCULATOR_CATEGORIES.map((cat) => (
           <HSCard key={cat.label} shadow={2} padding="14px 16px 16px">
             <HSEyebrow>{cat.label}</HSEyebrow>

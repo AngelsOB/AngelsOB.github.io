@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 
 import { hsTokens } from "@/modules/builder/tokens";
 import HSScriptNote from "@/modules/builder/components/HSScriptNote";
-import CalculatorsSidebar from "@/modules/calculators/CalculatorsSidebar";
-import PageTransition from "@/modules/calculators/PageTransition";
+import CalculatorsGrid from "@/modules/calculators/CalculatorsGrid";
 
 /**
- * Shared surface for /calculators. Persistent masthead + sidebar (so they stay
- * mounted across navigation), with the featured column cross-fading on nav.
+ * Shared surface for /calculators. Persistent masthead, then the grid: the
+ * sidebar is always mounted, and on the directory it's CSS-hidden so the cards
+ * go full-width (no double-listing) without remounting anything.
  */
 export default function CalculatorsLayout({
   children,
@@ -73,19 +73,22 @@ export default function CalculatorsLayout({
           padding: "0 clamp(20px, 4vw, 56px) clamp(40px, 6vw, 96px)",
         }}
       >
-        <div
-          className="hs-calc-layout"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.6fr) minmax(280px, 0.9fr)",
-            gap: 24,
-            alignItems: "start",
-          }}
-        >
-          <PageTransition>{children}</PageTransition>
-          <CalculatorsSidebar />
-        </div>
+        <CalculatorsGrid>{children}</CalculatorsGrid>
         <style>{`
+          .hs-calc-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+            gap: 24px;
+            align-items: start;
+          }
+          .hs-calc-layout.is-directory {
+            grid-template-columns: 1fr;
+          }
+          /* Override the aside's inline display:flex (inline beats a normal
+             class rule, so !important is required here). */
+          .hs-calc-layout.is-directory .calc-catalog {
+            display: none !important;
+          }
           @media (max-width: 1024px) {
             .hs-calc-layout { grid-template-columns: 1fr !important; }
           }
