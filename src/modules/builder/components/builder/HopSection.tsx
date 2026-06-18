@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HopPresetModal from "../modals/HopPresetModal";
@@ -912,8 +912,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         textAlign: "center",
       }}
     >
-      <HSScriptNote color={hsTokens.hops} size={20} rotate={-3}>
-        empty bill —
+      <HSScriptNote color={hsTokens.hops} rotate={-3} style={emptyStateTitleStyle}>
+        Hop Bill
       </HSScriptNote>
       <p
         style={{
@@ -961,7 +961,7 @@ function LedgerHeaderRow({
         paddingTop: 2,
       }}
     >
-      <Eyebrow size={11}>The hop bill</Eyebrow>
+      <Eyebrow size={11}>Hop bill</Eyebrow>
       <HopGroupToggle mode={groupMode} onChange={onGroupModeChange} />
       <span
         aria-hidden

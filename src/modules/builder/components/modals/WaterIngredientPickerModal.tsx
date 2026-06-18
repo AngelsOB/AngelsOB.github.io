@@ -92,7 +92,6 @@ export default function WaterIngredientPickerModal({
     >
       <HSModalHeader
         title="Add an ingredient"
-        kicker="finings, spices, agents —"
         onClose={handleClose}
         titleId={titleId}
       />

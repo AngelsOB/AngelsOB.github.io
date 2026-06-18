@@ -66,7 +66,6 @@ export default function CustomFermentableModal({ isOpen, onClose, onSave }: Prop
     >
       <HSModalHeader
         title="Create custom fermentable"
-        kicker="your own grain —"
         onClose={handleClose}
         titleId={titleId}
       />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import HSScriptNote from "@/modules/builder/components/HSScriptNote";
 import { hsTokens } from "@/modules/builder/tokens";
 
 import RecipesHubClient from "./RecipesHubClient";
@@ -76,9 +75,6 @@ export default async function RecipesHubPage() {
           padding: "clamp(36px, 4.5vw, 64px) clamp(20px, 4vw, 56px) 20px",
         }}
       >
-        <HSScriptNote color={hsTokens.hops} size={26} rotate={-3}>
-          your brewing —
-        </HSScriptNote>
         <h1
           style={{
             fontFamily: hsTokens.display,

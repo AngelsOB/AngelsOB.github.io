@@ -41,6 +41,18 @@ function StageEyebrow({
   );
 }
 
+const srOnly: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0,0,0,0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 // ── Beat 6: Compare ──────────────────────────────────────────────────────
 // Its own beat (pulled out of the old combined community section). Text only;
 // the friends/accessibility line lands here.
@@ -67,7 +79,7 @@ export function StageCompare() {
         }}
       >
         <div data-tour-reveal>
-          <StageEyebrow>{s.h2}</StageEyebrow>
+          <h2 style={srOnly}>{s.h2}</h2>
           <p
             style={{
               fontFamily: hsTokens.display,
@@ -426,7 +438,7 @@ export function StageWhatElse() {
         data-tour-reveal
         style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}
       >
-        <StageEyebrow>{s.h2}</StageEyebrow>
+        <h2 style={srOnly}>{s.h2}</h2>
         <p
           style={{
             fontFamily: hsTokens.display,
@@ -706,7 +718,6 @@ export function StageFeedback() {
         data-tour-reveal
         style={{ maxWidth: 540, margin: "0 auto", textAlign: "center" }}
       >
-        <StageEyebrow>Got a minute?</StageEyebrow>
         <h2
           style={{
             fontFamily: hsTokens.display,

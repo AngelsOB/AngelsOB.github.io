@@ -66,7 +66,6 @@ export default function SourceWaterPresetModal({
     >
       <HSModalHeader
         title="Select source water"
-        kicker="your tap, the well, the jug —"
         onClose={handleClose}
         titleId={titleId}
       />

@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -282,22 +282,9 @@ function EmptyState({
         gap: 16,
       }}
     >
-      <HSScriptNote color={hsTokens.roast} size={24} rotate={-4}>
-        blank schedule —
+      <HSScriptNote color={hsTokens.roast} rotate={-4} style={emptyStateTitleStyle}>
+        Mash Schedule
       </HSScriptNote>
-      <p
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 15,
-          color: hsTokens.muted,
-          margin: 0,
-          maxWidth: 420,
-          lineHeight: 1.4,
-        }}
-      >
-        Pick a starting point and tweak. Most all-grain recipes do fine with a single
-        infusion — step + decoction unlock specific flavors.
-      </p>
       <div
         style={{
           display: "grid",
@@ -351,6 +338,19 @@ function EmptyState({
           </button>
         ))}
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 420,
+          lineHeight: 1.4,
+        }}
+      >
+        Pick a starting point and tweak. Most all-grain recipes do fine with a single
+        infusion — step + decoction unlock specific flavors.
+      </p>
       <HSButton onClick={onAdd} color={hsTokens.roast} size="md">
         Or add a custom step
       </HSButton>
@@ -382,7 +382,7 @@ function LedgerHeaderRow({
         paddingTop: 2,
       }}
     >
-      <Eyebrow size={11}>The mash schedule</Eyebrow>
+      <Eyebrow size={11}>Mash schedule</Eyebrow>
       <HSScriptNote color={hsTokens.muted} size={15} rotate={-3}>
         drag to reorder
       </HSScriptNote>

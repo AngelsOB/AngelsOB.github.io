@@ -162,7 +162,6 @@ export default function YeastPresetModal({
     >
       <HSModalHeader
         title={editing ? "Swap yeast strain" : "Select yeast strain"}
-        kicker={editing ? "swap —" : "pick one —"}
         onClose={handleClose}
         titleId={titleId}
       />

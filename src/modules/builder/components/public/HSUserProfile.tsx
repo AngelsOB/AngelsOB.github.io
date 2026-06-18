@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { hsTokens } from "../../tokens";
 import HSCard from "../HSCard";
-import HSScriptNote from "../HSScriptNote";
 import HSBrowseCard, { type BrowseRecipe } from "./HSBrowseCard";
 
 const TILT_CYCLE = [-0.6, 0.5, -0.4, 0.7, -0.3, 0.6];
@@ -52,9 +51,6 @@ export default function HSUserProfile({
         >
           ← Back to browse
         </Link>
-        <HSScriptNote color={hsTokens.water} size={22}>
-          brewer —
-        </HSScriptNote>
         <h1
           style={{
             margin: "6px 0 0",
@@ -102,9 +98,6 @@ export default function HSUserProfile({
         </div>
       ) : (
         <HSCard shadow={2} padding={32} style={{ textAlign: "center" }}>
-          <HSScriptNote color={hsTokens.water} size={20}>
-            no public brews yet —
-          </HSScriptNote>
           <div
             style={{
               marginTop: 8,

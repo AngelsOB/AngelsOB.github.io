@@ -5,7 +5,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { AnimatePresence, m, useReducedMotion } from "framer-motion";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import {
   springEnter,
   springSoft,
@@ -596,7 +596,7 @@ function BillStack({
           flexWrap: "wrap",
         }}
       >
-        <Eyebrow size={11}>The bill</Eyebrow>
+        <Eyebrow size={11}>Grain bill</Eyebrow>
         <span
           style={{
             fontFamily: hsTokens.body,
@@ -2272,8 +2272,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
         gap: 14,
       }}
     >
-      <HSScriptNote color={hsTokens.malt} size={24} rotate={-4}>
-        empty bill —
+      <HSScriptNote color={hsTokens.malt} rotate={-4} style={emptyStateTitleStyle}>
+        Grain Bill
       </HSScriptNote>
       <p
         style={{

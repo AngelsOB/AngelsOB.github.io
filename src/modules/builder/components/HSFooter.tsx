@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { hsTokens } from "../tokens";
-import HSScriptNote from "./HSScriptNote";
 import { useUnsavedChangesStore } from "@/modules/recipe/stores/unsavedChangesStore";
 import { useFeedbackStore } from "@/modules/feedback/feedbackStore";
 
@@ -93,11 +92,6 @@ export default function HSFooter() {
               strokeLinejoin="round"
             />
           </svg>
-          <div style={{ marginTop: 18 }}>
-            <HSScriptNote color={hsTokens.malt} size={26}>
-              made with malt &amp; love.
-            </HSScriptNote>
-          </div>
           <p
             style={{
               marginTop: 18,

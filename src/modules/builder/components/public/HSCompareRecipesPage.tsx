@@ -197,9 +197,6 @@ export default function HSCompareRecipesPage({ initialRecipes }: Props) {
         >
           ← Back to browse
         </Link>
-        <HSScriptNote color={hsTokens.water} size={22}>
-          side by side —
-        </HSScriptNote>
         <h1
           style={{
             margin: "6px 0 0",

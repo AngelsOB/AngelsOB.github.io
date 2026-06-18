@@ -62,7 +62,6 @@ export default function CustomWaterIngredientModal({ isOpen, onClose, onAdd }: P
     >
       <HSModalHeader
         title="Custom ingredient"
-        kicker="name it —"
         onClose={onClose}
         titleId={titleId}
       />

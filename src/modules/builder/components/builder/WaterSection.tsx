@@ -41,7 +41,7 @@ import {
 } from "@/modules/recipe/services/sourceWaterPrefs";
 import { springSupersoft } from "../../motion";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -337,22 +337,9 @@ function IntroState({
         gap: 16,
       }}
     >
-      <HSScriptNote color={hsTokens.water} size={24} rotate={-4}>
-        the water salts —
+      <HSScriptNote color={hsTokens.water} rotate={-4} style={emptyStateTitleStyle}>
+        Water Chemistry
       </HSScriptNote>
-      <p
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 15,
-          color: hsTokens.muted,
-          margin: 0,
-          maxWidth: 440,
-          lineHeight: 1.4,
-        }}
-      >
-        Where your water starts, and where the style wants it to end up.
-        Chloride rounds out malt; sulfate sharpens hops.
-      </p>
       <div
         style={{
           display: "flex",
@@ -402,6 +389,19 @@ function IntroState({
           {targetName ?? (hasStyle ? targetSuggestion : "Select your target")}
         </IntroPick>
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 440,
+          lineHeight: 1.4,
+        }}
+      >
+        Where your water starts, and where the style wants it to end up.
+        Chloride rounds out malt; sulfate sharpens hops.
+      </p>
       <div
         style={{
           display: "flex",
@@ -1018,7 +1018,7 @@ function WaterPlanHeaderRow({
         flexWrap: "wrap",
       }}
     >
-      <Eyebrow size={11}>The water plan</Eyebrow>
+      <Eyebrow size={11}>Water chemistry</Eyebrow>
       <span
         aria-hidden
         style={{
@@ -1951,9 +1951,6 @@ function EmptyOtherIngredients({ onAdd }: { onAdd: () => void }) {
         textAlign: "center",
       }}
     >
-      <HSScriptNote color={hsTokens.water} size={24} rotate={-4}>
-        additional items —
-      </HSScriptNote>
       <p
         style={{
           fontFamily: hsTokens.body,

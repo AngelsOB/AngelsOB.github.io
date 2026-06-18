@@ -110,9 +110,6 @@ export default function HopSkipRecipes() {
           padding: "clamp(36px, 4.5vw, 64px) clamp(20px, 4vw, 56px) 20px",
         }}
       >
-        <HSScriptNote color={hsTokens.hops} size={24} rotate={-3}>
-          your brewing —
-        </HSScriptNote>
         <h1
           style={{
             fontFamily: hsTokens.display,

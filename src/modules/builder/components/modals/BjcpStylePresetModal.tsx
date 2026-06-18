@@ -97,7 +97,6 @@ export default function BjcpStylePresetModal({
     >
       <HSModalHeader
         title="Select BJCP style"
-        kicker="aim for —"
         onClose={handleClose}
         titleId={titleId}
       />

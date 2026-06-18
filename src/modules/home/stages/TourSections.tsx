@@ -55,7 +55,6 @@ export function StageIntro() {
   const s = STAGES.hero;
   return (
     <section style={{ ...sectionStyle(72), justifyContent: "flex-end" }}>
-      <p style={eyebrowStyle}>{s.kicker}</p>
       <h1
         data-tour-split-reveal
         data-tour-split-mode="words"
@@ -144,7 +143,6 @@ export function StageGrains() {
   const s = STAGES.grains;
   return (
     <section data-tour-stage="grains" style={sectionStyle(96)}>
-      <p style={eyebrowStyle}>{s.h2}</p>
       <h2 data-tour-split-reveal data-tour-split-mode="words" style={leadStyle}>
         {s.lead}
       </h2>
@@ -203,7 +201,6 @@ export function StageHonestNumbers() {
   const s = STAGES.honestNumbers;
   return (
     <section data-tour-stage="honest" style={sectionStyle(108)}>
-      <p style={eyebrowStyle}>{s.h2}</p>
       <h2 data-tour-split-reveal data-tour-split-mode="words" style={leadStyle}>
         {s.lead}
       </h2>

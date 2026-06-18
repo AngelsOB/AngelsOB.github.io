@@ -7,7 +7,6 @@ import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useAuthStore } from "@/modules/auth/authStore";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import HSCard from "@/modules/builder/components/HSCard";
-import HSEyebrow from "@/modules/builder/components/HSEyebrow";
 import { hsTokens } from "@/modules/builder/tokens";
 import { toast } from "@/stores/toastStore";
 import type { PreviewSelection } from "@/modules/builder/components/public/usePreviewState";
@@ -94,7 +93,6 @@ export default function MyRecentRecipes({
       }}
     >
       <div>
-        <HSEyebrow>your shelf</HSEyebrow>
         <h2
           style={{
             fontFamily: hsTokens.display,

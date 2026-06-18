@@ -240,7 +240,6 @@ export default function HopPresetModal({
     >
       <HSModalHeader
         title={editing ? "Swap hop" : "Select hop"}
-        kicker={editing ? "swap —" : "pick a variety —"}
         onClose={handleClose}
         titleId={titleId}
       />

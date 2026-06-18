@@ -44,7 +44,6 @@ export default function UnsavedChangesModal() {
       closeOnBackdropClick={false}
     >
       <HSModalHeader
-        kicker="hold up —"
         title="Unsaved changes"
         onClose={handleCancel}
       />

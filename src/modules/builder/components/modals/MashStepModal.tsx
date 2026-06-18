@@ -108,7 +108,6 @@ export default function MashStepModal({
     >
       <HSModalHeader
         title={existingStep ? "Edit mash step" : "Add mash step"}
-        kicker={existingStep ? "tweak the rest —" : "drop a rest —"}
         onClose={handleClose}
         titleId={titleId}
       />

@@ -24,7 +24,7 @@ export default function FeedbackModal() {
 
   return (
     <HSModal isOpen={isOpen} onClose={close} size="md" accent={hsTokens.malt}>
-      <HSModalHeader kicker="got a minute? —" title="Send feedback" onClose={close} />
+      <HSModalHeader title="Send feedback" onClose={close} />
       <HSModalBody>
         <FeedbackForm onDone={close} />
       </HSModalBody>

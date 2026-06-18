@@ -89,7 +89,6 @@ export default function CustomEquipmentModal({
     >
       <HSModalHeader
         title="Save as custom profile"
-        kicker="your kit, saved —"
         onClose={handleClose}
         titleId={titleId}
       />

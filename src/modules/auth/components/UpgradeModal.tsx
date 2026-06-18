@@ -63,7 +63,7 @@ export default function UpgradeModal({ isOpen, onClose, reason }: UpgradeModalPr
 
   return (
     <HSModal isOpen={isOpen} onClose={onClose} size="sm" accent={hsTokens.malt}>
-      <HSModalHeader kicker="go premium —" title="Upgrade to Premium" onClose={onClose} />
+      <HSModalHeader title="Upgrade to Premium" onClose={onClose} />
       <HSModalBody>
         {reason ? (
           <p

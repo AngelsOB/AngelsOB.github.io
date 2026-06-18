@@ -75,7 +75,6 @@ export default function CustomSourceWaterModal({
     >
       <HSModalHeader
         title="Custom source water"
-        kicker="dial it in —"
         onClose={handleClose}
         titleId={titleId}
       />

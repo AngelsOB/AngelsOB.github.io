@@ -128,7 +128,6 @@ export default function FermentationStepModal({
     >
       <HSModalHeader
         title={existingStep ? "Edit fermentation step" : "Add fermentation step"}
-        kicker={existingStep ? "tune the schedule —" : "lay down a step —"}
         onClose={handleClose}
         titleId={titleId}
       />

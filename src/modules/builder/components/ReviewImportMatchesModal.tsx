@@ -208,7 +208,6 @@ export default function ReviewImportMatchesModal({
       closeOnBackdropClick={false}
     >
       <HSModalHeader
-        kicker="check this —"
         title="Match imported items to your library"
         onClose={onCancel}
       />

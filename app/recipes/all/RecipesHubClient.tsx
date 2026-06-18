@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { hsTokens } from "@/modules/builder/tokens";
-import HSEyebrow from "@/modules/builder/components/HSEyebrow";
 import HSPreviewColumn from "@/modules/builder/components/public/HSPreviewColumn";
 import { usePreviewState } from "@/modules/builder/components/public/usePreviewState";
 import {
@@ -67,7 +66,6 @@ export default function RecipesHubClient({ community }: Props) {
             }}
           >
             <div>
-              <HSEyebrow>from the community</HSEyebrow>
               <h2
                 style={{
                   fontFamily: hsTokens.display,

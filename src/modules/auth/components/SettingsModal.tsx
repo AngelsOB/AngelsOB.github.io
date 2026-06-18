@@ -38,7 +38,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <HSModal isOpen={isOpen} onClose={onClose} size="md" accent={hsTokens.water}>
-      <HSModalHeader kicker="tune the numbers —" title="Settings" onClose={onClose} />
+      <HSModalHeader title="Settings" onClose={onClose} />
       <HSModalBody>
         <p
           style={{

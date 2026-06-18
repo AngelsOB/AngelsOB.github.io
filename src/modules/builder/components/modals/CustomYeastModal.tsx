@@ -53,7 +53,6 @@ export default function CustomYeastModal({ isOpen, onClose, onSave }: Props) {
     >
       <HSModalHeader
         title="Create custom yeast"
-        kicker="your own strain —"
         onClose={handleClose}
         titleId={titleId}
       />

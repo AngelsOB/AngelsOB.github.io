@@ -178,7 +178,6 @@ export default function ImportRecipeModal({
   return (
     <HSModal isOpen={isOpen} onClose={onClose} size="xl" accent={hsTokens.malt}>
       <HSModalHeader
-        kicker="bring a recipe in —"
         title="Import a recipe"
         onClose={onClose}
       />

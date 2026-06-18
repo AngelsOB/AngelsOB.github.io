@@ -5,7 +5,6 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
-import HSScriptNote from "../HSScriptNote";
 import HSActionMenu from "../HSActionMenu";
 import EquipmentProfileModal from "../modals/EquipmentProfileModal";
 import CustomEquipmentModal from "../modals/CustomEquipmentModal";
@@ -419,9 +418,6 @@ function TitleRow({
         Equipment.
       </h2>
       <span aria-hidden style={{ flex: 1, minWidth: 12 }} />
-      <HSScriptNote color={hsTokens.muted} size={16} rotate={-3}>
-        your kit —
-      </HSScriptNote>
       <HSActionMenu
         trigger={
           <span

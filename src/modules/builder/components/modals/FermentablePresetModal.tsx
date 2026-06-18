@@ -184,7 +184,6 @@ export default function FermentablePresetModal({
     >
       <HSModalHeader
         title={editing ? "Swap fermentable" : "Select fermentable"}
-        kicker={editing ? "swap —" : "pick one —"}
         onClose={handleClose}
         titleId={titleId}
       />

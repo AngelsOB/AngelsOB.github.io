@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -626,22 +626,9 @@ function StrainEmptyState({
         gap: 16,
       }}
     >
-      <HSScriptNote color={hsTokens.yeast} size={24} rotate={-4}>
-        nothing pitched yet —
+      <HSScriptNote color={hsTokens.yeast} rotate={-4} style={emptyStateTitleStyle}>
+        Yeast Strain
       </HSScriptNote>
-      <p
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 15,
-          color: hsTokens.muted,
-          margin: 0,
-          maxWidth: 460,
-          lineHeight: 1.4,
-        }}
-      >
-        Pick a quick start, or browse the full library — we&apos;ll size your
-        pitch and tell you whether you need a starter.
-      </p>
       <div
         style={{
           display: "grid",
@@ -695,6 +682,19 @@ function StrainEmptyState({
           </button>
         ))}
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 460,
+          lineHeight: 1.4,
+        }}
+      >
+        Pick a quick start, or browse the full library — we&apos;ll size your
+        pitch and tell you whether you need a starter.
+      </p>
       <HSButton onClick={onAdd} color={hsTokens.yeast} size="md">
         Or browse the full library
       </HSButton>
@@ -816,7 +816,7 @@ function StrainBlockHeader({
   onAdd: () => void;
 }) {
   if (!hasStrains) {
-    return <BlockEyebrow label="The yeast strain" meta={null} right={null} />;
+    return <BlockEyebrow label="Yeast strain" meta={null} right={null} />;
   }
   const labelStyle: CSSProperties = {
     fontFamily: hsTokens.body,
@@ -875,7 +875,7 @@ function StrainBlockHeader({
       >
         <span style={{ ...punchStyle, paddingLeft: 0 }}>
           <Eyebrow size={11} style={{ whiteSpace: "nowrap" }}>
-            The yeast strain
+            Yeast strain
           </Eyebrow>
         </span>
       </div>
@@ -1528,7 +1528,7 @@ function StarterBlock({
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <BlockEyebrow
-          label="The starter schedule"
+          label="Starter schedule"
           meta={`${steps.length} ${steps.length === 1 ? "step" : "steps"} · ${totalLiters.toFixed(1)} L · ${Math.round(totalDme)} g DME · ${modelLabel.toLowerCase()}`}
           right={
             <BlockHeaderActions>
@@ -1644,9 +1644,6 @@ function StarterPromptProminent({
           boxShadow: hsTokens.sh2,
         }}
       >
-        <HSScriptNote color={hsTokens.yeast} size={24} rotate={-4}>
-          build a starter —
-        </HSScriptNote>
         <p
           style={{
             fontFamily: hsTokens.body,

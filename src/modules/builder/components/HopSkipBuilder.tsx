@@ -437,9 +437,6 @@ export default function HopSkipBuilder({
     if (recipeError && !isAuthLoading) {
       return (
         <section style={{ padding: `80px ${BAND_PADDING_X}`, textAlign: "center" }}>
-          <HSScriptNote color={hsTokens.roast} size={22}>
-            hmm —
-          </HSScriptNote>
           <h1
             style={{
               ...display,

@@ -58,7 +58,7 @@ export const STAGES = {
 
   // ── Beat 2: Flavor — the timing-aware estimate ─────────────────────────
   hops: {
-    h2: "Hop flavor, estimated",
+    h2: "Hop flavor",
     lead: "Now shape how it tastes.",
     paragraphs: [
       "Numbers are half of it. Here's the other half. Pick your hops and watch the flavor land: citrus, tropical, pine, dank.",

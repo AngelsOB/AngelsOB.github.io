@@ -7,6 +7,8 @@
 // Ingredient accents (malt, hops, water, yeast, roast, honey) stay literal
 // hex — they don't change between light and dark mode by design.
 
+import type { CSSProperties } from "react";
+
 export const hsTokens = {
   // surfaces — resolve via CSS var so dark mode flips them
   cream: "var(--hs-cream)",
@@ -71,3 +73,12 @@ export const hsBrewAccentMap = {
   equipment: hsTokens.muted,
   targets: hsTokens.ink,
 } as const;
+
+// Empty-state section header — the big bold Caveat note shown in each empty
+// builder section (Hop bill, Grain bill, Mash schedule, Water chemistry, Yeast
+// strain, Fermentation plan, Conditioning plan). Size + weight live here so the
+// whole set tunes in one place; per-section color + rotate stay inline.
+export const emptyStateTitleStyle: CSSProperties = {
+  fontSize: 24,
+  fontWeight: 800,
+};

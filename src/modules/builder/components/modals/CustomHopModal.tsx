@@ -66,7 +66,6 @@ export default function CustomHopModal({ isOpen, onClose, onSave }: Props) {
     >
       <HSModalHeader
         title="Create custom hop"
-        kicker="your own variety —"
         onClose={handleClose}
         titleId={titleId}
       />

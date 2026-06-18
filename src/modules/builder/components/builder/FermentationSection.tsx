@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -330,7 +330,7 @@ export default function FermentationSection() {
       <div className="hs-fermentation-grid">
         <div className="hs-fermentation-grid-lhead">
           <BlockEyebrow
-            label="The fermentation schedule"
+            label="Fermentation schedule"
             hint={derived.length > 0 ? "drag to reorder" : null}
             meta={(() => {
               const parts: string[] = [];
@@ -571,22 +571,9 @@ function FermentationEmptyState({
         gap: 16,
       }}
     >
-      <HSScriptNote color={hsTokens.honey} size={24} rotate={-4}>
-        nothing pitched yet —
+      <HSScriptNote color={hsTokens.honey} rotate={-4} style={emptyStateTitleStyle}>
+        Fermentation Plan
       </HSScriptNote>
-      <p
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 15,
-          color: hsTokens.muted,
-          margin: 0,
-          maxWidth: 460,
-          lineHeight: 1.4,
-        }}
-      >
-        Lay down a fermentation schedule. Most ales just need a single primary;
-        lagers and hazies want more shape.
-      </p>
       <div
         style={{
           display: "grid",
@@ -640,6 +627,19 @@ function FermentationEmptyState({
           </button>
         ))}
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 15,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 460,
+          lineHeight: 1.4,
+        }}
+      >
+        Lay down a fermentation schedule. Most ales just need a single primary;
+        lagers and hazies want more shape.
+      </p>
       <HSButton onClick={onAdd} color={hsTokens.honey} size="md">
         Or add a custom step
       </HSButton>
@@ -1435,7 +1435,7 @@ function ConditioningBlock({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <BlockEyebrow
-        label="The conditioning plan"
+        label="Conditioning plan"
         meta={hasPackaging ? methodLabel : null}
         right={
           hasPackaging ? (
@@ -1530,22 +1530,9 @@ function ConditioningEmptyState({
         gap: 14,
       }}
     >
-      <HSScriptNote color={hsTokens.honey} size={22} rotate={-4}>
-        no carb plan yet —
+      <HSScriptNote color={hsTokens.honey} rotate={-4} style={emptyStateTitleStyle}>
+        Conditioning Plan
       </HSScriptNote>
-      <p
-        style={{
-          fontFamily: hsTokens.body,
-          fontSize: 14,
-          color: hsTokens.muted,
-          margin: 0,
-          maxWidth: 460,
-          lineHeight: 1.4,
-        }}
-      >
-        Pick how you&apos;ll carbonate. You can change this later, or run both
-        paths for a single batch.
-      </p>
       <div
         style={{
           display: "grid",
@@ -1610,6 +1597,19 @@ function ConditioningEmptyState({
           </button>
         ))}
       </div>
+      <p
+        style={{
+          fontFamily: hsTokens.body,
+          fontSize: 14,
+          color: hsTokens.muted,
+          margin: 0,
+          maxWidth: 460,
+          lineHeight: 1.4,
+        }}
+      >
+        Pick how you&apos;ll carbonate. You can change this later, or run both
+        paths for a single batch.
+      </p>
     </div>
   );
 }
@@ -2448,10 +2448,10 @@ function JourneyTimeline({
           >
             <HSScriptNote color={hovered.color} size={18}>
               {hovered.kind === "carb-keg"
-                ? "force carb —"
+                ? "force carb"
                 : hovered.kind === "carb-bottle"
-                  ? "bottle condition —"
-                  : "fermentation —"}
+                  ? "bottle condition"
+                  : "fermentation"}
             </HSScriptNote>
             <div
               style={{

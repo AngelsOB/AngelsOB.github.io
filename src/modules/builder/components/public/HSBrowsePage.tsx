@@ -18,7 +18,6 @@ import { db } from "@/config/firebase";
 import { hsTokens } from "../../tokens";
 import HSButton from "../HSButton";
 import HSCard from "../HSCard";
-import HSScriptNote from "../HSScriptNote";
 import HSBrowseCard, { type BrowseRecipe } from "./HSBrowseCard";
 import HSPreviewColumn from "./HSPreviewColumn";
 import { cardPathFor, loadFullPublicRecipe } from "./loadFullPublicRecipe";
@@ -199,9 +198,6 @@ export default function HSBrowsePage({ initialRecipes }: Props) {
       }}
     >
       <div style={{ marginBottom: 28 }}>
-        <HSScriptNote color={hsTokens.water} size={22}>
-          your brewing —
-        </HSScriptNote>
         <h1
           style={{
             margin: "6px 0 0",
@@ -383,9 +379,6 @@ export default function HSBrowsePage({ initialRecipes }: Props) {
 
       {showEmpty ? (
         <HSCard shadow={2} padding={32} style={{ textAlign: "center" }}>
-          <HSScriptNote color={hsTokens.water} size={20}>
-            empty shelf —
-          </HSScriptNote>
           <div
             style={{
               marginTop: 8,

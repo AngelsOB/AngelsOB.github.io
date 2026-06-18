@@ -75,7 +75,6 @@ export default function EquipmentProfileModal({
     >
       <HSModalHeader
         title="Select equipment profile"
-        kicker="pick your kit —"
         onClose={handleClose}
         titleId={titleId}
       />

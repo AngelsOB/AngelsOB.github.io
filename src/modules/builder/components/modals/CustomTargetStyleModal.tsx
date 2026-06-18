@@ -85,7 +85,6 @@ export default function CustomTargetStyleModal({
     >
       <HSModalHeader
         title="Custom target water"
-        kicker="design your own —"
         onClose={handleClose}
         titleId={titleId}
       />

@@ -116,7 +116,6 @@ export default function TargetStylePresetModal({
     >
       <HSModalHeader
         title="Select target water style"
-        kicker="aim for —"
         onClose={handleClose}
         titleId={titleId}
       />
