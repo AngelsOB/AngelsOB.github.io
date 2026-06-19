@@ -37,6 +37,7 @@ import { toast } from "@/stores/toastStore";
 import { hopFlavorCalculationService } from "@/modules/recipe/services/HopFlavorCalculationService";
 import { hopEnrichmentService } from "@/modules/recipe/services/HopEnrichmentService";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { volumeCalculationService } from "@/modules/recipe/services/VolumeCalculationService";
 import type { Hop } from "@/modules/recipe/models/Recipe";
 import type {
   HopPreset,
@@ -633,7 +634,7 @@ export default function HopSection() {
               assignments={frozenAssignments}
               totalGrams={totalGrams}
               og={calculations?.og ?? 1.05}
-              batchVolumeGal={(currentRecipe?.batchVolumeL ?? 20) * 0.264172}
+              batchVolumeGal={(currentRecipe ? volumeCalculationService.calculatePostBoilVolume(currentRecipe) : 20) * 0.264172}
               boilGravity={
                 ((calculations?.preBoilGravity ?? calculations?.og ?? 1.05) +
                   (calculations?.og ?? 1.05)) /

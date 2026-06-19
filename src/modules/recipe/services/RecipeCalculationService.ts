@@ -470,10 +470,16 @@ export class RecipeCalculationService {
       return 0;
     }
 
-    const batchVolumeGal = batchVolumeL * 0.264172;
+    // IBU is the iso-alpha concentration fixed at flameout, so it references the
+    // post-boil (kettle) volume — the standard Tinseth convention, NOT the
+    // finished/into-fermenter volume.
+    const ibuVolumeGal = volumeCalculationService.calculatePostBoilVolume(recipe) * 0.264172;
+    if (ibuVolumeGal <= 0) {
+      return 0;
+    }
 
     const totalIBU = hops.reduce((sum, hop) => {
-      const ibu = this.calculateSingleHopIBU(hop, og, batchVolumeGal, boilGravity, equipment.boilTimeMin);
+      const ibu = this.calculateSingleHopIBU(hop, og, ibuVolumeGal, boilGravity, equipment.boilTimeMin);
       return sum + ibu;
     }, 0);
 
@@ -483,14 +489,18 @@ export class RecipeCalculationService {
   /**
    * Calculate IBU contribution from a single hop addition.
    *
+   * `ibuVolumeGal` is the post-boil (kettle) volume in gallons — the volume the
+   * iso-alpha is dissolved in at flameout (standard Tinseth convention).
    * Kettle additions (boil, first wort, mash) use `boilGravity` (boil average);
    * whirlpool uses `og` since it happens after the boil. `boilTimeMin` anchors
-   * first-wort hops to the full boil duration.
+   * first-wort hops to the full boil duration. A +10% utilization factor is
+   * applied to the isomerization model (assumes pellet hops, the common case;
+   * matches Brewer's Friend / Brewfather defaults).
    */
   calculateSingleHopIBU(
     hop: Hop,
     og: number,
-    batchVolumeGal: number,
+    ibuVolumeGal: number,
     boilGravity: number = og,
     boilTimeMin: number = 60,
   ): number {
@@ -509,8 +519,8 @@ export class RecipeCalculationService {
     //   - Non-isomerized alpha acids also dissolve (~1% at fermentation temps),
     //     contributing at ~0.62 IBU response factor per mg/L
     if (type === 'dry hop') {
-      const batchVolumeL = batchVolumeGal / 0.264172;
-      const dryHopRateGL = grams / batchVolumeL;
+      const beerVolumeL = ibuVolumeGal / 0.264172;
+      const dryHopRateGL = grams / beerVolumeL;
 
       // Humulinone contribution
       const humulinoneFraction = 0.004;  // ~0.4% of hop weight is humulinones (pellets)
@@ -518,7 +528,7 @@ export class RecipeCalculationService {
       // Extraction efficiency: ~75% at moderate rates, decreasing at high rates
       // Maye 2016: ~98% at 0.5 lb/bbl (~4 g/L), ~47% at 2 lb/bbl (~16 g/L)
       const extractionRate = 0.75 * Math.exp(-0.04 * Math.max(0, dryHopRateGL - 4));
-      const humulinonePpm = (humulinoneMg * extractionRate) / batchVolumeL;
+      const humulinonePpm = (humulinoneMg * extractionRate) / beerVolumeL;
       const humulinoneIbu = humulinonePpm * 0.54;
 
       // Non-isomerized alpha acid contribution
@@ -527,7 +537,7 @@ export class RecipeCalculationService {
       // Calibrated against Maye 2016: 142g Centennial/10%AA/16L → +18.5 IBU measured
       const alphaAcidMg = grams * (alphaAcid / 100) * 1000;
       const dissolvedAaMg = alphaAcidMg * 0.01;
-      const dissolvedAaPpm = dissolvedAaMg / batchVolumeL;
+      const dissolvedAaPpm = dissolvedAaMg / beerVolumeL;
       const alphaAcidIbu = dissolvedAaPpm * 0.62;
 
       return humulinoneIbu + alphaAcidIbu;
@@ -560,11 +570,18 @@ export class RecipeCalculationService {
         break;
     }
 
+    // Pellet utilization bonus: +10% on the Tinseth isomerization model. We
+    // assume pellet hops (the common case; there's no hop-form field yet), which
+    // matches Brewer's Friend's documented default and Brewfather's pellet
+    // handling. Dry hop returned earlier, so it's unaffected (correct — the bump
+    // is a Tinseth-only convention).
+    utilization *= 1.1;
+
     // Tinseth formula using imperial units
     // Convert grams to ounces, then calculate AAU
     const oz = grams / 28.3495;
     const aau = oz * alphaAcid;  // Alpha Acid Units
-    const ibu = (aau * utilization * 75) / batchVolumeGal;
+    const ibu = (aau * utilization * 75) / ibuVolumeGal;
 
     return ibu;
   }

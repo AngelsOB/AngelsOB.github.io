@@ -156,8 +156,17 @@ describe('Recipe Calculation Service', () => {
           createFermentable({ id: 'crystal', name: 'Crystal Medium', weightKg: 0.341, ppg: 32.15 }),
           createFermentable({ id: 'roast', name: 'Roasted Barley', weightKg: 0.0583, ppg: 34.16 }),
         ],
+        hops: [
+          createHop({ id: 'h1', name: 'EKG', grams: 28.35, alphaAcid: 4.8, type: 'boil', timeMinutes: 60 }),
+          createHop({ id: 'h2', name: 'EKG', grams: 14.17, alphaAcid: 4.8, type: 'boil', timeMinutes: 30 }),
+        ],
       });
-      expect(recipeCalculationService.calculateOG(recipe)).toBeCloseTo(1.05, 2);
+      const calc = recipeCalculationService.calculate(recipe);
+      expect(calc.og).toBeCloseTo(1.05, 2);
+      // IBU references post-boil volume + a +10% pellet factor → ~23.9, matching
+      // Brewfather's 23 within Tinseth's inherent accuracy (band guards the model).
+      expect(calc.ibu).toBeGreaterThan(22);
+      expect(calc.ibu).toBeLessThan(25);
     });
 
     test('missing brewhouseEfficiencyPercent defaults to 75% — no NaN cascade', () => {

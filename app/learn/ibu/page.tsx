@@ -217,7 +217,7 @@ export default function IbuPage() {
         <HSFormulaCallout
           title="Tinseth IBU"
           expression={"IBU = \\frac{W \\times \\alpha \\times U \\times 75}{V}"}
-          description="W = hop weight (oz), α = alpha acid %, U = utilization factor, V = batch volume (gal)."
+          description="W = hop weight (oz), α = alpha acid %, U = utilization factor, V = post-boil volume (gal)."
         />
 
         <p className="text-sm leading-relaxed">
@@ -230,6 +230,17 @@ export default function IbuPage() {
           title="Utilization"
           expression={"U = \\underbrace{1.65 \\times 0.000125^{\\,(G - 1)}}_{\\text{gravity}} \\times \\underbrace{\\frac{1 - e^{-0.04t}}{4.15}}_{\\text{time}}"}
         />
+
+        <p className="text-sm leading-relaxed">
+          Two conventions worth knowing. We <strong>assume pellet hops</strong>{" "}
+          and add a <strong>+10% utilization</strong> bonus to every kettle
+          addition. Pellets have more surface area than whole cones and are what
+          most brewers use, and this matches how Brewer&apos;s Friend and
+          Brewfather handle it. If you brew with whole/leaf hops, your real
+          bitterness will land a touch lower than we show. And we measure against
+          the <strong>post-boil volume</strong>, where the bitterness is
+          concentrated at flameout, not the smaller packaged volume.
+        </p>
 
         {/* ── Each addition type ── */}
         <h2
@@ -370,7 +381,8 @@ export default function IbuPage() {
         </h2>
         <p className="text-sm leading-relaxed mb-4">
           Here&apos;s the math for a single hop addition: 1 oz of Cascade
-          (7% alpha acid) boiled for 60 minutes in 5 gallons of 1.050 wort:
+          (7% alpha acid) boiled for 60 minutes in 5 gallons of 1.050 post-boil
+          wort:
         </p>
 
         <div
@@ -393,6 +405,10 @@ export default function IbuPage() {
             <p>
               Utilization = 1.053 × 0.219 = <strong>23.1%</strong>
             </p>
+            <p>
+              Pellet factor = 23.1% × 1.10 = <strong>25.4%</strong>{" "}
+              <span style={{ color: "var(--fg-muted)" }}>(pellets assumed)</span>
+            </p>
             <div
               className="mt-3 pt-3"
               style={{
@@ -401,8 +417,8 @@ export default function IbuPage() {
               }}
             >
               <p>
-                IBU = (1 × 7 × 0.231 × 75) / 5 ={" "}
-                <strong className="text-base">24.2 IBU</strong>
+                IBU = (1 × 7 × 0.254 × 75) / 5 ={" "}
+                <strong className="text-base">26.6 IBU</strong>
               </p>
             </div>
           </div>

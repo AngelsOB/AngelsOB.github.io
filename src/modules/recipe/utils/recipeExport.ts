@@ -303,7 +303,8 @@ export const generateRecipeMarkdown = (
   if (recipe.hops.length === 0) {
     lines.push("_No hops_");
   } else {
-    const batchGalForIbu = (recipe.batchVolumeL || 1) * 0.264172;
+    // IBU references the post-boil (kettle) volume, matching calculateIBU.
+    const batchGalForIbu = (volumeCalculationService.calculatePostBoilVolume(recipe) || 1) * 0.264172;
     // Match the brew-sheet total: kettle additions use the average boil gravity
     // and the recipe's boil time (so FWH anchors to the full boil).
     const boilGravityForIbu = ((calc.preBoilGravity ?? calc.og) + calc.og) / 2;
