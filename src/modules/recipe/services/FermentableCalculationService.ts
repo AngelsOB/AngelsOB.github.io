@@ -9,6 +9,7 @@
 import type { Fermentable } from "../models/Recipe";
 import { fermentableExtractEfficiency, inferFermentability } from "../data/fermentablePresets";
 import { LITERS_TO_GALLONS, KG_TO_LBS } from "@/calculators/units";
+import { ABV_FACTOR } from "@/calculators/abv";
 
 export class FermentableCalculationService {
   /**
@@ -91,7 +92,7 @@ export class FermentableCalculationService {
     // Invert the ABV formula to the target OG, symmetric with calculateABV +
     // calculateFG: ABV = (OG - 1) * 131.25 * attenuation * avgFermentability.
     const ogTarget =
-      1 + Math.max(0, targetABV) / (131.25 * attenuation * avgFermentability);
+      1 + Math.max(0, targetABV) / (ABV_FACTOR * attenuation * avgFermentability);
     const totalGuNeeded = (ogTarget - 1) * 1000 * volumeGal;
 
     const totalLb = totalGuNeeded / effectiveGuPerLb;

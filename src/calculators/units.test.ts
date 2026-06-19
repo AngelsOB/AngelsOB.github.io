@@ -7,6 +7,7 @@ import {
   gravityPoints,
   celsiusToFahrenheit,
   fahrenheitToCelsius,
+  sgToPlato,
 } from "./units";
 
 describe("units", () => {
@@ -35,5 +36,12 @@ describe("units", () => {
     expect(fahrenheitToCelsius(32)).toBe(0);
     expect(fahrenheitToCelsius(212)).toBe(100);
     expect(fahrenheitToCelsius(70)).toBe(((70 - 32) * 5) / 9);
+  });
+
+  test("sgToPlato (ASBC polynomial)", () => {
+    expect(sgToPlato(1.0)).toBeCloseTo(0, 1);
+    expect(sgToPlato(1.04)).toBeCloseTo(9.9935, 3);
+    expect(sgToPlato(1.05)).toBeCloseTo(12.3876, 3);
+    expect(sgToPlato(1.08)).toBeCloseTo(19.331, 3);
   });
 });

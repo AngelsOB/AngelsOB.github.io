@@ -12,7 +12,7 @@ import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculation
 import { mashScheduleService } from './MashScheduleService';
 import { inferFermentability, fermentableExtractEfficiency } from '@/modules/recipe/data/fermentablePresets';
 import { abvFromOGFG } from '@/calculators/abv';
-import { LITERS_TO_GALLONS, KG_TO_LBS } from '@/calculators/units';
+import { LITERS_TO_GALLONS, KG_TO_LBS, sgToPlato } from '@/calculators/units';
 
 export type AttenuationModel = 'kinetic' | 'linear';
 
@@ -622,10 +622,7 @@ export class RecipeCalculationService {
    * Reference: "Brew By The Numbers" – Hall, Zymurgy 1995
    */
   calculateNutrition(og: number, fg: number): { calories: number; carbsG: number } {
-    // SG → °Plato (simplified polynomial, accurate to ±0.02 °P for beer range)
-    const sgToPlato = (sg: number) =>
-      -616.868 + 1111.14 * sg - 630.272 * sg * sg + 135.997 * sg * sg * sg;
-
+    // SG → °Plato via the shared ASBC polynomial (see @/calculators/units).
     const oe = sgToPlato(og); // Original Extract in °Plato
     const ae = sgToPlato(fg); // Apparent Extract in °Plato
 

@@ -11,7 +11,7 @@
  */
 
 import type { StarterStep, YeastType } from "../models/Recipe";
-import { LITERS_TO_GALLONS, GRAVITY_TO_POINTS } from "@/calculators/units";
+import { LITERS_TO_GALLONS, GRAVITY_TO_POINTS, sgToPlato } from "@/calculators/units";
 
 // ============================================================================
 // UNIT CONVERSION CONSTANTS
@@ -22,17 +22,6 @@ const POUNDS_TO_GRAMS = 453.59237;
 
 /** Milliseconds per day for date calculations */
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-// ============================================================================
-// PLATO CONVERSION POLYNOMIAL COEFFICIENTS
-// ============================================================================
-// ASBC polynomial for converting specific gravity to degrees Plato
-// Formula: Plato = A + B*SG + C*SG² + D*SG³
-
-const PLATO_COEFF_A = -616.868;
-const PLATO_COEFF_B = 1111.14;
-const PLATO_COEFF_C = -630.272;
-const PLATO_COEFF_D = 135.997;
 
 // ============================================================================
 // YEAST VIABILITY CONSTANTS
@@ -130,17 +119,12 @@ function clamp(n: number, lo: number, hi: number): number {
 
 export class StarterCalculationService {
   /**
-   * Convert specific gravity to degrees Plato using ASBC polynomial
+   * Convert specific gravity to degrees Plato using ASBC polynomial.
+   * Delegates to the shared `sgToPlato` helper so the coefficients live in
+   * exactly one place (see @/calculators/units).
    */
   sgToPlato(sg: number): number {
-    const s2 = sg * sg;
-    const s3 = s2 * sg;
-    return (
-      PLATO_COEFF_A +
-      PLATO_COEFF_B * sg +
-      PLATO_COEFF_C * s2 +
-      PLATO_COEFF_D * s3
-    );
+    return sgToPlato(sg);
   }
 
   /**

@@ -8,6 +8,7 @@
 import type { Recipe } from '../models/Recipe';
 import type { SessionActuals, SessionCalculated } from '../models/BrewSession';
 import { LITERS_TO_GALLONS, KG_TO_LBS } from '@/calculators/units';
+import { abvFromOGFG } from '@/calculators/abv';
 
 export class BrewSessionCalculationService {
   /**
@@ -69,7 +70,7 @@ export class BrewSessionCalculationService {
    * @returns ABV percentage (e.g., 5.25)
    */
   calculateABV(og: number, fg: number): number {
-    return (og - fg) * 131.25;
+    return abvFromOGFG(og, fg);
   }
 
   /**

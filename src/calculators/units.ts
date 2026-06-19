@@ -31,3 +31,20 @@ export function celsiusToFahrenheit(c: number): number {
 export function fahrenheitToCelsius(f: number): number {
   return ((f - 32) * 5) / 9;
 }
+
+/**
+ * ASBC polynomial converting specific gravity to degrees Plato:
+ *   °P = A + B·SG + C·SG² + D·SG³
+ * Reference: ASBC Methods of Analysis.
+ */
+export const PLATO_COEFF_A = -616.868;
+export const PLATO_COEFF_B = 1111.14;
+export const PLATO_COEFF_C = -630.272;
+export const PLATO_COEFF_D = 135.997;
+
+/** Specific gravity → degrees Plato (ASBC polynomial). */
+export function sgToPlato(sg: number): number {
+  const s2 = sg * sg;
+  const s3 = s2 * sg;
+  return PLATO_COEFF_A + PLATO_COEFF_B * sg + PLATO_COEFF_C * s2 + PLATO_COEFF_D * s3;
+}

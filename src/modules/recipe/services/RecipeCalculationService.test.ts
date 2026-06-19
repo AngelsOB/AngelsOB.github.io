@@ -587,6 +587,14 @@ describe('Recipe Calculation Service', () => {
       expect(strong.calories).toBeGreaterThan(light.calories);
     });
 
+    test('exact output unchanged after sgToPlato consolidation (golden master)', () => {
+      // Pinned from the pre-refactor inline ASBC polynomial. The shared
+      // sgToPlato helper must reproduce these rounded outputs exactly.
+      expect(recipeCalculationService.calculateNutrition(1.050, 1.010)).toEqual({ calories: 164, carbsG: 15.2 });
+      expect(recipeCalculationService.calculateNutrition(1.080, 1.020)).toEqual({ calories: 266, carbsG: 27.4 });
+      expect(recipeCalculationService.calculateNutrition(1.040, 1.008)).toEqual({ calories: 130, carbsG: 12.1 });
+    });
+
     test('higher FG yields more carbs', () => {
       const dry = recipeCalculationService.calculateNutrition(1.050, 1.005);
       const sweet = recipeCalculationService.calculateNutrition(1.050, 1.020);
