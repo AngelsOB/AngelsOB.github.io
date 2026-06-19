@@ -261,7 +261,7 @@ class BeerXmlExportService {
     lines.push(tag('BATCH_SIZE', num(fermenterBatchL, 2)));
     lines.push(tag('BOIL_SIZE', num(calcs.preBoilVolumeL, 2)));
     lines.push(tag('BOIL_TIME', num(recipe.equipment.boilTimeMin, 0)));
-    lines.push(tag('EFFICIENCY', num(recipe.equipment.mashEfficiencyPercent, 1)));
+    lines.push(tag('EFFICIENCY', num(recipe.equipment.brewhouseEfficiencyPercent, 1)));
     if (recipe.notes) lines.push(tag('NOTES', recipe.notes));
 
     // ---- Calculated vitals ----

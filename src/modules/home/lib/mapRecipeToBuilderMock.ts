@@ -320,7 +320,7 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
       { label: "Batch", value: `${batchGal} gal` },
       { label: "Boil", value: `${recipe.equipment.boilTimeMin} min` },
       { label: "Setup", value: recipe.equipmentProfileName || "Custom" },
-      { label: "Eff", value: `${Math.round(recipe.equipment.mashEfficiencyPercent)}%` },
+      { label: "Eff", value: `${Math.round(recipe.equipment.brewhouseEfficiencyPercent)}%` },
     ],
     targets: [
       { label: "OG", value: calc.og.toFixed(3) },

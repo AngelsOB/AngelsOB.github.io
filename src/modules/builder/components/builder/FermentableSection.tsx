@@ -54,6 +54,7 @@ import { usePresetStore } from "@/modules/recipe/stores/presetStore";
 import { toast } from "@/stores/toastStore";
 import { fermentableCalculationService } from "@/modules/recipe/services/FermentableCalculationService";
 import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
+import { volumeCalculationService } from "@/modules/recipe/services/VolumeCalculationService";
 import { usePreferencesStore } from "@/modules/auth/preferencesStore";
 import type { Fermentable } from "@/modules/recipe/models/Recipe";
 import type { FermentablePreset } from "@/modules/recipe/models/Presets";
@@ -137,8 +138,10 @@ export default function FermentableSection() {
         currentRecipe.fermentables,
         percents,
         abv,
-        currentRecipe.batchVolumeL,
-        currentRecipe.equipment.mashEfficiencyPercent || 75,
+        // Into-fermenter volume — the same reference the forward OG calc uses,
+        // so the back-calculated bill reads back as the requested ABV.
+        volumeCalculationService.calculateIntoFermenterVolume(currentRecipe),
+        currentRecipe.equipment.brewhouseEfficiencyPercent || 75,
         recipeCalculationService.getEffectiveAttenuation(currentRecipe, attenuationModel)
       );
       updated.forEach((f) => {

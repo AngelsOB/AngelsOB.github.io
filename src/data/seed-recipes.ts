@@ -25,7 +25,7 @@ export const SEED_RECIPES: Recipe[] = [
     equipment: {
       boilTimeMin: 60,
       boilOffRateLPerHour: 4,
-      mashEfficiencyPercent: 75,
+      brewhouseEfficiencyPercent: 75,
       mashThicknessLPerKg: 2.7,
       grainAbsorptionLPerKg: 0.8,
       mashTunDeadspaceLiters: 2.0,
@@ -222,7 +222,7 @@ export const SEED_RECIPES: Recipe[] = [
     equipment: {
       boilTimeMin: 60,
       boilOffRateLPerHour: 4,
-      mashEfficiencyPercent: 75,
+      brewhouseEfficiencyPercent: 75,
       mashThicknessLPerKg: 2.7,
       grainAbsorptionLPerKg: 0.8,
       mashTunDeadspaceLiters: 2.0,
@@ -392,7 +392,7 @@ export const SEED_RECIPES: Recipe[] = [
     equipment: {
       boilTimeMin: 60,
       boilOffRateLPerHour: 4,
-      mashEfficiencyPercent: 75,
+      brewhouseEfficiencyPercent: 75,
       mashThicknessLPerKg: 2.7,
       grainAbsorptionLPerKg: 0.8,
       mashTunDeadspaceLiters: 2.0,

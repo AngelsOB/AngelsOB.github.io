@@ -38,7 +38,7 @@ function makeRecipe(
     equipment: {
       boilTimeMin: 60,
       boilOffRateLPerHour: 2.5,
-      mashEfficiencyPercent: 75,
+      brewhouseEfficiencyPercent: 75,
       mashThicknessLPerKg: 3.0,
       grainAbsorptionLPerKg: 1.04,
       mashTunDeadspaceLiters: 0,

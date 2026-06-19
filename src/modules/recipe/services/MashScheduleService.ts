@@ -121,11 +121,15 @@ export class MashScheduleService {
       errors.push('Step name is required');
     }
 
-    if (step.temperatureC < 0 || step.temperatureC > 100) {
+    if (
+      Number.isNaN(step.temperatureC) ||
+      step.temperatureC < 0 ||
+      step.temperatureC > 100
+    ) {
       errors.push('Temperature must be between 0°C and 100°C');
     }
 
-    if (step.durationMinutes <= 0) {
+    if (Number.isNaN(step.durationMinutes) || step.durationMinutes <= 0) {
       errors.push('Duration must be greater than 0 minutes');
     }
 

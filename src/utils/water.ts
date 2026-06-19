@@ -33,16 +33,16 @@ export type SaltAdditions = {
 // 1 g/L = 1000 mg/L, ppm contribution = mass_fraction * 1000
 export const ION_PPM_PER_G_PER_L = {
   gypsum: {
-    Ca: 0.2328 * 1000, // 40.078 / 172.169
-    SO4: 0.5583 * 1000, // 96.061 / 172.169
+    Ca: 0.2328 * 1000, // 40.078 / 172.164
+    SO4: 0.5579 * 1000, // 96.056 / 172.164
   },
   cacl2: {
     Ca: 0.2726 * 1000, // 40.078 / 147.014
-    Cl: 0.482 * 1000, // 70.906 / 147.014
+    Cl: 0.4823 * 1000, // 70.906 / 147.014
   },
   epsom: {
-    Mg: 0.0986 * 1000, // 24.305 / 246.471
-    SO4: 0.3896 * 1000, // 96.061 / 246.471
+    Mg: 0.0986 * 1000, // 24.305 / 246.466
+    SO4: 0.3897 * 1000, // 96.056 / 246.466
   },
   nacl: {
     Na: 0.3934 * 1000, // 22.990 / 58.443
@@ -140,17 +140,20 @@ export function mixProfiles(
     0
   );
   if (totalV <= 0.0001) return zeroProfile();
-  const sum = volumesAndProfiles.reduce(
-    (acc, { volumeL, profile }) => ({
-      Ca: acc.Ca + profile.Ca * volumeL,
-      Mg: acc.Mg + profile.Mg * volumeL,
-      Na: acc.Na + profile.Na * volumeL,
-      Cl: acc.Cl + profile.Cl * volumeL,
-      SO4: acc.SO4 + profile.SO4 * volumeL,
-      HCO3: acc.HCO3 + profile.HCO3 * volumeL,
-    }),
-    zeroProfile()
-  );
+  const sum = volumesAndProfiles.reduce((acc, { volumeL, profile }) => {
+    // Floor negative volumes here too (the denominator already does), so a
+    // negative entry contributes nothing rather than subtracting — keeps the
+    // result a true weighted average within the source profiles' bounds.
+    const v = Math.max(0, volumeL);
+    return {
+      Ca: acc.Ca + profile.Ca * v,
+      Mg: acc.Mg + profile.Mg * v,
+      Na: acc.Na + profile.Na * v,
+      Cl: acc.Cl + profile.Cl * v,
+      SO4: acc.SO4 + profile.SO4 * v,
+      HCO3: acc.HCO3 + profile.HCO3 * v,
+    };
+  }, zeroProfile());
   return scaleProfile(sum, 1 / totalV);
 }
 

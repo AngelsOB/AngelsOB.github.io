@@ -15,7 +15,7 @@ interface CurrentSettings {
   batchVolumeL: number;
   boilTimeMin: number;
   boilOffRateLPerHour: number;
-  mashEfficiencyPercent: number;
+  brewhouseEfficiencyPercent: number;
   mashThicknessLPerKg: number;
   grainAbsorptionLPerKg: number;
   mashTunDeadspaceLiters: number;
@@ -70,8 +70,8 @@ export default function CustomEquipmentModal({
       coolingShrinkagePercent: currentSettings.coolingShrinkagePercent,
       grainAbsorptionL_kg: currentSettings.grainAbsorptionLPerKg,
       hopAbsorptionL_kg: currentSettings.hopsAbsorptionLPerKg,
-      mashEfficiency: currentSettings.mashEfficiencyPercent,
-      brewhouseEfficiency: currentSettings.mashEfficiencyPercent,
+      mashEfficiency: currentSettings.brewhouseEfficiencyPercent,
+      brewhouseEfficiency: currentSettings.brewhouseEfficiencyPercent,
       isCustom: true,
     };
     onSave(profile);
@@ -152,7 +152,7 @@ function SnapshotPreview({ settings }: { settings: CurrentSettings }) {
         <SnapStat label="Batch" value={`${settings.batchVolumeL.toFixed(1)} L`} />
         <SnapStat label="Boil" value={`${settings.boilTimeMin} min`} />
         <SnapStat label="Boil-off" value={`${settings.boilOffRateLPerHour.toFixed(1)} L/hr`} />
-        <SnapStat label="Mash eff" value={`${settings.mashEfficiencyPercent}%`} />
+        <SnapStat label="Brewhouse eff" value={`${settings.brewhouseEfficiencyPercent}%`} />
         <SnapStat label="Thickness" value={`${settings.mashThicknessLPerKg.toFixed(1)} L/kg`} />
         <SnapStat label="Tun deadspace" value={`${settings.mashTunDeadspaceLiters.toFixed(1)} L`} />
         <SnapStat label="Kettle loss" value={`${settings.kettleLossLiters.toFixed(1)} L`} />

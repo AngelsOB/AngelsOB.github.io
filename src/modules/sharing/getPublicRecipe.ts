@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import type { Recipe, RecipeCalculations } from '@/modules/recipe/models/Recipe'
+import { normalizeRecipe } from '@/modules/recipe/models/normalizeRecipe'
 
 export type PublicRecipeResult = {
   recipe: Recipe
@@ -40,7 +41,7 @@ export const getPublicRecipe = cache(async (slug: string): Promise<PublicRecipeR
   const ratingCount = indexData?.ratingCount || 0
   const ratingAvg = ratingCount > 0 ? ratingSum / ratingCount : 0
 
-  const recipe = { id: doc.id, ...data } as Recipe
+  const recipe = normalizeRecipe({ id: doc.id, ...data } as Recipe)
   const calc = new RecipeCalculationService().calculate(recipe)
 
   return { recipe, calc, ownerName, ownerId, ratingAvg, ratingCount }

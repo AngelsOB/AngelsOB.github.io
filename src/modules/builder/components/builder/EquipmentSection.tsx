@@ -48,7 +48,7 @@ export default function EquipmentSection() {
       recipe.batchVolumeL !== currentProfile.batchSizeL ||
       eq.boilTimeMin !== currentProfile.boilTimeMin ||
       eq.boilOffRateLPerHour !== currentProfile.boilOffRateL_hr ||
-      eq.mashEfficiencyPercent !== currentProfile.mashEfficiency ||
+      eq.brewhouseEfficiencyPercent !== currentProfile.brewhouseEfficiency ||
       eq.mashThicknessLPerKg !== currentProfile.mashThicknessL_kg ||
       eq.grainAbsorptionLPerKg !== currentProfile.grainAbsorptionL_kg ||
       eq.mashTunDeadspaceLiters !== currentProfile.mashTunDeadspaceL ||
@@ -71,7 +71,7 @@ export default function EquipmentSection() {
         ...recipe.equipment,
         boilTimeMin: profile.boilTimeMin,
         boilOffRateLPerHour: profile.boilOffRateL_hr,
-        mashEfficiencyPercent: profile.mashEfficiency,
+        brewhouseEfficiencyPercent: profile.brewhouseEfficiency,
         mashThicknessLPerKg: profile.mashThicknessL_kg,
         grainAbsorptionLPerKg: profile.grainAbsorptionL_kg,
         mashTunDeadspaceLiters: profile.mashTunDeadspaceL,
@@ -144,10 +144,10 @@ export default function EquipmentSection() {
           />
           <FieldRow
             id="hs-equip-efficiency"
-            label="Mash efficiency"
+            label="Brewhouse efficiency"
             unit="%"
-            value={recipe.equipment.mashEfficiencyPercent}
-            onChange={(v) => updateEquip("mashEfficiencyPercent", v)}
+            value={recipe.equipment.brewhouseEfficiencyPercent}
+            onChange={(v) => updateEquip("brewhouseEfficiencyPercent", v)}
             step={1}
             min={0}
             max={100}
@@ -295,7 +295,7 @@ export default function EquipmentSection() {
           batchVolumeL: recipe.batchVolumeL,
           boilTimeMin: recipe.equipment.boilTimeMin,
           boilOffRateLPerHour: recipe.equipment.boilOffRateLPerHour,
-          mashEfficiencyPercent: recipe.equipment.mashEfficiencyPercent,
+          brewhouseEfficiencyPercent: recipe.equipment.brewhouseEfficiencyPercent,
           mashThicknessLPerKg: recipe.equipment.mashThicknessLPerKg,
           grainAbsorptionLPerKg: recipe.equipment.grainAbsorptionLPerKg,
           mashTunDeadspaceLiters: recipe.equipment.mashTunDeadspaceLiters,

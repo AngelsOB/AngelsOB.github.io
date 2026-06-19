@@ -10,6 +10,7 @@
 
 import { devError } from '@/utils/logger';
 import type { Recipe, RecipeId } from '../models/Recipe';
+import { normalizeRecipe } from '../models/normalizeRecipe';
 
 /** Result type for loadAll - distinguishes "no data" from "corrupted data" */
 export type LoadResult<T> =
@@ -62,6 +63,10 @@ export class RecipeRepository {
             equipment: { ...migrated.equipment, mashTunLossLiters: 0 },
           };
         }
+        // Migrate equipment: mashEfficiencyPercent → brewhouseEfficiencyPercent
+        // (renamed June 2026). normalizeRecipe returns the same ref if nothing
+        // changed, so the persist-back check below still works.
+        migrated = normalizeRecipe(migrated as Recipe) as Record<string, unknown> & Recipe;
         return migrated as Recipe;
       });
 

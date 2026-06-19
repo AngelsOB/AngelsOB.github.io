@@ -62,7 +62,7 @@ export default function IbuCalculator({ accent = hsTokens.hops }: Props) {
       equipment: {
         boilTimeMin: 60,
         boilOffRateLPerHour: 3,
-        mashEfficiencyPercent: 75,
+        brewhouseEfficiencyPercent: 75,
         mashThicknessLPerKg: 3,
         grainAbsorptionLPerKg: 1,
         mashTunDeadspaceLiters: 0,

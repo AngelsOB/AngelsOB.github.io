@@ -1,5 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { recipeCalculationService } from './RecipeCalculationService';
+import { fermentableCalculationService } from './FermentableCalculationService';
+import { volumeCalculationService } from './VolumeCalculationService';
 import type { Recipe, Fermentable, Hop, Yeast } from '../models/Recipe';
 
 // Helper to create a minimal valid recipe for testing
@@ -17,7 +19,7 @@ function createTestRecipe(overrides: Partial<Recipe> = {}): Recipe {
     grainAbsorptionLPerKg: 0.96,
     mashTunDeadspaceLiters: 1,
     mashTunLossLiters: 0,
-    mashEfficiencyPercent: 75,
+    brewhouseEfficiencyPercent: 75,
   };
 
   return {
@@ -87,21 +89,23 @@ describe('Recipe Calculation Service', () => {
       expect(og).toBeLessThan(1.070);
     });
 
-    test('OG is measured at post-boil volume — bigger losses dilute OG', () => {
-      // Same grist, but more kettle loss => larger cold post-boil volume =>
-      // the extract is divided by a bigger denominator => lower OG. This only
-      // holds because OG references post-boil volume, not packaged volume.
-      const base = createTestRecipe({
-        batchVolumeL: 20,
-        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
-        equipment: { ...createTestRecipe().equipment, kettleLossLiters: 0 },
-      });
-      const lossy = createTestRecipe({
-        batchVolumeL: 20,
-        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
-        equipment: { ...createTestRecipe().equipment, kettleLossLiters: 4 },
-      });
-      expect(recipeCalculationService.calculateOG(lossy)).toBeLessThan(
+    test('OG references the into-fermenter volume — kettle loss has no effect, fermenter loss dilutes', () => {
+      // Brewhouse efficiency already nets out kettle/chiller/hop losses, so adding
+      // more of THEM must not change OG. Only fermenter loss (which enlarges the
+      // into-fermenter volume in the finished-volume model) dilutes OG.
+      const make = (kettleLossLiters: number, fermenterLossLiters: number) =>
+        createTestRecipe({
+          batchVolumeL: 20,
+          fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+          equipment: { ...createTestRecipe().equipment, kettleLossLiters, fermenterLossLiters },
+        });
+      const base = make(0, 0.5);
+      // More kettle loss: OG unchanged (it's not in the gravity denominator).
+      expect(recipeCalculationService.calculateOG(make(4, 0.5))).toBeCloseTo(
+        recipeCalculationService.calculateOG(base), 6
+      );
+      // More fermenter loss: bigger into-fermenter volume => lower OG.
+      expect(recipeCalculationService.calculateOG(make(0, 4))).toBeLessThan(
         recipeCalculationService.calculateOG(base)
       );
     });
@@ -131,6 +135,47 @@ describe('Recipe Calculation Service', () => {
       const singleOG = recipeCalculationService.calculateOG(singleRecipe);
       const doubleOG = recipeCalculationService.calculateOG(doubleRecipe);
       expect(doubleOG).toBeCloseTo(singleOG, 3);
+    });
+
+    test('Irish Red Ale reconstruction matches Brewfather OG (1.050)', () => {
+      // TheApartmentBrewer "Irish Red Ale (2023)": Brewfather reports OG 1.050 at
+      // 78% brewhouse efficiency. ppg = BeerXML YIELD% × 0.46214. batchVolumeL is
+      // the finished volume; ~0.87 L fermenter loss puts into-fermenter at 20.82 L.
+      const recipe = createTestRecipe({
+        batchVolumeL: 19.95,
+        equipment: {
+          ...createTestRecipe().equipment,
+          brewhouseEfficiencyPercent: 78,
+          kettleLossLiters: 0,
+          chillerLossLiters: 0,
+          fermenterLossLiters: 0.87,
+        },
+        fermentables: [
+          createFermentable({ id: 'mild', name: 'Briess Mild', weightKg: 3.6344, ppg: 36.17 }),
+          createFermentable({ id: 'maize', name: 'Flaked Maize', weightKg: 0.4532, ppg: 34.16 }),
+          createFermentable({ id: 'crystal', name: 'Crystal Medium', weightKg: 0.341, ppg: 32.15 }),
+          createFermentable({ id: 'roast', name: 'Roasted Barley', weightKg: 0.0583, ppg: 34.16 }),
+        ],
+      });
+      expect(recipeCalculationService.calculateOG(recipe)).toBeCloseTo(1.05, 2);
+    });
+
+    test('missing brewhouseEfficiencyPercent defaults to 75% — no NaN cascade', () => {
+      // Regression guard: a legacy/malformed recipe whose equipment lacks the
+      // efficiency field must still produce a finite OG (not NaN, which used to
+      // cascade through IBU/ABV and crash the UI).
+      const recipe = createTestRecipe({
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+      });
+      delete (recipe.equipment as Record<string, unknown>).brewhouseEfficiencyPercent;
+      const og = recipeCalculationService.calculateOG(recipe);
+      expect(Number.isFinite(og)).toBe(true);
+      // Equals an explicit 75% recipe.
+      const explicit = createTestRecipe({
+        fermentables: [createFermentable({ weightKg: 5, ppg: 37 })],
+        equipment: { ...createTestRecipe().equipment, brewhouseEfficiencyPercent: 75 },
+      });
+      expect(og).toBeCloseTo(recipeCalculationService.calculateOG(explicit), 6);
     });
   });
 
@@ -280,7 +325,10 @@ describe('Recipe Calculation Service', () => {
           { id: 's3', name: 'alpha', temperatureC: 70, durationMinutes: 30 },
           { id: 's4', name: 'out', temperatureC: 76, durationMinutes: 15 },
         ] as Recipe['mashSteps'],
-        equipment: { ...createTestRecipe().equipment, mashEfficiencyPercent: 66, kettleLossLiters: 0, chillerLossLiters: 1, fermenterLossLiters: 0 },
+        // OG is measured at the into-fermenter volume (batch + fermenter loss).
+        // The real beer's ~1 L of trub/yeast loss puts into-fermenter at ~21.5 L,
+        // which reproduces the real OG of 1.056 at 66% brewhouse efficiency.
+        equipment: { ...createTestRecipe().equipment, brewhouseEfficiencyPercent: 66, kettleLossLiters: 0, chillerLossLiters: 0, fermenterLossLiters: 1 },
       });
       const og = recipeCalculationService.calculateOG(marzen);
       expect(og).toBeCloseTo(1.056, 2);  // OG matches Brewfather / the real beer
@@ -579,6 +627,90 @@ describe('Recipe Calculation Service', () => {
       expect(calculations.carbsG).toBeGreaterThan(0);
       expect(calculations.preBoilVolumeL).toBeGreaterThan(calculations.mashWaterL);
       expect(calculations.totalWaterL).toBeGreaterThan(0);
+    });
+  });
+
+  // ── Forward / reverse symmetry ──────────────────────────────────────────────
+  // The reverse "target ABV → grain bill" solver (FermentableCalculationService)
+  // must invert this forward OG calc: same per-fermentable efficiency selector
+  // (sugar/extract 100%, grains at mash efficiency) AND same post-boil volume
+  // basis. When it does, feeding the solved bill back through calculateOG
+  // reproduces the target OG exactly — at ANY efficiency. These tests would fail
+  // if the reverse used the old per-grain efficiency field or the batch volume.
+  describe('reverse solver round-trips through calculateOG', () => {
+    test('back-calculated bill reproduces the target OG exactly (65% eff, grain + sugar)', () => {
+      const recipe = createTestRecipe({
+        batchVolumeL: 20,
+        equipment: { ...createTestRecipe().equipment, brewhouseEfficiencyPercent: 65 },
+        fermentables: [
+          createFermentable({ id: 'base', name: 'Pale Malt 2-Row', ppg: 37, weightKg: 1 }),
+          createFermentable({ id: 'sugar', name: 'Corn Sugar', ppg: 46, weightKg: 1 }),
+        ],
+      });
+      const intoFermenterL = volumeCalculationService.calculateIntoFermenterVolume(recipe);
+      const effAtt = recipeCalculationService.getEffectiveAttenuation(recipe, 'linear');
+      const targetABV = 6.2;
+
+      const weighted = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
+        recipe.fermentables,
+        { base: 85, sugar: 15 },
+        targetABV,
+        intoFermenterL,
+        recipe.equipment.brewhouseEfficiencyPercent,
+        effAtt,
+      );
+      const solvedRecipe: Recipe = { ...recipe, fermentables: weighted };
+
+      // OG the reverse inverts to, using the same [0.40, 0.98] attenuation clamp.
+      const att = Math.max(0.4, Math.min(0.98, effAtt));
+      const ogTarget = 1 + targetABV / (131.25 * att);
+
+      expect(recipeCalculationService.calculateOG(solvedRecipe)).toBeCloseTo(ogTarget, 4);
+    });
+
+    test('changing only brewhouse efficiency changes the back-calculated grain weight', () => {
+      // Direct evidence the equipment efficiency is live in the reverse calc:
+      // a lower-efficiency system needs more grain for the same ABV.
+      const base = createTestRecipe({
+        fermentables: [createFermentable({ id: 'base', name: 'Pale Malt 2-Row', ppg: 37, weightKg: 1 })],
+      });
+      const reverseAt = (brewhouseEff: number) => {
+        const r: Recipe = { ...base, equipment: { ...base.equipment, brewhouseEfficiencyPercent: brewhouseEff } };
+        const intoFermenterL = volumeCalculationService.calculateIntoFermenterVolume(r);
+        const effAtt = recipeCalculationService.getEffectiveAttenuation(r, 'linear');
+        return fermentableCalculationService.calculateWeightsFromPercentsAndABV(
+          r.fermentables, { base: 100 }, 5.5, intoFermenterL, brewhouseEff, effAtt,
+        )[0].weightKg;
+      };
+      expect(reverseAt(65)).toBeGreaterThan(reverseAt(85));
+    });
+
+    test('ABV round-trips even with non-fermentable extract (lactose), at 65% eff', () => {
+      // The reverse solver weights the inversion by the bill's average
+      // fermentability, so a recipe with unfermentable lactose still reads back
+      // as the requested ABV (not an undershoot). OG ends higher to compensate.
+      const recipe = createTestRecipe({
+        batchVolumeL: 20,
+        equipment: { ...createTestRecipe().equipment, brewhouseEfficiencyPercent: 65 },
+        fermentables: [
+          createFermentable({ id: 'base', name: 'Pale Malt 2-Row', ppg: 37, weightKg: 1 }),
+          createFermentable({ id: 'lac', name: 'Lactose', ppg: 35, weightKg: 1 }),
+        ],
+      });
+      const intoFermenterL = volumeCalculationService.calculateIntoFermenterVolume(recipe);
+      const effAtt = recipeCalculationService.getEffectiveAttenuation(recipe, 'linear');
+      const targetABV = 5.5;
+
+      const weighted = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
+        recipe.fermentables, { base: 85, lac: 15 }, targetABV, intoFermenterL,
+        recipe.equipment.brewhouseEfficiencyPercent, effAtt,
+      );
+      const solved: Recipe = { ...recipe, fermentables: weighted };
+
+      const og = recipeCalculationService.calculateOG(solved);
+      const fg = recipeCalculationService.calculateFG(solved, { attenuationModel: 'linear' });
+      const abv = recipeCalculationService.calculateABV(og, fg);
+      expect(abv).toBeCloseTo(targetABV, 1);
     });
   });
 });

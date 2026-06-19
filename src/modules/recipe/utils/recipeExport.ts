@@ -153,7 +153,7 @@ export const generateRecipeMarkdown = (
     `| **Boil Time** | ${fmt(recipe.equipment.boilTimeMin, 0)} min |`
   );
   lines.push(
-    `| **Efficiency** | ${fmt(recipe.equipment.mashEfficiencyPercent, 0)}% |`
+    `| **Efficiency** | ${fmt(recipe.equipment.brewhouseEfficiencyPercent, 0)}% |`
   );
   lines.push(`| **Pre-Boil Gravity** | ${fmt(preBoilGravity, 3)} |`);
   lines.push(`| **OG** | ${fmt(calc.og, 3)} |`);

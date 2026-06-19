@@ -29,7 +29,7 @@ function createTestRecipe(overrides: Partial<Recipe> = {}): Recipe {
     grainAbsorptionLPerKg: 0.8,
     mashTunDeadspaceLiters: 2,
     mashTunLossLiters: 0,
-    mashEfficiencyPercent: 75,
+    brewhouseEfficiencyPercent: 75,
   };
 
   return {
@@ -163,7 +163,7 @@ describe('Pre-boil gravity consistency', () => {
         grainAbsorptionLPerKg: 0.85,
         mashTunDeadspaceLiters: 3.5,
         mashTunLossLiters: 0,
-        mashEfficiencyPercent: 70,
+        brewhouseEfficiencyPercent: 70,
       },
     });
 
@@ -176,10 +176,11 @@ describe('Pre-boil gravity consistency', () => {
     const postBoilSugar = (calc.og - 1) * postBoilColdL;
     expect(preBoilSugar).toBeCloseTo(postBoilSugar, 6);
 
-    // OG is now measured at the cold post-boil volume (~23.9 L), not the
-    // packaged 19 L. With 4.9 L of losses that drops OG from the old
-    // batch-volume value (~1.055) to ~1.044.
-    expect(calc.og).toBeCloseTo(1.044, 2);
+    // OG is measured at the into-fermenter volume (batch 19 L + fermenter loss
+    // 0.9 L = ~19.9 L), paired with brewhouse efficiency. Kettle/chiller/hop
+    // losses are NOT in the gravity denominator (brewhouse efficiency already
+    // nets them out), so OG ≈ 1.053 here.
+    expect(calc.og).toBeCloseTo(1.053, 2);
 
     // Pre-boil gravity dilutes that OG back over the larger pre-boil volume.
     //   New:           1 + (0.0438 × 23.9) / 27.2 ≈ 1.0385

@@ -9,6 +9,7 @@
 
 import { devError } from '@/utils/logger';
 import type { RecipeVersion } from '../models/Recipe';
+import { normalizeRecipe } from '../models/normalizeRecipe';
 
 export class RecipeVersionRepository {
   private readonly STORAGE_KEY = 'beer-recipe-versions-v1';
@@ -50,7 +51,12 @@ export class RecipeVersionRepository {
       if (!json) return [];
 
       const versions = JSON.parse(json) as RecipeVersion[];
-      return versions;
+      // Normalize each snapshot so legacy field names (e.g. the old
+      // mashEfficiencyPercent) keep working when an old version is restored.
+      return versions.map((v) => ({
+        ...v,
+        recipeSnapshot: normalizeRecipe(v.recipeSnapshot),
+      }));
     } catch (error) {
       devError('Failed to load all versions:', error);
       return [];

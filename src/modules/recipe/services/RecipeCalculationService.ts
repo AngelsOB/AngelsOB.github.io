@@ -10,7 +10,7 @@ import type { Recipe, RecipeCalculations, Hop, Fermentable } from '../models/Rec
 import { volumeCalculationService } from './VolumeCalculationService';
 import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculationService';
 import { mashScheduleService } from './MashScheduleService';
-import { inferFermentability, inferType } from '@/modules/recipe/data/fermentablePresets';
+import { inferFermentability, fermentableExtractEfficiency } from '@/modules/recipe/data/fermentablePresets';
 import { abvFromOGFG } from '@/calculators/abv';
 
 export type AttenuationModel = 'kinetic' | 'linear';
@@ -92,33 +92,37 @@ export class RecipeCalculationService {
   }
 
   /**
-   * Gravity points per the post-boil volume, split by fermentability.
+   * Gravity points per the into-fermenter volume, split by fermentability.
    *
    * Shared by calculateOG and calculateFG so they always use the same extract
    * total and the same denominator — they can't drift apart. Points are scaled
    * so that gravity = 1 + points / 1000.
    *
-   * The denominator is the cold post-boil volume (where all the extract is
-   * dissolved), NOT the smaller packaged volume — see calculatePostBoilVolume.
-   * Mash efficiency is applied to grains and mashable adjuncts; sugars and
-   * extracts dissolve completely and use 100% efficiency.
+   * OG is measured in the fermenter, so the denominator is the into-fermenter
+   * volume (= finished batch + fermenter loss; see calculateIntoFermenterVolume),
+   * paired with BREWHOUSE efficiency — which already nets out kettle/chiller/hop
+   * losses, so those must NOT be added back into the denominator. Dividing by the
+   * full post-boil volume would double-count those losses and understate OG.
+   * Sugars and extracts dissolve completely and use 100% efficiency.
    */
   private gravityPointsSplit(recipe: Recipe): { fermentablePts: number; nonFermentablePts: number } {
     const { fermentables, batchVolumeL, equipment } = recipe;
-    const postBoilGal = volumeCalculationService.calculatePostBoilVolume(recipe) * 0.264172;
+    const intoFermenterGal = volumeCalculationService.calculateIntoFermenterVolume(recipe) * 0.264172;
 
-    if (fermentables.length === 0 || batchVolumeL <= 0 || postBoilGal <= 0) {
+    if (fermentables.length === 0 || batchVolumeL <= 0 || intoFermenterGal <= 0) {
       return { fermentablePts: 0, nonFermentablePts: 0 };
     }
 
-    const mashEfficiency = equipment.mashEfficiencyPercent / 100;
+    // Default to 75% if the field is somehow absent, so a malformed/legacy
+    // recipe can never produce a NaN OG that cascades through every metric.
+    const brewhouseEfficiency = (equipment.brewhouseEfficiencyPercent ?? 75) / 100;
     let fermentablePts = 0;
     let nonFermentablePts = 0;
 
     for (const f of fermentables) {
       const weightLbs = f.weightKg * 2.20462; // kg to lbs
-      const efficiency = this.getEfficiency(f, mashEfficiency);
-      const pts = (f.ppg * weightLbs * efficiency) / postBoilGal;
+      const efficiency = this.getEfficiency(f, brewhouseEfficiency);
+      const pts = (f.ppg * weightLbs * efficiency) / intoFermenterGal;
       const ferm = this.getFermentability(f);
       fermentablePts += pts * ferm;
       nonFermentablePts += pts * (1 - ferm);
@@ -129,11 +133,11 @@ export class RecipeCalculationService {
 
   /**
    * Calculate Original Gravity
-   * Formula: OG = 1 + (total gravity points / post-boil volume in gallons)
+   * Formula: OG = 1 + (total gravity points / into-fermenter volume in gallons)
    *
-   * Measured against the cold post-boil volume, matching Brewfather. Mash
-   * efficiency is applied to grains and mashable adjuncts; sugars and extracts
-   * dissolve completely and use 100% efficiency.
+   * Measured at the into-fermenter volume with brewhouse efficiency, matching
+   * Brewfather. Brewhouse efficiency is applied to grains and mashable adjuncts;
+   * sugars and extracts dissolve completely and use 100% efficiency.
    */
   calculateOG(recipe: Recipe): number {
     const { fermentablePts, nonFermentablePts } = this.gravityPointsSplit(recipe);
@@ -187,9 +191,7 @@ export class RecipeCalculationService {
    * system's mash efficiency.
    */
   private getEfficiency(f: Fermentable, mashEfficiency: number): number {
-    const type = inferType(f.name);
-    if (type === 'sugar' || type === 'extract') return 1.0;
-    return mashEfficiency;
+    return fermentableExtractEfficiency(f, mashEfficiency);
   }
 
   /** Yeast's published apparent attenuation (fraction). Defaults to 0.75. */

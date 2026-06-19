@@ -232,6 +232,28 @@ export function inferType(name: string): FermentablePreset["type"] {
 }
 
 /**
+ * Extract efficiency for a fermentable, by the same rule the OG calc uses.
+ *
+ * Sugars and extracts dissolve completely and bypass the mash, so they are taken
+ * at 100%; grains and mashable adjuncts use the system's mash efficiency. The
+ * fermentable's lower/higher contribution is carried by its PPG, never by a
+ * per-grain efficiency. Shared by the forward OG calc (RecipeCalculationService)
+ * and the reverse target-ABV grain solver (FermentableCalculationService) so the
+ * two can never diverge.
+ *
+ * @param fermentable  Needs only `name` (type is inferred from it).
+ * @param mashEfficiency  System mash efficiency as a 0–1 fraction.
+ */
+export function fermentableExtractEfficiency(
+  fermentable: { name: string },
+  mashEfficiency: number
+): number {
+  const type = inferType(fermentable.name);
+  if (type === "sugar" || type === "extract") return 1.0;
+  return mashEfficiency;
+}
+
+/**
  * Groups fermentables by category
  */
 export function groupFermentables(

@@ -200,7 +200,7 @@ describe('Mash pH Calculation Service', () => {
         grainAbsorptionLPerKg: 0.96,
         mashTunDeadspaceLiters: 1,
         mashTunLossLiters: 0,
-        mashEfficiencyPercent: 75,
+        brewhouseEfficiencyPercent: 75,
       },
       waterChemistry: undefined,
       createdAt: new Date().toISOString(),

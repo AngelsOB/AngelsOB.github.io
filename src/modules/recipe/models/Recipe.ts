@@ -268,7 +268,7 @@ export type Recipe = {
     /** Boil-off rate in liters per hour */
     boilOffRateLPerHour: number;
     /** Mash efficiency percentage */
-    mashEfficiencyPercent: number;
+    brewhouseEfficiencyPercent: number;
     /** Mash thickness in liters per kilogram (typical: 3.0) */
     mashThicknessLPerKg: number;
     /** Grain absorption in liters per kilogram (typical: 1.04) */

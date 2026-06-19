@@ -17,6 +17,9 @@ export function postBoilVolume(
 ): number {
   const prePoints = gravityPoints(preBoilSG);
   const targetPoints = gravityPoints(targetOG);
-  if (targetPoints === 0) return Infinity;
+  // No physical answer when the volume is non-positive or either gravity is at
+  // or below water (points <= 0). Return NaN so callers — which guard on
+  // Number.isFinite — never propagate a negative or Infinite "volume".
+  if (!(preBoilVol > 0) || !(prePoints > 0) || !(targetPoints > 0)) return NaN;
   return (preBoilVol * prePoints) / targetPoints;
 }

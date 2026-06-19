@@ -25,7 +25,7 @@ export function calculateStrikeTemp(
 }
 
 export function celsiusToFahrenheit(c: number): number {
-  return Math.round((c * 9) / 5 + 32 * 10) / 10;
+  return Math.round(((c * 9) / 5 + 32) * 10) / 10;
 }
 
 export function fahrenheitToCelsius(f: number): number {

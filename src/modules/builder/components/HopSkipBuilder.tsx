@@ -758,7 +758,7 @@ export default function HopSkipBuilder({
           />
           <NumericMetaPill
             label="EFF"
-            value={currentRecipe.equipment?.mashEfficiencyPercent ?? 75}
+            value={currentRecipe.equipment?.brewhouseEfficiencyPercent ?? 75}
             unit="%"
             color={hsTokens.hops}
             step={1}
@@ -766,7 +766,7 @@ export default function HopSkipBuilder({
             max={100}
             onChange={(v) =>
               updateRecipe({
-                equipment: { ...currentRecipe.equipment, mashEfficiencyPercent: v },
+                equipment: { ...currentRecipe.equipment, brewhouseEfficiencyPercent: v },
               })
             }
             readOnly={isShared}

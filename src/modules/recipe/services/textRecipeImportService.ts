@@ -251,7 +251,7 @@ class TextRecipeImportService {
       equipment: {
         boilTimeMin: draft.boilTimeMin ?? 60,
         boilOffRateLPerHour: 4,
-        mashEfficiencyPercent: draft.efficiencyPercent ?? 75,
+        brewhouseEfficiencyPercent: draft.efficiencyPercent ?? 75,
         mashThicknessLPerKg: 2.7,
         grainAbsorptionLPerKg: 0.8,
         mashTunDeadspaceLiters: 2.0,
@@ -352,7 +352,7 @@ class TextRecipeImportService {
     return {
       batchVolumeL: recipe.batchVolumeL,
       boilTimeMin: recipe.equipment.boilTimeMin,
-      efficiencyPercent: recipe.equipment.mashEfficiencyPercent,
+      efficiencyPercent: recipe.equipment.brewhouseEfficiencyPercent,
       mashSteps: recipe.mashSteps.map((s) => ({
         temperatureC: s.temperatureC,
         durationMinutes: s.durationMinutes,
@@ -402,7 +402,7 @@ class TextRecipeImportService {
     const next: Recipe = JSON.parse(JSON.stringify(recipe));
     next.batchVolumeL = vitals.batchVolumeL;
     next.equipment.boilTimeMin = vitals.boilTimeMin;
-    next.equipment.mashEfficiencyPercent = vitals.efficiencyPercent;
+    next.equipment.brewhouseEfficiencyPercent = vitals.efficiencyPercent;
     // Per-grain efficiency mirrors the recipe efficiency, except for
     // extracts/sugars which stay at 100.
     for (const grain of next.fermentables) {

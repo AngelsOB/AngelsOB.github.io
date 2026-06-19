@@ -267,7 +267,7 @@ describe('efficiency, derived attenuation, and vitals application', () => {
     const { recipe } = textRecipeImportService.fromDraft(
       parseRecipeText('Efficiency: 72%\n4 kg Pilsner\n0.5 kg Corn Sugar'),
     );
-    expect(recipe.equipment.mashEfficiencyPercent).toBe(72);
+    expect(recipe.equipment.brewhouseEfficiencyPercent).toBe(72);
     expect(recipe.fermentables[0].efficiencyPercent).toBe(72);
     // Sugars stay at 100 regardless of mash efficiency.
     expect(recipe.fermentables[1].efficiencyPercent).toBe(100);
@@ -301,7 +301,7 @@ describe('efficiency, derived attenuation, and vitals application', () => {
     });
     expect(next.batchVolumeL).toBe(25);
     expect(next.equipment.boilTimeMin).toBe(90);
-    expect(next.equipment.mashEfficiencyPercent).toBe(68);
+    expect(next.equipment.brewhouseEfficiencyPercent).toBe(68);
     expect(next.fermentables[0].efficiencyPercent).toBe(68);
     expect(next.mashSteps).toHaveLength(1);
     expect(next.mashSteps[0]).toMatchObject({

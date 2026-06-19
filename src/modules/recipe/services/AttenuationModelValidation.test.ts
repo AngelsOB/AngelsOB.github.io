@@ -128,7 +128,7 @@ function recipe(steps: Array<[number, number]>, nominal: number, ogPoints = 55):
       name: 'e', boilTimeMin: 60, boilOffRateLPerHour: 3, kettleLossLiters: 0,
       hopsAbsorptionLPerKg: 0, chillerLossLiters: 0, fermenterLossLiters: 0,
       coolingShrinkagePercent: 4, mashThicknessLPerKg: 3, grainAbsorptionLPerKg: 0.8,
-      mashTunDeadspaceLiters: 0, mashTunLossLiters: 0, mashEfficiencyPercent: 75,
+      mashTunDeadspaceLiters: 0, mashTunLossLiters: 0, brewhouseEfficiencyPercent: 75,
     },
     createdAt: '', updatedAt: '',
   } as unknown as Recipe;

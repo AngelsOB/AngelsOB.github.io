@@ -484,7 +484,7 @@ class BeerXmlImportService {
       equipment: {
         boilTimeMin,
         boilOffRateLPerHour: 4,
-        mashEfficiencyPercent: efficiency,
+        brewhouseEfficiencyPercent: efficiency,
         mashThicknessLPerKg: 2.7,
         grainAbsorptionLPerKg: 0.8,
         mashTunDeadspaceLiters: 2,

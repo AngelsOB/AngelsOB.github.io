@@ -48,13 +48,14 @@ export class VolumeCalculationService {
   }
 
   /**
-   * Calculate the cold post-boil volume — the volume in which all the extract is
-   * actually dissolved at the end of the boil (after boil-off and cooling shrinkage,
-   * before kettle/chiller/fermenter losses are drawn off).
+   * Calculate the cold post-boil volume — the total wort in the kettle at the end
+   * of the boil (after boil-off and cooling shrinkage, before any losses are drawn
+   * off). Equals batchVolume + ALL losses.
    *
-   * This is the correct reference volume for OG/FG: trub, chiller, and fermenter
-   * losses remove wort at constant concentration, so they don't change gravity.
-   * Measuring against the smaller packaged volume (batchVolumeL) overstates OG.
+   * Use this for WATER/VOLUME planning (pre-boil volume, strike, sparge) — you must
+   * brew enough wort to cover every downstream loss. Do NOT use it as the OG/FG
+   * denominator: gravity is referenced to the into-fermenter volume (see
+   * calculateIntoFermenterVolume), paired with brewhouse efficiency.
    *
    * Formula: (preBoilVolume − boilOff) / shrinkageFactor  (= batchVolume + losses)
    */
@@ -64,6 +65,22 @@ export class VolumeCalculationService {
     const boilOffL = (equipment.boilOffRateLPerHour * equipment.boilTimeMin) / 60;
     const shrinkageFactor = 1 + equipment.coolingShrinkagePercent / 100;
     return Math.max(0, (preBoilL - boilOffL) / shrinkageFactor);
+  }
+
+  /**
+   * Volume of wort that goes INTO the fermenter — where OG is physically measured.
+   *
+   * In this app batchVolumeL is the FINISHED (packaged) volume, so the fermenter
+   * holds the finished beer plus the fermenter/packaging loss that gets left behind
+   * (trub + yeast). Kettle/chiller/hop losses are NOT here — they stay in the kettle
+   * and are already accounted for by brewhouse efficiency. This is the correct OG/FG
+   * gravity denominator (pairs with brewhouse efficiency; matches Brewfather).
+   *
+   * Formula: batchVolume + fermenterLoss
+   */
+  calculateIntoFermenterVolume(recipe: Recipe): number {
+    const { batchVolumeL, equipment } = recipe;
+    return Math.max(0, batchVolumeL + (equipment.fermenterLossLiters ?? 0));
   }
 
   /**
