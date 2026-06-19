@@ -12,6 +12,7 @@ import { mashPhCalculationService, DEFAULT_TARGET_PH } from './MashPhCalculation
 import { mashScheduleService } from './MashScheduleService';
 import { inferFermentability, fermentableExtractEfficiency } from '@/modules/recipe/data/fermentablePresets';
 import { abvFromOGFG } from '@/calculators/abv';
+import { LITERS_TO_GALLONS, KG_TO_LBS } from '@/calculators/units';
 
 export type AttenuationModel = 'kinetic' | 'linear';
 
@@ -107,7 +108,7 @@ export class RecipeCalculationService {
    */
   private gravityPointsSplit(recipe: Recipe): { fermentablePts: number; nonFermentablePts: number } {
     const { fermentables, batchVolumeL, equipment } = recipe;
-    const intoFermenterGal = volumeCalculationService.calculateIntoFermenterVolume(recipe) * 0.264172;
+    const intoFermenterGal = volumeCalculationService.calculateIntoFermenterVolume(recipe) * LITERS_TO_GALLONS;
 
     if (fermentables.length === 0 || batchVolumeL <= 0 || intoFermenterGal <= 0) {
       return { fermentablePts: 0, nonFermentablePts: 0 };
@@ -120,7 +121,7 @@ export class RecipeCalculationService {
     let nonFermentablePts = 0;
 
     for (const f of fermentables) {
-      const weightLbs = f.weightKg * 2.20462; // kg to lbs
+      const weightLbs = f.weightKg * KG_TO_LBS;
       const efficiency = this.getEfficiency(f, brewhouseEfficiency);
       const pts = (f.ppg * weightLbs * efficiency) / intoFermenterGal;
       const ferm = this.getFermentability(f);
@@ -473,7 +474,7 @@ export class RecipeCalculationService {
     // IBU is the iso-alpha concentration fixed at flameout, so it references the
     // post-boil (kettle) volume — the standard Tinseth convention, NOT the
     // finished/into-fermenter volume.
-    const ibuVolumeGal = volumeCalculationService.calculatePostBoilVolume(recipe) * 0.264172;
+    const ibuVolumeGal = volumeCalculationService.calculatePostBoilVolume(recipe) * LITERS_TO_GALLONS;
     if (ibuVolumeGal <= 0) {
       return 0;
     }
@@ -519,7 +520,7 @@ export class RecipeCalculationService {
     //   - Non-isomerized alpha acids also dissolve (~1% at fermentation temps),
     //     contributing at ~0.62 IBU response factor per mg/L
     if (type === 'dry hop') {
-      const beerVolumeL = ibuVolumeGal / 0.264172;
+      const beerVolumeL = ibuVolumeGal / LITERS_TO_GALLONS;
       const dryHopRateGL = grams / beerVolumeL;
 
       // Humulinone contribution
@@ -659,10 +660,10 @@ export class RecipeCalculationService {
       return 0;
     }
 
-    const batchVolumeGal = batchVolumeL * 0.264172;
+    const batchVolumeGal = batchVolumeL * LITERS_TO_GALLONS;
 
     const totalMCU = fermentables.reduce((sum, fermentable) => {
-      const weightLbs = fermentable.weightKg * 2.20462;
+      const weightLbs = fermentable.weightKg * KG_TO_LBS;
       const mcu = (fermentable.colorLovibond * weightLbs) / batchVolumeGal;
       return sum + mcu;
     }, 0);

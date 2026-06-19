@@ -5,9 +5,9 @@
  * Gravity "points" = (SG - 1) × 1000  e.g. 1.042 → 42
  */
 
-export function gravityPoints(sg: number): number {
-  return (sg - 1) * 1000;
-}
+import { gravityPoints } from "./units";
+
+export { gravityPoints };
 
 /** Post-boil volume needed to hit a target OG. */
 export function postBoilVolume(

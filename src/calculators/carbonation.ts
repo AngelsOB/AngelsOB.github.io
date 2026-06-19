@@ -28,10 +28,4 @@ export function psiToBar(psi: number): number {
   return psi * 0.0689476;
 }
 
-export function celsiusToFahrenheit(c: number): number {
-  return (c * 9) / 5 + 32;
-}
-
-export function fahrenheitToCelsius(f: number): number {
-  return ((f - 32) * 5) / 9;
-}
+export { celsiusToFahrenheit, fahrenheitToCelsius } from "./units";

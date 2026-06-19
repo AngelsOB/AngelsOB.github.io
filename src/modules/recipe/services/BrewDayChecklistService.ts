@@ -15,6 +15,7 @@ import type {
 } from '../models/Recipe';
 import { recipeCalculationService } from './RecipeCalculationService';
 import { volumeCalculationService } from './VolumeCalculationService';
+import { LITERS_TO_GALLONS, celsiusToFahrenheit } from '@/calculators/units';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -23,9 +24,9 @@ import { volumeCalculationService } from './VolumeCalculationService';
 const fmt = (n: number | undefined, d = 1): string =>
   n == null || Number.isNaN(n) ? '–' : Number(n).toFixed(d);
 
-const cToF = (c: number): string => fmt((c * 9) / 5 + 32, 0);
+const cToF = (c: number): string => fmt(celsiusToFahrenheit(c), 0);
 
-const lToGal = (l: number): string => fmt(l * 0.264172, 2);
+const lToGal = (l: number): string => fmt(l * LITERS_TO_GALLONS, 2);
 
 /* ------------------------------------------------------------------ */
 /*  Smart default generation                                           */

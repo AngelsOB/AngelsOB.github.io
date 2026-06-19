@@ -11,19 +11,14 @@
  */
 
 import type { StarterStep, YeastType } from "../models/Recipe";
+import { LITERS_TO_GALLONS, GRAVITY_TO_POINTS } from "@/calculators/units";
 
 // ============================================================================
 // UNIT CONVERSION CONSTANTS
 // ============================================================================
 
-/** Conversion factor: liters to US gallons (1 L = 0.264172 gal) */
-const LITERS_TO_GALLONS = 0.264172;
-
 /** Conversion factor: pounds to grams (1 lb = 453.59237 g) */
 const POUNDS_TO_GRAMS = 453.59237;
-
-/** Multiplier to convert gravity decimal to gravity points (e.g., 1.040 -> 40) */
-const GRAVITY_TO_POINTS = 1000;
 
 /** Milliseconds per day for date calculations */
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

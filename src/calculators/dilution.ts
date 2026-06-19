@@ -7,9 +7,9 @@
  * Gravity "points" = (SG - 1) × 1000  e.g. 1.060 → 60
  */
 
-export function gravityPoints(sg: number): number {
-  return (sg - 1) * 1000;
-}
+import { gravityPoints } from "./units";
+
+export { gravityPoints };
 
 /** Total volume needed to reach the target gravity. */
 export function totalVolumeAtTarget(

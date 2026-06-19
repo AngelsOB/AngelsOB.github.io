@@ -7,12 +7,7 @@
 
 import type { Recipe } from '../models/Recipe';
 import type { SessionActuals, SessionCalculated } from '../models/BrewSession';
-
-/** Conversion factor: liters to US gallons */
-const LITERS_TO_GALLONS = 0.264172;
-
-/** Conversion factor: kilograms to pounds */
-const KG_TO_LBS = 2.20462;
+import { LITERS_TO_GALLONS, KG_TO_LBS } from '@/calculators/units';
 
 export class BrewSessionCalculationService {
   /**

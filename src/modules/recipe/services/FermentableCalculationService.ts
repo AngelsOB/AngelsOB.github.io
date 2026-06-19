@@ -8,6 +8,7 @@
 
 import type { Fermentable } from "../models/Recipe";
 import { fermentableExtractEfficiency, inferFermentability } from "../data/fermentablePresets";
+import { LITERS_TO_GALLONS, KG_TO_LBS } from "@/calculators/units";
 
 export class FermentableCalculationService {
   /**
@@ -51,10 +52,8 @@ export class FermentableCalculationService {
     brewhouseEfficiencyPercent: number,
     effectiveAttenuation: number
   ): Fermentable[] {
-    const galPerL = 0.264172;
-    const lbsPerKg = 2.20462;
     const efficiency = Math.max(0, Math.min(1, brewhouseEfficiencyPercent / 100));
-    const volumeGal = Math.max(0, ogReferenceVolumeL * galPerL);
+    const volumeGal = Math.max(0, ogReferenceVolumeL * LITERS_TO_GALLONS);
     const attenuation = Math.max(0.4, Math.min(0.98, effectiveAttenuation));
 
     if (!(volumeGal > 0) || !(efficiency > 0) || !(attenuation > 0)) {
@@ -96,7 +95,7 @@ export class FermentableCalculationService {
     const totalGuNeeded = (ogTarget - 1) * 1000 * volumeGal;
 
     const totalLb = totalGuNeeded / effectiveGuPerLb;
-    const totalKg = totalLb / lbsPerKg;
+    const totalKg = totalLb / KG_TO_LBS;
 
     // Calculate new weights for each fermentable
     return fermentables.map(f => {
