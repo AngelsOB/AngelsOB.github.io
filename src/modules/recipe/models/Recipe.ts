@@ -43,6 +43,9 @@ export type Hop = {
   dryHopStartDay?: number;
   /** Dry hop duration in days */
   dryHopDays?: number;
+  /** Physical form — affects IBU (whole leaf gets no pellet utilization bonus).
+   *  Undefined is treated as pellet (the common case). */
+  form?: 'pellet' | 'leaf' | 'plug';
   /** Hop flavor profile (optional) */
   flavor?: {
     citrus: number;

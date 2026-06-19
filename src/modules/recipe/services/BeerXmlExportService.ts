@@ -216,6 +216,8 @@ function pushEquipmentBlock(
 ): void {
   const eq = recipe.equipment;
   lines.push('      <EQUIPMENT>');
+  // NAME holds the user's equipment profile — do NOT repurpose it as an origin
+  // marker. Our round-trip detection rides on the BT_* custom tags below.
   lines.push(tag('NAME', recipe.equipmentProfileName ?? 'Custom', '        '));
   lines.push(tag('VERSION', 1, '        '));
   lines.push(tag('BATCH_SIZE', num(fermenterBatchL, 2), '        '));
@@ -227,13 +229,31 @@ function pushEquipmentBlock(
   // volume). e.g. 3 L/hr off a 25.92 L boil = 11.57 %/hr — matches Brewfather.
   const evapPct = preBoilL > 0 ? (eq.boilOffRateLPerHour / preBoilL) * 100 : 0;
   lines.push(tag('EVAP_RATE', num(evapPct, 3), '        '));
-  // Trub/chiller loss = what stays in kettle after transfer
+  // Trub/chiller loss = what stays in the kettle after transfer (post-boil).
   const trubLoss = (eq.kettleLossLiters ?? 0) + (eq.chillerLossLiters ?? 0);
   lines.push(tag('TRUB_CHILLER_LOSS', num(trubLoss, 2), '        '));
-  // Mash tun deadspace
-  if (eq.mashTunDeadspaceLiters != null) {
-    lines.push(tag('LAUTER_DEADSPACE', num(eq.mashTunDeadspaceLiters, 2), '        '));
-  }
+  // LAUTER_DEADSPACE is spec-defined as the amount LOST to the lauter tun, so we
+  // write our genuine (unrecovered) mash-tun loss here — NOT the recovered
+  // deadspace (which has no standard field and rides on BT_MASH_TUN_DEADSPACE).
+  lines.push(tag('LAUTER_DEADSPACE', num(eq.mashTunLossLiters ?? 0, 2), '        '));
+
+  // --- Non-standard round-trip tags (BeerXML readers ignore unknown tags) ---
+  // These carry the equipment fields the standard can't express, so importing
+  // our own export reconstructs the profile exactly. Their presence also marks
+  // the file as ours. FERMENTER_LOSS is the key one: it lets the importer invert
+  // BATCH_SIZE (into-fermenter) back to our finished volume without guessing.
+  const bt = (name: string, value: number | undefined, decimals = 3) =>
+    tag(`BT_${name}`, num(value, decimals), '        ');
+  lines.push(bt('FERMENTER_LOSS', eq.fermenterLossLiters));
+  lines.push(bt('KETTLE_LOSS', eq.kettleLossLiters));
+  lines.push(bt('CHILLER_LOSS', eq.chillerLossLiters));
+  lines.push(bt('MASH_TUN_DEADSPACE', eq.mashTunDeadspaceLiters));
+  lines.push(bt('MASH_TUN_LOSS', eq.mashTunLossLiters));
+  lines.push(bt('HOP_ABSORPTION', eq.hopsAbsorptionLPerKg));
+  lines.push(bt('GRAIN_ABSORPTION', eq.grainAbsorptionLPerKg));
+  lines.push(bt('MASH_THICKNESS', eq.mashThicknessLPerKg));
+  lines.push(bt('COOLING_SHRINKAGE', eq.coolingShrinkagePercent));
+  lines.push(bt('BOIL_OFF_RATE', eq.boilOffRateLPerHour));
   lines.push('      </EQUIPMENT>');
 }
 
@@ -326,8 +346,9 @@ class BeerXmlExportService {
       lines.push(tag('AMOUNT', num(h.grams / 1000, 4), '          '));
       lines.push(tag('USE', use, '          '));
       lines.push(tag('TIME', num(time, 0), '          '));
-      // FORM is required by BeerXML; default to Pellet (most common) when we don't know.
-      lines.push(tag('FORM', 'Pellet', '          '));
+      // FORM is required by BeerXML; default to Pellet (most common) when unset.
+      const hopForm = h.form === 'leaf' ? 'Leaf' : h.form === 'plug' ? 'Plug' : 'Pellet';
+      lines.push(tag('FORM', hopForm, '          '));
       if (h.type === 'whirlpool' && h.temperatureC != null) {
         lines.push(tag('TEMPERATURE', num(h.temperatureC, 1), '          '));
       }

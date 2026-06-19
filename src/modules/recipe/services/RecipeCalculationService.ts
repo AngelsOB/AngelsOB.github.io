@@ -570,12 +570,11 @@ export class RecipeCalculationService {
         break;
     }
 
-    // Pellet utilization bonus: +10% on the Tinseth isomerization model. We
-    // assume pellet hops (the common case; there's no hop-form field yet), which
-    // matches Brewer's Friend's documented default and Brewfather's pellet
-    // handling. Dry hop returned earlier, so it's unaffected (correct — the bump
-    // is a Tinseth-only convention).
-    utilization *= 1.1;
+    // Pellet utilization bonus: +10% on the Tinseth isomerization model, matching
+    // Brewer's Friend's documented default and Brewfather's pellet handling. Whole
+    // leaf gets no bonus (lower utilization than pellets); an unset form defaults
+    // to pellet (the common case). Dry hop returned earlier, so it's unaffected.
+    if (hop.form !== 'leaf') utilization *= 1.1;
 
     // Tinseth formula using imperial units
     // Convert grams to ounces, then calculate AAU

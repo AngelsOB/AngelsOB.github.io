@@ -25,16 +25,68 @@ import {
   beerXmlImportService,
   type BeerXmlImportResult,
   type PendingMatch,
+  type SourceVitals,
 } from "@/modules/recipe/services/BeerXmlImportService";
 import {
   textRecipeImportService,
   type ImportVitals,
 } from "@/modules/recipe/services/textRecipeImportService";
+import { recipeCalculationService } from "@/modules/recipe/services/RecipeCalculationService";
 import type { Recipe } from "@/modules/recipe/models/Recipe";
 import { toast } from "@/stores/toastStore";
 
 import ImportRecipeModal from "./ImportRecipeModal";
 import ReviewImportMatchesModal from "./ReviewImportMatchesModal";
+
+// Deltas beyond which the file's stated OG/ABV diverge more than our model noise
+// can explain — usually an efficiency-basis mismatch (e.g. a Grainfather export
+// storing MASH efficiency in BeerXML's EFFICIENCY field where the spec, and we,
+// expect BREWHOUSE). IBU is intentionally NOT escalated on: utilization models
+// differ enough between tools that an IBU gap is expected, not a red flag.
+const OG_WARN_DELTA = 0.005; // ~5 gravity points
+const ABV_WARN_DELTA = 0.6; // percentage points
+
+/**
+ * Post-import reconciliation notice. Always shows what the file claimed vs what
+ * we compute (when the file stated vitals); escalates to a persistent warning
+ * when OG/ABV diverge beyond what's reasonable — the cheap guard against the
+ * efficiency-basis trap, which OG can't otherwise reveal silently.
+ */
+function announceImport(saved: Recipe, sourceVitals?: SourceVitals): void {
+  const hasVitals =
+    sourceVitals != null &&
+    (sourceVitals.og != null || sourceVitals.ibu != null || sourceVitals.abv != null);
+  if (!hasVitals) {
+    toast.success(`Imported "${saved.name}"`);
+    return;
+  }
+
+  const calc = recipeCalculationService.calculate(saved);
+  const parts: string[] = [];
+  if (sourceVitals!.og != null)
+    parts.push(`OG ${calc.og.toFixed(3)} (file ${sourceVitals!.og.toFixed(3)})`);
+  if (sourceVitals!.ibu != null)
+    parts.push(`${Math.round(calc.ibu)} IBU (file ${Math.round(sourceVitals!.ibu)})`);
+  if (sourceVitals!.abv != null)
+    parts.push(`${calc.abv.toFixed(1)}% ABV (file ${sourceVitals!.abv.toFixed(1)}%)`);
+  const comparison = parts.join(" · ");
+
+  const ogOff =
+    sourceVitals!.og != null && Math.abs(calc.og - sourceVitals!.og) >= OG_WARN_DELTA;
+  const abvOff =
+    sourceVitals!.abv != null && Math.abs(calc.abv - sourceVitals!.abv) >= ABV_WARN_DELTA;
+
+  if (ogOff || abvOff) {
+    toast.warning(
+      `Imported "${saved.name}", but our numbers differ from the file: ${comparison}. ` +
+        `If this came from Grainfather, its BeerXML stores mash efficiency where we expect ` +
+        `brewhouse — adjust the efficiency in the builder. Otherwise double-check batch volume and units.`,
+      { duration: 0 }
+    );
+  } else {
+    toast.success(`Imported "${saved.name}" — ${comparison}`);
+  }
+}
 
 export default function ImportRecipeFlow() {
   const isOpen = useImportStore((s) => s.isOpen);
@@ -53,6 +105,7 @@ export default function ImportRecipeFlow() {
     source: "beerxml" | "text";
     vitals?: ImportVitals;
     targetOg?: number;
+    sourceVitals?: SourceVitals;
   } | null>(null);
 
   const handleBeerXmlText = async (text: string) => {
@@ -66,7 +119,7 @@ export default function ImportRecipeFlow() {
       const saved = await commitImportedRecipe(result.recipe);
       if (saved) {
         loadRecipes();
-        toast.success(`Imported "${saved.name}"`);
+        announceImport(saved, result.sourceVitals);
       } else {
         toast.error("Failed to save imported recipe");
       }
@@ -119,10 +172,11 @@ export default function ImportRecipeFlow() {
             resolved = textRecipeImportService.applyVitals(resolved, editedVitals);
           }
           const saved = await commitImportedRecipe(resolved);
+          const sourceVitals = importReview.sourceVitals;
           setImportReview(null);
           if (saved) {
             loadRecipes();
-            toast.success(`Imported "${saved.name}"`);
+            announceImport(saved, sourceVitals);
           } else {
             toast.error("Failed to save imported recipe");
           }

@@ -55,6 +55,119 @@ const yieldToPpg = (yieldPercent: number | undefined): number | undefined => {
   return Math.round((yieldPercent / 100) * 46);
 };
 
+// Parse a BeerXML float that may carry a unit suffix ("1.052 SG", "6.0 %", "45 IBU").
+const parseLeadingNumber = (value: string | undefined): number | undefined => {
+  if (value == null) return undefined;
+  const m = value.match(/-?\d+(\.\d+)?/);
+  if (!m) return undefined;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+// A non-negative finite number, else undefined — so a negative/garbage loss in
+// the source file falls back to our default rather than corrupting the calc.
+const nonNegOrUndefined = (n: number | undefined): number | undefined =>
+  n != null && Number.isFinite(n) && n >= 0 ? n : undefined;
+
+// ---------- Equipment (<EQUIPMENT>) parsing ----------
+
+/** Vitals the source file claims, surfaced for the post-import reconciliation. */
+export type SourceVitals = { og?: number; fg?: number; ibu?: number; abv?: number };
+
+// Hardcoded fallbacks — used per-field whenever the EQUIPMENT block (or a field)
+// is absent, so an equipment-less BeerXML still imports cleanly. These mirror the
+// values the importer used to stamp unconditionally.
+const EQUIPMENT_DEFAULTS = {
+  boilOffRateLPerHour: 4,
+  mashThicknessLPerKg: 2.7,
+  grainAbsorptionLPerKg: 0.8,
+  mashTunDeadspaceLiters: 2,
+  mashTunLossLiters: 0,
+  kettleLossLiters: 1,
+  hopsAbsorptionLPerKg: 0.7,
+  chillerLossLiters: 0,
+  fermenterLossLiters: 0.5,
+  coolingShrinkagePercent: 4,
+} as const;
+
+// Namespace for the non-standard child tags our own export stamps inside
+// <EQUIPMENT>. BeerXML mandates that readers ignore unknown tags, so these are a
+// spec-sanctioned side-channel for the equipment fields the standard can't carry
+// (fermenter loss, recovered deadspace, absorption rates, etc.). Their presence
+// also marks a file as one of ours, making round-trips exactly lossless without
+// the fragile NAME-marker approach (NAME already holds the user's profile name).
+const BT = 'BT_';
+
+type ParsedEquipmentFields = Omit<
+  Recipe['equipment'],
+  'boilTimeMin' | 'brewhouseEfficiencyPercent' | 'fermenterLossLiters'
+>;
+
+function parseEquipment(recipeEl: Element): {
+  equipment: ParsedEquipmentFields;
+  fermenterLossLiters: number;
+} {
+  const d = EQUIPMENT_DEFAULTS;
+  const eqEl = recipeEl.getElementsByTagName('EQUIPMENT')?.[0] ?? null;
+  if (!eqEl) {
+    return { equipment: { ...d }, fermenterLossLiters: d.fermenterLossLiters };
+  }
+
+  // BT_* custom children are authoritative (our own export); they let the full
+  // equipment profile round-trip losslessly. Foreign files have none and fall
+  // through to the standard fields, then to defaults.
+  const bt = (tag: string) => nonNegOrUndefined(toNumber(text(eqEl, BT + tag)));
+
+  const trubChillerLoss = nonNegOrUndefined(toNumber(text(eqEl, 'TRUB_CHILLER_LOSS')));
+  const lauterDeadspace = nonNegOrUndefined(toNumber(text(eqEl, 'LAUTER_DEADSPACE')));
+  const boilSize = nonNegOrUndefined(toNumber(text(eqEl, 'BOIL_SIZE')));
+  const evapRate = toNumber(text(eqEl, 'EVAP_RATE')); // %/hr of boil volume, per spec
+
+  // EVAP_RATE is a PERCENTAGE of the boil volume per hour (NOT L/hr) — convert
+  // against BOIL_SIZE. Both must be present and sane; otherwise keep the default
+  // rate (we recompute pre-boil from our own model anyway, so boil-off only
+  // affects pre-boil water and the boil-average gravity feeding IBU).
+  const boilOffFromEvap =
+    evapRate != null && Number.isFinite(evapRate) && evapRate > 0 && boilSize != null
+      ? (evapRate / 100) * boilSize
+      : undefined;
+
+  const equipment: ParsedEquipmentFields = {
+    boilOffRateLPerHour: bt('BOIL_OFF_RATE') ?? boilOffFromEvap ?? d.boilOffRateLPerHour,
+    mashThicknessLPerKg: bt('MASH_THICKNESS') ?? d.mashThicknessLPerKg,
+    grainAbsorptionLPerKg: bt('GRAIN_ABSORPTION') ?? d.grainAbsorptionLPerKg,
+    // Recovered deadspace has no standard BeerXML field — only our custom tag.
+    mashTunDeadspaceLiters: bt('MASH_TUN_DEADSPACE') ?? d.mashTunDeadspaceLiters,
+    // LAUTER_DEADSPACE is "amount LOST to the lauter tun" → a genuine
+    // (unrecovered) loss, which maps to our mashTunLoss, NOT the recovered
+    // deadspace above.
+    mashTunLossLiters: bt('MASH_TUN_LOSS') ?? lauterDeadspace ?? d.mashTunLossLiters,
+    // BeerXML lumps kettle trub + chiller/transfer into TRUB_CHILLER_LOSS. Both
+    // are post-boil losses and the calc only uses their sum, so put it all on
+    // kettle and leave chiller 0 (the split is cosmetic).
+    kettleLossLiters: bt('KETTLE_LOSS') ?? trubChillerLoss ?? d.kettleLossLiters,
+    hopsAbsorptionLPerKg: bt('HOP_ABSORPTION') ?? d.hopsAbsorptionLPerKg,
+    chillerLossLiters: bt('CHILLER_LOSS') ?? d.chillerLossLiters,
+    coolingShrinkagePercent: bt('COOLING_SHRINKAGE') ?? d.coolingShrinkagePercent,
+  };
+
+  return { equipment, fermenterLossLiters: bt('FERMENTER_LOSS') ?? d.fermenterLossLiters };
+}
+
+function parseSourceVitals(recipeEl: Element): SourceVitals | undefined {
+  const og = parseLeadingNumber(text(recipeEl, 'OG') ?? text(recipeEl, 'EST_OG'));
+  const fg = parseLeadingNumber(text(recipeEl, 'FG') ?? text(recipeEl, 'EST_FG'));
+  const ibu = parseLeadingNumber(text(recipeEl, 'IBU'));
+  const abv = parseLeadingNumber(text(recipeEl, 'ABV') ?? text(recipeEl, 'EST_ABV'));
+  const v: SourceVitals = {};
+  // Guard junk values some exporters emit (OG 1.000 / 0, etc.).
+  if (og != null && og > 1.0) v.og = og;
+  if (fg != null && fg > 0.9) v.fg = fg;
+  if (ibu != null && ibu >= 0) v.ibu = ibu;
+  if (abv != null && abv >= 0) v.abv = abv;
+  return Object.keys(v).length > 0 ? v : undefined;
+}
+
 // ---------- Water salt routing (BeerXML MISC → waterChemistry.saltAdditions) ----------
 
 type SaltKey = 'gypsum_g' | 'cacl2_g' | 'epsom_g' | 'nacl_g' | 'nahco3_g';
@@ -125,6 +238,8 @@ export type PendingMatch =
 export type BeerXmlImportResult = {
   recipe: Recipe;
   pendingMatches: PendingMatch[];
+  /** Vitals the source file stated (if any), for post-import reconciliation. */
+  sourceVitals?: SourceVitals;
 };
 
 /** Resolutions returned by the review UI back to the import committer. */
@@ -170,7 +285,17 @@ class BeerXmlImportService {
       }
     }
 
-    const batchVolumeL = toNumber(text(recipeEl, 'BATCH_SIZE')) ?? 20;
+    // Equipment first — we need the fermenter loss to convert BATCH_SIZE.
+    const { equipment: parsedEquipment, fermenterLossLiters } = parseEquipment(recipeEl);
+
+    // BeerXML BATCH_SIZE is the INTO-FERMENTER volume; our batchVolumeL is the
+    // finished/packaged volume (fermenter loss is added back on top — see the
+    // export). Subtract the fermenter loss so OG and round-trips reconcile (this
+    // is the exact inverse of BeerXmlExportService's fermenterBatchL). Clamp so a
+    // tiny/garbage BATCH_SIZE can't drive the volume to zero/negative.
+    const rawBatchSize = toNumber(text(recipeEl, 'BATCH_SIZE')) ?? 20;
+    const batchVolumeL =
+      Math.max(1, roundTo(rawBatchSize - fermenterLossLiters, 3) ?? rawBatchSize);
     const boilTimeMin = toNumber(text(recipeEl, 'BOIL_TIME')) ?? 60;
     const efficiency = toNumber(text(recipeEl, 'EFFICIENCY')) ?? 75;
 
@@ -226,13 +351,30 @@ class BeerXmlImportService {
         const use = (text(h, 'USE') || '').toLowerCase();
         const timeMin = toNumber(text(h, 'TIME'));
 
+        const formStr = (text(h, 'FORM') || '').toLowerCase();
+        const form: Hop['form'] | undefined = formStr.includes('leaf') || formStr.includes('whole')
+          ? 'leaf'
+          : formStr.includes('plug')
+          ? 'plug'
+          : formStr.includes('pellet')
+          ? 'pellet'
+          : undefined;
+
         let type: Hop['type'] = 'boil';
-        const isFlameout = use.includes('flameout');
+        const useFlameout = use.includes('flameout');
         if (use.includes('dry')) type = 'dry hop';
         else if (use.includes('mash')) type = 'mash';
         else if (use.includes('first')) type = 'first wort';
-        else if (use.includes('aroma') || use.includes('whirlpool') || isFlameout)
+        else if (use.includes('aroma') || use.includes('whirlpool') || useFlameout)
           type = 'whirlpool';
+
+        // Narrow flameout case: a USE=Boil addition with TIME=0 isn't a 0-minute
+        // boil (which isomerizes ~nothing) — it's a flameout/steep. Route it to
+        // whirlpool with hot-stand defaults so it earns realistic late bitterness.
+        // (USE=Aroma already maps to whirlpool above and is left untouched.)
+        const isBoilFlameout = type === 'boil' && timeMin === 0;
+        if (isBoilFlameout) type = 'whirlpool';
+        const isFlameout = useFlameout || isBoilFlameout;
 
         const importedName = text(h, 'NAME') || 'Hop';
         const id = uid();
@@ -254,30 +396,37 @@ class BeerXmlImportService {
         }
 
         // enrichHop pulls flavor profile from presets keyed off the (now canonical) name.
-        hops.push(
-          hopEnrichmentService.enrichHop({
-            id,
-            name: resolvedName,
-            alphaAcid: alpha,
-            grams: amountG,
-            type,
-            timeMinutes: type === 'boil' || type === 'first wort' ? timeMin : undefined,
-            // Stand time: respect an explicit positive TIME, else default so a
-            // 0-min flameout still isomerizes (flameout ~10 min, whirlpool ~15).
-            whirlpoolTimeMinutes:
-              type === 'whirlpool'
-                ? (timeMin && timeMin > 0 ? timeMin : isFlameout ? 10 : 15)
-                : undefined,
-            // Temperature: use XML TEMPERATURE if present, else hot for flameout
-            // (~99 °C) and a cooler default for whirlpool/aroma (~85 °C).
-            temperatureC:
-              type === 'whirlpool'
-                ? (toNumber(text(h, 'TEMPERATURE')) ?? (isFlameout ? 99 : 85))
-                : undefined,
-            dryHopStartDay: type === 'dry hop' ? 7 : undefined,
-            dryHopDays: type === 'dry hop' ? 3 : undefined,
-          })
-        );
+        const enriched = hopEnrichmentService.enrichHop({
+          id,
+          name: resolvedName,
+          alphaAcid: alpha,
+          grams: amountG,
+          type,
+          form,
+          timeMinutes: type === 'boil' || type === 'first wort' ? timeMin : undefined,
+          // Stand time: respect an explicit positive TIME, else default so a
+          // 0-min flameout still isomerizes (flameout ~10 min, whirlpool ~15).
+          whirlpoolTimeMinutes:
+            type === 'whirlpool'
+              ? (timeMin && timeMin > 0 ? timeMin : isFlameout ? 10 : 15)
+              : undefined,
+          // Temperature: use XML TEMPERATURE if present, else hot for flameout
+          // (~99 °C) and a cooler default for whirlpool/aroma (~85 °C).
+          temperatureC:
+            type === 'whirlpool'
+              ? (toNumber(text(h, 'TEMPERATURE')) ?? (isFlameout ? 99 : 85))
+              : undefined,
+          dryHopStartDay: type === 'dry hop' ? 7 : undefined,
+          // Round-trip the dry-hop duration: BeerXML carries it in TIME minutes
+          // (our export writes days×1440). Fall back to 3 days when absent/zero.
+          dryHopDays:
+            type === 'dry hop'
+              ? (timeMin && timeMin > 0 ? Math.max(1, Math.round(timeMin / 1440)) : 3)
+              : undefined,
+        });
+        // enrichHop may rebuild the object from presets — make sure FORM survives.
+        if (form) enriched.form = form;
+        hops.push(enriched);
       });
     }
 
@@ -483,17 +632,11 @@ class BeerXmlImportService {
       batchVolumeL,
       equipment: {
         boilTimeMin,
-        boilOffRateLPerHour: 4,
         brewhouseEfficiencyPercent: efficiency,
-        mashThicknessLPerKg: 2.7,
-        grainAbsorptionLPerKg: 0.8,
-        mashTunDeadspaceLiters: 2,
-        mashTunLossLiters: 0,
-        kettleLossLiters: 1,
-        hopsAbsorptionLPerKg: 0.7,
-        chillerLossLiters: 0,
-        fermenterLossLiters: 0.5,
-        coolingShrinkagePercent: 4,
+        ...parsedEquipment,
+        // Fermenter loss is parsed alongside the rest but lives on batchVolumeL's
+        // conversion; restore it here so it round-trips and feeds SRM/volumes.
+        fermenterLossLiters,
       },
       fermentables,
       hops,
@@ -506,7 +649,7 @@ class BeerXmlImportService {
       updatedAt: now,
     };
 
-    return { recipe, pendingMatches };
+    return { recipe, pendingMatches, sourceVitals: parseSourceVitals(recipeEl) };
   }
 
   /**
