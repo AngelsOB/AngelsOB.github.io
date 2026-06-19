@@ -163,15 +163,11 @@ export function chlorideToSulfateRatio(profile: WaterProfile): number | null {
   return Cl / SO4;
 }
 
-export const COMMON_WATER_PROFILES: Record<string, WaterProfile> = {
-  RO: RO_PROFILE,
-  Pilsen: { Ca: 7, Mg: 3, Na: 2, Cl: 5, SO4: 5, HCO3: 15 },
-  Dortmund: { Ca: 225, Mg: 40, Na: 60, Cl: 180, SO4: 120, HCO3: 180 },
-  Burton: { Ca: 275, Mg: 40, Na: 25, Cl: 35, SO4: 470, HCO3: 300 },
-  Dublin: { Ca: 120, Mg: 4, Na: 12, Cl: 19, SO4: 53, HCO3: 319 },
-  Vienna: { Ca: 163, Mg: 12, Na: 10, Cl: 40, SO4: 125, HCO3: 258 },
-  Montreal: { Ca: 31, Mg: 8, Na: 15, Cl: 26, SO4: 22, HCO3: 0 },
-};
+// The live, corrected set of built-in water profiles lives in
+// WaterChemistryService.ts (COMMON_WATER_PROFILES). The legacy duplicate that
+// used to sit here was removed in the Tier-1 water consolidation: it was unused
+// (every importer reads the service's copy) and had drifted from it (e.g. the
+// Montreal/Dortmund values).
 
 export const ION_KEYS: Array<keyof WaterProfile> = [
   "Ca",

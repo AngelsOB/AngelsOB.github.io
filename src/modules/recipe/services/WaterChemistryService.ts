@@ -8,48 +8,22 @@
  */
 
 import { optimizeSaltAdditions } from './WaterSaltOptimizer';
+import {
+  type WaterProfile,
+  type SaltAdditions,
+  addProfiles,
+  scaleProfile,
+  clampProfile,
+  ionDeltaFromSalts,
+  chlorideToSulfateRatio,
+} from '@/utils/water';
 
-export type WaterProfile = {
-  Ca: number; // ppm
-  Mg: number; // ppm
-  Na: number; // ppm
-  Cl: number; // ppm
-  SO4: number; // ppm as sulfate
-  HCO3: number; // ppm as bicarbonate
-};
-
-export type SaltAdditions = {
-  gypsum_g?: number; // CaSO4·2H2O
-  cacl2_g?: number; // CaCl2·2H2O
-  epsom_g?: number; // MgSO4·7H2O
-  nacl_g?: number; // NaCl
-  nahco3_g?: number; // NaHCO3 (baking soda)
-};
-
-// Ion contributions per 1 g of salt added to 1 L of water (mg/L aka ppm)
-// Mass fractions computed from molar masses.
-export const ION_PPM_PER_G_PER_L = {
-  gypsum: {
-    Ca: 0.2328 * 1000, // 40.078 / 172.164
-    SO4: 0.5579 * 1000, // 96.056 / 172.164
-  },
-  cacl2: {
-    Ca: 0.2726 * 1000, // 40.078 / 147.014
-    Cl: 0.4823 * 1000, // 70.906 / 147.014
-  },
-  epsom: {
-    Mg: 0.0986 * 1000, // 24.305 / 246.466
-    SO4: 0.3897 * 1000, // 96.056 / 246.466
-  },
-  nacl: {
-    Na: 0.3934 * 1000, // 22.990 / 58.443
-    Cl: 0.6066 * 1000, // 35.453 / 58.443
-  },
-  nahco3: {
-    Na: 0.2737 * 1000, // 22.990 / 84.006
-    HCO3: 0.7263 * 1000, // 61.016 / 84.006
-  },
-} as const;
+// The canonical water-chemistry primitives (types, ion table, profile
+// arithmetic) live in @/utils/water. Re-export the type names and ion table so
+// existing `from './WaterChemistryService'` imports keep working, and have the
+// service methods below delegate to the shared helpers.
+export type { WaterProfile, SaltAdditions } from '@/utils/water';
+export { ION_PPM_PER_G_PER_L } from '@/utils/water';
 
 export class WaterChemistryService {
   /**
@@ -58,73 +32,28 @@ export class WaterChemistryService {
    * @param volumeL Water volume in liters
    */
   ionDeltaFromSalts(add: SaltAdditions, volumeL: number): WaterProfile {
-    const v = Math.max(0.0001, volumeL);
-    const perL = (g?: number) => (g && g > 0 ? g / v : 0); // g/L
-
-    const gyp = perL(add.gypsum_g);
-    const cac = perL(add.cacl2_g);
-    const eps = perL(add.epsom_g);
-    const nac = perL(add.nacl_g);
-    const nah = perL(add.nahco3_g);
-
-    return {
-      Ca:
-        gyp * ION_PPM_PER_G_PER_L.gypsum.Ca +
-        cac * ION_PPM_PER_G_PER_L.cacl2.Ca,
-      Mg: eps * ION_PPM_PER_G_PER_L.epsom.Mg,
-      Na:
-        nac * ION_PPM_PER_G_PER_L.nacl.Na +
-        nah * ION_PPM_PER_G_PER_L.nahco3.Na,
-      Cl:
-        cac * ION_PPM_PER_G_PER_L.cacl2.Cl +
-        nac * ION_PPM_PER_G_PER_L.nacl.Cl,
-      SO4:
-        gyp * ION_PPM_PER_G_PER_L.gypsum.SO4 +
-        eps * ION_PPM_PER_G_PER_L.epsom.SO4,
-      HCO3: nah * ION_PPM_PER_G_PER_L.nahco3.HCO3,
-    };
+    return ionDeltaFromSalts(add, volumeL);
   }
 
   /**
    * Add two water profiles together (ion by ion)
    */
   addProfiles(a: WaterProfile, b: WaterProfile): WaterProfile {
-    return {
-      Ca: a.Ca + b.Ca,
-      Mg: a.Mg + b.Mg,
-      Na: a.Na + b.Na,
-      Cl: a.Cl + b.Cl,
-      SO4: a.SO4 + b.SO4,
-      HCO3: a.HCO3 + b.HCO3,
-    };
+    return addProfiles(a, b);
   }
 
   /**
    * Scale a water profile by a factor
    */
   scaleProfile(p: WaterProfile, factor: number): WaterProfile {
-    return {
-      Ca: p.Ca * factor,
-      Mg: p.Mg * factor,
-      Na: p.Na * factor,
-      Cl: p.Cl * factor,
-      SO4: p.SO4 * factor,
-      HCO3: p.HCO3 * factor,
-    };
+    return scaleProfile(p, factor);
   }
 
   /**
    * Clamp all ion values to be non-negative
    */
   clampProfile(p: WaterProfile): WaterProfile {
-    return {
-      Ca: Math.max(0, p.Ca),
-      Mg: Math.max(0, p.Mg),
-      Na: Math.max(0, p.Na),
-      Cl: Math.max(0, p.Cl),
-      SO4: Math.max(0, p.SO4),
-      HCO3: Math.max(0, p.HCO3),
-    };
+    return clampProfile(p);
   }
 
   /**
@@ -132,9 +61,7 @@ export class WaterChemistryService {
    * Returns null if SO4 is zero or negative
    */
   chlorideToSulfateRatio(profile: WaterProfile): number | null {
-    const { Cl, SO4 } = profile;
-    if (SO4 <= 0) return null;
-    return Cl / SO4;
+    return chlorideToSulfateRatio(profile);
   }
 
   /**

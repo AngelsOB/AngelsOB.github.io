@@ -10,7 +10,6 @@ import {
   clampProfile,
   mixProfiles,
   chlorideToSulfateRatio,
-  COMMON_WATER_PROFILES,
   ION_KEYS,
   DEFAULT_TOLERANCE_PPM,
   ION_HINTS,
@@ -635,56 +634,11 @@ describe("water chemistry helpers", () => {
 
     test("hop-forward water (high SO4) yields ratio < 1", () => {
       // Burton: Cl 35 / SO4 470 = 0.0745 — sulfate-dominant, classic for bitters.
-      const ratio = chlorideToSulfateRatio(COMMON_WATER_PROFILES.Burton);
+      const burton: WaterProfile = { ...RO_PROFILE, Cl: 35, SO4: 470 };
+      const ratio = chlorideToSulfateRatio(burton);
       expect(ratio).not.toBeNull();
       expect(ratio!).toBeCloseTo(35 / 470, 6);
       expect(ratio!).toBeLessThan(1);
-    });
-  });
-
-  // ── COMMON_WATER_PROFILES (well-known historical city water) ───────────
-
-  describe("COMMON_WATER_PROFILES", () => {
-    test("RO entry aliases the all-zero RO_PROFILE", () => {
-      expect(COMMON_WATER_PROFILES.RO).toEqual(RO_PROFILE);
-    });
-
-    test("Burton-on-Trent is high-sulfate (pale-ale water)", () => {
-      // Burton water is famously gypsum-rich; SO4 should dominate Cl heavily.
-      const b = COMMON_WATER_PROFILES.Burton;
-      expect(b.SO4).toBe(470);
-      expect(b.SO4).toBeGreaterThan(b.Cl);
-    });
-
-    test("Pilsen is very soft (low total mineral content)", () => {
-      // Pilsen's softness is what defines pale lagers; every ion is small.
-      const p = COMMON_WATER_PROFILES.Pilsen;
-      for (const key of ION_KEYS) {
-        expect(p[key]).toBeLessThanOrEqual(15);
-      }
-    });
-
-    test("Dublin is high-alkalinity (stout water)", () => {
-      // Dublin's high HCO3 buffers roasted-malt acidity in stouts.
-      expect(COMMON_WATER_PROFILES.Dublin.HCO3).toBe(319);
-    });
-
-    test("Montreal has zero bicarbonate per the city report", () => {
-      // Per project memory: Montreal HCO3 was corrected to 0 from the city report.
-      expect(COMMON_WATER_PROFILES.Montreal.HCO3).toBe(0);
-    });
-
-    test("every profile exposes all six ion keys as finite, non-negative ppm", () => {
-      // A real water profile cannot have NaN/Infinity (typeof both === 'number')
-      // nor a negative ion concentration, so assert finiteness and >= 0 too.
-      for (const name of Object.keys(COMMON_WATER_PROFILES)) {
-        const profile = COMMON_WATER_PROFILES[name];
-        for (const key of ION_KEYS) {
-          expect(typeof profile[key]).toBe("number");
-          expect(Number.isFinite(profile[key])).toBe(true);
-          expect(profile[key]).toBeGreaterThanOrEqual(0);
-        }
-      }
     });
   });
 });

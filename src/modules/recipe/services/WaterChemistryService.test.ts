@@ -733,4 +733,16 @@ describe("WaterChemistryService", () => {
       );
     });
   });
+
+  describe("COMMON_WATER_PROFILES (the live, corrected built-in set)", () => {
+    test("Montreal HCO3 is 113 from the city report — never revert to 0", () => {
+      // A legacy duplicate in @/utils/water had drifted to HCO3 0; it was
+      // removed in the Tier-1 water consolidation. This is the canonical value.
+      expect(COMMON_WATER_PROFILES.Montreal.HCO3).toBe(113);
+    });
+
+    test("RO entry is all-zero", () => {
+      expect(COMMON_WATER_PROFILES.RO).toEqual(RO);
+    });
+  });
 });

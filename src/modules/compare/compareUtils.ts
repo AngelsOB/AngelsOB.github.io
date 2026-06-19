@@ -11,8 +11,10 @@ import {
   type FermentableGroup,
 } from '@/modules/recipe/data/fermentablePresets';
 import { resolveCanonicalGrain } from '@/modules/recipe/data/canonicalGrains';
+import type { WaterProfile } from '@/utils/water';
 
 export type { FermentableGroup };
+export type { WaterProfile };
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -40,15 +42,6 @@ export type RecipeHopSummary = {
   hops: HopSummary[];
   totalGrams: number;
   gramsPerLiter: number;
-};
-
-export type WaterProfile = {
-  Ca: number;
-  Mg: number;
-  Na: number;
-  Cl: number;
-  SO4: number;
-  HCO3: number;
 };
 
 export type MeanRecipeData = {
