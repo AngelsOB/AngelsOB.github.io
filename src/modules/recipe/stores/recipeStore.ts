@@ -51,8 +51,44 @@ function checkRecipeLimit(): boolean {
   return false;
 }
 
-/** IDs of recipes deleted this session — prevents stale network responses from restoring them */
-const deletedIds = new Set<string>();
+/**
+ * IDs of recipes the user has deleted, mapped to the time they were deleted.
+ * Persisted to localStorage so a page refresh can't resurrect them: deletes go
+ * through the admin SDK (server-side), so the client's Firestore persistent
+ * cache never learns the doc is gone and keeps replaying it on reload. We filter
+ * these out of the merged list (see withLocal in loadRecipes) regardless of what
+ * the cache returns. Entries self-expire after a TTL, by which point the cache
+ * has long since reconciled, so the set stays bounded.
+ */
+const DELETED_IDS_KEY = 'beer-deleted-recipe-ids';
+const DELETED_IDS_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+function loadDeletedIds(): Map<string, number> {
+  if (typeof window === 'undefined') return new Map();
+  try {
+    const raw = window.localStorage.getItem(DELETED_IDS_KEY);
+    if (!raw) return new Map();
+    const entries = Object.entries(JSON.parse(raw) as Record<string, number>);
+    const cutoff = Date.now() - DELETED_IDS_TTL_MS;
+    return new Map(entries.filter(([, ts]) => ts > cutoff));
+  } catch {
+    return new Map();
+  }
+}
+
+const deletedIds = loadDeletedIds();
+
+function persistDeletedIds() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      DELETED_IDS_KEY,
+      JSON.stringify(Object.fromEntries(deletedIds)),
+    );
+  } catch {
+    /* quota exceeded or storage unavailable — in-memory set still applies */
+  }
+}
 
 /**
  * Compare current recipe to the saved snapshot to detect unsaved changes.
@@ -534,7 +570,8 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     const current = get().currentRecipe;
     if (current?.id === id) set({ currentRecipe: null });
     set({ recipes: previousRecipes.filter((r) => r.id !== id), error: null });
-    deletedIds.add(id);
+    deletedIds.set(id, Date.now());
+    persistDeletedIds();
 
     const user = useAuthStore.getState().user;
     // Local (this-device) recipes never went through the API — delete them
@@ -556,6 +593,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
         console.error('[API] Failed to delete recipe:', err);
         // Rollback on failure
         deletedIds.delete(id);
+        persistDeletedIds();
         set({ recipes: previousRecipes, error: null });
         toast.error('Failed to delete recipe');
       });
@@ -570,6 +608,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
     } catch {
       // Rollback on failure
       deletedIds.delete(id);
+      persistDeletedIds();
       set({ recipes: previousRecipes, error: null });
       toast.error('Failed to delete recipe');
     }
