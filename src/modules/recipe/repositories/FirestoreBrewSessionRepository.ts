@@ -12,6 +12,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import { stripUndefined } from "@/utils/firestore";
 import type { BrewSession, SessionId } from "../models/BrewSession";
 
 export class FirestoreBrewSessionRepository {
@@ -70,12 +71,11 @@ export class FirestoreBrewSessionRepository {
   async saveAsync(session: BrewSession): Promise<void> {
     const docRef = doc(this.sessionsRef, session.id);
     const { id: _id, ...data } = session;
-    // JSON round-trip strips undefined values (Firestore rejects them)
-    const clean = JSON.parse(JSON.stringify({
+    const clean = stripUndefined({
       ...data,
       ownerId: this.userId,
       updatedAt: new Date().toISOString(),
-    }));
+    });
     await setDoc(docRef, clean);
   }
 

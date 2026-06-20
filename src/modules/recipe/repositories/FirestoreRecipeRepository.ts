@@ -15,6 +15,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import { stripUndefined } from "@/utils/firestore";
 import type { Recipe, RecipeId } from "../models/Recipe";
 import { normalizeRecipe } from "../models/normalizeRecipe";
 import type { LoadResult } from "./RecipeRepository";
@@ -114,14 +115,12 @@ export class FirestoreRecipeRepository {
   async saveAsync(recipe: Recipe): Promise<void> {
     const docRef = doc(this.recipesRef, recipe.id);
     const { id: _id, ...data } = recipe;
-    // JSON round-trip strips undefined values at all nesting levels
-    // (Firestore rejects documents containing undefined)
-    const clean = JSON.parse(JSON.stringify({
+    const clean = stripUndefined({
       ...data,
       ownerId: this.userId,
       isPublic: (data as Record<string, unknown>).isPublic ?? true,
       updatedAt: new Date().toISOString(),
-    }));
+    });
     await setDoc(docRef, clean);
   }
 
@@ -138,12 +137,12 @@ export class FirestoreRecipeRepository {
     const recipeRef = doc(this.recipesRef, recipe.id);
     const userRef = doc(db, "users", this.userId);
     const { id: _id, ...data } = recipe;
-    const clean = JSON.parse(JSON.stringify({
+    const clean = stripUndefined({
       ...data,
       ownerId: this.userId,
       isPublic: (data as Record<string, unknown>).isPublic ?? true,
       updatedAt: new Date().toISOString(),
-    }));
+    });
 
     await runTransaction(db, async (transaction) => {
       // Read user doc to ensure it exists (required for update)

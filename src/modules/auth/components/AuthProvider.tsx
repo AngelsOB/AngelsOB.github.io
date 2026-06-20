@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
+import { stripUndefined } from "@/utils/firestore";
 import { useAuthStore } from "../authStore";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import { useEquipmentStore } from "@/modules/recipe/stores/equipmentStore";
@@ -32,7 +33,7 @@ async function ensureUserDoc(userId: string, displayName: string | null, email: 
       stripeCustomerId: null,
       subscriptionCurrentPeriodEnd: null,
     };
-    await setDoc(userRef, JSON.parse(JSON.stringify(newDoc)));
+    await setDoc(userRef, stripUndefined(newDoc));
   }
 
   return userRef;

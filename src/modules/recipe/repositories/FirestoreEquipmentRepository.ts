@@ -10,6 +10,8 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import { stripUndefined } from "@/utils/firestore";
+import { deduplicateBy } from "@/utils/array";
 import type { EquipmentProfile } from "../models/Equipment";
 import { EQUIPMENT_PRESETS } from "../models/Equipment";
 
@@ -36,28 +38,20 @@ export class FirestoreEquipmentRepository {
       (d) => ({ ...d.data(), name: d.data().name } as EquipmentProfile),
     );
 
-    // Custom profiles override presets with the same name
+    // Custom profiles override presets with the same name (keep-first)
     const allProfiles = [...customProfiles, ...presets];
-    const seen = new Map<string, EquipmentProfile>();
-    for (const profile of allProfiles) {
-      if (!seen.has(profile.name)) {
-        seen.set(profile.name, profile);
-      }
-    }
-
-    this.cache = Array.from(seen.values());
+    this.cache = deduplicateBy(allProfiles, (p) => p.name);
     return this.cache;
   }
 
   async saveCustomProfile(profile: EquipmentProfile): Promise<void> {
     const docId = `${this.userId}_${profile.name.replace(/\s+/g, "-").toLowerCase()}`;
     const docRef = doc(this.equipmentRef, docId);
-    // JSON round-trip strips undefined values (Firestore rejects them)
-    const clean = JSON.parse(JSON.stringify({
+    const clean = stripUndefined({
       ...profile,
       ownerId: this.userId,
       isCustom: true,
-    }));
+    });
     await setDoc(docRef, clean);
     this.cache = null;
   }

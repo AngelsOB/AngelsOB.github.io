@@ -12,6 +12,7 @@
  */
 
 import { devError } from '@/utils/logger';
+import { deduplicateBy } from '@/utils/array';
 import type { EquipmentProfile } from '../models/Equipment';
 import { EQUIPMENT_PRESETS } from '../models/Equipment';
 
@@ -34,9 +35,9 @@ class EquipmentRepositoryImpl {
     // Load custom profiles from localStorage
     const customProfiles = this.loadCustomProfiles();
 
-    // Combine and deduplicate by name (custom overrides preset)
+    // Combine and deduplicate by name (custom overrides preset, keep-first)
     const allProfiles = [...customProfiles, ...presets];
-    const uniqueProfiles = this.deduplicateByName(allProfiles);
+    const uniqueProfiles = deduplicateBy(allProfiles, (p) => p.name);
 
     this.cache = uniqueProfiles;
     return uniqueProfiles;
@@ -105,16 +106,6 @@ class EquipmentRepositoryImpl {
       devError('Failed to load custom equipment profiles:', error);
       return [];
     }
-  }
-
-  private deduplicateByName(profiles: EquipmentProfile[]): EquipmentProfile[] {
-    const seen = new Map<string, EquipmentProfile>();
-    for (const profile of profiles) {
-      if (!seen.has(profile.name)) {
-        seen.set(profile.name, profile);
-      }
-    }
-    return Array.from(seen.values());
   }
 }
 
