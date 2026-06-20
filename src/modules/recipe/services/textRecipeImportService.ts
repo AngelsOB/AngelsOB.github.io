@@ -15,6 +15,7 @@
 
 import type { Recipe, Fermentable, Hop, Yeast } from '../models/Recipe';
 import { uid } from '@/utils/uid';
+import { round } from '@/utils/round';
 import { hopEnrichmentService } from './HopEnrichmentService';
 import { recipeCalculationService } from './RecipeCalculationService';
 import {
@@ -66,10 +67,14 @@ export type ImportSheetEdits = {
   removedIngredientIds: string[];
 };
 
-const round = (n: number, decimals: number): number => {
-  const f = Math.pow(10, decimals);
-  return Math.round(n * f) / f;
-};
+/** Look up a preset by exact name. Shared across hop/grain/yeast resolution. */
+function getPreset<T extends { name: string }>(presets: T[], name: string): T | undefined {
+  return presets.find((p) => p.name === name);
+}
+
+/** Name a mash rest: a single rest is "Saccharification", else "Step N". */
+const mashStepName = (index: number, total: number): string =>
+  total === 1 ? 'Saccharification' : `Step ${index + 1}`;
 
 /** Default total grist when a percentage bill gives us nothing to anchor on: ~5 kg per 20 L. */
 const DEFAULT_GRIST_KG_PER_L = 0.25;
@@ -269,7 +274,7 @@ class TextRecipeImportService {
       // Mash rests from directions prose, when stated (multi-step supported).
       mashSteps: (draft.mashSteps ?? []).map((step, i, all) => ({
         id: uid(),
-        name: all.length === 1 ? 'Saccharification' : `Step ${i + 1}`,
+        name: mashStepName(i, all.length),
         temperatureC: step.temperatureC,
         durationMinutes: step.durationMinutes ?? 60,
       })),
@@ -410,7 +415,7 @@ class TextRecipeImportService {
     }
     next.mashSteps = vitals.mashSteps.map((step, i, all) => ({
       id: uid(),
-      name: all.length === 1 ? 'Saccharification' : `Step ${i + 1}`,
+      name: mashStepName(i, all.length),
       temperatureC: step.temperatureC,
       durationMinutes: step.durationMinutes,
     }));
@@ -440,7 +445,7 @@ class TextRecipeImportService {
         const hop = next.hops.find((h) => h.id === r.ingredientId);
         if (!hop) continue;
         hop.name = r.presetName;
-        const preset = HOP_PRESETS.find((p) => p.name === r.presetName);
+        const preset = getPreset(HOP_PRESETS, r.presetName);
         if (preset) hop.alphaAcid = preset.alphaAcidPercent;
         // Drop the old flavor so enrichment re-resolves for the new name.
         delete hop.flavor;
@@ -449,7 +454,7 @@ class TextRecipeImportService {
         const grain = next.fermentables.find((g) => g.id === r.ingredientId);
         if (!grain) continue;
         grain.name = r.presetName;
-        const preset = getGrainPresets().find((p) => p.name === r.presetName);
+        const preset = getPreset(getGrainPresets(), r.presetName);
         if (preset) {
           grain.colorLovibond = preset.colorLovibond;
           grain.ppg = preset.potentialGu;
@@ -462,7 +467,7 @@ class TextRecipeImportService {
         const yeast = next.yeasts.find((y) => y.id === r.ingredientId);
         if (!yeast) continue;
         yeast.name = r.presetName;
-        const preset = YEAST_PRESETS.find((p) => p.name === r.presetName);
+        const preset = getPreset(YEAST_PRESETS, r.presetName);
         if (preset) {
           if (preset.attenuationPercent != null) yeast.attenuation = preset.attenuationPercent;
           yeast.laboratory = preset.category;

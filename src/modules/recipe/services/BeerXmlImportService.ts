@@ -9,6 +9,7 @@ import type {
   OtherIngredientCategory,
 } from '../models/Recipe';
 import { uid } from '@/utils/uid';
+import { round } from '@/utils/round';
 import { hopEnrichmentService } from './HopEnrichmentService';
 import {
   matchHop,
@@ -34,11 +35,8 @@ const toNumber = (value: string | undefined): number | undefined => {
 // Strip precision artifacts from BeerXML floats (some exporters round-trip
 // through SRM↔Lovibond / alpha-as-fraction conversions and emit values like
 // 4.5685179°L). We keep one decimal of meaningful precision.
-const roundTo = (n: number | undefined, decimals: number): number | undefined => {
-  if (n == null || !Number.isFinite(n)) return undefined;
-  const f = Math.pow(10, decimals);
-  return Math.round(n * f) / f;
-};
+const roundTo = (n: number | undefined, decimals: number): number | undefined =>
+  n == null || !Number.isFinite(n) ? undefined : round(n, decimals);
 
 const alphaToPercent = (alphaRaw: number | undefined): number | undefined => {
   if (alphaRaw == null) return undefined;

@@ -12,6 +12,7 @@
  */
 
 import type { Hop } from '../models/Recipe';
+import { round } from '@/utils/round';
 
 export type ParsedFermentable = {
   rawName: string;
@@ -71,11 +72,6 @@ export const lbToKg = (lb: number): number => lb * 0.45359237;
 export const ozToG = (oz: number): number => oz * 28.349523125;
 export const galToL = (gal: number): number => gal * 3.785411784;
 export const fToC = (f: number): number => ((f - 32) * 5) / 9;
-
-const round = (n: number, decimals: number): number => {
-  const f = Math.pow(10, decimals);
-  return Math.round(n * f) / f;
-};
 
 // ── Tokenizing helpers ─────────────────────────────────────────────────────
 
