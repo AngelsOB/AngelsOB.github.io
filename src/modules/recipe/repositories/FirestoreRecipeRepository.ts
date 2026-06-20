@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocFromCache,
   getDocs,
+  getDocsFromServer,
   getDocsFromCache,
   setDoc,
   runTransaction,
@@ -74,8 +75,20 @@ export class FirestoreRecipeRepository {
       // Cache miss or IndexedDB unavailable — continue to network
     }
 
-    // Step 2: Always fetch fresh from network
-    const snapshot = await getDocs(q);
+    // Step 2: Always fetch fresh from the server. getDocsFromServer forces a
+    // network round-trip instead of letting the default source resolve from
+    // the persistent cache — deletes happen via the admin SDK (server-side),
+    // so the client cache never learns they're gone. A plain getDocs() would
+    // keep returning the stale cached doc on every refresh. The server read
+    // also reconciles the cache, so subsequent getDocsFromCache() is correct.
+    // Fall back to the default source if the server is unreachable (offline),
+    // so we degrade to stale-but-present rather than erroring.
+    let snapshot;
+    try {
+      snapshot = await getDocsFromServer(q);
+    } catch {
+      snapshot = await getDocs(q);
+    }
     return snapshot.docs.map((d) => normalizeRecipe({ ...d.data(), id: d.id } as Recipe));
   }
 
