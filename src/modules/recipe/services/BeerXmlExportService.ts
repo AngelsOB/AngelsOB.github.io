@@ -283,6 +283,9 @@ class BeerXmlExportService {
     lines.push(tag('BOIL_TIME', num(recipe.equipment.boilTimeMin, 0)));
     lines.push(tag('EFFICIENCY', num(recipe.equipment.brewhouseEfficiencyPercent, 1)));
     if (recipe.notes) lines.push(tag('NOTES', recipe.notes));
+    // Subtitle/tagline has no standard BeerXML field — persist it as a custom
+    // RECIPE-level tag so it survives our own round-trip (other tools ignore it).
+    if (recipe.subtitle) lines.push(tag('BT_SUBTITLE', recipe.subtitle));
 
     // ---- Calculated vitals ----
     // Per BeerXML 1.0: OG/FG/IBU/ABV are plain floats; EST_* fields are

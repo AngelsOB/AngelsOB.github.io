@@ -624,6 +624,7 @@ class BeerXmlImportService {
       id: uid(),
       name,
       style: resolvedStyle,
+      subtitle: text(recipeEl, 'BT_SUBTITLE'),
       notes: text(recipeEl, 'NOTES'),
       tags: [],
       currentVersion: 1,

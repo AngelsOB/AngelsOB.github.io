@@ -111,6 +111,12 @@ describe('BeerXML round-trip (our export → our import)', () => {
     expect(boilHop?.form).toBe('leaf');
     expect(dryHop?.dryHopDays).toBe(5);
   });
+
+  test('round-trips the subtitle/tagline via a custom RECIPE tag', () => {
+    const original = createTestRecipe({ subtitle: 'Adapted from Brewing Classic Styles' });
+    const recipe = beerXmlImportService.parse(beerXmlExportService.generate(original)).recipe;
+    expect(recipe.subtitle).toBe('Adapted from Brewing Classic Styles');
+  });
 });
 
 // A trimmed Brewfather-style export: BATCH_SIZE = into-fermenter, EVAP_RATE in
