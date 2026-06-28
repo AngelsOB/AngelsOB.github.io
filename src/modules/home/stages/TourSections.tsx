@@ -2,7 +2,8 @@
 
 import HSButton from "@/modules/builder/components/HSButton";
 import { hsTokens } from "@/modules/builder/tokens";
-import { CTA, STAGES } from "../data";
+import { CTA } from "../data";
+import { useStageCopy } from "../stageCopy";
 
 // Left-column text blocks for the tour. Pure scrolling DOM. Home targets
 // these via the `data-tour-stage` attribute for the per-beat triggers.
@@ -52,7 +53,7 @@ function sectionStyle(minVh: number): React.CSSProperties {
 }
 
 export function StageIntro() {
-  const s = STAGES.hero;
+  const s = useStageCopy().hero;
   return (
     <section style={{ ...sectionStyle(72), justifyContent: "flex-end" }}>
       <h1
@@ -111,7 +112,8 @@ export function StageIntro() {
 }
 
 export function StageOpening() {
-  const s = STAGES.opening;
+  const s = useStageCopy().opening;
+  if (!s.sentences.length) return null; // V2 drops the chaos opener (empty sentences)
   const last = s.sentences.length - 1;
   return (
     <section data-tour-stage="opening" style={sectionStyle(82)}>
@@ -140,7 +142,7 @@ export function StageOpening() {
 }
 
 export function StageGrains() {
-  const s = STAGES.grains;
+  const s = useStageCopy().grains;
   return (
     <section data-tour-stage="grains" style={sectionStyle(96)}>
       <h2 data-tour-split-reveal data-tour-split-mode="words" style={leadStyle}>
@@ -154,7 +156,7 @@ export function StageGrains() {
 }
 
 export function StageHops() {
-  const s = STAGES.hops;
+  const s = useStageCopy().hops;
   return (
     <section data-tour-stage="hops" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
@@ -176,7 +178,7 @@ export function StageHops() {
 }
 
 export function StageWater() {
-  const s = STAGES.water;
+  const s = useStageCopy().water;
   return (
     <section data-tour-stage="water" style={sectionStyle(108)}>
       <p style={eyebrowStyle}>{s.h2}</p>
@@ -198,7 +200,7 @@ export function StageWater() {
 }
 
 export function StageHonestNumbers() {
-  const s = STAGES.honestNumbers;
+  const s = useStageCopy().honestNumbers;
   return (
     <section data-tour-stage="honest" style={sectionStyle(108)}>
       <h2 data-tour-split-reveal data-tour-split-mode="words" style={leadStyle}>
@@ -219,7 +221,7 @@ export function StageHonestNumbers() {
 }
 
 export function StageBrewSheet() {
-  const s = STAGES.brewSheet;
+  const s = useStageCopy().brewSheet;
   return (
     <section data-tour-stage="brewsheet" style={sectionStyle(120)}>
       <p style={{ ...eyebrowStyle, color: hsTokens.roast }}>{s.h2}</p>

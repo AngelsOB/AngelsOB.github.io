@@ -109,7 +109,7 @@ export default function ImportRecipeFlow() {
   } | null>(null);
 
   const handleBeerXmlText = async (text: string) => {
-    const result = parseBeerXml(text);
+    const result = await parseBeerXml(text);
     if (!result) {
       toast.error("Couldn't read that BeerXML file");
       return;

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 
 import { allLearnRoutes } from '@/modules/learn/docsConfig'
 import { calculatorSlugs } from '@/modules/calculators/calculatorsMeta'
+import { indexableHopItems } from '@/modules/ingredients/hops/hopKind'
 
 // ISR — regenerate at most hourly. (force-dynamic would override revalidate.)
 export const revalidate = 3600
@@ -14,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE_URL },
     { url: `${BASE_URL}/browse` },
     { url: `${BASE_URL}/calculators` },
+    { url: `${BASE_URL}/hops` },
     { url: `${BASE_URL}/learn` },
     { url: `${BASE_URL}/privacy` },
     { url: `${BASE_URL}/terms` },
@@ -23,6 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Each calculator's own tool-first page (registry-driven).
   const calculatorRoutes: MetadataRoute.Sitemap = calculatorSlugs.map((slug) => ({
     url: `${BASE_URL}/calculators/${slug}`,
+  }))
+
+  // Hop reference pages — only the index-worthy ones (thin hops + the compare
+  // tool are noindexed and stay out).
+  const hopRoutes: MetadataRoute.Sitemap = indexableHopItems().map((it) => ({
+    url: `${BASE_URL}${it.path}`,
   }))
 
   // Learn articles, sourced from docsConfig so the list never drifts.
@@ -61,6 +69,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes,
     ...calculatorRoutes,
+    ...hopRoutes,
     ...learnRoutes,
     ...recipeRoutes,
     ...profileRoutes,

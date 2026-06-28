@@ -10,7 +10,8 @@ import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import type { CommunityRecipeCard } from "@/modules/home/lib/communityCard";
 import FeedbackForm from "@/modules/feedback/FeedbackForm";
 import CompareMock from "../mock/CompareMock";
-import { CTA, STAGES } from "../data";
+import { CTA } from "../data";
+import { useStageCopy } from "../stageCopy";
 
 // Below-tour stages — full-width, no sticky mock. Reveals are wired in Home
 // via a single ScrollTrigger.batch on `[data-tour-reveal]` (play-once-on-enter).
@@ -57,7 +58,7 @@ const srOnly: React.CSSProperties = {
 // Its own beat (pulled out of the old combined community section). Text only;
 // the friends/accessibility line lands here.
 export function StageCompare() {
-  const s = STAGES.compare;
+  const s = useStageCopy().compare;
   return (
     <section
       data-tour-stage="compare"
@@ -132,7 +133,7 @@ export function StageLibraryCommunity({
 }: {
   recipes: CommunityRecipeCard[];
 }) {
-  const s = STAGES.library;
+  const s = useStageCopy().library;
   return (
     <section
       data-tour-stage="library"
@@ -424,7 +425,7 @@ function CommunityCard({ recipe }: { recipe: CommunityRecipeCard }) {
 // One tight block: the spine beats carry the pitch, this just confirms the
 // basics are present so they're never a reason to reach for another tool.
 export function StageWhatElse() {
-  const s = STAGES.whatElse;
+  const s = useStageCopy().whatElse;
   return (
     <section
       data-tour-stage="what-else"
@@ -492,14 +493,14 @@ export function StageLearn() {
           border: 0,
         }}
       >
-        {STAGES.learn.h2}
+        {useStageCopy().learn.h2}
       </h2>
       <div
         data-tour-reveal
         style={{ maxWidth: 720, margin: "0 auto", textAlign: "center" }}
       >
         <HSScriptNote color={hsTokens.yeast} size={26} rotate={-4}>
-          {STAGES.learn.kicker}
+          {useStageCopy().learn.kicker}
         </HSScriptNote>
         <h3
           style={{
@@ -511,7 +512,7 @@ export function StageLearn() {
             margin: "12px 0 24px",
           }}
         >
-          {STAGES.learn.title}
+          {useStageCopy().learn.title}
         </h3>
         <div
           style={{
@@ -521,7 +522,7 @@ export function StageLearn() {
             flexWrap: "wrap",
           }}
         >
-          {STAGES.learn.ctas.map((c) => (
+          {useStageCopy().learn.ctas.map((c) => (
             <a
               key={c.href}
               href={c.href}
@@ -562,10 +563,10 @@ export function StageFAQ() {
     >
       <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <div data-tour-reveal>
-          <StageEyebrow>{STAGES.faq.h2}</StageEyebrow>
+          <StageEyebrow>{useStageCopy().faq.h2}</StageEyebrow>
         </div>
         <div style={{ marginTop: 28 }}>
-          {STAGES.faq.items.map((item) => (
+          {useStageCopy().faq.items.map((item) => (
             <div key={item.q} data-tour-reveal>
               <FAQItem q={item.q} a={item.a} />
             </div>
@@ -640,7 +641,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ── Close (price + data ownership) ────────────────────────────────────────
 export function StageClose() {
-  const s = STAGES.close;
+  const s = useStageCopy().close;
   return (
     <section
       data-tour-stage="close"

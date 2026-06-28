@@ -103,7 +103,16 @@ const LINKS: NavLink[] = [
       kind: "calc" as const,
     })),
   },
-  { href: "/learn", label: "Learn" },
+  {
+    // Reference is a pure dropdown (no hub page), so the trigger toggles the
+    // menu rather than navigating. Yeast slots in beside Hops in Phase 2.
+    href: "#reference",
+    label: "Reference",
+    children: [
+      { href: "/hops", label: "Hops", accent: hsTokens.hops },
+      { href: "/learn", label: "Learn", accent: hsTokens.water },
+    ],
+  },
 ];
 
 /** Compact (≤720px) nav: the link row can't fit a phone, so the whole nav
@@ -119,7 +128,8 @@ const COMPACT_MENU: NavLink = {
     { href: "/recipes/new", label: "Create new blank", kind: "create" },
     { href: "#import", label: "Import", kind: "action" },
     { href: "/calculators", label: "Calculators" },
-    { href: "/learn", label: "Learn" },
+    { href: "/hops", label: "Hops", accent: hsTokens.hops },
+    { href: "/learn", label: "Learn", accent: hsTokens.water },
   ],
 };
 
@@ -483,6 +493,17 @@ export default function HSHeader() {
   const [openCalcs, setOpenCalcs] = useState<OpenCalc[]>([]);
   const zCounter = useRef(50);
 
+  // PIPs are a builder-only convenience — the floating windows only make sense
+  // overlaid on the recipe editor. Builder routes are /recipes/new and
+  // /recipes/[id] (both render HopSkipBuilder); /recipes/all is the hub, not the
+  // editor, so it's excluded despite matching the same single-segment shape.
+  // Anywhere else, the dropdown's calc items navigate to the calculator's own
+  // page instead of opening a PIP.
+  const inBuilder = useMemo(
+    () => /^\/recipes\/[^/]+$/.test(pathname) && pathname !== "/recipes/all",
+    [pathname],
+  );
+
   useEffect(() => {
     setOpenCalcs([]);
   }, [pathname]);
@@ -652,6 +673,7 @@ export default function HSHeader() {
     }
     if (pathname.startsWith("/recipes")) return "/ recipes";
     if (pathname.startsWith("/calculators")) return "/ calculators";
+    if (pathname.startsWith("/hops")) return "/ hops";
     if (pathname.startsWith("/learn")) return "/ learn";
     if (pathname.startsWith("/browse")) return "/ browse";
     if (pathname.startsWith("/r/")) return "/ shared recipe";
@@ -1093,6 +1115,33 @@ export default function HSHeader() {
               const itemStyle = makeItemStyle(ci, childActive);
               const leading = renderLeading(c);
               if (isCalc) {
+                // Inside the builder, a calc opens as a floating PIP overlaid on
+                // the editor. Anywhere else there's nothing to overlay, so the
+                // item navigates to the calculator's own page (slug === calc id).
+                if (!inBuilder) {
+                  const calcHref = `/calculators/${c.href}`;
+                  return (
+                    <Link
+                      key={c.href}
+                      href={calcHref}
+                      role="menuitem"
+                      onClick={(e) => {
+                        handleNavLinkClick(calcHref)(e);
+                        closeMenu();
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = hsTokens.cream2;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                      style={itemStyle}
+                    >
+                      {leading}
+                      <span style={{ flex: 1, minWidth: 0 }}>{c.label}</span>
+                    </Link>
+                  );
+                }
                 return (
                   <button
                     type="button"

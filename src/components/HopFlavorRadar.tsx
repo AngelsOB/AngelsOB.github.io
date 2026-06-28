@@ -28,6 +28,11 @@ type Props = {
   // If true, SVG fills its container width (no fixed px dimensions). viewBox still
   // uses size/ringRadius for the internal coordinate system.
   responsive?: boolean;
+  // Externally-controlled highlight: the series index to emphasize (others dim),
+  // or null for none. When passed (not undefined), it overrides the internal
+  // legend-hover state — lets a custom legend drive the highlight. Undefined =
+  // use the built-in legend's own hover state.
+  activeIndex?: number | null;
 };
 
 // Generate distinct colors per series index
@@ -62,8 +67,12 @@ export default function HopFlavorRadar({
   outerPadding = 30,
   ringRadius,
   responsive = false,
+  activeIndex,
 }: Props) {
   const [highlightIdx, setHighlightIdx] = useState<number | null>(null);
+  // Controlled highlight (a custom legend) wins over the built-in hover state.
+  const effectiveHighlight =
+    activeIndex !== undefined ? activeIndex : highlightIdx;
 
   // In responsive mode, keep a large internal coordinate system so text/strokes
   // stay at their intended pixel sizes, then constrain the rendered output via CSS.
@@ -280,7 +289,8 @@ export default function HopFlavorRadar({
           : colorStrategy === "dominant"
             ? colorForAxis(dominantAxisKey(s.flavor))
             : colorForIndex(si, list.length);
-        const dimmed = highlightIdx !== null && highlightIdx !== si;
+        const dimmed =
+          effectiveHighlight !== null && effectiveHighlight !== si;
         return (
           <g
             key={s.name}

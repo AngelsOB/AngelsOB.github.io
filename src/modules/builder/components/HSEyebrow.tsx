@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ElementType, ReactNode } from "react";
 
 import { hsTokens } from "../tokens";
 
@@ -7,11 +7,20 @@ interface Props {
   color?: string;
   style?: CSSProperties;
   className?: string;
+  /** Render as a heading (e.g. "h2") for semantic section labels; the eyebrow
+   *  look is preserved. Defaults to a presentational span. */
+  as?: ElementType;
 }
 
-export default function HSEyebrow({ children, color, style, className }: Props) {
+export default function HSEyebrow({
+  children,
+  color,
+  style,
+  className,
+  as: Tag = "span",
+}: Props) {
   return (
-    <span
+    <Tag
       className={className}
       style={{
         fontFamily: hsTokens.body,
@@ -22,10 +31,11 @@ export default function HSEyebrow({ children, color, style, className }: Props) 
         color: color ?? hsTokens.muted,
         display: "inline-block",
         lineHeight: 1,
+        margin: 0,
         ...style,
       }}
     >
       {children}
-    </span>
+    </Tag>
   );
 }

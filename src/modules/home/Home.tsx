@@ -90,7 +90,7 @@ function HomeSignedIn({ recipes }: { recipes: CommunityRecipeCard[] }) {
   );
 }
 
-function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
+export function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 

@@ -2,7 +2,7 @@
 
 import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
-import { STAGES } from "../data";
+import { useStageCopy } from "../stageCopy";
 import type { BrewSheetData } from "../lib/mapRecipeToBuilderMock";
 
 // Small-scale, presentational mirror of the live builder's brew sheet
@@ -29,7 +29,7 @@ export default function BrewSheetPanel({
 }) {
   // Sample/tour uses the hardcoded panel (with the scripted pre-boil miss). Data
   // mode (signed-in hero) renders the recipe's real brew sheet and drops the miss.
-  const samplePanel = STAGES.brewSheet.panel;
+  const samplePanel = useStageCopy().brewSheet.panel;
   const panel: BrewSheetData = data ?? {
     title: samplePanel.title,
     status: samplePanel.status,

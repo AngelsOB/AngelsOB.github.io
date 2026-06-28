@@ -14,13 +14,13 @@ import type { Recipe, RecipeId, Fermentable, Hop, Yeast, MashStep, RecipeVersion
 import { recipeRepository } from '@/modules/recipe/repositories/RecipeRepository';
 import { FirestoreRecipeRepository } from '@/modules/recipe/repositories/FirestoreRecipeRepository';
 import { recipeVersionRepository } from '@/modules/recipe/repositories/RecipeVersionRepository';
-import {
-  beerXmlImportService,
-  type BeerXmlImportResult,
-} from '@/modules/recipe/services/BeerXmlImportService';
+import type { BeerXmlImportResult } from '@/modules/recipe/services/BeerXmlImportService';
 import { parseRecipeText as parseRecipeTextToDraft } from '@/modules/recipe/services/recipeTextParser';
-import { textRecipeImportService } from '@/modules/recipe/services/textRecipeImportService';
-import { hopEnrichmentService } from '@/modules/recipe/services/HopEnrichmentService';
+// NOTE: BeerXmlImportService / textRecipeImportService / HopEnrichmentService are
+// NOT imported at module level — they each pull the full ~100KB hop+yeast preset
+// library, and this store is loaded on every page (via the header). They're only
+// needed inside the import-only actions below, so each dynamically imports its
+// service on demand, keeping that dataset off every page's first-load JS.
 import { toast } from '@/stores/toastStore';
 import { useAuthStore, deriveUserState } from '@/modules/auth/authStore';
 import { canCreateRecipe, RECIPE_LIMIT } from '@/modules/auth/tierAccess';
@@ -140,15 +140,15 @@ type RecipeStore = {
    * Parse BeerXML and surface low-confidence preset matches for review.
    * Does NOT persist — call `commitImportedRecipe` once the user resolves matches.
    */
-  parseBeerXml: (xml: string) => BeerXmlImportResult | null;
+  parseBeerXml: (xml: string) => Promise<BeerXmlImportResult | null>;
   /**
    * Parse free-form pasted recipe text (book/forum/notes) and surface
    * low-confidence preset matches for review. Does NOT persist.
    */
-  parseRecipeText: (text: string) => BeerXmlImportResult | null;
+  parseRecipeText: (text: string) => Promise<BeerXmlImportResult | null>;
   /** Persist a recipe that came from an import flow (post-review). */
   commitImportedRecipe: (recipe: Recipe) => Promise<Recipe | null>;
-  importFromJson: (json: string) => Recipe | null;
+  importFromJson: (json: string) => Promise<Recipe | null>;
 
   // Ingredient actions
   addFermentable: (fermentable: Fermentable) => void;
@@ -621,8 +621,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   },
 
   // Parse BeerXML without persisting; caller resolves matches then commits.
-  parseBeerXml: (xml: string) => {
+  parseBeerXml: async (xml: string) => {
     try {
+      const { beerXmlImportService } = await import(
+        '@/modules/recipe/services/BeerXmlImportService'
+      );
       const result = beerXmlImportService.parse(xml);
       if (!result?.recipe) {
         set({ error: 'Failed to import BeerXML' });
@@ -637,8 +640,11 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   },
 
   // Parse pasted recipe text without persisting; caller resolves matches then commits.
-  parseRecipeText: (text: string) => {
+  parseRecipeText: async (text: string) => {
     try {
+      const { textRecipeImportService } = await import(
+        '@/modules/recipe/services/textRecipeImportService'
+      );
       const draft = parseRecipeTextToDraft(text);
       const result = textRecipeImportService.fromDraft(draft);
       set({ error: null });
@@ -679,7 +685,7 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
   },
 
   // Import JSON and persist
-  importFromJson: (json: string) => {
+  importFromJson: async (json: string) => {
     try {
       const parsed = JSON.parse(json);
       if (!parsed || typeof parsed !== 'object' || !parsed.name) {
@@ -688,6 +694,9 @@ export const useRecipeStore = create<RecipeStore>((set, get) => ({
       }
       const now = new Date().toISOString();
       // Enrich hops missing flavor profiles from presets
+      const { hopEnrichmentService } = await import(
+        '@/modules/recipe/services/HopEnrichmentService'
+      );
       const hops = Array.isArray(parsed.hops)
         ? hopEnrichmentService.enrichHops(parsed.hops)
         : parsed.hops;

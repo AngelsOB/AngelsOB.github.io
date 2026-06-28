@@ -4116,6 +4116,20 @@ function RadarEmpty({ hops }: { hops: Hop[] }) {
   );
 }
 
+// Baked crosshatch + offset look for the radar shapes (dialed in via the old
+// tuner panel, now a constant). hGap/vGap = bar spacing, h/vWeight = thickness;
+// offset = the faint colour ghost, hatch = the out-of-register hatch plate.
+const RADAR_HATCH = {
+  hGap: 2.5,
+  hWeight: 1.4,
+  vGap: 3,
+  vWeight: 0.3,
+  offsetX: 0,
+  offsetY: 0,
+  hatchX: 0,
+  hatchY: 0,
+} as const;
+
 function HopFlavorRadarSvg({
   series,
   dominantPerAxis,
@@ -4135,6 +4149,7 @@ function HopFlavorRadarSvg({
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const lastClientXRef = useRef<number | null>(null);
   const restTimerRef = useRef<number | null>(null);
+  const hatch = RADAR_HATCH;
 
   const size = 240;
   const max = 5;
@@ -4263,6 +4278,27 @@ function HopFlavorRadarSvg({
         }}
         aria-label="Estimated hop flavor profile"
       >
+        {/* One crosshatch pattern per series, in that hop's ink. The tile is
+            vGap × hGap: a vertical bar (repeats every vGap) + a horizontal bar
+            (repeats every hGap), each with its own weight (see RADAR_HATCH). */}
+        <defs>
+          {series.map((s, si) => (
+            <pattern
+              key={`hatch-${s.id}`}
+              id={`hop-hatch-${si}`}
+              patternUnits="userSpaceOnUse"
+              width={hatch.vGap}
+              height={hatch.hGap}
+            >
+              {hatch.vWeight > 0 ? (
+                <line x1={0} y1={0} x2={0} y2={hatch.hGap} stroke={s.color} strokeWidth={hatch.vWeight} />
+              ) : null}
+              {hatch.hWeight > 0 ? (
+                <line x1={0} y1={0} x2={hatch.vGap} y2={0} stroke={s.color} strokeWidth={hatch.hWeight} />
+              ) : null}
+            </pattern>
+          ))}
+        </defs>
         {/* Rings + axes wrapped in a single fading group — the group's
             opacity goes 0 → 1, multiplied by each child's natural opacity
             attribute. After animation: group at 1, rings at 0.35/0.2,
@@ -4324,35 +4360,53 @@ function HopFlavorRadarSvg({
                     "transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease",
                 }}
               >
-                <polygon
-                  points={flavorPolyPoints(s.flavor)}
-                  fill={s.color}
-                  fillOpacity={
-                    isHovered
-                      ? s.isEstimated
-                        ? 0.5
-                        : 0.36
-                      : s.isEstimated
-                        ? 0.32
-                        : 0.18
-                  }
-                  stroke={s.color}
-                  strokeWidth={
-                    isHovered
-                      ? s.isEstimated
-                        ? 2.4
-                        : 1.8
-                      : s.isEstimated
-                        ? 1.8
-                        : 1.2
-                  }
-                  strokeLinejoin="round"
-                  strokeDasharray={s.isEstimated ? undefined : "3 3"}
-                  style={{
-                    transition:
-                      "fill-opacity 200ms ease, stroke-width 200ms ease",
-                  }}
-                />
+                {(() => {
+                  const pts = flavorPolyPoints(s.flavor);
+                  const fillOp = isHovered
+                    ? s.isEstimated
+                      ? 0.5
+                      : 0.36
+                    : s.isEstimated
+                      ? 0.32
+                      : 0.18;
+                  const sw = isHovered
+                    ? s.isEstimated
+                      ? 2.4
+                      : 1.8
+                    : s.isEstimated
+                      ? 1.8
+                      : 1.2;
+                  const dash = s.isEstimated ? undefined : "3 3";
+                  // Three layers, like a quick print: a faint colour plate
+                  // nudged off-register, a crosshatch fill in the hop's ink,
+                  // and a crisp stroke on top.
+                  return (
+                    <>
+                      <polygon
+                        points={pts}
+                        fill={s.color}
+                        fillOpacity={fillOp * 0.6}
+                        stroke="none"
+                        transform={`translate(${hatch.offsetX} ${hatch.offsetY})`}
+                      />
+                      <polygon
+                        points={pts}
+                        fill={`url(#hop-hatch-${si})`}
+                        stroke="none"
+                        transform={`translate(${hatch.hatchX} ${hatch.hatchY})`}
+                      />
+                      <polygon
+                        points={pts}
+                        fill="none"
+                        stroke={s.color}
+                        strokeWidth={sw}
+                        strokeLinejoin="round"
+                        strokeDasharray={dash}
+                        style={{ transition: "stroke-width 200ms ease" }}
+                      />
+                    </>
+                  );
+                })()}
               </g>
             </g>
           );
