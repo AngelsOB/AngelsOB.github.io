@@ -40,6 +40,16 @@ export const hsTokens = {
   sh4: "6px 6px 0 var(--hs-ink)",
 } as const;
 
+// Build a translucent tint from a token color. You CANNOT suffix a hex alpha
+// onto a var() color — `${hsTokens.ink}1a` resolves to `var(--hs-ink)1a`,
+// which is invalid CSS, so the browser drops the whole declaration and the
+// border / background silently renders as nothing. color-mix is the correct
+// way to fade a var()-backed color (and it stays theme-aware in dark mode).
+// Pass any token (or literal hex) plus an opacity percent 0–100, e.g.
+//   border: `1px solid ${hsAlpha(hsTokens.ink, 13)}`
+export const hsAlpha = (color: string, pct: number) =>
+  `color-mix(in oklab, ${color} ${pct}%, transparent)`;
+
 export type HSIngredient =
   | "malt"
   | "roast"

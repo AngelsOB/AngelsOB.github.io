@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { getPublicRecipe, buildRecipeJsonLd } from '@/modules/sharing/getPublicRecipe'
 import HSPublicRecipeShell from '@/modules/builder/components/public/HSPublicRecipeShell'
+import RecipeSummary from '@/modules/builder/components/public/RecipeSummary'
 import HSCard from '@/modules/builder/components/HSCard'
 import HSScriptNote from '@/modules/builder/components/HSScriptNote'
 import { hsTokens } from '@/modules/builder/tokens'
@@ -118,6 +119,7 @@ export default async function PublicRecipePage({ params }: PageProps) {
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
+
       <HSPublicRecipeShell
         recipe={recipe}
         ownerName={ownerName}
@@ -125,6 +127,8 @@ export default async function PublicRecipePage({ params }: PageProps) {
         ratingAvg={ratingAvg}
         ratingCount={ratingCount}
       />
+
+      <RecipeSummary recipe={recipe} calc={calc} ownerName={ownerName} slug={slug} />
     </>
   )
 }

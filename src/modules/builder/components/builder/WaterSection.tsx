@@ -41,7 +41,7 @@ import {
 } from "@/modules/recipe/services/sourceWaterPrefs";
 import { springSupersoft } from "../../motion";
 
-import { hsTokens, emptyStateTitleStyle } from "../../tokens";
+import { hsTokens, hsAlpha, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -1480,8 +1480,8 @@ function SaltCell({
               background: "transparent",
               border: "none",
               borderBottom: hasValue
-                ? `1.5px dotted ${hsTokens.ink}55`
-                : `1.5px dotted ${hsTokens.ink}22`,
+                ? `1.5px dotted ${hsAlpha(hsTokens.ink, 33)}`
+                : `1.5px dotted ${hsAlpha(hsTokens.ink, 13)}`,
               padding: "0 2px",
               cursor: "text",
               color: hasValue ? hsTokens.ink : hsTokens.muted,
@@ -1993,7 +1993,7 @@ function OtherIngredientRow({
         gap: 12,
         alignItems: "center",
         padding: "12px 14px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         background: "transparent",
         transition: "background 90ms ease",
       }}
@@ -2272,7 +2272,7 @@ function NumericCell({
           style={{
             background: "transparent",
             border: "none",
-            borderBottom: `1.5px dotted ${hsTokens.ink}55`,
+            borderBottom: `1.5px dotted ${hsAlpha(hsTokens.ink, 33)}`,
             padding: "1px 24px 1px 4px",
             cursor: "text",
             fontFamily: hsTokens.script,
@@ -2433,7 +2433,7 @@ function IonVisualizerCard({
           display: "flex",
           alignItems: "center",
           gap: 8,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
+          borderBottom: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
           paddingBottom: 8,
         }}
       >
@@ -2906,7 +2906,7 @@ function FinalProfileReadout({
       style={{
         marginTop: 4,
         paddingTop: 10,
-        borderTop: `1.5px dashed ${hsTokens.ink}55`,
+        borderTop: `1.5px dashed ${hsAlpha(hsTokens.ink, 33)}`,
         display: "flex",
         alignItems: "baseline",
         gap: 10,

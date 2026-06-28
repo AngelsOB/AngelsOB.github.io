@@ -6,7 +6,7 @@ import HSFormulaCallout from "@/modules/builder/components/HSFormulaCallout";
 export const metadata: Metadata = {
   title: "Understanding IBU: How Bitterness Is Calculated",
   description:
-    "Learn how Brewing.It calculates IBU for every type of hop addition: boil, whirlpool, dry hop, and first wort. The formulas, the reasoning, and what makes our approach different.",
+    "How Brewing.It calculates IBU for boil, whirlpool, dry hop, and first wort additions: the formulas and the reasoning behind each.",
   keywords: [
     "IBU calculator",
     "tinseth formula",

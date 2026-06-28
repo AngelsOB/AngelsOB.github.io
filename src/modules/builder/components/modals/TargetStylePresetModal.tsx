@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, hsAlpha } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
@@ -347,7 +347,7 @@ function PresetRow({
             display: "inline-flex",
             padding: "2px 9px",
             background: hsTokens.cream,
-            border: `1px solid ${hsTokens.ink}55`,
+            border: `1px solid ${hsAlpha(hsTokens.ink, 33)}`,
             borderRadius: 999,
             fontFamily: hsTokens.body,
             fontSize: 10,

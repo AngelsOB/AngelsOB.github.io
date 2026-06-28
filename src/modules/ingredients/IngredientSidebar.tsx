@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 
-import { hsTokens } from "@/modules/builder/tokens";
+import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 
 export interface SidebarCategory {
   label: string;
   accent: string;
+  /** Optional category symbol (e.g. a lab favicon) shown in place of the
+   *  accent dot on the category header. Falls back to the dot when absent. */
+  icon?: string;
   hops: { slug: string; name: string; accent: string }[];
 }
 
@@ -109,17 +112,31 @@ export default function IngredientSidebar({
                   textAlign: "left",
                 }}
               >
-                <span
-                  aria-hidden
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 999,
-                    background: cat.accent,
-                    border: `1px solid ${hsTokens.ink}`,
-                    flexShrink: 0,
-                  }}
-                />
+                {cat.icon ? (
+                  <img
+                    src={cat.icon}
+                    alt=""
+                    width={18}
+                    height={18}
+                    style={{
+                      objectFit: "contain",
+                      borderRadius: 4,
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: 999,
+                      background: cat.accent,
+                      border: `1px solid ${hsTokens.ink}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
                 <span style={{ fontWeight: 600, flex: 1, minWidth: 0 }}>
                   {cat.label}
                 </span>
@@ -167,7 +184,7 @@ export default function IngredientSidebar({
                     <div
                       style={{
                         padding: "3px 6px 6px",
-                        borderTop: `1px solid ${hsTokens.ink}1a`,
+                        borderTop: `1px solid ${hsAlpha(hsTokens.ink, 10)}`,
                       }}
                     >
                       {cat.hops.map((h) => {

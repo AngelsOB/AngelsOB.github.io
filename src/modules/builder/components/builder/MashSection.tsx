@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { hsTokens, emptyStateTitleStyle } from "../../tokens";
+import { hsTokens, hsAlpha, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -603,7 +603,7 @@ function LedgerRow({
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         alignItems: "center",
         gap: 14,
         transform: CSS.Transform.toString(transform),

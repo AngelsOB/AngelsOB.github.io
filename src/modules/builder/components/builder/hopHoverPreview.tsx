@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 
 import { LazyMotion, domMax, m } from "framer-motion";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, hsAlpha } from "../../tokens";
 import { springEnter, springTilt, springTrack } from "../../motion";
 import type {
   HopFlavorProfile,
@@ -629,7 +629,7 @@ export function HopPreviewBody({
           gap: 6,
           marginBottom: 6,
           paddingBottom: 6,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
+          borderBottom: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         }}
       >
         <span
@@ -679,7 +679,7 @@ export function HopPreviewBody({
           style={{
             marginTop: 8,
             paddingTop: 8,
-            borderTop: `1px solid ${hsTokens.ink}22`,
+            borderTop: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
           }}
         >
           {flag ? (
@@ -974,7 +974,7 @@ function SimilarChip({
     alignItems: "baseline",
     gap: 5,
     background: clickable && hovered ? hsTokens.hops : hsTokens.cream,
-    border: `1px solid ${clickable && hovered ? hsTokens.hops : `${hsTokens.ink}55`}`,
+    border: `1px solid ${clickable && hovered ? hsTokens.hops : hsAlpha(hsTokens.ink, 33)}`,
     borderRadius: 999,
     padding: "2px 9px",
     fontFamily: hsTokens.body,

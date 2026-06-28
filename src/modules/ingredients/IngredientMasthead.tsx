@@ -13,6 +13,7 @@ export default function IngredientMasthead({
 }: {
   section: IngredientSection;
 }) {
+  const accent = section.accent ?? hsTokens.hops;
   return (
     <section
       style={{
@@ -22,7 +23,7 @@ export default function IngredientMasthead({
       }}
     >
       {section.kicker ? (
-        <HSScriptNote color={hsTokens.hops} size={26} rotate={-3}>
+        <HSScriptNote color={accent} size={26} rotate={-3}>
           {section.kicker}
         </HSScriptNote>
       ) : null}
@@ -40,7 +41,7 @@ export default function IngredientMasthead({
       >
         <span
           style={{
-            background: hsTokens.hops,
+            background: accent,
             color: hsTokens.paper,
             padding: "0 0.18em",
             display: "inline-block",

@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, hsAlpha } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
@@ -393,7 +393,7 @@ function ProfileRow({
               letterSpacing: "0.14em",
               textTransform: "uppercase",
               color: hsTokens.muted,
-              border: `1px solid ${hsTokens.ink}55`,
+              border: `1px solid ${hsAlpha(hsTokens.ink, 33)}`,
               padding: "1px 6px",
               borderRadius: 999,
               flexShrink: 0,

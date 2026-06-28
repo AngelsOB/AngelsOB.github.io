@@ -22,6 +22,13 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
     ],
   },
   {
+    label: "Reference",
+    links: [
+      { href: "/hops", text: "Hops" },
+      { href: "/yeast", text: "Yeast" },
+    ],
+  },
+  {
     label: "Learn",
     links: [
       { href: "/learn", text: "Brewing science" },
@@ -198,7 +205,7 @@ export default function HSFooter() {
            actually win — an inline grid-template-columns outranks these media
            queries and the 260px first column then overflows narrow screens. */
         .hs-footer-grid {
-          grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(0, 1fr));
+          grid-template-columns: minmax(260px, 1fr) repeat(4, minmax(0, 1fr));
         }
         @media (max-width: 900px) {
           .hs-footer-grid { grid-template-columns: 1fr 1fr; }

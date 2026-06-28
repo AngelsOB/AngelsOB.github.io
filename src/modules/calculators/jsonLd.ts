@@ -1,28 +1,17 @@
 import { breadcrumbJsonLd } from "@/utils/seo";
 import type { CalculatorMeta } from "./calculatorsMeta";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://brewing.it.com";
-
 /**
  * Builds the JSON-LD payload for a calculator page from its metadata:
- * SoftwareApplication (the tool) + FAQPage (answer-engine bait) + HowTo
- * (the steps) + BreadcrumbList. Returned as an array to inline in one
- * <script type="application/ld+json"> tag.
+ * FAQPage (answer-engine bait) + HowTo (the steps) + BreadcrumbList.
+ * Returned as an array to inline in one <script type="application/ld+json"> tag.
+ *
+ * A SoftwareApplication node used to live here too, but it was removed: without
+ * real ratings it earns no rich result, and structured-data validators flag it
+ * as invalid for missing `aggregateRating`/`review` (we won't fabricate those).
+ * FAQPage + HowTo are the structured data that actually surface for these pages.
  */
 export function calculatorJsonLd(meta: CalculatorMeta) {
-  const url = `${BASE_URL}/calculators/${meta.slug}`;
-
-  const softwareApp = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: meta.appName,
-    description: meta.appDescription,
-    applicationCategory: "UtilityApplication",
-    operatingSystem: "Web",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    url,
-  };
-
   const faqPage = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -50,5 +39,5 @@ export function calculatorJsonLd(meta: CalculatorMeta) {
     { name: meta.h1, path: `/calculators/${meta.slug}` },
   ]);
 
-  return [softwareApp, faqPage, howTo, breadcrumb];
+  return [faqPage, howTo, breadcrumb];
 }

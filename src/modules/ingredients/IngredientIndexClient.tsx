@@ -7,9 +7,54 @@ import { hsTokens } from "@/modules/builder/tokens";
 import HSCard from "@/modules/builder/components/HSCard";
 
 import MiniRadar from "./MiniRadar";
-import type { IngredientGroup, IngredientRow } from "./types";
+import type {
+  IngredientGroup,
+  IngredientRow,
+  IngredientSubFilter,
+} from "./types";
 
-const ALL = "all";
+/** Toggle a value in a Set, returning a new Set (immutable for React state). */
+function toggled(set: Set<string>, value: string): Set<string> {
+  const next = new Set(set);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return next;
+}
+
+/** Graded sub-filter match (hops/flavor): every selected value must be present
+ *  (≥ presentMin) and at least one prominent (≥ prominentMin). */
+function gradedPasses(
+  weights: Record<string, number> | undefined,
+  selected: string[],
+  g: { presentMin: number; prominentMin: number }
+): boolean {
+  if (!weights) return false;
+  let prominent = false;
+  for (const v of selected) {
+    const val = weights[v] ?? 0;
+    if (val < g.presentMin) return false; // a selected flavor is absent → out
+    if (val >= g.prominentMin) prominent = true;
+  }
+  return prominent;
+}
+
+/** Graded rank score: prominence-first (count of selected at prominentMin+),
+ *  then total selected intensity as a tiebreak. */
+function gradedScore(
+  weights: Record<string, number> | undefined,
+  selected: string[],
+  prominentMin: number
+): number {
+  if (!weights) return 0;
+  let prominent = 0;
+  let sum = 0;
+  for (const v of selected) {
+    const val = weights[v] ?? 0;
+    if (val >= prominentMin) prominent += 1;
+    sum += val;
+  }
+  return prominent * 1000 + sum;
+}
 
 // Card interaction CSS — rendered once at the component root (CardGrid is
 // invoked per category group, so it must NOT live inside CardGrid). The HS
@@ -97,6 +142,8 @@ export default function IngredientIndexClient({
   groups,
   renderCard,
   toolbar,
+  subFilter,
+  searchHint = "name, origin, or flavor",
 }: {
   basePath: string;
   /** Plural noun for the search placeholder ("Hops"). */
@@ -111,33 +158,70 @@ export default function IngredientIndexClient({
   renderCard?: (row: IngredientRow) => ReactNode;
   /** Optional control rendered to the right of the search box (e.g. Compare). */
   toolbar?: ReactNode;
+  /**
+   * Optional second filter dimension, rendered as its own chip row and ANDed
+   * with the category filter + search (yeast: strain type; hops: flavor).
+   * Matches a row when its `subGroups` include the option value.
+   */
+  subFilter?: IngredientSubFilter;
+  /** What the search box matches, used in its placeholder ("name, lab, or style"). */
+  searchHint?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [activeGroup, setActiveGroup] = useState<string>(ALL);
+  // Multi-select: an empty set means "all" (no filter on that dimension).
+  // Values within a dimension OR together; the two dimensions AND.
+  const [activeGroups, setActiveGroups] = useState<Set<string>>(new Set());
+  const [activeSubs, setActiveSubs] = useState<Set<string>>(new Set());
 
   // Apply a `?category=` deep link AFTER hydration rather than via
   // useSearchParams, which would push the whole grid behind a Suspense
   // fallback and strip the (crawlable) card links out of the static HTML.
   // SSR renders every hop; the sidebar's category links refine on arrival.
   useEffect(() => {
-    const category = new URLSearchParams(window.location.search).get("category");
-    if (category && groups.some((g) => g.slug === category)) {
-      setActiveGroup(category);
-    }
-  }, [groups]);
+    const params = new URLSearchParams(window.location.search);
+    const cats = (params.get("category") ?? "")
+      .split(",")
+      .filter((c) => groups.some((g) => g.slug === c));
+    if (cats.length) setActiveGroups(new Set(cats));
+    const types = (params.get("type") ?? "")
+      .split(",")
+      .filter((t) => subFilter?.options.some((o) => o.value === t));
+    if (types.length) setActiveSubs(new Set(types));
+  }, [groups, subFilter]);
 
   const q = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      if (activeGroup !== ALL && r.groupSlug !== activeGroup) return false;
+    const graded = subFilter?.graded;
+    const sel = [...activeSubs];
+    const result = rows.filter((r) => {
+      if (activeGroups.size && !activeGroups.has(r.groupSlug)) return false;
+      if (sel.length) {
+        if (graded) {
+          // Hops/flavor: every selected flavor present, at least one prominent.
+          if (!gradedPasses(r.subWeights, sel, graded)) return false;
+        } else if (!r.subGroups?.some((g) => activeSubs.has(g))) {
+          // Plain cumulative OR (yeast type).
+          return false;
+        }
+      }
       if (q && !r.keywords.includes(q) && !r.name.toLowerCase().includes(q))
         return false;
       return true;
     });
-  }, [rows, activeGroup, q]);
+    // Graded dimensions rank prominence-first so an all-flavors hop leads.
+    // Stable sort keeps dataset order within a tier.
+    if (graded && sel.length > 1) {
+      result.sort(
+        (a, b) =>
+          gradedScore(b.subWeights, sel, graded.prominentMin) -
+          gradedScore(a.subWeights, sel, graded.prominentMin)
+      );
+    }
+    return result;
+  }, [rows, activeGroups, activeSubs, q, subFilter]);
 
-  const grouped = activeGroup === ALL && !q;
+  const grouped = activeGroups.size === 0 && activeSubs.size === 0 && !q;
 
   return (
     <div>
@@ -147,7 +231,7 @@ export default function IngredientIndexClient({
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Search ${rows.length} ${label.toLowerCase()} by name, origin, or flavor…`}
+          placeholder={`Search ${rows.length} ${label.toLowerCase()} by ${searchHint}…`}
           aria-label={`Search ${label.toLowerCase()}`}
           style={{
             flex: 1,
@@ -166,21 +250,21 @@ export default function IngredientIndexClient({
         {toolbar}
       </div>
 
-      {/* Category filter chips */}
+      {/* Category filter chips (yeast: lab) */}
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
           gap: 8,
-          margin: "14px 0 22px",
+          margin: subFilter ? "14px 0 10px" : "14px 0 22px",
         }}
       >
         <FilterChip
           label="All"
           count={rows.length}
-          active={activeGroup === ALL}
+          active={activeGroups.size === 0}
           accent={hsTokens.ink}
-          onClick={() => setActiveGroup(ALL)}
+          onClick={() => setActiveGroups(new Set())}
         />
         {groups.map((g) => (
           <FilterChip
@@ -188,11 +272,55 @@ export default function IngredientIndexClient({
             label={g.label}
             count={g.count}
             accent={g.accent}
-            active={activeGroup === g.slug}
-            onClick={() => setActiveGroup(g.slug)}
+            active={activeGroups.has(g.slug)}
+            onClick={() => setActiveGroups((s) => toggled(s, g.slug))}
           />
         ))}
       </div>
+
+      {/* Optional second filter dimension (yeast: strain type) */}
+      {subFilter ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            alignItems: "center",
+            margin: "0 0 22px",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: hsTokens.body,
+              fontWeight: 700,
+              fontSize: 11,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: hsTokens.muted,
+              marginRight: 2,
+            }}
+          >
+            {subFilter.label}
+          </span>
+          <FilterChip
+            label="All"
+            count={rows.length}
+            active={activeSubs.size === 0}
+            accent={hsTokens.ink}
+            onClick={() => setActiveSubs(new Set())}
+          />
+          {subFilter.options.map((o) => (
+            <FilterChip
+              key={o.value}
+              label={o.label}
+              count={o.count}
+              accent={o.accent ?? hsTokens.ink}
+              active={activeSubs.has(o.value)}
+              onClick={() => setActiveSubs((s) => toggled(s, o.value))}
+            />
+          ))}
+        </div>
+      ) : null}
 
       {filtered.length === 0 ? (
         <p

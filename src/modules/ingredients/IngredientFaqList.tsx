@@ -1,4 +1,4 @@
-import { hsTokens } from "@/modules/builder/tokens";
+import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 import HSEyebrow from "@/modules/builder/components/HSEyebrow";
 
 import type { IngredientFaqItem } from "./types";
@@ -27,7 +27,7 @@ export default function IngredientFaqList({
               gap: "4px 18px",
               alignItems: "baseline",
               paddingBottom: 12,
-              borderBottom: `1px solid ${hsTokens.ink}1a`,
+              borderBottom: `1px solid ${hsAlpha(hsTokens.ink, 10)}`,
             }}
             className="ingredient-faq-row"
           >

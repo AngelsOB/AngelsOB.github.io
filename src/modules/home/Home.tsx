@@ -1306,7 +1306,7 @@ export function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
   );
 
   return (
-    <div
+    <main
       ref={rootRef}
       style={{
         background: hsTokens.cream,
@@ -1579,7 +1579,7 @@ export function HomeTour({ recipes }: { recipes: CommunityRecipeCard[] }) {
           }
         }
       `}</style>
-    </div>
+    </main>
   );
 }
 

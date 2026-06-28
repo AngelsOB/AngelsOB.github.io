@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 
 import { LazyMotion, domMax, m } from "framer-motion";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, hsAlpha } from "../../tokens";
 import { springEnter, springTilt, springTrack } from "../../motion";
 import type { YeastPreset } from "@/modules/recipe/models/Presets";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
@@ -660,7 +660,7 @@ export function YeastPreviewBody({
           gap: 8,
           marginBottom: 8,
           paddingBottom: 8,
-          borderBottom: `1px solid ${hsTokens.ink}22`,
+          borderBottom: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         }}
       >
         <PreviewLabBadge laboratory={preset.category} favicon={favicon} />
@@ -842,7 +842,7 @@ function RefChip({
     // panel's paper background — cream-2 was nearly the same tone and the
     // chips disappeared into the panel.
     background: clickable && hovered ? hsTokens.yeast : hsTokens.cream,
-    border: `1px solid ${clickable && hovered ? hsTokens.yeast : `${hsTokens.ink}55`}`,
+    border: `1px solid ${clickable && hovered ? hsTokens.yeast : hsAlpha(hsTokens.ink, 33)}`,
     borderRadius: 999,
     padding: "2px 9px",
     fontFamily: hsTokens.body,
@@ -895,7 +895,7 @@ function PreviewLabBadge({
     height: 28,
     borderRadius: 6,
     background: hsTokens.cream,
-    border: `1px solid ${hsTokens.ink}33`,
+    border: `1px solid ${hsAlpha(hsTokens.ink, 20)}`,
     flexShrink: 0,
   };
   if (favicon) {

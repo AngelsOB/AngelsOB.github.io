@@ -6,6 +6,7 @@ import {
   HOP_SECTION,
   hopRows,
   hopGroups,
+  hopFlavorFilter,
   indexableHopItems,
 } from "@/modules/ingredients/hops/hopKind";
 import { ingredientIndexJsonLd } from "@/modules/ingredients/jsonLd";
@@ -56,6 +57,7 @@ export default function HopsIndexPage() {
         label={HOP_SECTION.label}
         rows={rows}
         groups={groups}
+        subFilter={hopFlavorFilter()}
       />
 
       {/* Descriptive / SEO copy kept at the bottom, out of the way of the tool. */}

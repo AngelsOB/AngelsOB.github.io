@@ -8,7 +8,11 @@ import { hsTokens } from "@/modules/builder/tokens";
 import HSButton from "@/modules/builder/components/HSButton";
 import HSCard from "@/modules/builder/components/HSCard";
 import IngredientIndexClient from "../IngredientIndexClient";
-import type { IngredientGroup, IngredientRow } from "../types";
+import type {
+  IngredientGroup,
+  IngredientRow,
+  IngredientSubFilter,
+} from "../types";
 import { HOP_PRESETS } from "@/modules/recipe/data/hopPresets";
 import { getHop } from "./hopKind";
 import HopMorphCard from "./HopMorphCard";
@@ -26,6 +30,8 @@ export default function HopIndexClient(props: {
   label: string;
   rows: IngredientRow[];
   groups: IngredientGroup[];
+  subFilter?: IngredientSubFilter;
+  searchHint?: string;
 }) {
   const router = useRouter();
   const [compareMode, setCompareMode] = useState(false);

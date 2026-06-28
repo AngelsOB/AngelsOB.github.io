@@ -3,6 +3,7 @@ import type { MetadataRoute } from 'next'
 import { allLearnRoutes } from '@/modules/learn/docsConfig'
 import { calculatorSlugs } from '@/modules/calculators/calculatorsMeta'
 import { indexableHopItems } from '@/modules/ingredients/hops/hopKind'
+import { indexableYeastItems } from '@/modules/ingredients/yeast/yeastKind'
 
 // ISR — regenerate at most hourly. (force-dynamic would override revalidate.)
 export const revalidate = 3600
@@ -16,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/browse` },
     { url: `${BASE_URL}/calculators` },
     { url: `${BASE_URL}/hops` },
+    { url: `${BASE_URL}/yeast` },
     { url: `${BASE_URL}/learn` },
     { url: `${BASE_URL}/privacy` },
     { url: `${BASE_URL}/terms` },
@@ -30,6 +32,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Hop reference pages — only the index-worthy ones (thin hops + the compare
   // tool are noindexed and stay out).
   const hopRoutes: MetadataRoute.Sitemap = indexableHopItems().map((it) => ({
+    url: `${BASE_URL}${it.path}`,
+  }))
+
+  // Yeast reference pages — only the index-worthy ones (strains missing the
+  // core attenuation/temp/floc block are noindexed and stay out).
+  const yeastRoutes: MetadataRoute.Sitemap = indexableYeastItems().map((it) => ({
     url: `${BASE_URL}${it.path}`,
   }))
 
@@ -70,6 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...calculatorRoutes,
     ...hopRoutes,
+    ...yeastRoutes,
     ...learnRoutes,
     ...recipeRoutes,
     ...profileRoutes,

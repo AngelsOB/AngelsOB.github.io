@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { hsTokens } from "@/modules/builder/tokens";
+import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 import HSCard from "@/modules/builder/components/HSCard";
 import HSEyebrow from "@/modules/builder/components/HSEyebrow";
 import HSButton from "@/modules/builder/components/HSButton";
@@ -162,7 +162,7 @@ export default function HopDetailBody({ hop }: { hop: HopPreset }) {
                     style={{
                       height: 8,
                       borderRadius: 999,
-                      background: `${hsTokens.ink}1a`,
+                      background: hsAlpha(hsTokens.ink, 10),
                       position: "relative",
                       overflow: "hidden",
                     }}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { hsTokens } from "@/modules/builder/tokens";
+import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 
 /**
  * Shared detail-page header: a breadcrumb (Home › Hops › {title} — the section
@@ -47,7 +47,7 @@ export default function IngredientDetailHeader({
               >
                 {c.name}
               </Link>
-              <span aria-hidden style={{ color: `${hsTokens.ink}55` }}>
+              <span aria-hidden style={{ color: hsAlpha(hsTokens.ink, 33) }}>
                 ›
               </span>
             </li>

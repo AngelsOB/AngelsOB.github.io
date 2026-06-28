@@ -9,6 +9,9 @@ import { learnNav } from "@/modules/learn/docsConfig";
 
 export const metadata: Metadata = {
   title: "Learn Brewing Science",
+  description:
+    "Plain-English guides to the brewing science behind every number in the builder: gravity, IBU, color, water chemistry, and more.",
+  alternates: { canonical: "/learn" },
 };
 
 const FEATURED_PATHS = [

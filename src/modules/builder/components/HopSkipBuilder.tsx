@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
-import { hsTokens } from "../tokens";
+import { hsTokens, hsAlpha } from "../tokens";
 import HSEyebrow from "./HSEyebrow";
 import HSScriptNote from "./HSScriptNote";
 
@@ -1281,7 +1281,7 @@ export default function HopSkipBuilder({
                         fontVariantNumeric: "tabular-nums",
                         padding: "2px 7px",
                         background: isActive ? hsTokens.cream2 : hsTokens.paper,
-                        border: `1px solid ${hsTokens.ink}22`,
+                        border: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
                         borderRadius: 999,
                       }}
                     >

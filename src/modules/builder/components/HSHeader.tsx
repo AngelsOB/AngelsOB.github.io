@@ -105,11 +105,12 @@ const LINKS: NavLink[] = [
   },
   {
     // Reference is a pure dropdown (no hub page), so the trigger toggles the
-    // menu rather than navigating. Yeast slots in beside Hops in Phase 2.
+    // menu rather than navigating.
     href: "#reference",
     label: "Reference",
     children: [
       { href: "/hops", label: "Hops", accent: hsTokens.hops },
+      { href: "/yeast", label: "Yeast", accent: hsTokens.yeast },
       { href: "/learn", label: "Learn", accent: hsTokens.water },
     ],
   },
@@ -129,6 +130,7 @@ const COMPACT_MENU: NavLink = {
     { href: "#import", label: "Import", kind: "action" },
     { href: "/calculators", label: "Calculators" },
     { href: "/hops", label: "Hops", accent: hsTokens.hops },
+    { href: "/yeast", label: "Yeast", accent: hsTokens.yeast },
     { href: "/learn", label: "Learn", accent: hsTokens.water },
   ],
 };
@@ -674,6 +676,7 @@ export default function HSHeader() {
     if (pathname.startsWith("/recipes")) return "/ recipes";
     if (pathname.startsWith("/calculators")) return "/ calculators";
     if (pathname.startsWith("/hops")) return "/ hops";
+    if (pathname.startsWith("/yeast")) return "/ yeast";
     if (pathname.startsWith("/learn")) return "/ learn";
     if (pathname.startsWith("/browse")) return "/ browse";
     if (pathname.startsWith("/r/")) return "/ shared recipe";

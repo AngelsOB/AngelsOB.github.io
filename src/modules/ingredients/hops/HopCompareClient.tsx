@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { hsTokens } from "@/modules/builder/tokens";
+import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 import HSButton from "@/modules/builder/components/HSButton";
 import HopFlavorRadar from "@/components/HopFlavorRadar";
 import HopPresetModal from "@/modules/builder/components/modals/HopPresetModal";
@@ -165,7 +165,7 @@ export default function HopCompareClient() {
                   width: 20,
                   height: 20,
                   borderRadius: 999,
-                  border: `1px solid ${hsTokens.ink}55`,
+                  border: `1px solid ${hsAlpha(hsTokens.ink, 33)}`,
                   background: hsTokens.cream,
                   color: hsTokens.ink,
                   cursor: "pointer",
@@ -239,7 +239,7 @@ export default function HopCompareClient() {
                           justifyContent: "center",
                           marginTop: 8,
                           paddingTop: 10,
-                          borderTop: `1px solid ${hsTokens.ink}22`,
+                          borderTop: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
                         }}
                       >
                         {series.map((s, i) => {
@@ -463,7 +463,7 @@ function Cell({
     <div
       style={{
         padding: "9px 10px",
-        borderTop: head ? "none" : `1px solid ${hsTokens.ink}14`,
+        borderTop: head ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 8)}`,
         textAlign: center ? "center" : "left",
         fontFamily: mono ? hsTokens.mono : hsTokens.body,
         fontSize: head ? 13 : label ? 10.5 : 13,

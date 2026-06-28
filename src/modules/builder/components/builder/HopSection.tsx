@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
-import { hsTokens, emptyStateTitleStyle } from "../../tokens";
+import { hsTokens, hsAlpha, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HopPresetModal from "../modals/HopPresetModal";
@@ -1806,7 +1806,7 @@ function VarietyRow({
         display: "grid",
         gridTemplateColumns: VARIETY_COLS,
         padding: "14px 14px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         alignItems: "center",
         gap: 12,
       }}
@@ -2132,7 +2132,7 @@ function LedgerRow({
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "14px 14px 14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         alignItems: "center",
         gap: 12,
         cursor: draggable ? "grab" : undefined,
@@ -3898,7 +3898,7 @@ function RadarLegend({
       style={{
         marginTop: 12,
         paddingTop: 10,
-        borderTop: `1px solid ${hsTokens.ink}22`,
+        borderTop: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         display: "flex",
         flexWrap: "wrap",
         gap: "6px 10px",

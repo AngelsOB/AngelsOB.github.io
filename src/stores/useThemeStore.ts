@@ -30,6 +30,24 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+// --- Dark mode retirement -------------------------------------------------
+// There's no UI to toggle dark mode anymore, so the large `.dark` CSS layer
+// (src/index.css, builder/styles/{tokens,overrides}.css) and the palette system
+// are kept DORMANT rather than deleted. While retired, every requested theme
+// resolves to light, and any stale saved `dark`/`system` preference is reset
+// (see the persist `version`/`migrate` below) so returning visitors aren't
+// stuck dark with no toggle to escape.
+//
+// To bring dark mode back: set DARK_MODE_ENABLED = true and re-expose a control
+// that calls setTheme(). Nothing else in this file needs to change.
+const DARK_MODE_ENABLED = false;
+
+// Resolve a requested theme to the mode actually applied. Light while retired.
+function resolveTheme(theme: Theme): 'light' | 'dark' {
+  if (!DARK_MODE_ENABLED) return 'light';
+  return theme === 'system' ? getSystemTheme() : theme;
+}
+
 // Apply theme to document
 function applyTheme(theme: 'light' | 'dark') {
   if (typeof document === 'undefined') return;
@@ -59,7 +77,7 @@ export const useThemeStore = create<ThemeState>()(
       palette: 'copper',
 
       setTheme: (theme: Theme) => {
-        const resolved = theme === 'system' ? getSystemTheme() : theme;
+        const resolved = resolveTheme(theme);
         applyTheme(resolved);
         set({ theme, resolvedTheme: resolved });
       },
@@ -77,9 +95,18 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'beer-app-theme',
+      // Bump when changing how persisted theme state is interpreted. v1 retires
+      // dark mode: any previously-saved `dark`/`system` is rewritten to light so
+      // returning visitors aren't stuck dark with no toggle to escape.
+      version: 1,
+      migrate: (persisted) => {
+        const prev = (persisted ?? {}) as Partial<ThemeState>;
+        // persist re-supplies the action functions on merge; restore data only.
+        return { ...prev, theme: 'light', resolvedTheme: 'light' } as ThemeState;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
-          const resolved = state.theme === 'system' ? getSystemTheme() : state.theme;
+          const resolved = resolveTheme(state.theme);
           applyTheme(resolved);
           state.resolvedTheme = resolved;
           applyPalette(state.palette);
@@ -89,12 +116,13 @@ export const useThemeStore = create<ThemeState>()(
   )
 );
 
-// Listen for system theme changes
+// Track OS theme changes. Only meaningful once dark mode is re-enabled and the
+// user has picked 'system'; resolveTheme keeps this light while retired.
 if (typeof window !== 'undefined') {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     const state = useThemeStore.getState();
     if (state.theme === 'system') {
-      const resolved = e.matches ? 'dark' : 'light';
+      const resolved = resolveTheme('system');
       applyTheme(resolved);
       useThemeStore.setState({ resolvedTheme: resolved });
     }

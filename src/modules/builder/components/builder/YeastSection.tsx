@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
-import { hsTokens, emptyStateTitleStyle } from "../../tokens";
+import { hsTokens, hsAlpha, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -1711,7 +1711,7 @@ function StarterPromptSubtle({ onAdd }: { onAdd: () => void }) {
           textTransform: "uppercase",
           color: hsTokens.muted,
           cursor: "pointer",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
+          borderBottom: `1.5px dotted ${hsAlpha(hsTokens.ink, 33)}`,
         }}
       >
         + Add starter
@@ -1841,7 +1841,7 @@ function StarterLedgerRow({
         display: "grid",
         gridTemplateColumns: STARTER_LEDGER_COLS,
         padding: "14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         alignItems: "center",
         gap: 14,
       }}
@@ -2336,7 +2336,7 @@ function PitchReadout({
           themselves once the section name is established). */}
       <div
         style={{
-          borderBottom: `1px solid ${hsTokens.ink}22`,
+          borderBottom: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
           paddingBottom: 8,
           marginBottom: 2,
         }}

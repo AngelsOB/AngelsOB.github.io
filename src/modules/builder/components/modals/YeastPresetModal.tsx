@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 
-import { hsTokens } from "../../tokens";
+import { hsTokens, hsAlpha } from "../../tokens";
 import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
@@ -597,7 +597,7 @@ function LabBadge({
         alignItems: "center",
         justifyContent: "center",
         background: hsTokens.cream,
-        border: `1px solid ${hsTokens.ink}33`,
+        border: `1px solid ${hsAlpha(hsTokens.ink, 20)}`,
         borderRadius: 5,
         fontFamily: hsTokens.body,
         fontSize: 10,

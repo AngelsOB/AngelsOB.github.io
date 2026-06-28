@@ -23,6 +23,7 @@ import type {
   IngredientMeta,
   IngredientRow,
   IngredientSection,
+  IngredientSubFilter,
 } from "../types";
 
 const HOPS = HOP_PRESETS;
@@ -92,6 +93,13 @@ function rankedAxes(flavor: HopFlavorProfile) {
     .filter((a) => a.value > 0)
     .sort((a, b) => b.value - a.value);
 }
+
+// Flavor-match thresholds on the 0–5 axis scale, used by the graded flavor
+// filter on the index: when a flavor is selected it must be "present" (≥1) for a
+// hop to qualify, and at least one selected flavor must be "prominent" (≥3) — so
+// a multi-flavor query never returns a hop that's missing one of the picks.
+const FLAVOR_PRESENT = 1;
+const FLAVOR_PROMINENT = 3;
 
 export function dominantAxis(
   flavor: HopFlavorProfile
@@ -215,6 +223,8 @@ export function hopRows(): IngredientRow[] {
       chart: h.flavor
         ? HOP_FLAVOR_KEYS.map((k) => h.flavor![k] ?? 0)
         : undefined,
+      // Per-axis flavor intensities (0–5) — feeds the graded flavor filter.
+      subWeights: h.flavor ? { ...h.flavor } : undefined,
       keywords:
         `${h.name} ${group} ${h.originCode ?? ""} ${originName(h.originCode) ?? ""} ${summary}`
           .toLowerCase()
@@ -241,6 +251,34 @@ export function hopGroups(): IngredientGroup[] {
     accent: GROUP_PALETTE[i % GROUP_PALETTE.length],
     count: g.items.length,
   }));
+}
+
+/** The flavor filter (Citrus / Tropical fruit / …) for the index's second chip
+ *  row — in radar-axis order, each chip counting the hops that carry that axis
+ *  prominently (≥3), so its count matches what a single-flavor pick returns. */
+export function hopFlavorFilter(): IngredientSubFilter {
+  const counts = new Map<string, number>();
+  for (const h of HOPS) {
+    if (!h.flavor) continue;
+    for (const k of HOP_FLAVOR_KEYS) {
+      if ((h.flavor[k] ?? 0) >= FLAVOR_PROMINENT) {
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+    }
+  }
+  const options = HOP_FLAVOR_KEYS.filter((k) => counts.has(k)).map((k) => ({
+    value: k,
+    label: capitalize(FLAVOR_LABEL[k]),
+    count: counts.get(k)!,
+    accent: FLAVOR_COLOR[k],
+  }));
+  // Graded: every selected flavor must be present and at least one prominent, so
+  // (e.g.) Floral + Spice + Stone fruit never surfaces a hop with no stone fruit.
+  return {
+    label: "Flavor",
+    options,
+    graded: { presentMin: FLAVOR_PRESENT, prominentMin: FLAVOR_PROMINENT },
+  };
 }
 
 /** Categories with their hops, for the accordion sidebar (nav + compare-add).

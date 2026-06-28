@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { hsTokens, emptyStateTitleStyle } from "../../tokens";
+import { hsTokens, hsAlpha, emptyStateTitleStyle } from "../../tokens";
 import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import HSActionMenu from "../HSActionMenu";
@@ -832,7 +832,7 @@ function LedgerRow({
         display: "grid",
         gridTemplateColumns: LEDGER_COLS,
         padding: "14px 18px",
-        borderBottom: isLast ? "none" : `1px solid ${hsTokens.ink}22`,
+        borderBottom: isLast ? "none" : `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         alignItems: "center",
         gap: 14,
         transform: CSS.Transform.toString(transform),
@@ -1180,7 +1180,7 @@ function EditableCell({
         style={{
           background: "transparent",
           border: "none",
-          borderBottom: `1.5px dotted ${hsTokens.ink}55`,
+          borderBottom: `1.5px dotted ${hsAlpha(hsTokens.ink, 33)}`,
           padding: "2px 28px 2px 6px",
           margin: 0,
           cursor: "text",
@@ -1445,7 +1445,7 @@ function ConditioningBlock({
                 onClick={onChangeMethod}
                 style={{
                   background: "transparent",
-                  border: `1.5px dashed ${hsTokens.ink}55`,
+                  border: `1.5px dashed ${hsAlpha(hsTokens.ink, 33)}`,
                   borderRadius: 999,
                   padding: "5px 12px",
                   cursor: "pointer",
@@ -1829,7 +1829,7 @@ function SummaryCard({
             gridTemplateColumns: "repeat(auto-fit, minmax(64px, 1fr))",
             gap: 6,
             paddingTop: 8,
-            borderTop: `1px solid ${hsTokens.ink}1a`,
+            borderTop: `1px solid ${hsAlpha(hsTokens.ink, 10)}`,
           }}
         >
           {/* One tile per fermentation step — multi-tiered schedules (hazy IPA
@@ -2146,10 +2146,10 @@ function StatTile({
         gap: 2,
         padding: "8px 10px",
         background: hsTokens.paper,
-        border: `1px solid ${hsTokens.ink}33`,
+        border: `1px solid ${hsAlpha(hsTokens.ink, 20)}`,
         borderRadius: 8,
         minWidth: 0,
-        borderTop: accent ? `3px solid ${accent}` : `1px solid ${hsTokens.ink}33`,
+        borderTop: accent ? `3px solid ${accent}` : `1px solid ${hsAlpha(hsTokens.ink, 20)}`,
       }}
     >
       <Eyebrow size={9}>{label}</Eyebrow>
@@ -2300,7 +2300,7 @@ function JourneyTimeline({
         style={{
           height: 44,
           background: hsTokens.cream2,
-          border: `1.5px dashed ${hsTokens.ink}66`,
+          border: `1.5px dashed ${hsAlpha(hsTokens.ink, 40)}`,
           borderRadius: 8,
           display: "flex",
           alignItems: "center",
@@ -2412,11 +2412,11 @@ function JourneyTimeline({
           gap: 6,
         }}
       >
-        <span aria-hidden style={{ flex: 1, borderTop: `1px dotted ${hsTokens.ink}33`, position: "relative", top: -3 }} />
+        <span aria-hidden style={{ flex: 1, borderTop: `1px dotted ${hsAlpha(hsTokens.ink, 20)}`, position: "relative", top: -3 }} />
         <span style={{ whiteSpace: "nowrap" }}>
           {hasPackaging ? `Ferment · ${packageDay}d` : `end · ${packageDay}d`}
         </span>
-        <span aria-hidden style={{ flex: 1, borderTop: `1px dotted ${hsTokens.ink}33`, position: "relative", top: -3 }} />
+        <span aria-hidden style={{ flex: 1, borderTop: `1px dotted ${hsAlpha(hsTokens.ink, 20)}`, position: "relative", top: -3 }} />
       </div>
 
       {/* Cursor-following tooltip — appears on segment hover. */}
@@ -2877,7 +2877,7 @@ function CarbMethodToggle({
             style={{
               background: selected ? hsTokens.honey : "transparent",
               border: "none",
-              borderLeft: i === 0 ? "none" : `1.5px solid ${hsTokens.ink}33`,
+              borderLeft: i === 0 ? "none" : `1.5px solid ${hsAlpha(hsTokens.ink, 20)}`,
               padding: "0 10px",
               cursor: "pointer",
               fontFamily: hsTokens.body,
@@ -2963,7 +2963,7 @@ function PrimingSugarCard({
               className="hs-fermentation-sugar-chip"
               style={{
                 background: selected ? hsTokens.paper : "transparent",
-                border: `1.5px solid ${selected ? hsTokens.ink : `${hsTokens.ink}55`}`,
+                border: `1.5px solid ${selected ? hsTokens.ink : hsAlpha(hsTokens.ink, 33)}`,
                 borderRadius: 8,
                 padding: "5px 8px",
                 cursor: "pointer",
@@ -3008,7 +3008,7 @@ function PrimingSugarCard({
           justifyContent: "flex-end",
           gap: 8,
           paddingTop: 4,
-          borderTop: `1px solid ${hsTokens.ink}22`,
+          borderTop: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         }}
       >
         <Eyebrow size={9}>Add</Eyebrow>
@@ -3100,7 +3100,7 @@ function RoundedStepper({
             alignItems: "center",
             padding: "0 10px",
             background: hsTokens.cream2,
-            borderRight: `1.5px solid ${hsTokens.ink}33`,
+            borderRight: `1.5px solid ${hsAlpha(hsTokens.ink, 20)}`,
             fontFamily: hsTokens.body,
             fontWeight: 700,
             fontSize: 10,
@@ -3179,7 +3179,7 @@ function RoundedStepperBtn({
         width: 24,
         background: "transparent",
         border: "none",
-        borderLeft: `1px solid ${hsTokens.ink}22`,
+        borderLeft: `1px solid ${hsAlpha(hsTokens.ink, 13)}`,
         cursor: "pointer",
         fontFamily: hsTokens.body,
         fontSize: 14,

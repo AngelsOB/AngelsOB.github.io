@@ -142,7 +142,10 @@ export function buildRecipeJsonLd(
     ...(cookMinutes > 0 ? { cookTime: toIsoDuration(cookMinutes) } : {}),
     ...(totalMinutes > 0 ? { totalTime: toIsoDuration(totalMinutes) } : {}),
 
-    ...(recipe.labelUrl ? { image: recipe.labelUrl } : {}),
+    // Recipe rich results REQUIRE an image. Fall back to the per-recipe OG
+    // card (generated for every recipe at /r/[slug]/opengraph-image) when the
+    // brewer hasn't uploaded a label, so the field is never missing.
+    image: recipe.labelUrl || `${baseUrl}/r/${slug}/opengraph-image`,
 
     recipeIngredient: [
       ...(recipe.fermentables || []).map((f) => `${f.weightKg} kg ${f.name}`),
@@ -178,4 +181,138 @@ export function buildRecipeJsonLd(
       .filter(Boolean)
       .join(', '),
   }
+}
+
+/**
+ * Render a public recipe as a portable Markdown document — the payload behind
+ * the "Copy as Markdown" action on the share page. Pure + deterministic so the
+ * same string can be both displayed and copied.
+ */
+export function buildRecipeMarkdown(
+  recipe: Recipe,
+  calc: RecipeCalculations,
+  ownerName: string,
+  slug: string,
+): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://brewing.it.com'
+  const stats = [
+    recipe.style,
+    `${calc.abv.toFixed(1)}% ABV`,
+    `${Math.round(calc.ibu)} IBU`,
+    `OG ${calc.og.toFixed(3)}`,
+    `FG ${calc.fg.toFixed(3)}`,
+    `${Math.round(calc.srm)} SRM`,
+    recipe.batchVolumeL ? `${recipe.batchVolumeL} L batch` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const lines: string[] = [`# ${recipe.name}`]
+  if (recipe.subtitle) lines.push(`*${recipe.subtitle}*`)
+  lines.push('', `_${stats}_`)
+  if (ownerName) lines.push(`By ${ownerName}`)
+
+  const section = (title: string, rows: (string | null)[], ordered = false) => {
+    const clean = rows.filter(Boolean) as string[]
+    if (!clean.length) return
+    lines.push('', `## ${title}`, '')
+    clean.forEach((r, i) => lines.push(ordered ? `${i + 1}. ${r}` : `- ${r}`))
+  }
+
+  section('Vitals', [
+    `OG ${calc.og.toFixed(3)}`,
+    `FG ${calc.fg.toFixed(3)}`,
+    `ABV ${calc.abv.toFixed(1)}%`,
+    `IBU ${Math.round(calc.ibu)}`,
+    `Color ${Math.round(calc.srm)} SRM`,
+    calc.estimatedMashPh != null ? `Est. mash pH ${calc.estimatedMashPh.toFixed(2)}` : null,
+    `${Math.round(calc.calories)} cal / 355 mL`,
+    `${calc.carbsG.toFixed(1)} g carbs / 355 mL`,
+  ])
+  section(
+    'Fermentables',
+    (recipe.fermentables || []).map(
+      (f) => `${f.weightKg} kg — ${f.name}${typeof f.colorLovibond === 'number' ? ` (${f.colorLovibond} °L)` : ''}`,
+    ),
+  )
+  section(
+    'Hops',
+    (recipe.hops || []).map((h) => {
+      const bits = [
+        typeof h.alphaAcid === 'number' ? `${h.alphaAcid}% AA` : null,
+        h.type,
+        typeof h.timeMinutes === 'number' ? `${h.timeMinutes} min` : null,
+      ].filter(Boolean)
+      return `${h.grams} g — ${h.name}${bits.length ? ` (${bits.join(', ')})` : ''}`
+    }),
+  )
+  section('Yeast', (recipe.yeasts || []).map((y) => y.name))
+  section(
+    'Other ingredients',
+    (recipe.otherIngredients || []).map((o) => `${o.amount} ${o.unit} — ${o.name}`),
+  )
+
+  const wc = recipe.waterChemistry
+  if (wc) {
+    const sp = wc.sourceProfile
+    const sa = wc.saltAdditions || {}
+    const salts = [
+      sa.gypsum_g ? `Gypsum ${sa.gypsum_g} g` : null,
+      sa.cacl2_g ? `CaCl₂ ${sa.cacl2_g} g` : null,
+      sa.epsom_g ? `Epsom ${sa.epsom_g} g` : null,
+      sa.nacl_g ? `Table salt ${sa.nacl_g} g` : null,
+      sa.nahco3_g ? `Baking soda ${sa.nahco3_g} g` : null,
+    ].filter(Boolean)
+    section('Water', [
+      sp
+        ? `Source${wc.sourceProfileName ? ` (${wc.sourceProfileName})` : ''}: Ca ${sp.Ca}, Mg ${sp.Mg}, Na ${sp.Na}, Cl ${sp.Cl}, SO₄ ${sp.SO4}, HCO₃ ${sp.HCO3} ppm`
+        : null,
+      salts.length ? `Salts: ${salts.join(', ')}` : null,
+      wc.targetStyleName ? `Target: ${wc.targetStyleName}` : null,
+    ])
+  }
+
+  section(
+    'Mash schedule',
+    (recipe.mashSteps || []).map((s) => `${s.name} — ${s.temperatureC}°C for ${s.durationMinutes} min`),
+    true,
+  )
+  section(
+    'Fermentation',
+    (recipe.fermentationSteps || []).map(
+      (s) =>
+        `${s.name || s.type}${typeof s.temperatureC === 'number' ? ` — ${s.temperatureC}°C` : ''}${typeof s.durationDays === 'number' ? ` for ${s.durationDays} days` : ''}`,
+    ),
+    true,
+  )
+
+  const eq = recipe.equipment
+  if (eq) {
+    section('Process', [
+      `Efficiency: ${eq.brewhouseEfficiencyPercent}%`,
+      `Boil: ${eq.boilTimeMin} min`,
+      `Boil-off: ${eq.boilOffRateLPerHour} L/hr`,
+      `Mash thickness: ${eq.mashThicknessLPerKg} L/kg`,
+      `Batch volume: ${recipe.batchVolumeL} L`,
+    ])
+  }
+
+  const pk = recipe.packaging
+  if (pk) {
+    section('Packaging', [
+      pk.methods?.length ? `Method: ${pk.methods.join(' + ')}` : null,
+      typeof pk.targetCo2Volumes === 'number' ? `Target CO₂: ${pk.targetCo2Volumes} volumes` : null,
+      pk.primingSugarType ? `Priming sugar: ${pk.primingSugarType}` : null,
+      typeof pk.conditioningDays === 'number'
+        ? `Conditioning: ${pk.conditioningDays} days${typeof pk.conditioningTempC === 'number' ? ` at ${pk.conditioningTempC}°C` : ''}`
+        : null,
+      typeof pk.servingTempC === 'number' ? `Serving temp: ${pk.servingTempC}°C` : null,
+    ])
+  }
+
+  if (recipe.tags?.length) section('Tags', [recipe.tags.join(', ')])
+  if (recipe.notes) lines.push('', '## Notes', '', recipe.notes)
+
+  lines.push('', `Built with Brewing.It — ${baseUrl}/r/${slug}`)
+  return lines.join('\n')
 }

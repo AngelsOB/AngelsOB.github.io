@@ -60,5 +60,12 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vitest": "^4.0.18"
-  }
+  },
+  "browserslist": [
+    "chrome >= 93",
+    "edge >= 93",
+    "firefox >= 92",
+    "safari >= 15.4",
+    "ios_saf >= 15.4"
+  ]
 }
