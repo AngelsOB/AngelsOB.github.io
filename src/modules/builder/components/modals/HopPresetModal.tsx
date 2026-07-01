@@ -8,7 +8,8 @@ import HSButton from "../HSButton";
 import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import type { HopPreset } from "@/modules/recipe/models/Presets";
-import { fuzzyIncludes } from "@/utils/ingredientMatching";
+import { fuzzyIncludes, rankBySearch } from "@/utils/ingredientMatching";
+import { hopSearchText } from "@/modules/ingredients/searchText";
 import { useHopHoverPreview } from "../builder/hopHoverPreview";
 
 type PurposeFilter = "aroma" | "dual" | "bittering";
@@ -171,7 +172,8 @@ export default function HopPresetModal({
       .map((group) => ({
         ...group,
         items: group.items.filter((p) => {
-          if (!fuzzyIncludes(searchQuery, p.name, group.label)) return false;
+          // Same haystack as the /hops page — name, category, origin, flavor.
+          if (!fuzzyIncludes(searchQuery, hopSearchText(p))) return false;
           if (activeFilters.purposes.length) {
             if (!activeFilters.purposes.includes(purposeOf(p))) return false;
           }
@@ -184,6 +186,26 @@ export default function HopPresetModal({
       }))
       .filter((g) => g.items.length > 0);
   }, [presetsGrouped, searchQuery, activeFilters]);
+
+  // While searching, collapse the category groups into one relevance-ranked
+  // list so the best match leads (searching "citra" surfaces Citra before Citra
+  // Cryo, whatever order the library groups sit in). Browsing — no query — keeps
+  // the curated groups and the pinned common picks.
+  const searching = searchQuery.trim().length > 0;
+  const flatResults = useMemo(() => {
+    if (!searching) return [];
+    const ranked = rankBySearch(
+      filteredGrouped.flatMap((g) => g.items),
+      searchQuery,
+      (p) => [p.name, hopSearchText(p)]
+    );
+    // "Strong" = the query hit the hop's name. A row that only matched via
+    // origin, flavor, or category is a real but looser hit, so we dim it.
+    return ranked.map((preset) => ({
+      preset,
+      strong: fuzzyIncludes(searchQuery, preset.name),
+    }));
+  }, [filteredGrouped, searchQuery, searching]);
 
   const totalCount = presetsGrouped.reduce((s, g) => s + g.items.length, 0);
 
@@ -351,6 +373,18 @@ export default function HopPresetModal({
           >
             No hops match those filters.
           </p>
+        ) : searching ? (
+          <div style={{ display: "flex", flexDirection: "column", padding: "6px 14px 12px" }}>
+            {flatResults.map(({ preset, strong }) => (
+              <PresetRow
+                key={preset.name}
+                preset={preset}
+                dimmed={!strong}
+                onClick={() => handleSelect(preset)}
+                hoverProps={getTriggerProps(preset)}
+              />
+            ))}
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
             {filtersIdle && commonPicks.length > 0 ? (
@@ -596,6 +630,7 @@ function PresetRow({
   preset,
   onClick,
   hoverProps,
+  dimmed,
 }: {
   preset: HopPreset;
   onClick: () => void;
@@ -604,6 +639,7 @@ function PresetRow({
     onMouseMove?: (e: React.MouseEvent) => void;
     onMouseLeave?: () => void;
   };
+  dimmed?: boolean;
 }) {
   const purpose = purposeOf(preset);
   const dom = dominantFlavor(preset);
@@ -626,7 +662,10 @@ function PresetRow({
         cursor: "pointer",
         textAlign: "left",
         color: hsTokens.ink,
-        transition: "background 90ms ease",
+        // Weaker matches (hit via origin/flavor, not the name) read as present
+        // but secondary.
+        opacity: dimmed ? 0.55 : 1,
+        transition: "background 90ms ease, opacity 120ms ease",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = hsTokens.cream2;

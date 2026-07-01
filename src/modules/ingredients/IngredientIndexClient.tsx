@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { hsTokens } from "@/modules/builder/tokens";
 import HSCard from "@/modules/builder/components/HSCard";
+import { fuzzyIncludes, fuzzyScore } from "@/utils/ingredientMatching";
 
 import MiniRadar from "./MiniRadar";
 import type {
@@ -205,13 +206,24 @@ export default function IngredientIndexClient({
           return false;
         }
       }
-      if (q && !r.keywords.includes(q) && !r.name.toLowerCase().includes(q))
-        return false;
+      // Same fuzzy pipeline as the builder ingredient pickers. `keywords`
+      // already folds in the name, so one haystack covers it all.
+      if (q && !fuzzyIncludes(q, r.keywords)) return false;
       return true;
     });
-    // Graded dimensions rank prominence-first so an all-flavors hop leads.
-    // Stable sort keeps dataset order within a tier.
-    if (graded && sel.length > 1) {
+    // A text query ranks by search relevance: a name hit outranks an
+    // alias/keyword-only hit, so "us 05" leads with SafAle US-05 rather than the
+    // Chico-family strains that merely list it as an equivalent. Precomputed so
+    // the comparator doesn't re-score; stable sort keeps dataset order within a
+    // tier. A text query takes precedence over graded ranking (it's the more
+    // specific signal, and the grid is flat — not grouped — while searching).
+    if (q) {
+      const score = new Map(
+        result.map((r) => [r, fuzzyScore(q, r.name, r.keywords)] as const)
+      );
+      result.sort((a, b) => (score.get(b) ?? 0) - (score.get(a) ?? 0));
+    } else if (graded && sel.length > 1) {
+      // Graded dimensions rank prominence-first so an all-flavors hop leads.
       result.sort(
         (a, b) =>
           gradedScore(b.subWeights, sel, graded.prominentMin) -

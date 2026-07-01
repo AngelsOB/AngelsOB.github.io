@@ -17,6 +17,7 @@ import { hsTokens } from "@/modules/builder/tokens";
 
 import { createCatalog } from "../catalog";
 import { slugify } from "../slugify";
+import { hopSearchText } from "../searchText";
 import type {
   IngredientFaqItem,
   IngredientGroup,
@@ -206,7 +207,6 @@ export function hopRows(): IngredientRow[] {
     const group = h.category || "Other";
     const alpha = formatAlphaRange(h);
     const beta = formatBetaRange(h);
-    const summary = hopFlavorSummary(h);
     // The card shows the key numbers (alpha / beta); the dwell panel adds the rest.
     const stats = [];
     if (alpha) stats.push({ label: "Alpha", value: alpha });
@@ -225,10 +225,8 @@ export function hopRows(): IngredientRow[] {
         : undefined,
       // Per-axis flavor intensities (0–5) — feeds the graded flavor filter.
       subWeights: h.flavor ? { ...h.flavor } : undefined,
-      keywords:
-        `${h.name} ${group} ${h.originCode ?? ""} ${originName(h.originCode) ?? ""} ${summary}`
-          .toLowerCase()
-          .trim(),
+      // One shared haystack with the picker modal — see searchText.ts.
+      keywords: hopSearchText(h),
     };
   });
 }

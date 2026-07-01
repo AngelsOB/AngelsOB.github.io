@@ -9,6 +9,8 @@
   "betaHigh": 4.6,
   "oilTotalMlPer100g": 1.6,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 0,
@@ -33,6 +35,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 43.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -48,6 +52,32 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "African Queen",
+  "alphaAcidPercent": 13.5,
+  "alphaLow": 10,
+  "alphaHigh": 17,
+  "betaAcidPercent": 5,
+  "betaLow": 3.5,
+  "betaHigh": 6.5,
+  "oilTotalMlPer100g": 1.3,
+  "cohumulonePercent": 25,
+  "originCode": "ZA",
+  "category": "South African Hops",
+  "flavor": {
+   "citrus": 1,
+   "tropicalFruit": 2,
+   "stoneFruit": 3,
+   "berry": 5,
+   "floral": 0,
+   "grassy": 2,
+   "herbal": 2,
+   "spice": 2,
+   "resinPine": 2
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Agnus",
   "alphaAcidPercent": 11.2,
   "alphaLow": 9.0,
@@ -58,7 +88,7 @@
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 0.0,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -83,6 +113,8 @@
   "betaHigh": 6.5,
   "oilTotalMlPer100g": 1.2,
   "cohumulonePercent": 32.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 0,
@@ -159,6 +191,8 @@
   "betaHigh": 5.2,
   "oilTotalMlPer100g": 3.7,
   "cohumulonePercent": 27.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -251,6 +285,32 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Archer",
+  "alphaAcidPercent": 5,
+  "alphaLow": 4,
+  "alphaHigh": 6,
+  "betaAcidPercent": 2.5,
+  "betaLow": 2,
+  "betaHigh": 3,
+  "oilTotalMlPer100g": 0.7,
+  "cohumulonePercent": 35,
+  "originCode": "GB",
+  "category": "English Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 0,
+   "stoneFruit": 3,
+   "berry": 0,
+   "floral": 3,
+   "grassy": 0,
+   "herbal": 2,
+   "spice": 0,
+   "resinPine": 1
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Ariana",
   "alphaAcidPercent": 11.2,
   "alphaLow": 8.0,
@@ -329,6 +389,32 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Barbe Rouge",
+  "alphaAcidPercent": 8.5,
+  "alphaLow": 7,
+  "alphaHigh": 10,
+  "betaAcidPercent": 4,
+  "betaLow": 3.5,
+  "betaHigh": 4.5,
+  "oilTotalMlPer100g": 2,
+  "cohumulonePercent": 26,
+  "originCode": "FR",
+  "category": "French Hops",
+  "flavor": {
+   "citrus": 2,
+   "tropicalFruit": 0,
+   "stoneFruit": 1,
+   "berry": 5,
+   "floral": 2,
+   "grassy": 0,
+   "herbal": 1,
+   "spice": 1,
+   "resinPine": 0
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Belma",
   "alphaAcidPercent": 10.5,
   "alphaLow": 9.0,
@@ -338,6 +424,8 @@
   "betaHigh": 8.0,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 2,
@@ -353,7 +441,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Bitter gold",
+  "name": "Bitter Gold",
   "alphaAcidPercent": 13.5,
   "alphaLow": 12.0,
   "alphaHigh": 15.0,
@@ -362,6 +450,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 36.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 3,
@@ -386,6 +476,8 @@
   "betaHigh": 4.0,
   "oilTotalMlPer100g": 1.7,
   "cohumulonePercent": 26.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -437,7 +529,7 @@
   "oilTotalMlPer100g": 1.1,
   "cohumulonePercent": 24.0,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -453,7 +545,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Bramling cross",
+  "name": "Bramling Cross",
   "alphaAcidPercent": 6.5,
   "alphaLow": 5.0,
   "alphaHigh": 8.0,
@@ -462,6 +554,8 @@
   "betaHigh": 3.5,
   "oilTotalMlPer100g": 1.2,
   "cohumulonePercent": 34.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 0,
@@ -502,7 +596,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Brewers gold",
+  "name": "Brewers Gold",
   "alphaAcidPercent": 7.8,
   "alphaLow": 4.5,
   "alphaHigh": 11.0,
@@ -526,7 +620,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Bru-1",
+  "name": "BRU-1",
   "alphaAcidPercent": 14.8,
   "alphaLow": 12.7,
   "alphaHigh": 17.0,
@@ -546,6 +640,32 @@
    "grassy": 1,
    "herbal": 1,
    "spice": 0,
+   "resinPine": 2
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
+  "name": "Bullion",
+  "alphaAcidPercent": 7.5,
+  "alphaLow": 6.5,
+  "alphaHigh": 9,
+  "betaAcidPercent": 4,
+  "betaLow": 3.2,
+  "betaHigh": 4.7,
+  "oilTotalMlPer100g": 1.35,
+  "cohumulonePercent": 45,
+  "originCode": "GB",
+  "category": "English Hops",
+  "flavor": {
+   "citrus": 0,
+   "tropicalFruit": 0,
+   "stoneFruit": 0,
+   "berry": 4,
+   "floral": 0,
+   "grassy": 0,
+   "herbal": 1,
+   "spice": 3,
    "resinPine": 2
   },
   "flavorSource": "derived",
@@ -587,6 +707,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 41.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 3,
@@ -834,30 +956,6 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Cluster fugget",
-  "alphaAcidPercent": 8.1,
-  "alphaLow": 8.1,
-  "alphaHigh": 8.1,
-  "betaAcidPercent": 4.1,
-  "betaLow": 4.1,
-  "betaHigh": 4.1,
-  "oilTotalMlPer100g": 0.9,
-  "cohumulonePercent": 33.5,
-  "flavor": {
-   "citrus": 1,
-   "tropicalFruit": 1,
-   "stoneFruit": 1,
-   "berry": 1,
-   "floral": 1,
-   "grassy": 3,
-   "herbal": 1,
-   "spice": 1,
-   "resinPine": 1
-  },
-  "flavorSource": "derived",
-  "flavorConfidence": "high"
- },
- {
   "name": "Columbia",
   "alphaAcidPercent": 5.5,
   "alphaLow": 5.0,
@@ -942,7 +1040,7 @@
   "betaHigh": 6.1,
   "oilTotalMlPer100g": 2.5,
   "cohumulonePercent": 38.5,
-  "originCode": "DE",
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 3,
@@ -992,6 +1090,8 @@
   "betaHigh": 7.4,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 30.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -1067,6 +1167,8 @@
   "betaHigh": 7.0,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 23.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -1077,6 +1179,32 @@
    "herbal": 2,
    "spice": 3,
    "resinPine": 1
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
+  "name": "Denali",
+  "alphaAcidPercent": 14,
+  "alphaLow": 13,
+  "alphaHigh": 15,
+  "betaAcidPercent": 5.75,
+  "betaLow": 4.5,
+  "betaHigh": 7,
+  "oilTotalMlPer100g": 3.25,
+  "cohumulonePercent": 24,
+  "originCode": "US",
+  "category": "US Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 4,
+   "stoneFruit": 0,
+   "berry": 0,
+   "floral": 1,
+   "grassy": 0,
+   "herbal": 0,
+   "spice": 2,
+   "resinPine": 4
   },
   "flavorSource": "derived",
   "flavorConfidence": "high"
@@ -1124,30 +1252,6 @@
   },
   "flavorSource": "curated",
   "flavorConfidence": "curated"
- },
- {
-  "name": "East kent golding",
-  "alphaAcidPercent": 5.5,
-  "alphaLow": 4.5,
-  "alphaHigh": 6.5,
-  "betaAcidPercent": 2.3,
-  "betaLow": 1.9,
-  "betaHigh": 2.8,
-  "oilTotalMlPer100g": 0.6,
-  "cohumulonePercent": 29.0,
-  "flavor": {
-   "citrus": 2,
-   "tropicalFruit": 0,
-   "stoneFruit": 0,
-   "berry": 0,
-   "floral": 1,
-   "grassy": 0,
-   "herbal": 2,
-   "spice": 3,
-   "resinPine": 2
-  },
-  "flavorSource": "derived",
-  "flavorConfidence": "high"
  },
  {
   "name": "East Kent Goldings",
@@ -1262,6 +1366,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 5,
@@ -1312,6 +1418,8 @@
   "betaHigh": 5.3,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 33.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -1362,6 +1470,8 @@
   "betaHigh": 4.0,
   "oilTotalMlPer100g": 2.5,
   "cohumulonePercent": 26.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -1386,6 +1496,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 0.9,
   "cohumulonePercent": 52.5,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -1401,7 +1513,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Eureka!",
+  "name": "Eureka",
   "alphaAcidPercent": 18.4,
   "alphaLow": 17.0,
   "alphaHigh": 19.9,
@@ -1410,6 +1522,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 3.5,
   "cohumulonePercent": 29.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -1425,7 +1539,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Extra styrian dana",
+  "name": "Extra Styrian Dana",
   "alphaAcidPercent": 15.7,
   "alphaLow": 12.5,
   "alphaHigh": 18.8,
@@ -1451,7 +1565,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Falconers flight",
+  "name": "Falconers Flight",
   "alphaAcidPercent": 10.5,
   "alphaLow": 9.5,
   "alphaHigh": 11.5,
@@ -1460,6 +1574,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 27.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 3,
@@ -1475,7 +1591,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Falconers flight 7cs",
+  "name": "Falconers Flight 7Cs",
   "alphaAcidPercent": 10.5,
   "alphaLow": 9.5,
   "alphaHigh": 11.5,
@@ -1484,6 +1600,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 27.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 5,
    "tropicalFruit": 3,
@@ -1499,7 +1617,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "First gold",
+  "name": "First Gold",
   "alphaAcidPercent": 7.8,
   "alphaLow": 5.6,
   "alphaHigh": 10.0,
@@ -1508,6 +1626,8 @@
   "betaHigh": 4.5,
   "oilTotalMlPer100g": 1.2,
   "cohumulonePercent": 33.5,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 1,
@@ -1698,7 +1818,7 @@
   "flavorConfidence": "low"
  },
  {
-  "name": "Golding",
+  "name": "Goldings",
   "alphaAcidPercent": 5.5,
   "alphaLow": 4.0,
   "alphaHigh": 7.0,
@@ -1724,26 +1844,9 @@
   "flavorConfidence": "low"
  },
  {
-  "name": "Goldings",
-  "alphaAcidPercent": 5.5,
-  "category": "English Hops",
-  "flavor": {
-   "citrus": 1,
-   "tropicalFruit": 0,
-   "stoneFruit": 0,
-   "berry": 0,
-   "floral": 4,
-   "grassy": 1,
-   "herbal": 2,
-   "spice": 2,
-   "resinPine": 0
-  },
-  "flavorSource": "curated",
-  "flavorConfidence": "curated"
- },
- {
   "name": "Green Bullet",
   "alphaAcidPercent": 13.0,
+  "originCode": "NZ",
   "category": "New Zealand Hops",
   "flavor": {
    "citrus": 2,
@@ -1788,6 +1891,7 @@
  {
   "name": "Hallertau Mittelfr\u00fch",
   "alphaAcidPercent": 4.0,
+  "originCode": "DE",
   "category": "Noble Hops",
   "flavor": {
    "citrus": 1,
@@ -1804,7 +1908,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Hallertauer magnum",
+  "name": "Hallertauer Magnum",
   "alphaAcidPercent": 13.6,
   "alphaLow": 9.0,
   "alphaHigh": 18.2,
@@ -1830,7 +1934,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hallertauer merkur",
+  "name": "Hallertauer Merkur",
   "alphaAcidPercent": 12.0,
   "alphaLow": 10.0,
   "alphaHigh": 14.0,
@@ -1856,7 +1960,7 @@
   "flavorConfidence": "low"
  },
  {
-  "name": "Hallertauer mittelfr\u00fch",
+  "name": "Hallertauer Mittelfrüh",
   "alphaAcidPercent": 4.4,
   "alphaLow": 2.3,
   "alphaHigh": 6.6,
@@ -1882,7 +1986,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hallertauer taurus",
+  "name": "Hallertauer Taurus",
   "alphaAcidPercent": 16.2,
   "alphaLow": 11.1,
   "alphaHigh": 21.3,
@@ -1908,7 +2012,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hallertauer tradition",
+  "name": "Hallertauer Tradition",
   "alphaAcidPercent": 6.3,
   "alphaLow": 3.6,
   "alphaHigh": 9.1,
@@ -1944,7 +2048,7 @@
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 0.0,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -1960,7 +2064,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 1019 c.v.",
+  "name": "HBC 1019 c.v.",
   "alphaAcidPercent": 11.1,
   "alphaLow": 10.0,
   "alphaHigh": 12.2,
@@ -1986,7 +2090,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 472",
+  "name": "HBC 472",
   "alphaAcidPercent": 10.5,
   "alphaLow": 9.0,
   "alphaHigh": 12.0,
@@ -1995,6 +2099,8 @@
   "betaHigh": 10.0,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 43.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 4,
@@ -2010,7 +2116,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 630",
+  "name": "HBC 630",
   "alphaAcidPercent": 14.0,
   "alphaLow": 13.0,
   "alphaHigh": 15.0,
@@ -2019,6 +2125,8 @@
   "betaHigh": 7.0,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 23.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 3,
@@ -2034,7 +2142,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 638",
+  "name": "HBC 638",
   "alphaAcidPercent": 14.5,
   "alphaLow": 13.0,
   "alphaHigh": 16.0,
@@ -2043,6 +2151,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 3.0,
   "cohumulonePercent": 28.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 3,
@@ -2058,7 +2168,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 682",
+  "name": "HBC 682",
   "alphaAcidPercent": 18.5,
   "alphaLow": 16.0,
   "alphaHigh": 21.0,
@@ -2067,6 +2177,8 @@
   "betaHigh": 8.0,
   "oilTotalMlPer100g": 3.0,
   "cohumulonePercent": 29.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 2,
@@ -2082,7 +2194,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hbc 682 c.v.",
+  "name": "HBC 682 c.v.",
   "alphaAcidPercent": 15.8,
   "alphaLow": 13.2,
   "alphaHigh": 18.5,
@@ -2117,6 +2229,8 @@
   "betaHigh": 7.0,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 21.5,
+  "originCode": "AU",
+  "category": "Australian Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -2141,6 +2255,8 @@
   "betaHigh": 4.5,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 27.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -2208,7 +2324,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Hersbrucker sp\u00e4t",
+  "name": "Hersbrucker Spät",
   "alphaAcidPercent": 3.6,
   "alphaLow": 1.3,
   "alphaHigh": 5.9,
@@ -2243,6 +2359,8 @@
   "betaHigh": 8.5,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 18.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -2258,7 +2376,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hqg3",
+  "name": "HQG 3",
   "alphaAcidPercent": 3.8,
   "alphaLow": 7.5,
   "alphaHigh": 0.0,
@@ -2267,6 +2385,8 @@
   "betaHigh": 0.0,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 1,
@@ -2282,7 +2402,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Hs09326",
+  "name": "HS09326",
   "alphaAcidPercent": 5.5,
   "alphaLow": 4.0,
   "alphaHigh": 7.0,
@@ -2291,6 +2411,8 @@
   "betaHigh": 7.0,
   "oilTotalMlPer100g": 2.3,
   "cohumulonePercent": 30.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 3,
@@ -2306,7 +2428,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Huell classic",
+  "name": "Huell Classic",
   "alphaAcidPercent": 6.2,
   "alphaLow": 4.5,
   "alphaHigh": 8.0,
@@ -2393,6 +2515,7 @@
   "betaHigh": 9.1,
   "oilTotalMlPer100g": 3.0,
   "cohumulonePercent": 35.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 3,
@@ -2409,7 +2532,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Idaho gem",
+  "name": "Idaho Gem",
   "alphaAcidPercent": 13.5,
   "alphaLow": 12.0,
   "alphaHigh": 15.0,
@@ -2418,6 +2541,8 @@
   "betaHigh": 6.5,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 39.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 2,
@@ -2433,6 +2558,31 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Iunga",
+  "alphaAcidPercent": 11,
+  "alphaLow": 8,
+  "alphaHigh": 12.3,
+  "betaAcidPercent": 6.5,
+  "betaLow": 2,
+  "betaHigh": 7,
+  "oilTotalMlPer100g": 1.5,
+  "originCode": "PL",
+  "category": "Polish Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 4,
+   "stoneFruit": 3,
+   "berry": 2,
+   "floral": 1,
+   "grassy": 1,
+   "herbal": 1,
+   "spice": 1,
+   "resinPine": 0
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "low"
+ },
+ {
   "name": "Jarrylo",
   "alphaAcidPercent": 13.0,
   "alphaLow": 12.0,
@@ -2442,6 +2592,8 @@
   "betaHigh": 8.0,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 35.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 2,
@@ -2457,6 +2609,32 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Jester",
+  "alphaAcidPercent": 8,
+  "alphaLow": 7,
+  "alphaHigh": 9,
+  "betaAcidPercent": 5,
+  "betaLow": 4,
+  "betaHigh": 6,
+  "oilTotalMlPer100g": 0.9,
+  "cohumulonePercent": 25.5,
+  "originCode": "GB",
+  "category": "English Hops",
+  "flavor": {
+   "citrus": 4,
+   "tropicalFruit": 3,
+   "stoneFruit": 2,
+   "berry": 3,
+   "floral": 1,
+   "grassy": 0,
+   "herbal": 2,
+   "spice": 0,
+   "resinPine": 3
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Kazbek",
   "alphaAcidPercent": 6.0,
   "alphaLow": 4.0,
@@ -2467,7 +2645,7 @@
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 37.5,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 2,
@@ -2544,6 +2722,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 31.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 0,
@@ -2568,6 +2748,7 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 25.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 1,
@@ -2619,6 +2800,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 36.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 4,
@@ -2722,7 +2905,7 @@
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 25.0,
   "originCode": "DE",
-  "category": "US Hops",
+  "category": "German Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -2790,6 +2973,30 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Medusa",
+  "alphaAcidPercent": 3.8,
+  "betaAcidPercent": 5.25,
+  "betaLow": 5,
+  "betaHigh": 5.5,
+  "oilTotalMlPer100g": 0.4,
+  "cohumulonePercent": 29,
+  "originCode": "US",
+  "category": "US Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 4,
+   "stoneFruit": 2,
+   "berry": 0,
+   "floral": 2,
+   "grassy": 0,
+   "herbal": 0,
+   "spice": 0,
+   "resinPine": 0
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Melba",
   "alphaAcidPercent": 8.5,
   "alphaLow": 7.0,
@@ -2825,6 +3032,8 @@
   "betaHigh": 8.0,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 25.1,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 3,
@@ -2944,7 +3153,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Mount hood",
+  "name": "Mount Hood",
   "alphaAcidPercent": 6.0,
   "alphaLow": 4.0,
   "alphaHigh": 8.0,
@@ -3020,7 +3229,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Mt. rainier",
+  "name": "Mt. Rainier",
   "alphaAcidPercent": 7.2,
   "alphaLow": 5.0,
   "alphaHigh": 9.4,
@@ -3029,6 +3238,8 @@
   "betaHigh": 9.0,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 22.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -3045,14 +3256,14 @@
  },
  {
   "name": "Nectaron",
-  "alphaAcidPercent": 24.0,
-  "alphaLow": 21.0,
-  "alphaHigh": 27.0,
-  "betaAcidPercent": 11.5,
-  "betaLow": 10.0,
-  "betaHigh": 13.0,
-  "oilTotalMlPer100g": 4.5,
-  "cohumulonePercent": 0.0,
+  "alphaAcidPercent": 11,
+  "alphaLow": 10.5,
+  "alphaHigh": 11.5,
+  "betaAcidPercent": 4.8,
+  "betaLow": 4.5,
+  "betaHigh": 5,
+  "oilTotalMlPer100g": 1.7,
+  "cohumulonePercent": 27,
   "originCode": "NZ",
   "category": "New Zealand Hops",
   "flavor": {
@@ -3105,6 +3316,7 @@
   "betaHigh": 6.5,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 37.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 2,
@@ -3199,6 +3411,32 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Olicana",
+  "alphaAcidPercent": 8,
+  "alphaLow": 7,
+  "alphaHigh": 9,
+  "betaAcidPercent": 5,
+  "betaLow": 4,
+  "betaHigh": 6,
+  "oilTotalMlPer100g": 0.5,
+  "cohumulonePercent": 30,
+  "originCode": "GB",
+  "category": "English Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 5,
+   "stoneFruit": 2,
+   "berry": 0,
+   "floral": 2,
+   "grassy": 0,
+   "herbal": 1,
+   "spice": 0,
+   "resinPine": 0
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Olympic",
   "alphaAcidPercent": 12.5,
   "alphaLow": 11.5,
@@ -3208,6 +3446,8 @@
   "betaHigh": 5.5,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 1,
@@ -3249,7 +3489,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Pacific crest",
+  "name": "Pacific Crest",
   "alphaAcidPercent": 3.9,
   "alphaLow": 3.9,
   "alphaHigh": 3.9,
@@ -3258,6 +3498,8 @@
   "betaHigh": 3.0,
   "oilTotalMlPer100g": 0.5,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 1,
@@ -3386,6 +3628,8 @@
   "betaHigh": 8.0,
   "oilTotalMlPer100g": 1.3,
   "cohumulonePercent": 28.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 1,
@@ -3410,6 +3654,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 2.0,
   "cohumulonePercent": 28.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 2,
@@ -3435,7 +3681,7 @@
   "oilTotalMlPer100g": 1.2,
   "cohumulonePercent": 32.0,
   "originCode": "DE",
-  "category": "US Hops",
+  "category": "German Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -3486,6 +3732,8 @@
   "betaHigh": 5.5,
   "oilTotalMlPer100g": 1.7,
   "cohumulonePercent": 37.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 1,
@@ -3510,6 +3758,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 1.1,
   "cohumulonePercent": 34.5,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 0,
@@ -3520,6 +3770,32 @@
    "herbal": 1,
    "spice": 2,
    "resinPine": 2
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
+  "name": "Pioneer",
+  "alphaAcidPercent": 9.5,
+  "alphaLow": 8,
+  "alphaHigh": 12,
+  "betaAcidPercent": 3.75,
+  "betaLow": 3.5,
+  "betaHigh": 4,
+  "oilTotalMlPer100g": 1,
+  "cohumulonePercent": 37,
+  "originCode": "GB",
+  "category": "English Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 0,
+   "stoneFruit": 0,
+   "berry": 0,
+   "floral": 2,
+   "grassy": 0,
+   "herbal": 3,
+   "spice": 2,
+   "resinPine": 3
   },
   "flavorSource": "derived",
   "flavorConfidence": "high"
@@ -3561,7 +3837,7 @@
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 20.5,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -3577,7 +3853,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Pride of ringwood",
+  "name": "Pride of Ringwood",
   "alphaAcidPercent": 8.8,
   "alphaLow": 7.0,
   "alphaHigh": 10.5,
@@ -3612,6 +3888,8 @@
   "betaHigh": 3.3,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 27.5,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 1,
@@ -3731,7 +4009,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Saaz late",
+  "name": "Saaz Late",
   "alphaAcidPercent": 3.5,
   "alphaLow": 2.0,
   "alphaHigh": 5.0,
@@ -3818,6 +4096,7 @@
   "betaHigh": 9.0,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 23.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 1,
@@ -3860,7 +4139,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Savinjski golding",
+  "name": "Savinjski Golding",
   "alphaAcidPercent": 3.2,
   "alphaLow": 2.5,
   "alphaHigh": 4.0,
@@ -3869,6 +4148,8 @@
   "betaHigh": 3.5,
   "oilTotalMlPer100g": 1.0,
   "cohumulonePercent": 29.0,
+  "originCode": "SI",
+  "category": "Slovenian Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -3893,6 +4174,7 @@
   "betaHigh": 5.5,
   "oilTotalMlPer100g": 1.8,
   "cohumulonePercent": 19.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 2,
@@ -3919,7 +4201,7 @@
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 26.5,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 2,
@@ -3945,7 +4227,7 @@
   "oilTotalMlPer100g": 0.9,
   "cohumulonePercent": 24.5,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 2,
@@ -4013,7 +4295,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Sorachi ace",
+  "name": "Sorachi Ace",
   "alphaAcidPercent": 12.6,
   "alphaLow": 10.0,
   "alphaHigh": 15.2,
@@ -4065,6 +4347,84 @@
   "flavorConfidence": "high"
  },
  {
+  "name": "Southern Passion",
+  "alphaAcidPercent": 8.5,
+  "alphaLow": 5,
+  "alphaHigh": 12,
+  "betaAcidPercent": 5,
+  "betaLow": 4,
+  "betaHigh": 6,
+  "oilTotalMlPer100g": 1,
+  "cohumulonePercent": 21,
+  "originCode": "ZA",
+  "category": "South African Hops",
+  "flavor": {
+   "citrus": 2,
+   "tropicalFruit": 5,
+   "stoneFruit": 1,
+   "berry": 3,
+   "floral": 2,
+   "grassy": 0,
+   "herbal": 0,
+   "spice": 0,
+   "resinPine": 1
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
+  "name": "Southern Promise",
+  "alphaAcidPercent": 10.5,
+  "alphaLow": 9.5,
+  "alphaHigh": 11.5,
+  "betaAcidPercent": 4.5,
+  "betaLow": 3.6,
+  "betaHigh": 5.4,
+  "oilTotalMlPer100g": 0.9,
+  "cohumulonePercent": 21,
+  "originCode": "ZA",
+  "category": "South African Hops",
+  "flavor": {
+   "citrus": 1,
+   "tropicalFruit": 1,
+   "stoneFruit": 0,
+   "berry": 2,
+   "floral": 1,
+   "grassy": 1,
+   "herbal": 4,
+   "spice": 2,
+   "resinPine": 2
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
+  "name": "Southern Star",
+  "alphaAcidPercent": 14,
+  "alphaLow": 12,
+  "alphaHigh": 18,
+  "betaAcidPercent": 5,
+  "betaLow": 4,
+  "betaHigh": 6,
+  "oilTotalMlPer100g": 1.5,
+  "cohumulonePercent": 30,
+  "originCode": "ZA",
+  "category": "South African Hops",
+  "flavor": {
+   "citrus": 3,
+   "tropicalFruit": 4,
+   "stoneFruit": 0,
+   "berry": 2,
+   "floral": 0,
+   "grassy": 0,
+   "herbal": 0,
+   "spice": 2,
+   "resinPine": 3
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Sovereign",
   "alphaAcidPercent": 5.5,
   "alphaLow": 4.5,
@@ -4074,6 +4434,8 @@
   "betaHigh": 3.1,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 28.0,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -4091,6 +4453,7 @@
  {
   "name": "Spalt",
   "alphaAcidPercent": 5.0,
+  "originCode": "DE",
   "category": "Noble Hops",
   "flavor": {
    "citrus": 1,
@@ -4107,7 +4470,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Spalt spalter",
+  "name": "Spalt Spalter",
   "alphaAcidPercent": 3.1,
   "alphaLow": 0.0,
   "alphaHigh": 6.2,
@@ -4194,6 +4557,8 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 1.4,
   "cohumulonePercent": 24.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -4244,6 +4609,7 @@
   "betaHigh": 6.0,
   "oilTotalMlPer100g": 2.9,
   "cohumulonePercent": 10.5,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 3,
@@ -4314,7 +4680,8 @@
  {
   "name": "Styrian Celeia",
   "alphaAcidPercent": 4.0,
-  "category": "New Zealand Hops",
+  "originCode": "SI",
+  "category": "Slovenian Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -4330,7 +4697,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Styrian gold",
+  "name": "Styrian Gold",
   "alphaAcidPercent": 5.0,
   "alphaLow": 3.5,
   "alphaHigh": 6.5,
@@ -4356,7 +4723,7 @@
   "flavorConfidence": "low"
  },
  {
-  "name": "Styrian golding",
+  "name": "Styrian Golding",
   "alphaAcidPercent": 5.5,
   "alphaLow": 4.0,
   "alphaHigh": 7.0,
@@ -4384,7 +4751,8 @@
  {
   "name": "Styrian Goldings",
   "alphaAcidPercent": 4.5,
-  "category": "English Hops",
+  "originCode": "SI",
+  "category": "Slovenian Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 0,
@@ -4400,7 +4768,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Styrian savinjski golding",
+  "name": "Styrian Savinjski Golding",
   "alphaAcidPercent": 4.0,
   "alphaLow": 2.0,
   "alphaHigh": 6.1,
@@ -4426,6 +4794,32 @@
   "flavorConfidence": "low"
  },
  {
+  "name": "Styrian Wolf",
+  "alphaAcidPercent": 12,
+  "alphaLow": 10,
+  "alphaHigh": 13,
+  "betaAcidPercent": 5.5,
+  "betaLow": 5,
+  "betaHigh": 6,
+  "oilTotalMlPer100g": 3.5,
+  "cohumulonePercent": 22.5,
+  "originCode": "SI",
+  "category": "Slovenian Hops",
+  "flavor": {
+   "citrus": 4,
+   "tropicalFruit": 4,
+   "stoneFruit": 0,
+   "berry": 0,
+   "floral": 2,
+   "grassy": 1,
+   "herbal": 2,
+   "spice": 1,
+   "resinPine": 1
+  },
+  "flavorSource": "derived",
+  "flavorConfidence": "high"
+ },
+ {
   "name": "Sultana",
   "alphaAcidPercent": 14.0,
   "alphaLow": 13.0,
@@ -4435,6 +4829,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 3.2,
   "cohumulonePercent": 24.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 3,
@@ -4459,6 +4855,8 @@
   "betaHigh": 6.1,
   "oilTotalMlPer100g": 1.1,
   "cohumulonePercent": 22.5,
+  "originCode": "AU",
+  "category": "Australian Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 2,
@@ -4500,7 +4898,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Super galena",
+  "name": "Super Galena",
   "alphaAcidPercent": 14.5,
   "alphaLow": 13.0,
   "alphaHigh": 16.0,
@@ -4509,6 +4907,8 @@
   "betaHigh": 10.0,
   "oilTotalMlPer100g": 1.6,
   "cohumulonePercent": 37.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -4524,7 +4924,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Super pride",
+  "name": "Super Pride",
   "alphaAcidPercent": 14.6,
   "alphaLow": 12.3,
   "alphaHigh": 16.9,
@@ -4550,7 +4950,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Superdelic , hops",
+  "name": "Superdelic",
   "alphaAcidPercent": 10.5,
   "alphaLow": 9.0,
   "alphaHigh": 12.0,
@@ -4611,6 +5011,8 @@
   "betaHigh": 4.6,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 25.5,
+  "originCode": "AU",
+  "category": "Australian Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -4635,6 +5037,8 @@
   "betaHigh": 9.5,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 16.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 0,
@@ -4711,6 +5115,8 @@
   "betaHigh": 5.7,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 37.5,
+  "originCode": "GB",
+  "category": "English Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -4728,6 +5134,7 @@
  {
   "name": "Taurus",
   "alphaAcidPercent": 15.0,
+  "originCode": "DE",
   "category": "German Hops",
   "flavor": {
    "citrus": 1,
@@ -4746,6 +5153,7 @@
  {
   "name": "Tettnang",
   "alphaAcidPercent": 4.5,
+  "originCode": "DE",
   "category": "Noble Hops",
   "flavor": {
    "citrus": 1,
@@ -4762,7 +5170,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Tettnang tettnanger",
+  "name": "Tettnang Tettnanger",
   "alphaAcidPercent": 3.7,
   "alphaLow": 1.9,
   "alphaHigh": 5.5,
@@ -4842,6 +5250,7 @@
  {
   "name": "Tomahawk",
   "alphaAcidPercent": 16.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 2,
@@ -4919,6 +5328,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 2.2,
   "cohumulonePercent": 25.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 4,
@@ -4969,6 +5380,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 1.9,
   "cohumulonePercent": 24.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 2,
@@ -4984,7 +5397,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Tsingdao flower",
+  "name": "Tsingdao Flower",
   "alphaAcidPercent": 7.0,
   "alphaLow": 6.0,
   "alphaHigh": 8.0,
@@ -5011,6 +5424,7 @@
  {
   "name": "Ultra",
   "alphaAcidPercent": 5.0,
+  "originCode": "US",
   "category": "US Hops",
   "flavor": {
    "citrus": 1,
@@ -5027,7 +5441,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Us saaz",
+  "name": "US Saaz",
   "alphaAcidPercent": 5.0,
   "alphaLow": 3.5,
   "alphaHigh": 6.5,
@@ -5036,6 +5450,8 @@
   "betaHigh": 5.0,
   "oilTotalMlPer100g": 0.8,
   "cohumulonePercent": 26.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 0,
    "tropicalFruit": 0,
@@ -5051,7 +5467,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Usda 008",
+  "name": "USDA 008",
   "alphaAcidPercent": 11.1,
   "alphaLow": 11.1,
   "alphaHigh": 11.1,
@@ -5100,7 +5516,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Vic secret",
+  "name": "Vic Secret",
   "alphaAcidPercent": 17.8,
   "alphaLow": 14.0,
   "alphaHigh": 21.6,
@@ -5135,6 +5551,8 @@
   "betaHigh": 5.5,
   "oilTotalMlPer100g": 1.5,
   "cohumulonePercent": 31.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 2,
@@ -5160,7 +5578,7 @@
   "oilTotalMlPer100g": 2.2,
   "cohumulonePercent": 0.0,
   "originCode": "CZ",
-  "category": "Noble Hops",
+  "category": "Czech Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 2,
@@ -5174,32 +5592,6 @@
   },
   "flavorSource": "derived",
   "flavorConfidence": "low"
- },
- {
-  "name": "Wai",
-  "alphaAcidPercent": 3.0,
-  "alphaLow": 2.5,
-  "alphaHigh": 3.5,
-  "betaAcidPercent": 5.0,
-  "betaLow": 4.5,
-  "betaHigh": 5.5,
-  "oilTotalMlPer100g": 1.6,
-  "cohumulonePercent": 23.0,
-  "originCode": "NZ",
-  "category": "New Zealand Hops",
-  "flavor": {
-   "citrus": 3,
-   "tropicalFruit": 1,
-   "stoneFruit": 3,
-   "berry": 0,
-   "floral": 0,
-   "grassy": 0,
-   "herbal": 0,
-   "spice": 0,
-   "resinPine": 0
-  },
-  "flavorSource": "derived",
-  "flavorConfidence": "high"
  },
  {
   "name": "Wai-iti",
@@ -5306,7 +5698,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Whitbread golding",
+  "name": "Whitbread Golding",
   "alphaAcidPercent": 6.5,
   "alphaLow": 5.0,
   "alphaHigh": 8.0,
@@ -5332,7 +5724,7 @@
   "flavorConfidence": "low"
  },
  {
-  "name": "Whitbread goldings variety",
+  "name": "Whitbread Goldings Variety",
   "alphaAcidPercent": 6.3,
   "alphaLow": 5.0,
   "alphaHigh": 7.7,
@@ -5382,7 +5774,7 @@
   "flavorConfidence": "curated"
  },
  {
-  "name": "Yakima gold",
+  "name": "Yakima Gold",
   "alphaAcidPercent": 7.5,
   "alphaLow": 7.0,
   "alphaHigh": 8.0,
@@ -5391,6 +5783,8 @@
   "betaHigh": 4.5,
   "oilTotalMlPer100g": 1.0,
   "cohumulonePercent": 22.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 2,
    "tropicalFruit": 0,
@@ -5406,7 +5800,7 @@
   "flavorConfidence": "high"
  },
  {
-  "name": "Ycr 1",
+  "name": "YCR 1",
   "alphaAcidPercent": 5.0,
   "alphaLow": 4.0,
   "alphaHigh": 6.0,
@@ -5415,6 +5809,8 @@
   "betaHigh": 6.5,
   "oilTotalMlPer100g": 1.2,
   "cohumulonePercent": 32.5,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 3,
    "tropicalFruit": 0,
@@ -5439,6 +5835,8 @@
   "betaHigh": 9.0,
   "oilTotalMlPer100g": 2.1,
   "cohumulonePercent": 0.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 1,
    "tropicalFruit": 4,
@@ -5489,6 +5887,8 @@
   "betaHigh": 6.5,
   "oilTotalMlPer100g": 1.1,
   "cohumulonePercent": 30.0,
+  "originCode": "US",
+  "category": "US Hops",
   "flavor": {
    "citrus": 4,
    "tropicalFruit": 4,

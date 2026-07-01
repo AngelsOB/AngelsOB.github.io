@@ -1,20 +1,7 @@
 /* eslint-disable no-console -- offline analysis runner reports to stdout */
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
-
-function family(style: string): string {
-  const n = (style || "").toLowerCase();
-  if (/sour|gose|lambic|berliner|brett|\bwild\b|kettle/.test(n)) return "Sour/Wild";
-  if (/stout|porter/.test(n)) return "Stout/Porter";
-  if (/ipa|india pale/.test(n)) return "IPA";
-  if (/wheat|weiss|weizen|witbier|\bwit\b|hefe/.test(n)) return "Wheat";
-  if (/saison|farmhouse|belgian|tripel|dubbel|\bquad|abbey|biere de|grisette/.test(n)) return "Belgian";
-  if (/barley\s?wine|wee heavy|old ale|imperial|strong/.test(n)) return "Strong";
-  if (/lager|pilsner|\bpils\b|helles|märzen|marzen|bock|schwarz|dunkel|festbier|common|steam/.test(n)) return "Lager";
-  if (/brown|amber|\bred\b|altbier|\balt\b|bitter|\besb\b|\bmild\b|scottish/.test(n)) return "Amber/Brown";
-  if (/pale ale|blonde|golden|kölsch|kolsch|cream ale|\bapa\b/.test(n)) return "Pale/Blonde";
-  return "Other";
-}
+import { family } from "./styleFamily";
 
 const CLOUD = "src/modules/corpus-lab/offline/out/cloud.ndjson";
 const RUN = !!process.env.BUILD_CLOUD && existsSync(CLOUD);

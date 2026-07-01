@@ -24,6 +24,7 @@ import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 
 import { createCatalog } from "../catalog";
 import { slugify } from "../slugify";
+import { yeastSearchText } from "../searchText";
 import type {
   IngredientFaqItem,
   IngredientGroup,
@@ -371,18 +372,8 @@ export function yeastRows(): IngredientRow[] {
       stats,
       // No radar vector — yeast has no flavor profile; the generic card
       // handles the absent `chart` by rendering name + stats only.
-      keywords: [
-        y.name,
-        group,
-        formatStrainType(y.type) ?? "",
-        y.labProductId ?? "",
-        y.strainGroup ?? "",
-        ...yeastAliases(y),
-        ...(y.styles ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .trim(),
+      // One shared haystack with the picker modal — see searchText.ts.
+      keywords: yeastSearchText(y),
     };
   });
 }

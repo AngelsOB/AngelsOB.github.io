@@ -1,0 +1,549 @@
+# count	conf	canonical	raw
+57696	high	Cascade	Cascade
+56524	high	Citra	Citra
+34312	high	Centennial	Centennial
+34186	high	Amarillo	Amarillo
+31858	high	Mosaic	Mosaic
+29427	high	Simcoe	Simcoe
+20907	high	Saaz	Saaz
+20641	high	Chinook	Chinook
+19696	high	East Kent Goldings	East Kent Goldings
+19574	high	Columbus	Columbus
+16920	high	Magnum	Magnum
+14337	high	Galaxy	Galaxy
+14119	low	Fuggle	Fuggles
+11937	high	Willamette	Willamette
+10079	high	Hallertau Mittelfrüh	Hallertau Mittelfruh
+9223	high	Northern Brewer (German)	Northern Brewer
+8386	high	Tettnanger	Tettnanger
+7964	high	El Dorado	El Dorado
+7119	high	Nelson Sauvin	Nelson Sauvin
+6403	high	Perle	Perle
+6349	high	Nugget	Nugget
+6307	high	Styrian Goldings	Styrian Goldings
+6237	medium	Hersbrucker	Hallertau Hersbrucker
+5885	high	Warrior	Warrior
+5166	high	Azacca	Azacca
+5023	high	Hallertau Mittelfrüh	Domestic Hallertau
+4395	high	Challenger	Challenger
+4044	high	Mandarina Bavaria	Mandarina Bavaria
+3844	high	Motueka	Motueka
+3086	high	Summit	Summit
+2932	high	Crystal	Crystal
+2911	high	East Kent Goldings	Kent Goldings
+2901	high	Mount Hood	Mount Hood
+2884	high	Goldings	Goldings
+2868	high	Sorachi Ace	Sorachi Ace
+2633	high	Cluster	Cluster
+2553	high	Hallertau Blanc	Hallertau Blanc
+2545	high	Falconers Flight	Falconer's Flight
+2540	high	Ekuanot	Ekuanot
+2388	high	Galena	Galena
+2349	high	Ahtanum	Ahtanum
+2248	high	Target	Target
+2163	high	Liberty	Liberty
+2074	high	Huell Melon	Huell Melon
+2015	high	Apollo	Apollo
+1910	high	Lemondrop	Lemondrop
+1854	high	Vic Secret	Vic Secret
+1819	high	Sterling	Sterling
+1545	high	CTZ (Columbus/Tomahawk/Zeus)	CTZ
+1531	high	Bravo	Bravo
+1529	high	Spalt	Spalt
+1463	high	Calypso	Calypso
+1413	high	Hersbrucker	Hersbrucker
+1311	high	Bramling Cross	Bramling Cross
+1309	high	Citra	citra
+1266	high	Brewers Gold	Brewer's Gold
+1192	high	Comet	Comet
+1091	high	Glacier	Glacier
+1042	high	Horizon	Horizon
+1025	high	First Gold	First Gold
+930	high	Rakau	Rakau
+925	high	Loral	Loral
+912	high	Pacific Gem	Pacific Gem
+893	high	Zythos	Zythos
+867	high	Belma	Belma
+865	high	Zeus	Zeus
+828	high	Pacific Jade	Pacific Jade
+814	high	Cascade	cascade
+746	high	Admiral	Admiral
+736	high	Waimea	Waimea
+724	high	Palisade	Palisade
+723	high	Ella	Ella
+722	high	Wakatu	Wakatu
+717	high	Citra	Citra (11 AA)
+678	high	Strisselspalt	Strisselspalt
+656	high	Northdown	Northdown
+653	high	Aurora	Aurora
+650	high	Saphir	Saphir
+621	high	Wai-iti	Wai-iti
+615	high	Ekuanot	Equinox
+599	high	Pacifica	Pacifica
+573	high	Jarrylo	Jarrylo
+507	medium	Citra	Yakima Chief Hops - Citra LupuLN2 (Cryo)
+501	high	Green Bullet	Green Bullet
+497	high	Topaz	Topaz
+487	high	Kohatu	Kohatu
+486	high	Mosaic	mosaic
+481	high	Riwaka	Riwaka
+460	high	Sabro	Sabro
+457	medium	Tradition	Hallertau Tradition (Germany)
+444	high	Southern Cross	Southern Cross
+444	high	Mosaic	Mosaic (12.5 AA)
+433	high	Hallertau Mittelfrüh	Northern Brewer - Hallertau
+433	high	Summer	Summer
+431	high	Pilgrim	Pilgrim
+418	high	Cascade	Cascade (7 AA)
+418	medium	Mosaic	Yakima Chief Hops - Mosaic LupuLN2 (Cryo)
+408	high	Cashmere	Yakima Valley Hops - Cashmere
+404	high	Simcoe	simcoe
+393	high	Idaho 7	Yakima Valley Hops - Idaho 7
+388	high	Denali	Crosby Hop Farm - Denali
+383	medium	Saaz	Brewmaster - Czech Saaz
+383	high	Amarillo	Amarillo (8.6 AA)
+378	high	Saaz	saaz
+371	high	Idaho 7	Idaho 7
+357	high	Pride of Ringwood	Pride of Ringwood
+351	medium	Citra	Citra LupuLN2
+341	high	Progress	Progress
+337	high	Tomahawk	Tomahawk
+330	high	Phoenix	Phoenix
+330	medium	Goldings	B. C. Goldings
+329	high	Enigma	Enigma
+327	high	Eureka	Eureka
+326	high	Vanguard	Vanguard
+306	high	Hallertau Mittelfrüh	Yakima Chief Hops - German Hallertau
+298	high	Simcoe	Simcoe (12.7 AA)
+295	high	Amarillo	amarillo
+288	low	Millennium	Millenium
+285	medium	Simcoe	Yakima Chief Hops - Simcoe LupuLN2 (Cryo)
+274	high	Dr. Rudi	Dr. Rudi
+270	high	Cashmere	Cashmere
+268	high	Polaris	Polaris
+265	high	Tradition	Tradition
+261	high	Centennial	Centennial (10 AA)
+261	medium	Mosaic	Mosaic LupuLN2
+253	high	Galaxy	galaxy
+246	high	Lublin	Lublin
+242	high	Southern Passion	Yakima Valley Hops - Southern Passion
+240	high	Herkules	Herkules
+238	high	Ekuanot	equinox
+235	high	Magnum	magnum
+235	high	Sabro	Yakima Valley Hops - Sabro
+232	high	Citra	Yakima Valley Hops - Citra
+227	high	Strata	Strata
+222	high	Cascade	Taiheke
+221	high	Fuggle	Yakima Valley Hops - Fuggle
+221	high	Pekko	Yakima Valley Hops - Pekko
+220	high	Lemondrop	Lemon Drop
+213	high	Chinook	chinook
+212	high	Moutere	Moutere
+206	high	Chinook	Chinook (13 AA)
+203	high	Cascade	Artisan - Cascade
+202	high	Bullion	Bullion
+201	high	Whitbread Golding	Whitbread Golding
+197	high	Santiam	Santiam
+196	high	Mosaic	Yakima Valley Hops - Mosaic
+192	high	Galaxy	Galaxy (14.25 AA)
+189	high	East Kent Goldings	Yakima Valley Hops - East Kent Golding
+185	medium	Simcoe	Simcoe LupuLN2
+182	high	Tettnang	Tettnang
+181	low	Willamette	Northern Brewer - Williamette
+176	high	Archer	Archer
+175	medium	Cascade	Yakima Chief Hops - Cascade LupuLN2 (Cryo)
+168	high	Columbia	Columbia
+167	high	Jester	Jester
+167	high	Centennial	centennial
+166	high	Columbus	Columbus (15 AA)
+165	high	Medusa	Yakima Valley Hops - Medusa
+164	high	Kazbek	Kazbek
+163	high	Cascade	Yakima Chief Hops - Cascade
+160	high	Opal	Opal
+156	high	Cascade	Cascade (U.S.)
+156	medium	Tradition	Hallertau Tradition
+152	high	Aramis	Aramis
+150	high	Sabro	sabro
+147	high	Azacca	azacca
+146	high	German Tradition	German Tradition
+146	high	Columbus	columbus
+144	high	El Dorado	El Dorado (15.7 AA)
+144	high	Newport	Newport
+143	high	Mt. Hood	Mt. Hood
+143	high	Cashmere	cashmere
+140	high	Pioneer	Pioneer
+138	high	Premiant	Premiant
+136	low	Fuggle	fuggles
+133	high	Citra	Citra (US)
+133	high	Magnum	Magnum (15 AA)
+129	high	Enigma	enigma
+129	high	Zappa	Zappa
+128	high	Hallertau Mittelfrüh	Hallertauer
+127	high	Polaris	polaris
+125	medium	Ekuanot	Yakima Chief Hops - Ekuanot LupuLN2 (Cryo)
+122	high	Marynka	Marynka
+122	high	Meridian	Meridian
+120	high	African Queen	Yakima Valley Hops - African Queen
+120	high	Denali	Denali
+119	high	Medusa	Medusa
+117	medium	Galaxy	Northern Brewer - Australian Galaxy
+117	high	Cascade	Yakima Valley Hops - Cascade
+115	high	Columbus	Columbus (Tomahawk)
+115	high	Centennial	Yakima Valley Hops - Centennial
+113	high	Saaz	Saaz (3.5 AA)
+112	high	Bobek	Bobek
+111	high	Perle	perle
+107	high	Denali	Crosby Hop Farm - denali
+104	high	Citra	Yakima Chief Hops - Citra
+103	high	Lemondrop	lemon drop
+103	high	Azacca	Azacca (15 AA)
+103	medium	Cascade	Cascade LupuLN2
+101	high	Sovereign	Sovereign
+101	high	Simcoe	Yakima Chief Hops - Simcoe
+100	high	Pacific Jade	pacific jade
+99	high	Dr. Rudi	Super Alpha
+95	high	Idaho 7	Artisan - Idaho #7
+95	high	Strata	strata
+94	high	Idaho 7	idaho 7
+93	high	Galaxy	Galaxy (AU)
+93	high	East Kent Goldings	East Kent Goldings (5 AA)
+93	high	Cascade	Northern Brewer - Cascade
+91	high	Aurora	Super Styrians
+91	medium	East Kent Goldings	BSG - East Kent Goldings
+89	high	Nugget	nugget
+87	high	Mt. Rainier	Mount Rainier
+87	high	Southern Promise	Yakima Valley Hops - Southern Promise
+86	medium	Ekuanot	Ekuanot LupuLN2
+86	high	Sladek	Sladek
+86	high	Idaho 7	Yakima Valley Hops - idaho 7
+86	high	Sticklebract	Sticklebract
+85	high	Herkules	herkules
+84	high	Lemondrop	lemondrop
+83	high	Eureka	eureka
+82	high	Warrior	warrior
+82	high	Hüll melon	Yakima Valley Hops - Hull Melon
+82	high	Cashmere	Yakima Valley Hops - cashmere
+81	high	East Kent Goldings	Goldings, East Kent
+80	high	Ariana	Ariana
+80	high	Southern Passion	Southern Passion
+79	medium	Spalt	Spalt Select
+79	high	Wakatu	wakatu
+79	high	Mosaic	Mosaic™ (US)
+78	high	Celeia	Celeia
+78	high	Barbe Rouge	Barbe Rouge
+77	high	Pekko	Yakima Valley Hops - pekko
+77	medium	Citra	BSG - Citra
+75	high	Pekko	Pekko
+75	high	BRU-1	Yakima Valley Hops - BRU-1
+74	medium	Cluster	Yakima Cluster
+74	high	Sladek	sladek
+74	high	Sabro	HBC 438
+74	high	Amarillo	Amarillo (US)
+73	high	Azacca	Yakima Valley Hops - Azacca
+73	medium	Columbus	Yakima Chief Hops - Columbus LupuLN2 (Cryo)
+73	high	Centennial	Yakima Chief Hops - Centennial
+72	high	Summit	summit
+71	high	African Queen	African Queen
+70	high	Boadicea	Boadicea
+70	high	Mt. Hood	Mt Hood
+69	high	Topaz	topaz
+68	high	Ella	ella
+68	medium	Tettnang	Yakima Chief Hops - German Tettnang
+68	high	Amarillo	Yakima Chief Hops - Amarillo
+67	low	Goldings	Golding
+67	high	Ultra	Ultra
+65	medium	Northern Brewer (German)	BSG - German Northern Brewer
+65	high	BRU-1	Bru-1
+65	low	Fuggle	Fuggles (4.5 AA)
+65	high	Idaho Gem	Yakima Valley Hops - Idaho Gem
+64	high	Belma	belma
+63	high	Callista	Callista
+63	high	Olicana	Olicana
+63	high	Endeavour	Endeavour
+63	high	Centennial	Artisan - Centennial
+62	medium	Mosaic	BSG - Mosaic
+61	high	Fuggle	Yakima Valley Hops - fuggle
+61	high	Spalter Select	German Select
+61	high	Mandarina Bavaria	Mandarina Bavaria (8.5 AA)
+61	high	Citra	Northern Brewer - Citra
+60	medium	Amarillo	Amarillo Gold
+60	none	(UNRESOLVED)	Sonnet
+60	high	Waimea	waimea
+59	low	Herkules	Hercules
+59	medium	Magnum	BSG - Magnum
+59	medium	Sabro	BSG - Sabro
+58	high	Dr. Rudi	Dr Rudi
+58	high	Idaho Gem	Idaho Gem
+58	medium	Nelson Sauvin	Yakima Valley Hops - NZ Nelson Sauvin
+58	high	Magnum	Artisan - Magnum
+57	high	Southern Cross	southern cross
+57	high	Helga	Helga
+57	medium	Galaxy	Yakima Valley Hops - AU Galaxy
+56	high	Warrior	Warrior (16 AA)
+56	high	Simcoe	Simcoe (US)
+56	high	Mosaic	Mosiac
+56	high	Tradition	tradition
+56	high	Styrian Celeia	Styrian Celeia
+56	medium	Magnum	Yakima Chief Hops - German Magnum
+56	high	Chinook	Artisan - Chinook
+55	high	Cascade	Cascade (US)
+55	high	Kohatu	kohatu
+55	high	Simcoe	Simco
+55	none	(UNRESOLVED)	Fortnight
+54	high	East Kent Goldings	EKG
+54	low	Centennial	Centenial
+54	high	Celeia	celeia
+53	medium	Magnum	US Magnum
+53	high	Southern Star	Southern Star
+53	medium	Willamette	US Willamette
+53	medium	Citra	YCH - Citra LupuLN2 (Cryo) (25 AA)
+53	high	Hallertau Mittelfrüh	Northern Brewer - hallertau
+53	high	Styrian Wolf	Styrian Wolf
+53	high	Strata	Yakima Valley Hops - Strata
+53	high	Willamette	Yakima Valley Hops - Willamette
+53	high	Citra	Artisan - Citra
+52	medium	Tettnang	German Tettnang
+52	high	Delta	Delta
+52	high	Mt. Hood	Yakima Chief Hops - MT Hood
+52	high	Meridian	meridian
+51	medium	Citra	US Citra
+51	high	Kazbek	kazbek
+51	high	HBC 472	HBC 472
+51	high	Warrior	Yakima Valley Hops - Warrior
+50	high	Jester	jester
+50	medium	Fuggle	Yakima Chief Hops - Fuggle UK
+49	high	Northern Brewer (German)	Northern Brewer (U.S.)
+49	medium	Goldings	Yakima Chief Hops - US Golding
+49	high	Triskel	Triskel
+49	high	Spalter Select	Spalter Select
+49	high	Simcoe	Yakima Valley Hops - Simcoe
+49	high	Idaho 7	Idaho
+49	medium	Cascade	Yakima Chief Hops - Cascade DBL
+49	medium	Cascade	Barth-Haas - Cascade
+48	none	(UNRESOLVED)	007
+48	high	Lemondrop	Lemon drop
+48	high	Iunga	Iunga
+48	medium	Cascade	BSG - Cascade
+47	high	Motueka	Motueka (7 AA)
+47	none	(UNRESOLVED)	HBC 342
+47	high	Vic Secret	vic secret
+46	none	(UNRESOLVED)	Mandarina
+46	high	Eureka	Eureka!
+46	medium	Perle	German Perle
+45	high	Sybilla	Sybilla
+45	medium	Cascade	NZ Cascade
+45	high	Styrian Wolf	styrian wolf
+45	high	Amarillo	Yakima Valley Hops - Amarillo
+44	medium	Goldings	US Goldings
+44	high	Ekuanot	Ekuanot (14.25 AA)
+44	high	Lubelski	Lubelski
+44	none	(UNRESOLVED)	victoria
+43	none	(UNRESOLVED)	Hop Shot
+43	high	Citra	CITRA
+43	none	(UNRESOLVED)	Nelson
+43	high	BRU-1	BRU-1
+43	medium	Citra	Yakima Chief Hops - Citra DBL
+42	high	Hallertau Mittelfrüh	Hallertau Mittelfruh (3.75 AA)
+42	high	Mandarina Bavaria	mandarina bavaria
+42	high	Super Pride	Super Pride
+42	high	Medusa	Yakima Valley Hops - medusa
+42	high	Denali	denali
+42	medium	Mosaic	YCH - Mosaic LupuLN2 (Cryo) (22 AA)
+42	medium	Loral	Yakima Chief Hops - Loral LupuLN2 (Cryo)
+42	high	Simcoe	Artisan - Simcoe
+42	high	Centennial	Northern Brewer - Centennial
+41	medium	Citra	Yakima Chief Hops - Citra LupuLN2 (Cryo) (25 AA)
+41	high	Bobek	bobek
+41	none	(UNRESOLVED)	Hort 4337
+41	none	(UNRESOLVED)	Caliente
+41	high	Melba	Melba
+41	high	Amarillo	Artisan - Amarillo
+40	none	(UNRESOLVED)	Legacy
+40	high	Styrian Golding	Styrian Golding
+40	high	Hallertauer Tradition	Hallertauer Tradition
+40	high	Fuggle	Fuggle (U.S.)
+40	high	Mt. Hood	mt hood
+40	high	Simcoe	simco
+40	medium	Perle	Hallertau Perle
+40	high	Premiant	premiant
+40	none	(UNRESOLVED)	Triple Pearl
+40	high	Lemondrop	Lemondrop (6 AA)
+40	high	Magnum	Yakima Chief Hops - Magnum
+39	none	(UNRESOLVED)	German Hallertauer
+39	low	Columbus	colombus
+39	medium	Mosaic	Yakima Chief Hops - Mosaic LupuLN2 (Cryo) (22 AA)
+39	medium	Saaz	Yakima Valley Hops - CZ Saaz
+39	high	Mosaic	Mosaic (HBC 369)
+39	high	Nelson Sauvin	Nelson Sauvin (12.5 AA)
+39	high	Mt. Hood	Yakima Valley Hops - Mt Hood
+39	none	(UNRESOLVED)	Eukanot
+39	high	Columbus	Yakima Chief Hops - Columbus
+39	high	Willamette	Willamette (4.5 AA)
+38	high	Hüll melon	Yakima Valley Hops - Hüll Melon
+38	none	(UNRESOLVED)	Hallertau Mittlefruh
+38	high	Crystal	crystal
+38	high	Tettnang	tettnang
+38	high	Mosaic	Northern Brewer - Mosaic
+38	medium	Simcoe	Yakima Chief Hops - Simcoe LupuLN2 (Cryo) (23 AA)
+38	medium	Motueka	Yakima Valley Hops - NZ Motueka
+38	high	Hallertau Blanc	Hallertau Blanc (10 AA)
+38	high	Sladek	Sládek
+38	none	(UNRESOLVED)	Fantasia
+38	medium	Rakau	Yakima Valley Hops - NZ Rakau
+38	high	Saaz	ŽPČ
+38	none	(UNRESOLVED)	Michigan Copper
+38	high	Columbus	Artisan - Columbus (CTZ)
+38	none	(UNRESOLVED)	Sasquatch
+37	medium	Saaz	Brewmaster - czech saaz
+37	medium	Target	Wye Target
+37	high	Wai-iti	wai-iti
+37	high	Idaho 7	Idaho-7
+36	high	El Dorado	Eldorado
+
+# --- medium/low confidence within top 400 (eyeball these) ---
+14119	low	Fuggle	Fuggles
+6237	medium	Hersbrucker	Hallertau Hersbrucker
+507	medium	Citra	Yakima Chief Hops - Citra LupuLN2 (Cryo)
+457	medium	Tradition	Hallertau Tradition (Germany)
+418	medium	Mosaic	Yakima Chief Hops - Mosaic LupuLN2 (Cryo)
+383	medium	Saaz	Brewmaster - Czech Saaz
+351	medium	Citra	Citra LupuLN2
+330	medium	Goldings	B. C. Goldings
+288	low	Millennium	Millenium
+285	medium	Simcoe	Yakima Chief Hops - Simcoe LupuLN2 (Cryo)
+261	medium	Mosaic	Mosaic LupuLN2
+185	medium	Simcoe	Simcoe LupuLN2
+181	low	Willamette	Northern Brewer - Williamette
+175	medium	Cascade	Yakima Chief Hops - Cascade LupuLN2 (Cryo)
+156	medium	Tradition	Hallertau Tradition
+136	low	Fuggle	fuggles
+125	medium	Ekuanot	Yakima Chief Hops - Ekuanot LupuLN2 (Cryo)
+117	medium	Galaxy	Northern Brewer - Australian Galaxy
+103	medium	Cascade	Cascade LupuLN2
+91	medium	East Kent Goldings	BSG - East Kent Goldings
+86	medium	Ekuanot	Ekuanot LupuLN2
+79	medium	Spalt	Spalt Select
+77	medium	Citra	BSG - Citra
+74	medium	Cluster	Yakima Cluster
+73	medium	Columbus	Yakima Chief Hops - Columbus LupuLN2 (Cryo)
+68	medium	Tettnang	Yakima Chief Hops - German Tettnang
+67	low	Goldings	Golding
+65	medium	Northern Brewer (German)	BSG - German Northern Brewer
+65	low	Fuggle	Fuggles (4.5 AA)
+62	medium	Mosaic	BSG - Mosaic
+60	medium	Amarillo	Amarillo Gold
+59	low	Herkules	Hercules
+59	medium	Magnum	BSG - Magnum
+59	medium	Sabro	BSG - Sabro
+58	medium	Nelson Sauvin	Yakima Valley Hops - NZ Nelson Sauvin
+57	medium	Galaxy	Yakima Valley Hops - AU Galaxy
+56	medium	Magnum	Yakima Chief Hops - German Magnum
+54	low	Centennial	Centenial
+53	medium	Magnum	US Magnum
+53	medium	Willamette	US Willamette
+53	medium	Citra	YCH - Citra LupuLN2 (Cryo) (25 AA)
+52	medium	Tettnang	German Tettnang
+51	medium	Citra	US Citra
+50	medium	Fuggle	Yakima Chief Hops - Fuggle UK
+49	medium	Goldings	Yakima Chief Hops - US Golding
+49	medium	Cascade	Yakima Chief Hops - Cascade DBL
+49	medium	Cascade	Barth-Haas - Cascade
+48	medium	Cascade	BSG - Cascade
+46	medium	Perle	German Perle
+45	medium	Cascade	NZ Cascade
+44	medium	Goldings	US Goldings
+43	medium	Citra	Yakima Chief Hops - Citra DBL
+42	medium	Mosaic	YCH - Mosaic LupuLN2 (Cryo) (22 AA)
+42	medium	Loral	Yakima Chief Hops - Loral LupuLN2 (Cryo)
+41	medium	Citra	Yakima Chief Hops - Citra LupuLN2 (Cryo) (25 AA)
+40	medium	Perle	Hallertau Perle
+39	low	Columbus	colombus
+39	medium	Mosaic	Yakima Chief Hops - Mosaic LupuLN2 (Cryo) (22 AA)
+39	medium	Saaz	Yakima Valley Hops - CZ Saaz
+38	medium	Simcoe	Yakima Chief Hops - Simcoe LupuLN2 (Cryo) (23 AA)
+38	medium	Motueka	Yakima Valley Hops - NZ Motueka
+38	medium	Rakau	Yakima Valley Hops - NZ Rakau
+37	medium	Saaz	Brewmaster - czech saaz
+37	medium	Target	Wye Target
+
+# --- top UNRESOLVED by usage (need an alias or a new preset) ---
+60	none	(UNRESOLVED)	Sonnet
+55	none	(UNRESOLVED)	Fortnight
+48	none	(UNRESOLVED)	007
+47	none	(UNRESOLVED)	HBC 342
+46	none	(UNRESOLVED)	Mandarina
+44	none	(UNRESOLVED)	victoria
+43	none	(UNRESOLVED)	Hop Shot
+43	none	(UNRESOLVED)	Nelson
+41	none	(UNRESOLVED)	Hort 4337
+41	none	(UNRESOLVED)	Caliente
+40	none	(UNRESOLVED)	Legacy
+40	none	(UNRESOLVED)	Triple Pearl
+39	none	(UNRESOLVED)	German Hallertauer
+39	none	(UNRESOLVED)	Eukanot
+38	none	(UNRESOLVED)	Hallertau Mittlefruh
+38	none	(UNRESOLVED)	Fantasia
+38	none	(UNRESOLVED)	Michigan Copper
+38	none	(UNRESOLVED)	Sasquatch
+35	none	(UNRESOLVED)	Citr
+35	none	(UNRESOLVED)	Blend
+35	none	(UNRESOLVED)	Hopshot
+35	none	(UNRESOLVED)	Home Grown
+35	none	(UNRESOLVED)	N1/69
+34	none	(UNRESOLVED)	Victoria
+34	none	(UNRESOLVED)	Eroica
+34	none	(UNRESOLVED)	Mackinac
+34	none	(UNRESOLVED)	Southern Dawn
+33	none	(UNRESOLVED)	J17
+33	none	(UNRESOLVED)	Minstrel
+32	none	(UNRESOLVED)	07270
+32	none	(UNRESOLVED)	Cas
+31	none	(UNRESOLVED)	Buzz Bullets
+31	none	(UNRESOLVED)	aroma
+30	none	(UNRESOLVED)	Orbit
+29	none	(UNRESOLVED)	Experimental Stone Fruit
+29	none	(UNRESOLVED)	Northern Brewer - Mighty Axe Julius
+28	none	(UNRESOLVED)	Yellow Sub
+28	none	(UNRESOLVED)	Yakima Valley Hops - Experimental Grapefruit
+28	none	(UNRESOLVED)	Brooklyn
+28	none	(UNRESOLVED)	Styrian Cardinal
+27	none	(UNRESOLVED)	Homegrown
+26	none	(UNRESOLVED)	Mos
+25	none	(UNRESOLVED)	Hop Extract
+25	none	(UNRESOLVED)	Stella
+25	none	(UNRESOLVED)	Merkur
+25	none	(UNRESOLVED)	HBC 692
+25	none	(UNRESOLVED)	Grapefruit
+24	none	(UNRESOLVED)	fortnight
+24	none	(UNRESOLVED)	Casc
+24	none	(UNRESOLVED)	Aquila
+23	none	(UNRESOLVED)	blend
+23	none	(UNRESOLVED)	Aroma
+23	none	(UNRESOLVED)	Mix
+23	none	(UNRESOLVED)	Mag
+23	none	(UNRESOLVED)	Mosai
+23	none	(UNRESOLVED)	HBC 586
+22	none	(UNRESOLVED)	Hop Mix
+22	none	(UNRESOLVED)	Pahto
+22	none	(UNRESOLVED)	Banner
+22	none	(UNRESOLVED)	Wolf
+21	none	(UNRESOLVED)	Wild Turkey
+21	none	(UNRESOLVED)	fantasia
+21	none	(UNRESOLVED)	Styrian Dragon
+20	none	(UNRESOLVED)	Extract
+20	none	(UNRESOLVED)	legacy
+20	none	(UNRESOLVED)	Yakima Valley Hops - Southern Aroma
+20	none	(UNRESOLVED)	Aged Hops
+20	none	(UNRESOLVED)	Julius
+19	none	(UNRESOLVED)	Dana
+19	none	(UNRESOLVED)	Junga
+19	none	(UNRESOLVED)	Cen
+19	none	(UNRESOLVED)	pahto
+18	none	(UNRESOLVED)	Hallertauer Mittelfrueh
+18	none	(UNRESOLVED)	Athanum
+18	none	(UNRESOLVED)	Huller Bitterer
+18	none	(UNRESOLVED)	Galax
+18	none	(UNRESOLVED)	Hallertau Garden
+18	none	(UNRESOLVED)	Wild
+18	none	(UNRESOLVED)	wild
+18	none	(UNRESOLVED)	Bertwell

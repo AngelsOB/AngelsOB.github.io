@@ -9,7 +9,8 @@ import HSModal, { HSModalBody, HSModalFooter, HSModalHeader } from "./HSModal";
 
 import type { YeastPreset } from "@/modules/recipe/models/Presets";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
-import { fuzzyIncludes } from "@/utils/ingredientMatching";
+import { fuzzyIncludes, rankBySearch } from "@/utils/ingredientMatching";
+import { yeastSearchText } from "@/modules/ingredients/searchText";
 import { useYeastHoverPreview } from "../builder/yeastHoverPreview";
 
 type AttenuationBand = "low" | "med" | "high";
@@ -91,15 +92,10 @@ export default function YeastPresetModal({
       .map((group) => ({
         ...group,
         items: group.items.filter((p) => {
-          if (
-            !fuzzyIncludes(
-              searchQuery,
-              p.name,
-              p.labProductId,
-              p.category,
-              p.producer
-            )
-          ) {
+          // Same haystack as the /yeast page — name, lab, id, strain group,
+          // cross-lab aliases, styles. This is why "us 05" also finds the
+          // Chico-family strains that list it as an equivalent.
+          if (!fuzzyIncludes(searchQuery, yeastSearchText(p))) {
             return false;
           }
           if (
@@ -118,6 +114,25 @@ export default function YeastPresetModal({
       }))
       .filter((g) => g.items.length > 0);
   }, [presetsGrouped, searchQuery, activeFilters]);
+
+  // While searching, collapse the lab groups into one relevance-ranked list so
+  // the best match leads (searching "us 05" surfaces SafAle US-05 first, not
+  // whichever lab group renders first). Browsing — no query — keeps the groups.
+  const searching = searchQuery.trim().length > 0;
+  const flatResults = useMemo(() => {
+    if (!searching) return [];
+    const ranked = rankBySearch(
+      filteredGrouped.flatMap((g) => g.items),
+      searchQuery,
+      (p) => [p.name, p.labProductId, yeastSearchText(p)]
+    );
+    // "Strong" = the query hit the strain's name or lab code. A row that only
+    // matched via a cross-lab alias, style, or producer is dimmed.
+    return ranked.map((preset) => ({
+      preset,
+      strong: fuzzyIncludes(searchQuery, preset.name, preset.labProductId),
+    }));
+  }, [filteredGrouped, searchQuery, searching]);
 
   const totalCount = presetsGrouped.reduce((s, g) => s + g.items.length, 0);
 
@@ -273,6 +288,18 @@ export default function YeastPresetModal({
           >
             No yeasts match those filters.
           </p>
+        ) : searching ? (
+          <div style={{ display: "flex", flexDirection: "column", padding: "6px 14px 12px" }}>
+            {flatResults.map(({ preset, strong }) => (
+              <PresetRow
+                key={`${preset.category ?? ""}-${preset.name}`}
+                preset={preset}
+                dimmed={!strong}
+                onClick={() => handleSelect(preset)}
+                hoverProps={getTriggerProps(preset)}
+              />
+            ))}
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
             {filteredGrouped.map((group) => (
@@ -487,6 +514,7 @@ function PresetRow({
   preset,
   onClick,
   hoverProps,
+  dimmed,
 }: {
   preset: YeastPreset;
   onClick: () => void;
@@ -495,6 +523,7 @@ function PresetRow({
     onMouseMove?: (e: React.MouseEvent) => void;
     onMouseLeave?: () => void;
   };
+  dimmed?: boolean;
 }) {
   const favicon = getYeastLabFavicon(preset.category);
   return (
@@ -514,7 +543,10 @@ function PresetRow({
         cursor: "pointer",
         textAlign: "left",
         color: hsTokens.ink,
-        transition: "background 90ms ease",
+        // Weaker matches (hit via alias/style, not the name or code) read as
+        // present but secondary.
+        opacity: dimmed ? 0.55 : 1,
+        transition: "background 90ms ease, opacity 120ms ease",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = hsTokens.cream2;

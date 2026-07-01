@@ -18,8 +18,18 @@ into the builder). Nothing here ships in the bundle until then.
 - `offline/` — Node data-prep (never bundled, never shipped):
   - `corpus.mjs` — streaming helpers over the raw corpus
   - `eda.mjs` — Phase 0 ground-truthing
-  - `build-archetype-map.mjs` — name → archetype mapper (+ review file)
-  - `out/` — committed, facts-only outputs (`archetype-map.json`, `archetype-map.review.tsv`)
+  - `build-archetype-map.mjs` / `build-yeast-map.mjs` — name → archetype/yeast-class mappers
+  - `buildCloud.ts` — pure recipe → feature-vector logic; `cloudViz.test.ts` persists the
+    cloud (gated); `neighborPurity.test.ts` tunes/validates k-NN (gated)
+  - `styleFamily.ts` — shared coarse style-family classifier
+  - `out/` — committed, facts-only outputs (maps, style-summary, cloud-viz)
+- `steering/` — Phase 2, the "median brew + flavour steering" engine (pure, test-first):
+  - `featureSpace.ts` — cloud-math toolkit (z-scoring, yeast multi-hot, k-NN, kernel weights)
+  - `loadCloud.ts` — the only fs-touching piece (reads `cloud.ndjson`)
+  - `reconstruction.ts` — blended archetype%/hops/yeast → a real, clean recipe's ingredients
+  - `RecipeSteeringService.ts` — orchestrator: `steer(query)` → synthesized recipe +
+    style-fit signal. `RecipeSteeringService.realCloud.test.ts` (gated) fires example
+    queries against the real cloud for eyeballing.
 - `raw/` — **gitignored** raw Brewer's Friend corpus (179 MB). Never shipped, never committed.
 
 ## Data posture
@@ -33,4 +43,7 @@ aggregates / synthesized blends / curated lexicons ever leave this module. See
 node src/modules/corpus-lab/offline/eda.mjs
 node src/modules/corpus-lab/offline/build-archetype-map.mjs
 npx vitest run src/modules/corpus-lab
+
+# fire example steering queries against the real cloud (needs cloud.ndjson — see docs/corpus-lab-build.md §8)
+BUILD_CLOUD=1 npx vitest run src/modules/corpus-lab/steering/RecipeSteeringService.realCloud.test.ts
 ```

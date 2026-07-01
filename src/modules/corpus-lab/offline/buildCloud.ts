@@ -17,8 +17,10 @@ import type { Hop } from "../../recipe/models/Recipe";
 import type { HopFlavorProfile } from "../../recipe/models/Presets";
 import HOPS from "../../../utils/presets.generated.hops.json";
 import MAP from "./out/archetype-map.json";
+import HOP_MAP_JSON from "./out/hop-map.json";
 
 const ARCH = MAP as Record<string, { archetype: string }>;
+const HOP_MAP = HOP_MAP_JSON as Record<string, { canonical: string | null }>;
 
 /** hop preset flavour keyed by lower-cased name (corpus names vary in case). */
 export const HOP_FLAVOR_BY_LOWER = new Map<string, HopFlavorProfile>(
@@ -26,6 +28,29 @@ export const HOP_FLAVOR_BY_LOWER = new Map<string, HopFlavorProfile>(
     .filter((h) => h.flavor)
     .map((h) => [h.name.toLowerCase(), h.flavor as HopFlavorProfile])
 );
+
+/** Strip inline AA%/form noise a corpus name carries but a preset name doesn't. */
+function cleanHopName(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b\d+(\.\d+)?\s*%?\s*a\.?a\.?\b/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/**
+ * Resolve a raw corpus hop name to its canonical HOP_PRESETS name (lower-cased),
+ * via the pre-built hop-map (see build-hop-map.mjs). Done ONCE at cloud-build
+ * time so the cloud stores clean names, the flavour vector sees the REAL hop
+ * (~11.5% of additions were previously unresolved -> zero flavour), and
+ * reconstruction never has to fuzzy-match again. Unresolved names (~3%: newer
+ * hops absent from the preset DB) fall back to a de-noised form.
+ */
+export function resolveHopName(raw: string): string {
+  const canonical = HOP_MAP[raw.trim()]?.canonical;
+  return canonical ? canonical.toLowerCase() : cleanHopName(raw);
+}
 
 const num = (x: unknown): number =>
   typeof x === "number" && isFinite(x) ? x : typeof x === "string" ? parseFloat(x) || 0 : 0;
@@ -41,6 +66,8 @@ export type CorpusRecipe = {
   color?: number;
   fermentables?: Array<Array<string | number>>;
   hops?: Array<Array<string | number>>;
+  yeast?: Array<string | number>;
+  other?: Array<Array<string | number>>;
 };
 
 type GristCat = "grain" | "extract" | "sugar" | "adjunct" | "inert" | "unknown";
@@ -102,8 +129,9 @@ function parseTimeMin(s: string): number {
 /** Map a corpus hop row [grams, name, form, alpha, use, time, ibu, pct] → app Hop. */
 export function parseHopAddition(row: Array<string | number>): Hop | null {
   const grams = num(row[0]);
-  const name = String(row[1] ?? "").toLowerCase().trim();
-  if (!name || grams <= 0) return null;
+  const raw = String(row[1] ?? "").trim();
+  if (!raw || grams <= 0) return null;
+  const name = resolveHopName(raw); // canonical, clean, lower-cased — once, here
   const use = String(row[4] ?? "").toLowerCase();
   const time = String(row[5] ?? "");
   let type: Hop["type"] = "boil";

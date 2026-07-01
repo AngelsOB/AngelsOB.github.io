@@ -11,27 +11,13 @@ import {
 import { MALT_FLAVOR_KEYS } from "../maltFlavor";
 import { HOP_FLAVOR_KEYS } from "../../recipe/models/Presets";
 import { streamRecords } from "./corpus.mjs";
+import { family } from "./styleFamily";
 
 const MALT = [...MALT_FLAVOR_KEYS];
 const HOP = [...HOP_FLAVOR_KEYS];
 const num = (x: unknown) => (typeof x === "number" && isFinite(x) ? x : 0);
 const YMAP: Record<string, { cls: string | null; subs: string[]; preset: string | null }> =
   JSON.parse(readFileSync("src/modules/corpus-lab/offline/out/yeast-map.json", "utf8"));
-
-// coarse style family for colouring the map
-function family(style: string): string {
-  const n = style.toLowerCase();
-  if (/sour|gose|lambic|berliner|brett|\bwild\b|kettle/.test(n)) return "Sour/Wild";
-  if (/stout|porter/.test(n)) return "Stout/Porter";
-  if (/ipa|india pale/.test(n)) return "IPA";
-  if (/wheat|weiss|weizen|witbier|\bwit\b|hefe/.test(n)) return "Wheat";
-  if (/saison|farmhouse|belgian|tripel|dubbel|\bquad|abbey|biere de|grisette/.test(n)) return "Belgian";
-  if (/barley\s?wine|wee heavy|old ale|imperial|strong/.test(n)) return "Strong";
-  if (/lager|pilsner|\bpils\b|helles|märzen|marzen|bock|schwarz|dunkel|festbier|common|steam/.test(n)) return "Lager";
-  if (/brown|amber|\bred\b|altbier|\balt\b|bitter|\besb\b|\bmild\b|scottish/.test(n)) return "Amber/Brown";
-  if (/pale ale|blonde|golden|kölsch|kolsch|cream ale|\bapa\b/.test(n)) return "Pale/Blonde";
-  return "Other";
-}
 
 // ── tiny PCA (no deps): standardise → covariance → power-iteration top-2 ────────
 function standardise(rows: number[][], D: number) {

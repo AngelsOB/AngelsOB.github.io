@@ -40,10 +40,12 @@ export function tokenize(s: string): string[] {
  * Forgiving substring match for ingredient pickers.
  *
  * Brewers type lab codes loosely — "us05", "us 05", "us-05" should all
- * find "SafAle US-05". The query matches if any of these hold:
+ * find "SafAle US-05" — and they misspell ("galexy" → Galaxy). The query
+ * matches if any of these hold:
  *   1) plain lowercase substring (fast path)
  *   2) alphanumeric-stripped substring — separators on either side stop mattering
  *   3) every whitespace-split word in the query appears in the haystack
+ *   4) every query word is a near-typo of some word in the haystack
  *
  * Pass any number of candidate fields (name, lab code, category, …); they're
  * joined into one haystack so a hit in any field counts. Empty query → true.
@@ -71,7 +73,107 @@ export function fuzzyIncludes(
   const tokens = q.split(/\s+/).filter(Boolean);
   if (tokens.length > 1 && tokens.every((t) => haystack.includes(t))) return true;
 
+  // Typo tolerance — every query word is within a length-scaled edit distance
+  // of some word in the haystack. Reached only after the exact paths miss, so a
+  // correctly-typed substring is never overridden by a looser match. Tokenizing
+  // both sides keeps edit distance meaningful (a short query is never diffed
+  // against the whole joined haystack, where the distance would be enormous).
+  const queryWords = tokenize(q);
+  const haystackWords = tokenize(haystack);
+  if (
+    queryWords.length > 0 &&
+    queryWords.every((qw) => haystackWords.some((hw) => withinTypoDistance(qw, hw)))
+  ) {
+    return true;
+  }
+
   return false;
+}
+
+// Match-strength tiers within a single field (higher = stronger). Mirrors the
+// ladder in fuzzyIncludes, scored instead of boolean.
+const TIER_EXACT = 100;
+const TIER_PREFIX = 70;
+const TIER_SUBSTRING = 55;
+const TIER_SEPARATOR = 45;
+const TIER_MULTIWORD = 35;
+const TIER_TYPO = 20;
+
+/** Strength of `q`'s best match within a single lowercased field, 0 if none. */
+function fieldMatchTier(q: string, field: string): number {
+  const f = field.toLowerCase();
+  if (!f) return 0;
+  if (f === q) return TIER_EXACT;
+  if (f.startsWith(q)) return TIER_PREFIX;
+  if (f.includes(q)) return TIER_SUBSTRING;
+
+  const alphaQ = q.replace(/[^a-z0-9]/g, "");
+  if (alphaQ && f.replace(/[^a-z0-9]/g, "").includes(alphaQ)) return TIER_SEPARATOR;
+
+  const tokens = q.split(/\s+/).filter(Boolean);
+  if (tokens.length > 1 && tokens.every((t) => f.includes(t))) return TIER_MULTIWORD;
+
+  const queryWords = tokenize(q);
+  const fieldWords = tokenize(f);
+  if (
+    queryWords.length > 0 &&
+    queryWords.every((qw) => fieldWords.some((fw) => withinTypoDistance(qw, fw)))
+  ) {
+    return TIER_TYPO;
+  }
+  return 0;
+}
+
+/**
+ * Relevance score for ranking fuzzy matches (higher = better; 0 = no match).
+ *
+ * Candidates are ordered by importance — pass the display name first. Scoring is
+ * field-dominant: a match in an earlier field beats a match in any later field
+ * regardless of strength, so a name hit always outranks an alias/keyword-only
+ * hit ("us 05" leads with SafAle US-05, not the Chico-family strains that merely
+ * list it as an equivalent). Within a field, a stronger match type scores
+ * higher. Mirrors fuzzyIncludes' rules, so anything that passes that filter
+ * scores > 0 here.
+ */
+export function fuzzyScore(
+  query: string,
+  ...candidates: Array<string | undefined | null>
+): number {
+  const q = query.trim().toLowerCase();
+  if (!q) return 0;
+  // Weight per field must exceed the max tier (100) so field order dominates
+  // match strength: even a weak name match (typo, 20) outscores an exact hit in
+  // any later field.
+  const FIELD_WEIGHT = 1000;
+  let best = 0;
+  candidates.forEach((c, i) => {
+    if (typeof c !== "string" || !c) return;
+    const tier = fieldMatchTier(q, c);
+    if (tier === 0) return;
+    const score = (candidates.length - i) * FIELD_WEIGHT + tier;
+    if (score > best) best = score;
+  });
+  return best;
+}
+
+/**
+ * Sort a list by search relevance (see fuzzyScore), best match first. Returns a
+ * new array; the input is left untouched. An empty query returns the items in
+ * their original order. The sort is stable — items with equal scores (including
+ * the score-0 no-hit tail) keep their input order. `getFields` returns each
+ * item's candidate fields in importance order (name first), matching whatever
+ * the caller filtered on.
+ */
+export function rankBySearch<T>(
+  items: T[],
+  query: string,
+  getFields: (item: T) => Array<string | undefined | null>
+): T[] {
+  if (!query.trim()) return items;
+  return items
+    .map((item, i) => ({ item, i, score: fuzzyScore(query, ...getFields(item)) }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map((x) => x.item);
 }
 
 function editDistance(a: string, b: string): number {
@@ -90,6 +192,23 @@ function editDistance(a: string, b: string): number {
     [prev, curr] = [curr, prev];
   }
   return prev[b.length];
+}
+
+/**
+ * Single-word typo tolerance with a length-scaled edit budget. Exact tokens
+ * always pass; short words (< 4 chars) allow no edits — a one-edit window on a
+ * three-letter word matches unrelated words ("ale"/"ipa"). Longer words allow
+ * one edit, and two once they're long enough for the edits to stay
+ * distinctive. The length pre-check skips the O(n·m) distance for pairs that
+ * can't possibly land within budget.
+ */
+function withinTypoDistance(query: string, token: string): boolean {
+  if (query === token) return true;
+  const len = query.length;
+  if (len < 4) return false;
+  const budget = len <= 6 ? 1 : 2;
+  if (Math.abs(len - token.length) > budget) return false;
+  return editDistance(query, token) <= budget;
 }
 
 /** 0-1 similarity combining token-set overlap (Jaccard) with normalized edit distance. */
