@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/calculators` },
     { url: `${BASE_URL}/hops` },
     { url: `${BASE_URL}/yeast` },
+    { url: `${BASE_URL}/yeast/substitution-chart` },
     { url: `${BASE_URL}/learn` },
     { url: `${BASE_URL}/privacy` },
     { url: `${BASE_URL}/terms` },

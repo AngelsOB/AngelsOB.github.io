@@ -1,0 +1,722 @@
+[
+  {
+    "slug": "3763",
+    "label": "3763 Roeselare Ale Blend",
+    "type": "blend",
+    "members": [
+      "Belgian Sour Blend",
+      "3763 Roeselare Ale Blend"
+    ]
+  },
+  {
+    "slug": "a01",
+    "label": "A01 House",
+    "type": "ale",
+    "members": [
+      "A01 House",
+      "OYL-006 British Ale I",
+      "1098 British Ale"
+    ]
+  },
+  {
+    "slug": "a07",
+    "label": "A07 Flagship",
+    "type": "ale",
+    "members": [
+      "Cali Ale",
+      "A07 Flagship",
+      "1056 American Ale"
+    ]
+  },
+  {
+    "slug": "a15",
+    "label": "A15 Independence",
+    "type": "ale",
+    "members": [
+      "American Ale",
+      "A15 Independence",
+      "OYL-009 West Coast Ale II",
+      "1272 American Ale II"
+    ]
+  },
+  {
+    "slug": "a31",
+    "label": "A31 Tartan",
+    "type": "ale",
+    "members": [
+      "A31 Tartan",
+      "1728 Scottish Ale"
+    ]
+  },
+  {
+    "slug": "a38",
+    "label": "A38 Juice",
+    "type": "ale",
+    "members": [
+      "Foggy London Ale",
+      "A38 Juice",
+      "OYL-011 British Ale I",
+      "1318 London Ale III"
+    ]
+  },
+  {
+    "slug": "b56",
+    "label": "B56 Rustic",
+    "type": "ale",
+    "members": [
+      "B56 Rustic",
+      "OYL-042 Belgian Saison II",
+      "3726 Farmhouse Ale"
+    ]
+  },
+  {
+    "slug": "be134",
+    "label": "SafAle BE-134",
+    "type": "ale",
+    "members": [
+      "SafAle BE-134",
+      "M41 Belgian Ale Yeast"
+    ]
+  },
+  {
+    "slug": "g02",
+    "label": "G02 Kaiser",
+    "type": "ale",
+    "members": [
+      "G02 Kaiser",
+      "1007 German Ale"
+    ]
+  },
+  {
+    "slug": "l02",
+    "label": "L02 Fest",
+    "type": "lager",
+    "members": [
+      "L02 Fest",
+      "OYL-107 Oktoberfest",
+      "2206 Bavarian Lager"
+    ]
+  },
+  {
+    "slug": "l11",
+    "label": "L11 Gateway",
+    "type": "lager",
+    "members": [
+      "L11 Gateway",
+      "2007 Pilsen Lager"
+    ]
+  },
+  {
+    "slug": "l13",
+    "label": "L13 Global",
+    "type": "lager",
+    "members": [
+      "Isar Lager",
+      "L13 Global",
+      "OYL-106 German Lager I",
+      "2124 Bohemian Lager"
+    ]
+  },
+  {
+    "slug": "oyl003",
+    "label": "OYL-003 London Ale",
+    "type": "ale",
+    "members": [
+      "OYL-003 London Ale",
+      "1028 London Ale"
+    ]
+  },
+  {
+    "slug": "oyl016",
+    "label": "OYL-016 Extra Special (formerly British Ale VIII)",
+    "type": "ale",
+    "members": [
+      "OYL-016 Extra Special (formerly British Ale VIII)",
+      "1968 London ESB Ale"
+    ]
+  },
+  {
+    "slug": "oyl017",
+    "label": "OYL-017 Kolsch I",
+    "type": "ale",
+    "members": [
+      "OYL-017 Kolsch I",
+      "2565 Kölsch"
+    ]
+  },
+  {
+    "slug": "oyl023",
+    "label": "OYL-023 Grand Cru",
+    "type": "ale",
+    "members": [
+      "OYL-023 Grand Cru",
+      "3463-PC Forbidden Fruit"
+    ]
+  },
+  {
+    "slug": "oyl039",
+    "label": "OYL-039 Biere de Garde",
+    "type": "ale",
+    "members": [
+      "Spooky Saison",
+      "OYL-039 Biere de Garde",
+      "3725-PC Bière de Garde"
+    ]
+  },
+  {
+    "slug": "oyl041",
+    "label": "OYL-041 CL-50 Ale",
+    "type": "ale",
+    "members": [
+      "OYL-041 CL-50 Ale",
+      "1450 Denny's Favorite 50 Ale"
+    ]
+  },
+  {
+    "slug": "s04",
+    "label": "SafAle S-04",
+    "type": "ale",
+    "members": [
+      "SafAle S-04",
+      "M36 Liberty Bell Ale Yeast",
+      "1026-PC British Cask Ale"
+    ]
+  },
+  {
+    "slug": "s23",
+    "label": "SafLager S-23",
+    "type": "lager",
+    "members": [
+      "Premium Pils",
+      "SafLager S-23",
+      "2001 Pilsner Urquell H-Strain"
+    ]
+  },
+  {
+    "slug": "s33",
+    "label": "SafAle S-33",
+    "type": "ale",
+    "members": [
+      "SafAle S-33",
+      "M10 Workhorse Yeast"
+    ]
+  },
+  {
+    "slug": "w3470",
+    "label": "SafLager W-34/70",
+    "type": "lager",
+    "members": [
+      "SafLager W-34/70",
+      "OYL-103 American Lager",
+      "2035-PC American Lager"
+    ]
+  },
+  {
+    "slug": "wldbry97",
+    "label": "LalBrew BRY-97 American West Coast Ale",
+    "type": "ale",
+    "members": [
+      "LalBrew BRY-97 American West Coast Ale",
+      "M44 US West Coast Yeast"
+    ]
+  },
+  {
+    "slug": "wlddiamond",
+    "label": "LalBrew Diamond Lager",
+    "type": "lager",
+    "members": [
+      "LalBrew Diamond Lager",
+      "2308 Munich Lager"
+    ]
+  },
+  {
+    "slug": "wldnovalager",
+    "label": "LalBrew NovaLager",
+    "type": "lager",
+    "members": [
+      "LalBrew NovaLager",
+      "M24 Versa Lager Yeast"
+    ]
+  },
+  {
+    "slug": "wldwindsor",
+    "label": "LalBrew Windsor",
+    "type": "ale",
+    "members": [
+      "LalBrew Windsor",
+      "M15 Empire Ale Yeast",
+      "OYL-007 British Ale II",
+      "1099 Whitbread Ale"
+    ]
+  },
+  {
+    "slug": "wlp001",
+    "label": "WLP001 California Ale",
+    "type": "ale",
+    "members": [
+      "OYL-004 West Coast Ale I",
+      "WLP001 California Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp002",
+    "label": "WLP002 English Ale",
+    "type": "ale",
+    "members": [
+      "English Ale I",
+      "WLP002 English Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp003",
+    "label": "WLP003 German Ale II",
+    "type": "ale",
+    "members": [
+      "WLP003 German Ale II Yeast",
+      "2575-PC Kölsch II"
+    ]
+  },
+  {
+    "slug": "wlp004",
+    "label": "WLP004 Irish Ale",
+    "type": "ale",
+    "members": [
+      "Irish Ale",
+      "A10 Darkness",
+      "OYL-005 Irish Ale",
+      "WLP004 Irish Ale Yeast",
+      "1084 Irish Ale"
+    ]
+  },
+  {
+    "slug": "wlp007",
+    "label": "WLP007 Dry English Ale",
+    "type": "ale",
+    "members": [
+      "English Ale II",
+      "WLP007 Dry English Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp008",
+    "label": "WLP008 East Coast Ale",
+    "type": "ale",
+    "members": [
+      "OYL-032 East Coast Ale",
+      "WLP008 East Coast Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp022",
+    "label": "WLP022 Essex Ale",
+    "type": "ale",
+    "members": [
+      "A05 Voyager",
+      "OYL-014 British Ale VII",
+      "WLP022 Essex Ale Yeast",
+      "1469 West Yorkshire Ale"
+    ]
+  },
+  {
+    "slug": "wlp023",
+    "label": "WLP023 Burton Ale",
+    "type": "ale",
+    "members": [
+      "OYL-010 British Ale IV",
+      "WLP023 Burton Ale Yeast",
+      "1275 Thames Valley Ale"
+    ]
+  },
+  {
+    "slug": "wlp025",
+    "label": "WLP025 Southwold Ale",
+    "type": "ale",
+    "members": [
+      "OYL-013 British Ale VI",
+      "WLP025 Southwold Ale Yeast",
+      "1335 British Ale II"
+    ]
+  },
+  {
+    "slug": "wlp028",
+    "label": "WLP028 Edinburgh/Scottish Ale",
+    "type": "ale",
+    "members": [
+      "OYL-015 Scottish Ale",
+      "WLP028 Edinburgh/Scottish Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp029",
+    "label": "WLP029 German Ale/Kölsch",
+    "type": "ale",
+    "members": [
+      "Kolsch Ale",
+      "G03 Dieter",
+      "OYL-044 Kolsch II",
+      "WLP029 German Ale/Kölsch Yeast"
+    ]
+  },
+  {
+    "slug": "wlp033",
+    "label": "WLP033 Klassic Ale",
+    "type": "ale",
+    "members": [
+      "WLP033 Klassic Ale Yeast",
+      "1768-PC English Special Bitter"
+    ]
+  },
+  {
+    "slug": "wlp039",
+    "label": "WLP039 East Midlands Ale",
+    "type": "ale",
+    "members": [
+      "LalBrew Nottingham",
+      "M42 New World Strong Ale Yeast",
+      "WLP039 East Midlands Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp041",
+    "label": "WLP041 Pacific Ale",
+    "type": "ale",
+    "members": [
+      "Northwest Ale",
+      "OYL-012 Pacific NW Ale",
+      "WLP041 Pacific Ale Yeast",
+      "1332 Northwest Ale"
+    ]
+  },
+  {
+    "slug": "wlp066",
+    "label": "WLP066 London Fog Ale",
+    "type": "ale",
+    "members": [
+      "LalBrew Verdant IPA",
+      "M66 Hophead Ale Yeast",
+      "WLP066 London Fog Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp090",
+    "label": "WLP090 San Diego Super Ale",
+    "type": "ale",
+    "members": [
+      "A18 Joystick",
+      "OYL-043 Point Loma (formerly West Coast Ale III)",
+      "WLP090 San Diego Super Ale Yeast",
+      "1764 Pacman"
+    ]
+  },
+  {
+    "slug": "wlp095",
+    "label": "WLP095 Burlington Ale",
+    "type": "ale",
+    "members": [
+      "Vermont Ale",
+      "A04 Barbarian",
+      "LalBrew New England",
+      "OYL-052 DIPA Ale",
+      "WLP095 Burlington Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp300",
+    "label": "WLP300 Hefeweizen Ale",
+    "type": "wheat",
+    "members": [
+      "OYL-022 Hefeweizen Ale II",
+      "WLP300 Hefeweizen Ale Yeast",
+      "3333 German Wheat"
+    ]
+  },
+  {
+    "slug": "wlp351",
+    "label": "WLP351 Bavarian Weizen Ale",
+    "type": "wheat",
+    "members": [
+      "OYL-025 Bavarian Wheat I",
+      "WLP351 Bavarian Weizen Ale Yeast",
+      "3638 Bavarian Wheat"
+    ]
+  },
+  {
+    "slug": "wlp380",
+    "label": "WLP380 Hefeweizen IV Ale",
+    "type": "wheat",
+    "members": [
+      "Weizen I",
+      "G01 Stefon",
+      "OYL-021 Hefeweizen Ale I",
+      "WLP380 Hefeweizen IV Ale Yeast",
+      "3068 Weihenstephan Weizen"
+    ]
+  },
+  {
+    "slug": "wlp400",
+    "label": "WLP400 Belgian Wit Ale",
+    "type": "wheat",
+    "members": [
+      "OYL-030 Wit",
+      "WLP400 Belgian Wit Ale Yeast",
+      "3944 Belgian Witbier"
+    ]
+  },
+  {
+    "slug": "wlp410",
+    "label": "WLP410 Belgian Wit II Ale",
+    "type": "wheat",
+    "members": [
+      "M21 Belgian Wit Yeast",
+      "WLP410 Belgian Wit II Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp500",
+    "label": "WLP500 Trappist Ale",
+    "type": "ale",
+    "members": [
+      "LalBrew Abbaye",
+      "OYL-018 Abbey Ale C",
+      "WLP500 Trappist Ale Yeast",
+      "1214 Belgian Abbey Style Ale"
+    ]
+  },
+  {
+    "slug": "wlp510",
+    "label": "WLP510 Bastogne Belgian Ale",
+    "type": "ale",
+    "members": [
+      "B63 Monastic",
+      "OYL-046 Belgian Ale O",
+      "WLP510 Bastogne Belgian Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp515",
+    "label": "WLP515 Antwerp Ale",
+    "type": "ale",
+    "members": [
+      "OYL-049 Belgian Ale DK",
+      "WLP515 Antwerp Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp520",
+    "label": "WLP520 Sigmund Kveik Ale",
+    "type": "kveik",
+    "members": [
+      "Voss Kveik",
+      "A43 Loki",
+      "M12 Kveik Yeast",
+      "OYL-061 Voss Kveik",
+      "WLP520 Sigmund Kveik Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp521",
+    "label": "WLP521 Hornindal Kveik Ale",
+    "type": "kveik",
+    "members": [
+      "Hornindal Kveik Blend",
+      "A46 Bartleby",
+      "OYL-091 Hornindal Kveik",
+      "WLP521 Hornindal Kveik Ale Yeast"
+    ]
+  },
+  {
+    "slug": "wlp530",
+    "label": "WLP530 Abbey Ale",
+    "type": "ale",
+    "members": [
+      "B48 Triple Double",
+      "OYL-028 Belgian Ale W",
+      "WLP530 Abbey Ale Yeast",
+      "3787 Trappist High Gravity"
+    ]
+  },
+  {
+    "slug": "wlp540",
+    "label": "WLP540 Abbey IV Ale",
+    "type": "ale",
+    "members": [
+      "St-Remy Abbey Ale",
+      "OYL-020 Belgian Ale R",
+      "WLP540 Abbey IV Ale Yeast",
+      "1762 Belgian Abbey Style Ale II"
+    ]
+  },
+  {
+    "slug": "wlp545",
+    "label": "WLP545 Belgian Strong Ale",
+    "type": "ale",
+    "members": [
+      "B64 Napoleon",
+      "LalBrew Belle Saison",
+      "M29 French Saison Yeast",
+      "OYL-026 French Saison",
+      "WLP545 Belgian Strong Ale Yeast",
+      "3711 French Saison"
+    ]
+  },
+  {
+    "slug": "wlp550",
+    "label": "WLP550 Belgian Ale",
+    "type": "ale",
+    "members": [
+      "Ardennes Ale",
+      "B45 Gnome",
+      "OYL-024 Belgian Ale A",
+      "WLP550 Belgian Ale Yeast",
+      "3522 Belgian Ardennes"
+    ]
+  },
+  {
+    "slug": "wlp565",
+    "label": "WLP565 Belgian Saison I Ale",
+    "type": "ale",
+    "members": [
+      "OYL-027 Belgian Saison I",
+      "WLP565 Belgian Saison I Ale Yeast",
+      "3724 Belgian Saison"
+    ]
+  },
+  {
+    "slug": "wlp570",
+    "label": "WLP570 Belgian Golden Ale",
+    "type": "ale",
+    "members": [
+      "OYL-019 Belgian Ale D",
+      "WLP570 Belgian Golden Ale Yeast",
+      "1388 Belgian Strong Ale"
+    ]
+  },
+  {
+    "slug": "wlp644",
+    "label": "WLP644 Saccharomyces brux-like Trois",
+    "type": "ale",
+    "members": [
+      "Cerberus",
+      "A20 Citrus",
+      "OYL-200 Tropical IPA",
+      "WLP644 Saccharomyces brux-like Trois"
+    ]
+  },
+  {
+    "slug": "wlp802",
+    "label": "WLP802 Czech Budejovice Lager",
+    "type": "lager",
+    "members": [
+      "Czech Lager",
+      "OYL-100 Lager I",
+      "WLP802 Czech Budejovice Lager Yeast",
+      "2000-PC Budvar Lager"
+    ]
+  },
+  {
+    "slug": "wlp810",
+    "label": "WLP810 San Francisco Lager",
+    "type": "lager",
+    "members": [
+      "Goldrush Lager",
+      "L05 Cablecar",
+      "OYL-105 West Coast Lager",
+      "WLP810 San Francisco Lager Yeast",
+      "2112 California Lager"
+    ]
+  },
+  {
+    "slug": "wlp830",
+    "label": "WLP830 German Lager",
+    "type": "lager",
+    "members": [
+      "L28 Urkel",
+      "OYL-108 Pilsner II",
+      "WLP830 German Lager Yeast",
+      "2278 Czech Pils"
+    ]
+  },
+  {
+    "slug": "wlp833",
+    "label": "WLP833 German Bock Lager",
+    "type": "lager",
+    "members": [
+      "L18 The GOAT",
+      "OYL-111 German Bock",
+      "WLP833 German Bock Lager Yeast",
+      "2487-PC Hella Bock Lager"
+    ]
+  },
+  {
+    "slug": "wlp835",
+    "label": "WLP835 German X Lager",
+    "type": "lager",
+    "members": [
+      "L26 Pilgrimage",
+      "WLP835 German X Lager Yeast",
+      "2105-PC Rocky Mountain Lager"
+    ]
+  },
+  {
+    "slug": "wlp838",
+    "label": "WLP838 Southern German Lager",
+    "type": "lager",
+    "members": [
+      "OYL-109 German Lager II",
+      "WLP838 Southern German Lager Yeast"
+    ]
+  },
+  {
+    "slug": "wlp845",
+    "label": "WLP845 Fast Lager",
+    "type": "lager",
+    "members": [
+      "Autobahn Lager",
+      "WLP845 Fast Lager Yeast"
+    ]
+  },
+  {
+    "slug": "wlp850",
+    "label": "WLP850 Copenhagen Lager",
+    "type": "lager",
+    "members": [
+      "Copenhagen Lager",
+      "L25 Hygge",
+      "OYL-104 Danish Lager",
+      "WLP850 Copenhagen Lager Yeast",
+      "2042 Danish Lager"
+    ]
+  },
+  {
+    "slug": "wlp860",
+    "label": "WLP860 Munich Helles",
+    "type": "lager",
+    "members": [
+      "Biergarten Lager",
+      "L17 Harvest",
+      "OYL-114 Bayern Lager",
+      "WLP860 Munich Helles Yeast",
+      "2352-PC Munich Lager II"
+    ]
+  },
+  {
+    "slug": "wlp920",
+    "label": "WLP920 Old Bavarian Lager",
+    "type": "lager",
+    "members": [
+      "WLP920 Old Bavarian Lager Yeast",
+      "2247-PC European Lager"
+    ]
+  },
+  {
+    "slug": "wlp940",
+    "label": "WLP940 Mexican Lager",
+    "type": "lager",
+    "members": [
+      "Mexican Lager",
+      "L09 Que Bueno",
+      "OYL-113 Mexican Lager",
+      "WLP940 Mexican Lager Yeast"
+    ]
+  }
+]

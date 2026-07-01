@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { hsTokens } from "@/modules/builder/tokens";
 import YeastIndexClient from "@/modules/ingredients/yeast/YeastIndexClient";
@@ -52,6 +53,32 @@ export default function YeastIndexPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
+      {/* Quick link to the cross-lab substitution chart, up top where a brewer
+          looking to swap a strain will see it. */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+        <Link
+          href="/yeast/substitution-chart"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            fontFamily: hsTokens.body,
+            fontSize: 13,
+            fontWeight: 600,
+            color: hsTokens.ink,
+            textDecoration: "none",
+            border: `1.5px solid ${hsTokens.ink}`,
+            borderRadius: 999,
+            padding: "5px 14px",
+            background: hsTokens.cream,
+            boxShadow: hsTokens.sh1,
+          }}
+        >
+          Yeast substitution chart <span aria-hidden>→</span>
+        </Link>
+      </div>
+
       <YeastIndexClient
         basePath={YEAST_SECTION.basePath}
         label={YEAST_SECTION.label}

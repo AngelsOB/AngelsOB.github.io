@@ -88,8 +88,10 @@ export type YeastPreset = {
   styles?: string[]; // recommended beer styles
   substitutes?: string[]; // derived "similar / replaceable" strains (recipe-key names), best-first
   // Strain-equivalence ("same strain, other labs") — CURATED lineage, NOT computed from stats.
-  strainGroup?: string; // slug shared by all labs' versions of one strain, e.g. "chico"
-  strainGroupLabel?: string; // human label, e.g. "Chico / American Ale"
+  // The canonical strain name shared by every lab's version — the grouping key AND the
+  // display (two strains are the same strain iff this matches exactly).
+  strainGroup?: string; // e.g. "Chico (American Ale)", "Westmalle"
+  strainGroupAliases?: string[]; // other names brewers search for this strain, e.g. ["Sierra Nevada", "US-05"]
   // Provenance
   source?: string; // where the facts came from, e.g. "White Labs spec sheet"
   sourceConfidence?: "high" | "medium" | "low";

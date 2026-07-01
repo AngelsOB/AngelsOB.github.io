@@ -10,6 +10,7 @@ import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 
 import IngredientDetailHeader from "../IngredientDetailHeader";
 import IngredientFaqList from "../IngredientFaqList";
+import IngredientHoverCard from "../IngredientHoverCard";
 import {
   yeastSlug,
   yeastFaq,
@@ -28,6 +29,7 @@ import {
   yeastEquivalenceLine,
   yeastSubstitutes,
   equivToken,
+  yeastCommonName,
 } from "./yeastKind";
 import YeastSidebar from "./YeastSidebar";
 
@@ -52,6 +54,14 @@ type SpecRow = {
   accent: string;
 };
 
+type TraitChip = {
+  name: string;
+  value: string;
+  sub: string;
+  desc: string;
+  accent: string;
+};
+
 export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
   const lede = yeastLede(yeast);
   const favicon = getYeastLabFavicon(yeast.category);
@@ -64,6 +74,7 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
   const tolerance = yeastTolerance(yeast);
 
   const equivLine = yeastEquivalenceLine(yeast);
+  const commonName = yeastCommonName(yeast);
   const peers = yeastEquivalents(yeast);
   const subs = yeastSubstitutes(yeast);
   // The dataset comma-splits some compound BJCP names ("Sweet Stout" →
@@ -128,6 +139,48 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
       point: tp,
       accent: hsTokens.hops,
     });
+
+  // Genetic traits — POF (phenolics) and STA-1 (diastatic). Binary facts, each
+  // with a plain-English explainer in a hover tooltip (real text in the DOM, so
+  // it stays crawlable). Rendered only when known; an undefined trait is omitted,
+  // never shown as a guess — most strains carry both, Brett/wild often don't.
+  const traits: TraitChip[] = [];
+  if (yeast.pof !== undefined)
+    traits.push(
+      yeast.pof
+        ? {
+            name: "Phenolics",
+            value: "POF+",
+            sub: "Clove & spice",
+            desc: "Throws phenolics — the clove and spice notes (4-vinyl-guaiacol) behind hefeweizens, witbiers, and saisons. Expect a spicy character, not a clean one.",
+            accent: hsTokens.honey,
+          }
+        : {
+            name: "Phenolics",
+            value: "POF−",
+            sub: "Ferments clean",
+            desc: "Phenolically clean (POF-negative). No clove or spice, so malt, esters, and hops come through unmasked. The norm for American and British ales and most lagers.",
+            accent: hsTokens.water,
+          }
+    );
+  if (yeast.sta1 !== undefined)
+    traits.push(
+      yeast.sta1
+        ? {
+            name: "Diastatic",
+            value: "STA-1+",
+            sub: "Finishes bone-dry",
+            desc: "Carries the STA1 (diastaticus) gene, so it keeps eating sugars other yeast leave behind and finishes very dry. It's also a contamination risk: it can over-carbonate or gush if it crosses into other beers.",
+            accent: hsTokens.roast,
+          }
+        : {
+            name: "Diastatic",
+            value: "STA-1−",
+            sub: "Not diastatic",
+            desc: "Does not carry the STA1 (diastaticus) gene. It attenuates normally, with no diastaticus over-attenuation or gushing risk.",
+            accent: hsTokens.muted,
+          }
+    );
 
   return (
     <article>
@@ -194,11 +247,12 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
               <HSEyebrow as="h2">Specs</HSEyebrow>
               <div className="yeast-spec-cards">
                 {specRows.map((r) => (
-                  <div
+                  <IngredientHoverCard
                     key={r.name}
                     className="yeast-stat-card"
                     tabIndex={0}
-                    aria-label={`${r.name}: ${r.value}. ${r.desc}`}
+                    ariaLabel={`${r.name}: ${r.value}. ${r.desc}`}
+                    tip={r.desc}
                   >
                     <span
                       aria-hidden
@@ -209,10 +263,36 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
                     <div className="yeast-stat-value">{r.value}</div>
                     {r.sub ? <div className="yeast-stat-sub">{r.sub}</div> : null}
                     <MiniMeter band={r.band} point={r.point} accent={r.accent} />
-                    <div role="tooltip" className="yeast-stat-tip">
-                      {r.desc}
-                    </div>
-                  </div>
+                  </IngredientHoverCard>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Genetic traits — POF (phenolics) + STA-1 (diastatic), the two
+              markers a brewer can't read off the spec sheet. Same card pattern
+              as Specs; the explainer rides in a crawlable hover tooltip. */}
+          {traits.length ? (
+            <section style={{ marginBottom: 30 }}>
+              <HSEyebrow as="h2">Genetic traits</HSEyebrow>
+              <div className="yeast-spec-cards">
+                {traits.map((t) => (
+                  <IngredientHoverCard
+                    key={t.name}
+                    className="yeast-stat-card"
+                    tabIndex={0}
+                    ariaLabel={`${t.name}: ${t.value}. ${t.desc}`}
+                    tip={t.desc}
+                  >
+                    <span
+                      aria-hidden
+                      className="yeast-stat-stripe"
+                      style={{ background: t.accent }}
+                    />
+                    <div className="yeast-stat-label">{t.name}</div>
+                    <div className="yeast-stat-value">{t.value}</div>
+                    <div className="yeast-stat-sub">{t.sub}</div>
+                  </IngredientHoverCard>
                 ))}
               </div>
             </section>
@@ -230,6 +310,20 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
                 accent={accent}
                 style={{ marginTop: 12, maxWidth: equivWidth }}
               >
+                {commonName ? (
+                  <div
+                    style={{
+                      fontFamily: hsTokens.body,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: accent,
+                      letterSpacing: "-0.01em",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {commonName}
+                  </div>
+                ) : null}
                 <div
                   style={{
                     fontFamily: hsTokens.mono,
@@ -509,8 +603,10 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
           outline: none;
           transition: box-shadow 160ms ease, transform 160ms ease;
         }
+        /* No transform on hover: the cursor-following tip is a position:fixed
+           descendant, and a transformed card would become its containing block
+           (breaking the viewport-relative placement). Shadow carries the feedback. */
         .yeast-stat-card:hover, .yeast-stat-card:focus-visible {
-          transform: translateY(-2px);
           box-shadow: ${hsTokens.sh3};
         }
         .yeast-stat-stripe {
@@ -545,39 +641,6 @@ export default function YeastDetailBody({ yeast }: { yeast: YeastPreset }) {
           font-size: 11px;
           color: var(--hs-muted);
           margin-top: 2px;
-        }
-        /* The explanation: present in the DOM (crawlable), revealed on hover. */
-        .yeast-stat-tip {
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          width: max-content;
-          min-width: 100%;
-          max-width: 240px;
-          z-index: 6;
-          background: var(--hs-paper);
-          border: 2px solid var(--hs-ink);
-          border-radius: 10px;
-          box-shadow: ${hsTokens.sh3};
-          padding: 9px 11px;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 12px;
-          line-height: 1.45;
-          color: var(--hs-muted);
-          opacity: 0;
-          transform: translateY(-4px);
-          pointer-events: none;
-          transition: opacity 140ms ease, transform 140ms ease;
-        }
-        .yeast-stat-card:hover .yeast-stat-tip,
-        .yeast-stat-card:focus-visible .yeast-stat-tip {
-          opacity: 1;
-          transform: translateY(0);
-        }
-        /* Keep an edge card's tip from spilling off the right. */
-        .yeast-spec-cards > .yeast-stat-card:last-child .yeast-stat-tip {
-          left: auto;
-          right: 0;
         }
         @media (max-width: 1024px) {
           .ingredient-page-grid { grid-template-columns: 1fr; }

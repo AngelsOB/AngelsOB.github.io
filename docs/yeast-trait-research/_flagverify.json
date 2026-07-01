@@ -1,0 +1,346 @@
+{
+  "results": [
+    {
+      "name": "A07 Flagship",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast official strain page (imperialyeast.com/yeast-strains/flagship) re-fetched: tech specs list 'Phenolic Off-Flavor (POF): negative' and describe 'extremely clean character'. A07 is a clean American ale workhorse, not a phenolic German/Belgian strain, so PAD1/FDC1 4-VG production is absent. The 'phenolic-style' heuristic flag is a false alarm (driven by the long American-styles list, none of which are clove-phenolic).",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Same official page: tech specs list 'Diastatic (STA1): negative'. Attenuation 73-77% is normal, consistent with a non-diastatic clean ale strain."
+    },
+    {
+      "name": "1007 German Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Wyeast product page (wyeastlab.com/product/german-ale) re-fetched: 'low ester formation', 'low or no detectable diacetyl', clean Dusseldorf Alt/Kolsch profile with no mention of clove/phenolic character. This is a clean German ALE, not a phenolic hefeweizen — POF-negative genotype. Flag is a false alarm.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Wyeast's PCR diastaticus survey identifies only its known STA1+ strains (1388, 3711, 3724, 3725-PC, 3726, 3739-PC, 3822-PC); 1007 is not among them. Attenuation 73-77% is normal. Non-diastatic."
+    },
+    {
+      "name": "G02 Kaiser",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast official page (imperialyeast.com/yeast-strains/kaiser) re-fetched: tech specs list 'Phenolic Off-Flavor (POF): negative'; traditional Alt strain that 'will keep the beer clean and allow the delicate malt flavors to shine through'. Non-phenolic genotype. Same isolate group as 1007 German Ale (g02 group) — both POF-negative, internally consistent.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Same official page: 'Diastatic (STA1): negative'. Attenuation 73-77% normal. Consistent with sibling 1007 (g02 group), also STA1-negative."
+    },
+    {
+      "name": "2565 Kölsch",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Wyeast product page (wyeastlab.com/product/klsch) re-fetched: classic Cologne Kolsch strain producing 'some of the fruity character of an ale, with a clean lager like profile', low/no diacetyl, no phenolic/clove. Clean ale = POF-negative genotype. Flag is a false alarm.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Mainstream clean Kolsch ale strain; attenuation 73-77% (normal). Not a diastaticus strain — STA1 over-attenuation would be a defect in a Kolsch. Non-diastatic."
+    },
+    {
+      "name": "G03 Dieter",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast official page (imperialyeast.com/yeast-strains/dieter) re-fetched: tech specs list 'Phenolic Off-Flavor (POF): negative'; 'a clean, crisp, traditional German Kolsch strain. A very low ester profile...'. Non-phenolic genotype. Group wlp029 (German Ale/Kolsch) — consistent with Escarpment Kolsch sibling, both POF-negative.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Same official page: 'Diastatic (STA1): negative'. Attenuation 73-77% normal. Consistent with wlp029-group sibling (Escarpment Kolsch 'Non-diastatic')."
+    },
+    {
+      "name": "Kolsch Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Escarpment Labs product page (escarpmentlabs.com/en-us/products/kolsch) re-fetched: Key Characteristics table lists 'Non-phenolic'; profile 'Clean, Malt-forward'. WLP029 German Ale/Kolsch group. Non-phenolic genotype, consistent with sibling G03 Dieter (also POF-negative). Flag is a false alarm.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Same page: Key Characteristics table lists 'Non-diastatic'. Attenuation 72-78% normal. Consistent with wlp029-group sibling G03 Dieter (STA1-negative)."
+    },
+    {
+      "name": "OYL-002 American Wheat",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Omega page (omegayeast.com/yeast/ales/american-wheat) re-fetched: 'Phenolic: No', 'fairly clean and lightly dry'. Multiple retailers confirm OYL-002 'Compares to WY1010' (Wyeast 1010 American Wheat) — a clean, non-phenolic American wheat strain. POF-negative is CORRECT for this strain. SIBLING/GROUP NOTE: the strainGroup 'wlp320' pairs OYL-002 with White Labs WLP320 American Hefeweizen, but this is a MIS-GROUPING — OYL-002 = WY1010 American Wheat lineage (clean), whereas the true WLP320 cross-lab equivalent is OYL-021 Hefeweizen Ale I, not OYL-002. They are genuinely different strains with different POF genotypes, so the group POF values legitimately differ (OYL-002 POF-, WLP320 POF+).",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Omega page: 'Diastatic: No'. WY1010-equivalent American wheat strain, attenuation 74-78% normal, non-diastatic. Consistent with WLP320 (also STA1-negative), so the STA1 group value is consistent even though the grouping itself is questionable on POF grounds."
+    },
+    {
+      "name": "WLP320 American Hefeweizen Ale Yeast",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "White Labs official page (whitelabs.com, id=149) re-fetched: 'produces very slight banana and clove notes'. Clove = 4-vinyl-guaiacol, so the strain DOES carry functional PAD1+/FDC1+ and converts ferulic acid to 4-VG — POF+ by genotype, just milder than WLP300/Weihenstephan weizen yeast. The brief's rule applies: genotype-honest call is POF+ even though sensory intensity is low. SIBLING/GROUP NOTE: strainGroup 'wlp320' incorrectly pairs WLP320 (American Hefeweizen, POF+) with OYL-002 (American Wheat = WY1010 clean, POF-); these are different isolates (true WLP320 Omega analog is OYL-021), so POF correctly differs across the mis-grouped pair.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "White Labs page STA1 QC field: 'STA1: Negative'. Trust the lab's genetic QC. Attenuation 70-75% normal. Consistent with OYL-002 (STA1-negative)."
+    },
+    {
+      "name": "3638 Bavarian Wheat",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Wyeast product page (wyeastlab.com/product/bavarian-wheat) re-fetched: banana esters 'complemented nicely by clove and subtle vanilla phenolics.' Classic Bavarian weizen strain producing 4-VG clove — POF+ genotype. Matches WLP351-group siblings (OYL-025 'Phenolic: Yes').",
+      "sta1Verdict": "correct",
+      "sta1Value": "positive",
+      "sta1Reason": "Recorded 'negative' is WRONG. 3638 is the same isolate as WLP351 / OYL-025 (suregork/Langdon 2019 genome decoding: 'WLP351 identified as a S. cerevisiae x S. uvarum hybrid that possesses STA1'; MTF/Langdon: 3638 = WLP351). STA1 is genetic, so 3638 must match its tested-positive siblings. The WLP351 lineage carries the 1162-bp STA1 promoter deletion (Langdon/Krogerus 2019, PMC6719335), i.e. it is weakly diastatic and attenuates normally (~70-76%) — so the normal attenuation is NOT evidence of STA1-negative. Flip negative -> positive; this is the adjudicated value."
+    },
+    {
+      "name": "OYL-025 Bavarian Wheat I",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Omega page (omegayeast.com/yeast/ales/bavarian-wheat) re-fetched: 'Phenolic: Yes'; predominant clove and pepper. Bavarian weizen = canonical 4-VG clove producer, POF+ genotype. Consistent with WLP351-group siblings (3638, WLP351).",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Omega page: 'This strain tests positive for the STA1 gene, an indicator of S. cerevisiae var. diastaticus'; 'Diastatic: Yes'. The 'sta1+ but low attenuation' flag is NOT a contradiction: the WLP351/OYL-025 weizen lineage carries the 1162-bp STA1 promoter-deletion variant (~100x lower expression, Langdon/Krogerus 2019), so it is genuinely STA1+ yet attenuates a normal 72-78%. Trust the lab's genetic positive over the attenuation-based doubt."
+    },
+    {
+      "name": "3944 Belgian Witbier",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Wyeast product page (re-fetched): 'a complex flavor profile dominated by spicy phenolics' and 'a delicate clove profile not to be overshadowed by esters.' Clove/4-VG is the witbier signature; this is the classic POF+ Belgian wit genotype. Consistent with sibling OYL-030 (Omega 'Phenolic: Yes').",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Wyeast page makes no diastaticus/STA1 claim; 1762 is not on Wyeast's diastaticus list and wit strains are not STA1+. Sibling OYL-030 Omega spec table lists 'Diastatic: No'. Attenuation 72-76% is normal."
+    },
+    {
+      "name": "OYL-030 Tropical IPA",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "This labProductId is Omega's Belgian Wit strain (wlp400 lineage). Omega Wit page (re-fetched) spec table: 'Phenolic: Yes'; prose 'Spicy phenolics carry the flavoring.' POF+ genotype, consistent with sibling 3944.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Omega Wit page spec table lists 'Diastatic: No.' Consistent with the wlp400 wit group (sibling 3944 also STA1-)."
+    },
+    {
+      "name": "OYL-049 Belgian Ale DK",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Omega Belgian Ale DK page (re-fetched) spec table: 'Phenolic: No'; prose describes 'light toasty or biscuit-like aromatic maltiness' with no clove/phenolic character. WLP515 Antwerp group is a mild, non-phenolic Belgian strain.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Omega page spec table: 'Diastatic: No'; attenuation 73-80% with no STA1/diastaticus mention."
+    },
+    {
+      "name": "1762 Belgian Abbey Style Ale II",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Genotype-honest call for the wlp540 group: Gallone 2016 via suregork crosswalk finds WLP540 'Rochefort' is of British origin and POF- (nonfunctional PAD1/FDC1), nearly unique among Belgian strains. Wyeast's own page (re-fetched) calls it a 'relatively clean profile' with only delicate dried-fruit esters, no clove/spice. Sibling St-Remy is explicitly 'Non-phenolic.' BYO's sensory 'strong spicy phenolic' prose is overridden by the genotype evidence per POF=genotype rule. Consistent with the whole wlp540 group (POF-).",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Wyeast diastaticus page (re-fetched) lists its seven STA1+ strains (1388, 3711, 3724, 3725, 3726, 3739, 3822); 1762 is NOT among them. Attenuation 73-77% is non-super-attenuating. Consistent with siblings (WLP540 White Labs STA1 Negative)."
+    },
+    {
+      "name": "OYL-020 Belgian Ale R",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "wlp540 group resolves to POF- (Gallone/suregork: WLP540 Rochefort British-origin, nonfunctional PAD1/FDC1; sibling St-Remy explicitly 'Non-phenolic'; WLP540 White Labs fruit-forward). Omega's coarse spec cell reads 'Phenolic: Yes' but its OWN prose (re-fetched) contradicts it: 'low phenolics for a Belgian strain, with stone fruit and light, floral or rose-like aromas.' Genotype + sibling consistency = negative.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Omega Belgian Ale R page spec table: 'Diastatic: No.' Attenuation 73-82%. Consistent with wlp540 group (White Labs STA1 Negative)."
+    },
+    {
+      "name": "St-Remy Abbey Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Escarpment Labs official page (re-fetched): 'A rare non-phenolic Belgian ale strain'; characteristics table value 'Non-phenolic.' Directly corroborates the wlp540 group genotype POF- call (Gallone/suregork British-origin Rochefort).",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Escarpment characteristics table lists 'Non-diastatic.' Attenuation 76%. Consistent with wlp540 group."
+    },
+    {
+      "name": "WLP540 Abbey IV Ale Yeast",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Decisive genomic basis: Gallone 2016 via suregork crosswalk (re-fetched) states WLP540 'Rochefort' 'appears to be of British origin (POF- as well), and not related to other Trappist strains' (nonfunctional PAD1/FDC1). White Labs page lists no phenolic descriptors ('balanced fruit aroma'). This is the group head; conflicts with some marketing 'warm phenolics' prose, but genotype governs. POF-.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "White Labs official page (re-fetched): 'STA1 QC Result: Negative.' Attenuation 74-82%."
+    },
+    {
+      "name": "1388 Belgian Strong Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Wyeast page (re-fetched) notes 'subtle phenolics'; BYO describes the WLP570/Duvel-type strain producing 'a strong peppery phenolic.' All Wyeast diastaticus strains are POF+, and this is a STA1+ var. diastaticus strain = functional PAD1/FDC1. POF+ confirmed. Consistent with sibling OYL-019 ('Phenolic: Yes').",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Wyeast diastaticus page (re-fetched) explicitly lists 1388 among its seven STA1+ S. cerevisiae var. diastaticus strains; product page: 'This strain carries the STA1 gene.' The 74-78% attenuation reflects the promoter-deletion (low-expression) variant and is NOT a contradiction. Confirmed positive."
+    },
+    {
+      "name": "OYL-019 Belgian Ale D",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Omega Belgian Ale D page (re-fetched) spec table: 'Phenolic: Yes.' Matches the WLP570 Belgian Golden / Duvel genotype (BYO: 'strong peppery phenolic'). Consistent with sibling 1388.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Omega page (re-fetched): 'This strain tests positive for the STA1 gene, an indicator of S. cerevisiae var. diastaticus'; spec table 'Diastatic: Yes.' Trust the genetic QC over the 74-78% attenuation (promoter-deletion variant). Confirmed positive; consistent with sibling 1388 (Wyeast STA1+ list)."
+    },
+    {
+      "name": "SafAle BE-256",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Fermentis official product page (re-fetched) overview table: 'Phenolic Off-Flavor: –' (negative). BE-256 (Abbaye) is a fruity, ester-forward, non-phenolic Belgian strong-ale strain — 'won't produce any spicy flavours.' POF- confirmed.",
+      "sta1Verdict": "correct",
+      "sta1Value": "negative",
+      "sta1Reason": "Changing recorded 'unknown' to negative. The prior WLP590 French Saison grouping was a confirmed mis-grouping: BE-256 is an Abbaye/Belgian-strong strain, not a French saison, so the 'unknown' revert is no longer warranted. Fermentis does not classify BE-256 as diastaticus, and it appears on no recognized diastaticus/STA1+ list; its 82-86% attenuation is typical of high-attenuating Belgian Abbaye strains, not evidence of STA1. Best determination: STA1-negative. (Missing: a published genetic STA1 QC specifically for BE-256; Fermentis does not state one, so a small residual uncertainty remains.)"
+    },
+    {
+      "name": "A20 Citrus",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast official A20 Citrus page tech spec lists 'Phenolic Off-Flavor: negative'; profile is citrus ester (orange/lemon/tropical), no clove. This is the brux-like Trois lineage (wlp644 group), which is genuinely non-phenolic. POF-negative is correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Imperial Yeast page: 'tests positive for the STA1 gene via PCR analysis and is therefore considered to be Saccharomyces cerevisiae var. Diastaticus.' The 73-75% attenuation is NOT a contradiction — the brux-like Trois lineage is genuinely weakly-diastatic STA1+. Trust the lab's genetic positive over the attenuation doubt."
+    },
+    {
+      "name": "WLP644 Saccharomyces brux-like Trois",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Same isolate as A20 Citrus (wlp644 group). The brux-like Trois lineage is a Saccharomyces strain that does not produce 4-VG clove; profile is tart mango/pineapple/funk without Brett or Sacc phenolics. Sibling A20 Citrus's Imperial page explicitly lists POF negative. Group-consistent POF-negative. (This is a labeled-'brux' but genetically Saccharomyces strain, so the normal Sacc POF call applies, not the Brett N/A rule.)",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "White Labs WLP644 page: 'STA1 QC Result: Positive' (verified by re-fetch). Group-consistent with sibling A20 Citrus (Imperial 'Diastatic: positive'). The weakly-diastatic STA1+ Trois lineage attenuates only moderately despite carrying STA1; positive is correct."
+    },
+    {
+      "name": "WLP885 Zurich Lager Yeast",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "White Labs WLP885 page (re-fetched): 'Sulfur and diacetyl production is minimal, but the strain is POF+' and 'Perfect for a phenolic Christmas Lager strain.' POF-positive is explicitly stated by the manufacturer despite being a lager strain.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "White Labs WLP885 page (re-fetched): 'STA1 QC Result: Positive'. Carries the STA1 gene (potential diastaticus); 70-80% attenuation is consistent and not a contradiction. Positive is correct."
+    },
+    {
+      "name": "1581-PC Belgian Stout",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Wyeast 1581-PC page (re-fetched): 'produces moderate levels of esters without significant phenolic or spicy characteristics' — explicit manufacturer statement of non-phenolic/clean character. POF-negative is correct even though it is a Belgian strain.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Wyeast's 'Developments in understanding diastaticus' article (re-fetched) enumerates exactly seven STA1-positive strains (1388, 3711, 3724, 3725-PC, 3726, 3739-PC, 3822-PC); 1581/1581-PC is NOT on that list. STA1-negative is correct."
+    },
+    {
+      "name": "3739-PC Flanders Golden Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Wyeast 3739-PC page (re-fetched): 'produce moderate levels of both fruity esters and spicy phenols while finishing dry.' Explicit spicy-phenol (4-VG) production = POF-positive. Correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Wyeast diastaticus article: 3739-PC is one of the seven STA1+ strains AND one of only three carrying the functional STA1 promoter (super-attenuators, 86-90%). STA1-positive is correct; the recorded attenuationMax 0.78 understates true attenuation but the gene call is solid."
+    },
+    {
+      "name": "3822-PC Belgian Dark Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "Wyeast 3822-PC page (re-fetched): 'balanced ester and phenol production'; 'high acid producer'; 'Spicy, tart, and dry.' Phenol production = POF-positive. Correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Wyeast 3822-PC page: 'classified as Saccharomyces cerevisiae var. diastaticus using rapid PCR analysis' and 'carries the STA1 gene.' Also on the diastaticus article's seven-strain STA1+ list. STA1-positive is correct (one of the four lacking the functional promoter, hence ~74-79% attenuation — not a contradiction)."
+    },
+    {
+      "name": "A24 Dry Hop",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast A24 Dry Hop page (re-fetched): tech spec 'Phenolic Off-Flavor: negative'. Blend of A20 Citrus + A04 Barbarian, both non-phenolic. POF-negative is correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Imperial Yeast A24 page: 'Diastatic: positive'; the blend 'contains a strain that tests positive for the STA1 gene via PCR analysis' (the A20 Citrus / brux-like Trois component). STA1-positive is correct; 73-75% attenuation reflects the weakly-diastatic Trois component, not a contradiction."
+    },
+    {
+      "name": "OYL-057 Wallonian Farmhouse",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "labProductId OYL-057 = Omega HotHead Kveik (verified: omegayeast.com/yeast/kveiks/hothead-ale, Product ID OYL-057, spec 'Phenolic: No'). The manifest display name 'Wallonian Farmhouse' does not match Omega's OYL-057 (a name/ID mis-label), but the product ID is the authoritative mapping and it is non-phenolic Norwegian kveik. POF-negative is correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Omega HotHead Kveik (OYL-057) page: spec 'Diastatic: No', attenuation 75-82%. Kveik strains are non-diastatic / STA1-negative. STA1-negative is correct. (Note possible mis-grouping: the 'Wallonian Farmhouse' display name is inconsistent with the OYL-057 product ID, but the recorded trait values match the real OYL-057.)"
+    },
+    {
+      "name": "OYL-101 Saisonstein's Monster",
+      "pofVerdict": "confirm",
+      "pofValue": "positive",
+      "pofReason": "The named strain Saisonstein's Monster is Omega OYL-500 (omegayeast.com/yeast/belgian-ales/saisonstein), spec table 'Phenolic: Yes'. It is a hybrid of French Saison (OYL-026, 'Phenolic: Yes') and Belgian Saison — both saison parents are genotype-POF+. POF-positive matches the named strain. CAVEAT/mis-mapping: the recorded labProductId OYL-101 actually maps to Omega Pilsner I ('Phenolic: No'), so the original cited source was the wrong strain. The recorded value was already self-corrected to positive and matches Saisonstein/OYL-500; positive is correct for the named strain.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Saisonstein's Monster (OYL-500) Omega page: 'Diastatic: Yes' and 'tests positive for the STA1 gene, an indicator of Saccharomyces cerevisiae var. diastaticus', attenuation 80-90%. STA1-positive matches the named strain. Same mis-mapping caveat: OYL-101 = Pilsner I ('Diastatic: No'); the manifest ID is wrong, but the recorded positive value (self-corrected) is correct for the named Saisonstein strain."
+    },
+    {
+      "name": "OYL-501 Gulo Ale",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Omega OYL-501 Gulo Ale page (re-fetched): spec 'Phenolic: No'; 'Non-phenolic'; 'orange-marmalade and peach character with a clean, brut-like finish' — no clove/peppery phenolics. POF-negative is correct.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Omega OYL-501 page: 'Diastatic: Yes' and 'tests positive for the STA1 gene, an indicator of Saccharomyces cerevisiae var. diastaticus, and is capable of fermenting dextrins, resulting in very high attenuation' (85-90%). STA1-positive is correct."
+    },
+    {
+      "name": "Sourvisiae",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Lallemand Sourvisiae TDS, Brewing Properties (read directly from the cited PDF): 'This strain is POF negative.' Sourvisiae is a bioengineered S. cerevisiae (not a true Brett, despite the DB type 'brett'), so the Sacc POF/4-VG concept applies and the manufacturer's POF-negative call is a genuine genotype-level statement. The 'pof- on a phenolic-style strain' flag is a false alarm — it is a clean lactic-souring strain, not a clove/phenolic one.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Lallemand Sourvisiae TDS, Microbiological Properties (read directly from the cited PDF): 'Diastaticus  Negative'."
+    },
+    {
+      "name": "W05 Brett Drei",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Imperial Yeast Brett Drei page spec table lists 'Phenolic Off-Flavor: negative'. Although Imperial's prose calls it 'Brettanomyces bruxellensis', the page also states it 'tests positive for the STA1 gene via PCR analysis and is therefore considered to be Saccharomyces cerevisiae var. Diastaticus' — i.e. genotype-Sacc, so the Sacc POF call is valid. Aroma is tropical-fruit/ester, not clove. POF negative confirmed.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "Imperial Yeast page (re-fetched): spec table 'Diastatic: positive' and 'This strain tests positive for the STA1 gene via PCR analysis and is therefore considered to be Saccharomyces cerevisiae var. Diastaticus.' Wide attenuation range 56-85% is consistent with a STA1+ strain; lab PCR-positive is decisive."
+    },
+    {
+      "name": "WLDSOURVISIAE Sourvisiae",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "White Labs WLDSOURVISIAE page confirms this is the same Sourvisiae strain — 'a bioengineered (GMO) strain of Saccharomyces cerevisiae' with a single lactate-dehydrogenase modification that 'does not produce other flavor compounds associated with Brettanomyces, Lachancea, or Lactic Acid Bacteria.' Identical isolate to Lallemand Sourvisiae, whose TDS states 'This strain is POF negative.' POF negative confirmed.",
+      "sta1Verdict": "correct",
+      "sta1Value": "negative",
+      "sta1Reason": "Recorded as 'unknown' with no source. This is the same isolate as Lallemand Sourvisiae (White Labs distributes Lallemand's GMO souring strain), and the Lallemand Sourvisiae TDS states 'Diastaticus  Negative'. By strain identity, STA-1 must be negative. Correcting unknown -> negative for sibling/identity consistency."
+    },
+    {
+      "name": "WLP026 Premium Bitter Ale Yeast",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "WLP026 maps to Gallone Beer059. suregork (Gallone 2016 decoding) and the Krogerus STA1 work note it as 'only one of two known examples of a diastatic strain that are NOT also POF+' (the other being WLP644) — i.e. STA1+ yet POF-negative. Official description is ester-led ('mild but complex ester character'), no clove/phenolic. POF negative confirmed.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "White Labs WLP026 page lists 'STA1: Positive'; independently confirmed STA1+ via Gallone Beer059 by Krogerus (suregork: 'Beer059 (probably WLP026)' among full STA1 hits). The 'sta1+ but low attenuation' flag (70-75%) is the promoter-deletion variant (the deletion was heterozygous in Beer059, ~100x lower expression) — normal attenuation is NOT a contradiction. STA1 positive confirmed."
+    },
+    {
+      "name": "WLP067 Coastal Haze Ale Yeast Blend",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "White Labs WLP067 is a blend of NEIPA strains giving 'tropical, fruit-forward esters... mango and pineapple', described as 'dry, yet juicy' with no phenolic/clove character. Ester-forward, clean = POF negative. POF negative confirmed.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "positive",
+      "sta1Reason": "White Labs WLP067 page (re-fetched twice) lists 'STA1: Positive'; the blend 'has been determined through genetic testing to contain the STA1 gene (glucoamylase)', explaining attenuation up to 75-82%. The 'sta1+ but low attenuation' flag is not a contradiction (genetic test is decisive; STA1+ strains can carry the low-expression promoter variant). STA1 positive confirmed."
+    },
+    {
+      "name": "WLP4645 Transatlantic Berliner Blend",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "White Labs describes the Saccharomyces component as 'a clean S. cerevisiae strain (Germany)' fermenting to crisp dryness — clean Sacc base reads POF-negative. The tartness/funk comes from the blend's Lactobacillus brevis and a touch of Brettanomyces, which make phenols by a non-Sacc pathway, not from Sacc 4-VG. So the Sacc POF call is negative. Caveat: this is a multi-organism blend (Brett present), so a 'clean Sacc base' POF-negative is the honest read, not a single-isolate genotype.",
+      "sta1Verdict": "uncertain",
+      "sta1Value": "negative",
+      "sta1Reason": "Recorded 'unknown'. White Labs publishes no STA1 field for WLP4645 (re-fetched product and yeast-bank pages; neither lists STA1), and it is a blend rather than a single isolate. No diastatic/over-attenuation claim is made for the clean German ale base. Best guess negative (typical clean German ale yeast), but it cannot be confirmed from permitted sources — no genotype data published for the blend's Sacc component. Missing: a White Labs STA1 QC field or Gallone/Krogerus mapping for this specific strain."
+    },
+    {
+      "name": "WLP815 Belgian Lager Yeast",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "White Labs WLP815 (re-fetched): 'A clean, crisp European lager yeast with low sulfur production', ferments crisp and neutral for pilsners/lagers. Clean neutral lager = POF negative. The 'pof- on a phenolic-style strain' flag is spurious (it is a lager strain, not a phenolic Belgian ale). POF negative confirmed.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "White Labs WLP815 page (re-fetched) lists 'STA1: Negative'. Attenuation 72-78% is normal lager range, consistent with non-diastatic. STA1 negative confirmed."
+    },
+    {
+      "name": "WildBrew Philly Sour",
+      "pofVerdict": "confirm",
+      "pofValue": "negative",
+      "pofReason": "Lallemand WildBrew Philly Sour TDS, Brewing Properties (read directly from the cited PDF): 'This strain is POF negative.' Note: this is Lachancea thermotolerans, a non-Saccharomyces wild yeast, so the Sacc PAD1/FDC1 4-VG concept does not strictly apply; the negative call rests on the manufacturer's direct phenolic assertion for this exact strain (sour/stone-fruit/peach profile, no clove). Keeping the recorded 'negative' on that manufacturer statement rather than forcing 'unknown', since the source explicitly asserts POF-negative for this isolate.",
+      "sta1Verdict": "confirm",
+      "sta1Value": "negative",
+      "sta1Reason": "Lallemand WildBrew Philly Sour TDS, Microbiological Properties (read directly from the cited PDF): 'Diastaticus  Negative'. (Lachancea thermotolerans, not a STA1-bearing Saccharomyces.)"
+    }
+  ]
+}

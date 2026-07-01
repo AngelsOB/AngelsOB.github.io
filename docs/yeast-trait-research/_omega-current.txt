@@ -1,0 +1,101 @@
+OYL-001	OYL-001 Alt	type=ale	atten=0.77	temp=13-20
+OYL-002	OYL-002 American Wheat	type=wheat	atten=0.78	temp=14-23
+OYL-003	OYL-003 London Ale	type=ale	atten=0.77	temp=19-22
+OYL-004	OYL-004 West Coast Ale I	type=ale	atten=0.8	temp=16-23
+OYL-005	OYL-005 Irish Ale	type=ale	atten=0.75	temp=17-22
+OYL-006	OYL-006 Voss Kveik	type=ale	atten=0.8	temp=18-22
+OYL-007	OYL-007 British Ale II	type=ale	atten=0.72	temp=18-24
+OYL-008	OYL-008 British Ale III	type=ale	atten=0.74	temp=18-23
+OYL-009	OYL-009 West Coast Ale II	type=ale	atten=0.76	temp=16-22
+OYL-010	OYL-010 British Ale IV	type=ale	atten=0.76	temp=21-24
+OYL-011	OYL-011 British Ale I	type=ale	atten=0.75	temp=18-23
+OYL-012	OYL-012 Pacific NW Ale	type=ale	atten=0.71	temp=18-24
+OYL-013	OYL-013 London Ale	type=ale	atten=0.76	temp=17-24
+OYL-014	OYL-014 British Ale VII	type=ale	atten=0.71	temp=18-22
+OYL-015	OYL-015 Scottish Ale	type=ale	atten=0.76	temp=17-24
+OYL-016	OYL-016 Extra Special (formerly British Ale VIII)	type=ale	atten=0.71	temp=18-22
+OYL-017	OYL-017 Kolsch I	type=ale	atten=0.77	temp=13-21
+OYL-018	OYL-018 Abbey Ale C	type=ale	atten=0.78	temp=20-26
+OYL-019	OYL-019 Belgian Ale D	type=ale	atten=0.78	temp=18-27
+OYL-020	OYL-020 Belgian Ale R	type=ale	atten=0.82	temp=18-24
+OYL-021	OYL-021 Hefeweizen Ale I	type=wheat	atten=0.77	temp=18-24
+OYL-022	OYL-022 Hefeweizen Ale II	type=wheat	atten=0.76	temp=17-24
+OYL-023	OYL-023 Grand Cru	type=ale	atten=0.76	temp=17-24
+OYL-024	OYL-024 Belgian Ale A	type=ale	atten=0.85	temp=18-26
+OYL-025	OYL-025 Bavarian Wheat I	type=wheat	atten=0.78	temp=19-22
+OYL-026	OYL-026 French Saison	type=ale	atten=0.9	temp=18-25
+OYL-027	OYL-027 Belgian Saison I	type=ale	atten=0.8	temp=21-35
+OYL-028	OYL-028 Belgian Ale W	type=ale	atten=0.78	temp=18-26
+OYL-029	OYL-029 Belgian Wheat	type=wheat	atten=0.76	temp=18-23
+OYL-030	OYL-030 Tropical IPA	type=wheat	atten=0.76	temp=17-24
+OYL-032	OYL-032 East Coast Ale	type=ale	atten=0.75	temp=20-23
+OYL-033	OYL-033 Jovaru Lithuanian Farmhouse	type=ale	atten=0.85	temp=21-35
+OYL-034	OYL-034 Bavarian Wheat II	type=wheat	atten=0.76	temp=18-24
+OYL-039	OYL-039 Biere de Garde	type=ale	atten=0.79	temp=21-29
+OYL-041	OYL-041 DIPA Ale	type=ale	atten=0.76	temp=16-21
+OYL-042	OYL-042 Belgian Saison II	type=ale	atten=0.79	temp=21-29
+OYL-043	OYL-043 Point Loma (formerly West Coast Ale III)	type=ale	atten=0.83	temp=18-20
+OYL-044	OYL-044 Kolsch II	type=ale	atten=0.78	temp=18-21
+OYL-046	OYL-046 Belgian Ale O	type=ale	atten=0.8	temp=19-22
+OYL-049	OYL-049 Belgian Ale DK	type=ale	atten=0.8	temp=19-21
+OYL-050	OYL-050 West Coast Ale IV	type=ale	atten=0.8	temp=17-23
+OYL-052	OYL-052 Omega HotHead Ale	type=ale	atten=0.8	temp=18-22
+OYL-056	OYL-056 Belgian Golden Strong	type=ale	atten=0.95	temp=20-24
+OYL-057	OYL-057 Wallonian Farmhouse	type=kveik	atten=0.85	temp=22-37
+OYL-061	OYL-061 Lutra Kveik	type=kveik	atten=0.82	temp=22-37
+OYL-071	OYL-071 Lutra Kveik	type=kveik	atten=0.82	temp=20-35
+OYL-071DRY	OYL-071DRY Dried Lutra	type=kveik	atten=0.82	temp=12-35
+OYL-090	OYL-090 Espe Kveik	type=kveik	atten=0.8	temp=20-37
+OYL-091	OYL-091 Hornindal Kveik	type=kveik	atten=0.82	temp=22-37
+OYL-100	OYL-100 Lager I	type=lager	atten=0.75	temp=9-13
+OYL-101	OYL-101 Saisonstein's Monster	type=lager	atten=0.76	temp=9-13
+OYL-102	OYL-102 American Pilsner	type=lager	atten=0.75	temp=9-13
+OYL-103	OYL-103 American Lager	type=lager	atten=0.77	temp=9-14
+OYL-104	OYL-104 Danish Lager	type=lager	atten=0.77	temp=8-13
+OYL-105	OYL-105 West Coast Lager	type=lager	atten=0.71	temp=14-20
+OYL-106	OYL-106 German Lager I	type=lager	atten=0.77	temp=7-20
+OYL-107	OYL-107 Oktoberfest	type=lager	atten=0.77	temp=8-14
+OYL-108	OYL-108 Pilsner II	type=lager	atten=0.74	temp=10-14
+OYL-109	OYL-109 German Lager II	type=lager	atten=0.76	temp=10-13
+OYL-111	OYL-111 German Bock	type=lager	atten=0.76	temp=9-13
+OYL-113	OYL-113 Mexican Lager	type=lager	atten=0.78	temp=10-13
+OYL-114	OYL-114 Bayern Lager	type=lager	atten=0.76	temp=11-17
+OYL-200	OYL-200 Kolsch I	type=ale	atten=0.9	temp=21-29
+OYL-201	OYL-201 Brett. Claussenii	type=brett	atten=0.85	temp=21-29
+OYL-202	OYL-202 Brett. Bruxellensis	type=brett	atten=0.85	temp=21-29
+OYL-203	OYL-203 Hefe Weizen	type=brett	atten=0.85	temp=21-29
+OYL-210	OYL-210 Brett Blend #1 Where Da Funk?	type=blend	atten=0.88	temp=20-27
+OYL-211	OYL-211 Brett Blend #2 Bit O' Funk	type=blend	atten=null	temp=20-27
+OYL-212	OYL-212 Brett Blend #3 Bring On Da Funk	type=blend	atten=null	temp=20-27
+OYL-216	OYL-216 Northwest Farmhouse Brett	type=blend	atten=0.85	temp=20-27
+OYL-217	OYL-217 C2C American Farmhouse	type=blend	atten=0.85	temp=20-27
+OYL-218	OYL-218 All the Bretts	type=brett	atten=null	temp=20-29
+OYL-400	OYL-400 American Lager	type=ale	atten=0.77	temp=18-24
+OYL-401	OYL-401 Sundew	type=ale	atten=0.85	temp=18-26
+OYL-402	OYL-402 Cosmic Punch	type=ale	atten=0.75	temp=18-24
+OYL-403	OYL-403 Lunar Crush Lager	type=lager	atten=0.78	temp=10-18
+OYL-404	OYL-404 Star Party	type=ale	atten=0.8	temp=16-23
+OYL-405	OYL-405 Helio Gazer	type=ale	atten=0.75	temp=18-23
+OYL-406	OYL-406 Little DIPA	type=ale	atten=0.8	temp=18-22
+OYL-407	OYL-407 Vossa Nova	type=kveik	atten=0.82	temp=20-35
+OYL-408	OYL-408 DayBreak-V	type=ale	atten=0.8	temp=18-23
+OYL-409	OYL-409 Tartango	type=kveik	atten=0.82	temp=20-35
+OYL-410	OYL-410 Solsta	type=ale	atten=null	temp=18-22
+OYL-430	OYL-430 West Coast I	type=ale	atten=0.8	temp=16-23
+OYL-431	OYL-431 British V	type=ale	atten=0.75	temp=18-23
+OYL-432	OYL-432 Extra Special	type=ale	atten=0.71	temp=18-22
+OYL-433	OYL-433 Bayern Lager	type=lager	atten=0.76	temp=11-17
+OYL-434	OYL-434 Point Loma	type=ale	atten=0.83	temp=18-20
+OYL-435	OYL-435 Kolsch II	type=ale	atten=0.78	temp=18-21
+OYL-436	OYL-436 DIPA	type=ale	atten=0.8	temp=18-22
+OYL-437	OYL-437 German Lager I	type=lager	atten=0.77	temp=7-20
+OYL-438	OYL-438 French Saison	type=ale	atten=0.8	temp=18-25
+OYL-439	OYL-439 Belgian Saison II	type=ale	atten=0.78	temp=18-27
+OYL-440	OYL-440 American Saison	type=ale	atten=0.78	temp=18-27
+OYL-441	OYL-441 Mexican Lager	type=lager	atten=0.82	temp=9-18
+OYL-500	OYL-500 Belgian Ale A	type=ale	atten=0.9	temp=18-26
+OYL-501	OYL-501 Gulo Ale	type=ale	atten=0.9	temp=20-25
+PIN-001DRY	PIN-001DRY Heritage American Ale	type=ale	atten=0.82	temp=18-25
+PIN-002DRY	PIN-002DRY Heritage English Ale	type=ale	atten=0.78	temp=18-22
+PIN-003DRY	PIN-003DRY Heritage Pilsner	type=lager	atten=0.81	temp=12-15
+PIN-005DRY	PIN-005DRY Low Alcohol	type=ale	atten=0.2	temp=18-25

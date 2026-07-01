@@ -223,8 +223,8 @@ export function equivToken(y: YeastPreset): string {
 }
 
 /**
- * The "A = B = C" equivalence string for the headline + meta, self first, or
- * null for a singleton. Deduped so two labs sharing a catalog id don't repeat.
+ * The "A = B = C" equivalence string for the detail-page headline, self first,
+ * or null for a singleton. Deduped so two labs sharing a catalog id don't repeat.
  */
 export function yeastEquivalenceLine(y: YeastPreset): string | null {
   const peers = yeastEquivalents(y);
@@ -237,9 +237,114 @@ export function yeastEquivalenceLine(y: YeastPreset): string | null {
   return tokens.length >= 2 ? tokens.join(" = ") : null;
 }
 
+/**
+ * The "A = B = C" equivalence string EXCLUDING self, for the "{name} is the same
+ * strain as {equiv}" meta sentence — the headline includes self as a title
+ * ("WLP001 = 1056 = US-05"), but that reads redundant inside a sentence that
+ * already names the strain ("Cali Ale is the same strain as Cali Ale = ...").
+ */
+export function yeastEquivalenceLineOthers(y: YeastPreset): string | null {
+  const peers = yeastEquivalents(y);
+  if (peers.length === 0) return null;
+  const tokens: string[] = [];
+  for (const s of peers) {
+    const t = equivToken(s);
+    if (t !== equivToken(y) && !tokens.includes(t)) tokens.push(t);
+  }
+  return tokens.length ? tokens.join(" = ") : null;
+}
+
 /** Resolved substitutes for this strain (best-first), empty when none. */
 export function yeastSubstitutes(y: YeastPreset): ResolvedYeastRef[] {
   return resolveSubstitutes(y, YEASTS);
+}
+
+/** The strain's canonical common name (its strainGroup, e.g. "Chico (American
+ *  Ale)", "Westmalle"), or null for a singleton. This is the name brewers search. */
+export function yeastCommonName(y: YeastPreset): string | null {
+  return y.strainGroup?.trim() || null;
+}
+
+/** Other names brewers search for this isolate — origin breweries, famous beers,
+ *  cross-lab codes (e.g. Chico → Sierra Nevada, US-05, WLP001). SEO surface. */
+export function yeastAliases(y: YeastPreset): string[] {
+  return y.strainGroupAliases ?? [];
+}
+
+// ─── Substitution-chart data ─────────────────────────────────────────────────
+// The chart is strain-anchored: one row per strain that has cross-lab matches or
+// substitutes. Each row shows BOTH — the same strain at other labs (exact swaps)
+// and its closest substitutes — so a brewer can look up their strain and see every
+// option at once. `category` carries the lab so the row + chips can show its mark.
+
+export type YeastEquivMember = {
+  name: string;
+  slug: string;
+  category: string;
+  token: string;
+  accent: string;
+};
+
+export type YeastChartRow = {
+  name: string;
+  slug: string;
+  category: string;
+  accent: string;
+  type: string | undefined;
+  exact: YeastEquivMember[]; // same strain, other labs
+  substitutes: YeastEquivMember[]; // close alternatives
+};
+
+const presetToMember = (y: YeastPreset): YeastEquivMember => ({
+  name: y.name,
+  slug: yeastSlug(y),
+  category: y.category,
+  token: equivToken(y),
+  accent: yeastAccent(y),
+});
+const refToMember = (r: ResolvedYeastRef): YeastEquivMember => ({
+  name: r.name,
+  slug: r.preset ? yeastSlug(r.preset) : "",
+  category: r.preset?.category ?? "",
+  token: r.preset ? equivToken(r.preset) : r.name,
+  accent: r.preset ? yeastAccent(r.preset) : hsTokens.muted,
+});
+
+/** One row per strain that carries cross-lab equivalents and/or substitutes. */
+export function yeastChartRows(): YeastChartRow[] {
+  const rows: YeastChartRow[] = [];
+  for (const y of YEASTS) {
+    const exact = yeastEquivalents(y).map(presetToMember);
+    const substitutes = yeastSubstitutes(y).map(refToMember);
+    if (!exact.length && !substitutes.length) continue;
+    rows.push({
+      name: y.name,
+      slug: yeastSlug(y),
+      category: y.category,
+      accent: yeastAccent(y),
+      type: y.type,
+      exact,
+      substitutes,
+    });
+  }
+  return rows;
+}
+
+/** Chart rows bucketed into strain-type sections (Ale, Lager, Wheat, …), common→
+ *  specialty type order, alphabetical within each, empty types dropped. */
+export function yeastChartSections(): {
+  type: string;
+  label: string;
+  rows: YeastChartRow[];
+}[] {
+  const all = yeastChartRows();
+  return TYPE_ORDER.map((type) => ({
+    type,
+    label: formatStrainType(type) ?? type,
+    rows: all
+      .filter((r) => (r.type ?? "other") === type)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  })).filter((s) => s.rows.length > 0);
 }
 
 // ─── Index rows + groups ────────────────────────────────────────────────────
@@ -271,7 +376,8 @@ export function yeastRows(): IngredientRow[] {
         group,
         formatStrainType(y.type) ?? "",
         y.labProductId ?? "",
-        y.strainGroupLabel ?? "",
+        y.strainGroup ?? "",
+        ...yeastAliases(y),
         ...(y.styles ?? []),
       ]
         .join(" ")
@@ -371,16 +477,34 @@ export function yeastLede(y: YeastPreset): string {
 export function yeastMeta(y: YeastPreset): IngredientMeta {
   const atten = yeastAttenuation(y);
   const temp = yeastTemp(y);
-  const equiv = yeastEquivalenceLine(y);
+  const equiv = yeastEquivalenceLineOthers(y);
+  const common = yeastCommonName(y);
   const subs = yeastSubstitutes(y).map((s) => s.name);
 
   const description = [
     // Lead with the cross-lab equivalence — the highest-intent, lowest-
-    // competition query — then the core spec, then substitutes.
-    equiv ? `${y.name} is the same strain as ${equiv}.` : null,
+    // competition query — then the core spec, then substitutes. Name the strain's
+    // common identity (Chico, Conan, Westmalle…) where it has one — that's the
+    // term people actually search.
+    equiv
+      ? `${y.name} is the same strain as ${equiv}${
+          common ? `, the ${common} yeast` : ""
+        }.`
+      : common
+        ? `${y.name} is the ${common} yeast.`
+        : null,
     [
       atten ? `${atten} attenuation` : null,
       temp ? `${temp} fermentation` : null,
+    ]
+      .filter(Boolean)
+      .join(", ")
+      .replace(/^./, (c) => c.toUpperCase()) || null,
+    // A short trait flag, only for the defining (positive) cases — enriches the
+    // snippet for saisons/hefes/diastatic strains; clean strains stay uncluttered.
+    [
+      y.pof === true ? "phenolic (clove and spice)" : null,
+      y.sta1 === true ? "diastatic" : null,
     ]
       .filter(Boolean)
       .join(", ")
@@ -404,12 +528,26 @@ export function yeastMeta(y: YeastPreset): IngredientMeta {
   if (y.labProductId && !y.name.includes(y.labProductId)) {
     keywords.push(`${y.labProductId} equivalent`, `${y.labProductId} substitute`);
   }
+  // Trait keywords — only where the trait is a real question for this strain.
+  if (pofRelevant(y)) {
+    keywords.push(`${y.name} phenolic`);
+    if (y.pof) keywords.push("phenolic off-flavor", "4-vinyl-guaiacol", "clove");
+  }
+  if (sta1Relevant(y)) {
+    keywords.push(`${y.name} diastatic`);
+    if (y.sta1) keywords.push("diastaticus", "STA1", "super attenuating");
+  }
+  // Canonical common name + the origin/nickname search terms (Chico, Sierra
+  // Nevada, Heady Topper…) — the highest-value, lowest-competition yeast queries.
+  const withYeast = (t: string) => (/yeast$/i.test(t) ? [t] : [t, `${t} yeast`]);
+  if (common) keywords.push(...withYeast(common));
+  for (const a of yeastAliases(y)) keywords.push(...withYeast(a));
 
   return {
     slug: yeastSlug(y),
     title: `${y.name} — Attenuation, Temperature & Equivalents`,
     description: description || yeastLede(y),
-    keywords,
+    keywords: [...new Set(keywords.filter(Boolean))],
   };
 }
 
@@ -429,7 +567,7 @@ export function yeastFaq(y: YeastPreset): IngredientFaqItem[] {
       q: `What is the ${y.name} equivalent?`,
       a: `${joinAnd(names)} — the same strain from ${
         peers.length === 1 ? "another lab" : "other labs"
-      }${y.strainGroupLabel ? ` (${y.strainGroupLabel})` : ""}.`,
+      }${y.strainGroup ? `, the ${y.strainGroup} strain` : ""}.`,
     });
   }
 
@@ -446,6 +584,25 @@ export function yeastFaq(y: YeastPreset): IngredientFaqItem[] {
     out.push({
       q: `What temperature should I ferment ${y.name} at?`,
       a: `${temp} is the recommended range.`,
+    });
+  }
+
+  // Genetic traits — only on strains where the question is real (phenolic- or
+  // diastatic-leaning), so clean ales/lagers never get filler trait Q&A.
+  if (pofRelevant(y)) {
+    out.push({
+      q: `Does ${y.name} produce phenolics (clove and spice)?`,
+      a: y.pof
+        ? `Yes. ${y.name} is POF-positive — it makes 4-vinyl-guaiacol, the clove and spice character of hefeweizens, witbiers, and saisons.`
+        : `No. ${y.name} is POF-negative (phenolically clean), so it won't throw clove or spice.`,
+    });
+  }
+  if (sta1Relevant(y)) {
+    out.push({
+      q: `Is ${y.name} diastatic (STA-1)?`,
+      a: y.sta1
+        ? `Yes. ${y.name} carries the STA1 gene (S. cerevisiae var. diastaticus). It super-attenuates to a dry finish, and can over-carbonate or gush if it cross-contaminates other beers.`
+        : `No. ${y.name} does not carry the STA1 gene, so it attenuates normally with no diastaticus gushing risk.`,
     });
   }
 
@@ -480,6 +637,35 @@ export const YEAST_SECTION: IngredientSection = {
   blurb: "",
   accent: hsTokens.yeast,
 };
+
+// ─── Trait relevance (keep POF/STA-1 SEO off pages where it isn't a real question) ──
+// POF/STA-1 facts only earn FAQ + keyword + meta space on strains where a brewer
+// would actually ask — phenolic-leaning or diastatic-leaning styles, or where the
+// trait is positive. Clean American ales and lagers (the long tail) get nothing, so
+// we never ship "is this clean lager phenolic? no" filler across hundreds of pages.
+const PHENOLIC_RE =
+  /weiss|weizen|\bwit\b|hefe|saison|farmhouse|belg|abbey|trappist|tripel|dubbel|biere de garde|gose|berliner|brett/i;
+const DIASTATIC_RE = /saison|farmhouse|biere de garde|\bbrut\b|diastatic/i;
+
+function traitHaystack(y: YeastPreset): string {
+  return `${y.name} ${(y.styles ?? []).join(" ")}`;
+}
+
+/** Whether the phenolic (POF) trait is worth surfacing for SEO on this strain. */
+export function pofRelevant(y: YeastPreset): boolean {
+  if (y.pof === undefined) return false;
+  if (y.pof) return true;
+  if (y.type && ["wheat", "brett", "wild", "blend"].includes(y.type)) return true;
+  return PHENOLIC_RE.test(traitHaystack(y));
+}
+
+/** Whether the diastatic (STA-1) trait is worth surfacing for SEO on this strain. */
+export function sta1Relevant(y: YeastPreset): boolean {
+  if (y.sta1 === undefined) return false;
+  if (y.sta1) return true;
+  if (y.type && ["brett", "wild"].includes(y.type)) return true;
+  return DIASTATIC_RE.test(traitHaystack(y));
+}
 
 // ─── Small string helpers ───────────────────────────────────────────────────
 

@@ -56,7 +56,9 @@ export default function YeastMorphCard({
     (!!preset.strainGroup ||
       !!preset.substitutes?.length ||
       !!preset.flocculation ||
-      preset.alcoholTolerance != null);
+      preset.alcoholTolerance != null ||
+      preset.pof !== undefined ||
+      preset.sta1 !== undefined);
 
   const onEnter = () => {
     if (collapse.current) {
@@ -103,6 +105,27 @@ export default function YeastMorphCard({
   const abv = expanded && preset ? yeastTolerance(preset) : null;
   const peers = expanded && preset ? yeastEquivalents(preset) : [];
   const subs = expanded && preset ? yeastSubstitutes(preset) : [];
+
+  // Genetic-trait pills (POF / STA-1), shown only when known. The notable states
+  // (POF+, STA-1+) are filled so spicy/diastatic strains pop while scanning the
+  // grid; the clean states stay quiet as outlines. STA-1+ borrows the warning red
+  // — it flags a real over-attenuation / gushing risk.
+  const quietBorder = `color-mix(in oklab, ${hsTokens.muted} 45%, transparent)`;
+  const traitBadges: { label: string; bg: string; fg: string; border: string }[] = [];
+  if (expanded && preset) {
+    if (preset.pof !== undefined)
+      traitBadges.push(
+        preset.pof
+          ? { label: "POF+", bg: hsTokens.honey, fg: hsTokens.ink, border: hsTokens.honey }
+          : { label: "POF−", bg: "transparent", fg: hsTokens.muted, border: quietBorder }
+      );
+    if (preset.sta1 !== undefined)
+      traitBadges.push(
+        preset.sta1
+          ? { label: "STA-1+", bg: hsTokens.roast, fg: hsTokens.paper, border: hsTokens.roast }
+          : { label: "STA-1−", bg: "transparent", fg: hsTokens.muted, border: quietBorder }
+      );
+  }
 
   const specRows: { label: string; value: string }[] = [];
   if (expanded) {
@@ -204,6 +227,37 @@ export default function YeastMorphCard({
                     >
                       {specRows.map((s) => (
                         <StatPair key={s.label} label={s.label} value={s.value} />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {traitBadges.length ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 6,
+                        marginTop: 11,
+                      }}
+                    >
+                      {traitBadges.map((t) => (
+                        <span
+                          key={t.label}
+                          style={{
+                            fontFamily: hsTokens.body,
+                            fontSize: 9.5,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            color: t.fg,
+                            background: t.bg,
+                            border: `1.5px solid ${t.border}`,
+                            borderRadius: 999,
+                            padding: "2px 9px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {t.label}
+                        </span>
                       ))}
                     </div>
                   ) : null}

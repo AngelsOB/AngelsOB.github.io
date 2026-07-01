@@ -1,0 +1,641 @@
+[
+  {
+    "slug": "3763",
+    "currentLabel": "3763 Roeselare Ale Blend",
+    "canonicalLabel": "Roeselare (Rodenbach Blend)",
+    "aliases": ["Roeselare", "Rodenbach", "Flanders red blend", "sour blend", "3763"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 3763 Roeselare — a Flanders-red/oud-bruin blend (Sacch + Brett + Lactobacillus + Pediococcus) modeled on the Rodenbach house culture; Roeselare is the Belgian town Rodenbach is in (Wyeast)."
+  },
+  {
+    "slug": "a01",
+    "currentLabel": "A01 House",
+    "canonicalLabel": "Chico (British Ale I)",
+    "aliases": ["Whitbread B", "British Ale I", "Wyeast 1098", "OYL-006", "Imperial A01 House"],
+    "overSplit": true,
+    "confidence": "medium",
+    "note": "Wyeast 1098 British Ale = Whitbread 'B' strain lineage (dry, crisp English ale); grouped here as one isolate distinct from the Chico/US-05 family — keep the descriptive British Ale I name, origin = Whitbread (Wyeast/MTF)."
+  },
+  {
+    "slug": "a07",
+    "currentLabel": "A07 Flagship",
+    "canonicalLabel": "Chico (American Ale)",
+    "aliases": ["Chico", "Sierra Nevada", "1056", "US-05", "WLP001", "California Ale", "American Ale"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "Wyeast 1056 American Ale = the Chico strain from Sierra Nevada; the colloquial 'Chico' family (1056/US-05/WLP001) is split into isolate-groups here, so this is the Wyeast 1056 sub-isolate (Mr Malty, suregork)."
+  },
+  {
+    "slug": "a15",
+    "currentLabel": "A15 Independence",
+    "canonicalLabel": "American Ale II (1272)",
+    "aliases": ["Wyeast 1272", "American Ale II", "West Coast Ale II", "OYL-009", "nutty American ale"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 1272 American Ale II — a nuttier/fruitier American ale strain (Anchor-lineage per common lore, less clean than Chico); no single famous brewery name, keep the classic American Ale II label (Wyeast/MTF)."
+  },
+  {
+    "slug": "a31",
+    "currentLabel": "A31 Tartan",
+    "canonicalLabel": "Scottish Ale (1728)",
+    "aliases": ["Wyeast 1728", "Scottish Ale", "McEwan's", "Edinburgh Scottish", "A31 Tartan"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 1728 Scottish Ale — the classic malty Scottish/wee-heavy strain (widely linked to McEwan's/Scottish & Newcastle lineage); keep the Scottish Ale name (Wyeast/MTF)."
+  },
+  {
+    "slug": "a38",
+    "currentLabel": "A38 Juice",
+    "canonicalLabel": "London Ale III (1318)",
+    "aliases": ["Wyeast 1318", "London Ale III", "Boddingtons", "Foggy London Ale", "NEIPA yeast", "hazy IPA yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 1318 London Ale III — the famous NEIPA/hazy 'juice' strain, from a traditional London brewery (widely attributed to Boddingtons); the hazy-IPA icon (Wyeast/MTF)."
+  },
+  {
+    "slug": "b56",
+    "currentLabel": "B56 Rustic",
+    "canonicalLabel": "Belgian Saison II (3726)",
+    "aliases": ["Wyeast 3726", "Farmhouse Ale", "Belgian Saison II", "OYL-042", "rustic saison"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 3726 Farmhouse Ale (Belgian Saison II) — a rustic ester-forward saison strain distinct from Dupont/3724; no clear single origin brewery, keep the Saison II label (Wyeast/MTF)."
+  },
+  {
+    "slug": "be134",
+    "currentLabel": "SafAle BE-134",
+    "canonicalLabel": "BE-134 (Saison Dupont)",
+    "aliases": ["SafAle BE-134", "M41 Belgian Ale", "Dupont saison", "diastaticus saison", "highly attenuative saison"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Fermentis SafAle BE-134 — a highly-attenuative diastaticus saison strain widely regarded as a dry Saison-Dupont-type; Dupont is the reference origin/search term (Fermentis/MTF)."
+  },
+  {
+    "slug": "g02",
+    "currentLabel": "G02 Kaiser",
+    "canonicalLabel": "German Ale / Kölsch (1007)",
+    "aliases": ["Wyeast 1007", "German Ale", "Kölsch", "altbier yeast", "G02 Kaiser"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 1007 German Ale — a crisp clean German alt/Kölsch-type ale strain; no single named brewery, keep the German Ale label (Wyeast/MTF)."
+  },
+  {
+    "slug": "l02",
+    "currentLabel": "L02 Fest",
+    "canonicalLabel": "Bavarian Lager (2206)",
+    "aliases": ["Wyeast 2206", "Bavarian Lager", "Weihenstephan lager", "Oktoberfest yeast", "L02 Fest"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 2206 Bavarian Lager — a malty full-bodied Bavarian lager strain widely tied to the Weihenstephan lager line; keep the Bavarian Lager name (Wyeast/MTF)."
+  },
+  {
+    "slug": "l11",
+    "currentLabel": "L11 Gateway",
+    "canonicalLabel": "Pilsen Lager (2007)",
+    "aliases": ["Wyeast 2007", "Pilsen Lager", "Chico of lager", "St. Louis lager", "L11 Gateway"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 2007 Pilsen Lager — the classic clean American-pilsner lager strain often called the 'Chico of lagers' (Anheuser-Busch/St. Louis lineage per lore); keep the Pilsen Lager label (Wyeast/MTF)."
+  },
+  {
+    "slug": "l13",
+    "currentLabel": "L13 Global",
+    "canonicalLabel": "Bohemian Lager (2124)",
+    "aliases": ["Wyeast 2124", "Bohemian Lager", "Weihenstephan 34/70", "W-34/70", "German Lager I", "Isar Lager"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 2124 Bohemian Lager — the Weihenstephan 34/70 workhorse lager strain (same 34/70 lineage sold as the world's most common lager yeast); origin = Weihenstephan (Wyeast/suregork)."
+  },
+  {
+    "slug": "oyl003",
+    "currentLabel": "OYL-003 London Ale",
+    "canonicalLabel": "London Ale (1028)",
+    "aliases": ["Wyeast 1028", "London Ale", "Worthington White Shield", "bold English ale", "OYL-003"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 1028 London Ale — a bold, mineral, higher-attenuating English ale strain (often linked to Worthington White Shield lineage); keep the London Ale label (Wyeast/MTF)."
+  },
+  {
+    "slug": "oyl016",
+    "currentLabel": "OYL-016 Extra Special (formerly British Ale VIII)",
+    "canonicalLabel": "Fuller's (1968 ESB)",
+    "aliases": ["Fuller's", "Wyeast 1968", "London ESB", "WLP002", "Extra Special", "British Ale VIII"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 1968 London ESB = the Fuller's strain (super-floccy malty English ESB yeast); origin = Fuller's Brewery, London (Mr Malty/suregork)."
+  },
+  {
+    "slug": "oyl017",
+    "currentLabel": "OYL-017 Kolsch I",
+    "canonicalLabel": "Kölsch (2565)",
+    "aliases": ["Wyeast 2565", "Kölsch", "Cologne", "WLP029", "OYL-017"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 2565 Kölsch — a classic Cologne Kölsch ale strain; origin = a Köln (Cologne) Kölsch brewery, the defining style yeast (Wyeast/MTF)."
+  },
+  {
+    "slug": "oyl023",
+    "currentLabel": "OYL-023 Grand Cru",
+    "canonicalLabel": "Hoegaarden (Forbidden Fruit 3463)",
+    "aliases": ["Wyeast 3463", "Forbidden Fruit", "Hoegaarden", "Celis", "wit/grand cru yeast", "OYL-023"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 3463-PC Forbidden Fruit — the spicy phenolic Belgian wit/grand-cru strain widely tied to the Hoegaarden/Pierre Celis lineage; Hoegaarden is the reference origin (Wyeast/MTF)."
+  },
+  {
+    "slug": "oyl039",
+    "currentLabel": "OYL-039 Biere de Garde",
+    "canonicalLabel": "Bière de Garde (3725)",
+    "aliases": ["Wyeast 3725", "Biere de Garde", "French farmhouse", "Spooky Saison", "OYL-039"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Wyeast 3725-PC Bière de Garde — a malty French farmhouse/bière-de-garde strain; named for the northern-French style rather than a single brewery, keep the Bière de Garde label (Wyeast/MTF)."
+  },
+  {
+    "slug": "oyl041",
+    "currentLabel": "OYL-041 CL-50 Ale",
+    "canonicalLabel": "Denny's Favorite 50 (1450)",
+    "aliases": ["Wyeast 1450", "Denny's Favorite", "CL-50", "BrewTek California Pub", "North Coast", "OYL-041"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "Wyeast 1450 Denny's Favorite 50 = BrewTek CL-50 'California Pub Brewery Ale' lineage (traced to North Coast/UC Davis); Denny's Favorite is the searched name (Homebrew Finds/MTF)."
+  },
+  {
+    "slug": "s04",
+    "currentLabel": "SafAle S-04",
+    "canonicalLabel": "Whitbread (S-04)",
+    "aliases": ["SafAle S-04", "Whitbread B", "M36 Liberty Bell", "British cask ale", "English ale dry yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Fermentis SafAle S-04 — a fast-flocculating English ale dry yeast widely regarded as a Whitbread-lineage strain; Whitbread is the origin/search term (Fermentis/MTF)."
+  },
+  {
+    "slug": "s23",
+    "currentLabel": "SafLager S-23",
+    "canonicalLabel": "S-23 (Pilsner Urquell H-Strain)",
+    "aliases": ["SafLager S-23", "Pilsner Urquell", "H-strain", "West European lager", "estery lager"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Fermentis SafLager S-23 — a fruity/estery West-European lager strain grouped here with the '2001 Pilsner Urquell H-Strain'; Pilsner Urquell is the reference origin (Fermentis/Wyeast)."
+  },
+  {
+    "slug": "s33",
+    "currentLabel": "SafAle S-33",
+    "canonicalLabel": "S-33 (Edme Ale)",
+    "aliases": ["SafAle S-33", "Edme", "M10 Workhorse", "Belgian/British ale dry yeast", "low attenuation ale"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "Fermentis SafAle S-33 — a low-attenuating general ale dry yeast from the historic Edme (England) lineage; Edme is the origin/search term (Fermentis/MTF)."
+  },
+  {
+    "slug": "w3470",
+    "currentLabel": "SafLager W-34/70",
+    "canonicalLabel": "Weihenstephan 34/70",
+    "aliases": ["W-34/70", "34/70", "Weihenstephan", "WLP830", "2124", "German lager", "world's most common lager yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "SafLager W-34/70 = the Weihenstephan 34/70 strain, the world's most-used lager yeast; origin = Weihenstephan research brewery (Fermentis/suregork)."
+  },
+  {
+    "slug": "wldbry97",
+    "currentLabel": "LalBrew BRY-97 American West Coast Ale",
+    "canonicalLabel": "BRY-97 (Siebel West Coast)",
+    "aliases": ["BRY-97", "West Coast Ale", "Siebel", "M44 US West Coast", "American IPA dry yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "LalBrew BRY-97 — a clean American West Coast ale dry yeast from the Siebel Institute BRY collection; keep the BRY-97 / West Coast name, Siebel is the origin (Lallemand/MTF)."
+  },
+  {
+    "slug": "wlddiamond",
+    "currentLabel": "LalBrew Diamond Lager",
+    "canonicalLabel": "Diamond (Munich 2308)",
+    "aliases": ["LalBrew Diamond", "Munich Lager", "Wyeast 2308", "Weihenstephan 44", "Global lager", "clean lager dry yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "LalBrew Diamond — a clean neutral German lager dry yeast grouped with Wyeast 2308 Munich Lager (a Weihenstephan-type line); keep the Diamond/Munich label (Lallemand/Wyeast)."
+  },
+  {
+    "slug": "wldnovalager",
+    "currentLabel": "LalBrew NovaLager",
+    "canonicalLabel": "NovaLager (S. eubayanus hybrid)",
+    "aliases": ["LalBrew NovaLager", "M24 Versa", "warm-ferment lager", "fast lager dry yeast", "novel lager hybrid"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "LalBrew NovaLager — a modern purpose-bred warm-fermenting lager hybrid (no historic brewery origin); keep the product name NovaLager (Lallemand)."
+  },
+  {
+    "slug": "wldwindsor",
+    "currentLabel": "LalBrew Windsor",
+    "canonicalLabel": "Windsor (Whitbread B)",
+    "aliases": ["LalBrew Windsor", "Whitbread B", "Wyeast 1099", "Whitbread Ale", "British Ale II", "fruity English ale dry yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "LalBrew Windsor / Wyeast 1099 Whitbread Ale — a fruity low-attenuating English ale strain of the Whitbread 'B' lineage; Whitbread is the origin (Lallemand/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp001",
+    "currentLabel": "WLP001 California Ale",
+    "canonicalLabel": "Chico (West Coast)",
+    "aliases": ["Chico", "WLP001", "California Ale", "Sierra Nevada", "US-05", "1056", "West Coast Ale I"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "WLP001 California Ale = the White Labs Chico/Sierra Nevada isolate; split from the Wyeast-1056 group here, so it's the WLP001 sub-isolate of the colloquial Chico family (Mr Malty/suregork)."
+  },
+  {
+    "slug": "wlp002",
+    "currentLabel": "WLP002 English Ale",
+    "canonicalLabel": "Fuller's (WLP002)",
+    "aliases": ["Fuller's", "WLP002", "London ESB", "1968", "English Ale I", "super floccy ESB"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "WLP002 English Ale = the Fuller's strain (White Labs' Fuller's isolate, sibling of Wyeast 1968); origin = Fuller's Brewery, London — split from the 1968 group here (Mr Malty/suregork)."
+  },
+  {
+    "slug": "wlp003",
+    "currentLabel": "WLP003 German Ale II",
+    "canonicalLabel": "Kölsch II (WLP003)",
+    "aliases": ["WLP003", "Kölsch II", "Wyeast 2575", "German Ale II", "Cologne ale"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP003 German Ale II = the '2575-PC Kölsch II' isolate, a Cologne Kölsch-type ale strain distinct from the 2565 Kölsch line; keep the Kölsch II label (White Labs/Wyeast)."
+  },
+  {
+    "slug": "wlp004",
+    "currentLabel": "WLP004 Irish Ale",
+    "canonicalLabel": "Irish Ale (1084)",
+    "aliases": ["WLP004", "Wyeast 1084", "Irish Ale", "Guinness (reputed)", "stout yeast", "dry stout yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP004 / Wyeast 1084 Irish Ale — marketed as a historic Irish stout (Guinness-reputed) strain but genetically NOT the modern Guinness culture; keep the descriptive Irish Ale label (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp007",
+    "currentLabel": "WLP007 Dry English Ale",
+    "canonicalLabel": "Dry English Ale (WLP007)",
+    "aliases": ["WLP007", "Dry English Ale", "English Ale II", "Whitbread-type", "high-attenuation English ale"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP007 Dry English Ale — a clean, high-attenuating English ale strain with no reliably documented single brewery origin; keep the descriptive Dry English Ale label (White Labs)."
+  },
+  {
+    "slug": "wlp008",
+    "currentLabel": "WLP008 East Coast Ale",
+    "canonicalLabel": "East Coast Ale (WLP008)",
+    "aliases": ["WLP008", "East Coast Ale", "Brewer Patriot", "cream ale yeast", "clean American ale"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP008 East Coast Ale ('Brewer Patriot') — a clean neutral American/cream-ale strain (Chico-adjacent but distinct); no documented single brewery origin, keep the descriptive label (White Labs)."
+  },
+  {
+    "slug": "wlp022",
+    "currentLabel": "WLP022 Essex Ale",
+    "canonicalLabel": "West Yorkshire / Timothy Taylor (1469)",
+    "aliases": ["Timothy Taylor", "Wyeast 1469", "West Yorkshire", "WLP022", "Essex", "Ridleys", "Landlord clone", "British Ale VII"],
+    "overSplit": true,
+    "confidence": "medium",
+    "note": "Group lumps WLP022 Essex (Ridleys) with Wyeast 1469 West Yorkshire (Timothy Taylor / Landlord); they're close Beer1 English kin sold under different lab names — Timothy Taylor is the searched origin (suregork/MTF)."
+  },
+  {
+    "slug": "wlp023",
+    "currentLabel": "WLP023 Burton Ale",
+    "canonicalLabel": "Burton / Thames Valley (1275)",
+    "aliases": ["WLP023", "Wyeast 1275", "Thames Valley", "Burton Ale", "British Ale IV", "English pale ale yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP023 Burton Ale = Wyeast 1275 Thames Valley — a clean balanced English pale-ale strain of the Burton/Thames Valley lineage; keep the Burton/Thames Valley label (White Labs/Wyeast)."
+  },
+  {
+    "slug": "wlp025",
+    "currentLabel": "WLP025 Southwold Ale",
+    "canonicalLabel": "Adnams (Southwold 1335)",
+    "aliases": ["WLP025", "Wyeast 1335", "Southwold", "Adnams", "British Ale II", "Suffolk ale yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP025 Southwold Ale / Wyeast 1335 — the Adnams strain from Southwold, Suffolk (the town White Labs names it after); origin = Adnams (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp028",
+    "currentLabel": "WLP028 Edinburgh/Scottish Ale",
+    "canonicalLabel": "Edinburgh (McEwan's)",
+    "aliases": ["WLP028", "Edinburgh", "Scottish Ale", "McEwan's", "Scottish & Newcastle", "OYL-015"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP028 Edinburgh Ale — a malty Scottish ale strain from an Edinburgh brewery, widely tied to the McEwan's/Scottish & Newcastle lineage; Edinburgh/McEwan's is the origin (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp029",
+    "currentLabel": "WLP029 German Ale/Kölsch",
+    "canonicalLabel": "Kölsch (WLP029)",
+    "aliases": ["WLP029", "Kölsch", "Cologne", "Wyeast 2565", "German Ale", "Kolsch II", "G03 Dieter"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "WLP029 German Ale/Kölsch — a classic Cologne Kölsch strain (White Labs' Kölsch isolate, close kin of the 2565 line); origin = a Köln Kölsch brewery (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp033",
+    "currentLabel": "WLP033 Klassic Ale",
+    "canonicalLabel": "Klassic / Special Bitter (WLP033)",
+    "aliases": ["WLP033", "Klassic Ale", "English Special Bitter", "Wyeast 1768", "British bitter yeast"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP033 Klassic Ale = Wyeast 1768-PC English Special Bitter — a traditional English bitter strain with no reliably documented single brewery origin; keep the descriptive Special Bitter label (White Labs/Wyeast)."
+  },
+  {
+    "slug": "wlp039",
+    "currentLabel": "WLP039 East Midlands Ale",
+    "canonicalLabel": "Nottingham",
+    "aliases": ["Nottingham", "LalBrew Nottingham", "WLP039", "East Midlands", "M42 New World Strong", "clean English ale dry yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "LalBrew Nottingham = WLP039 East Midlands Ale — the classic clean high-attenuating English ale strain from the East Midlands/Nottingham lineage; Nottingham is the searched name (Lallemand/MTF)."
+  },
+  {
+    "slug": "wlp041",
+    "currentLabel": "WLP041 Pacific Ale",
+    "canonicalLabel": "Pacific NW / BridgePort (1332)",
+    "aliases": ["WLP041", "Wyeast 1332", "Northwest Ale", "Pacific Ale", "BridgePort", "Pacific NW Ale"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP041 Pacific Ale = Wyeast 1332 Northwest Ale — a malty Pacific-Northwest ale strain (widely tied to BridgePort/NW brewpub lineage); keep the Pacific NW label (White Labs/Wyeast)."
+  },
+  {
+    "slug": "wlp066",
+    "currentLabel": "WLP066 London Fog Ale",
+    "canonicalLabel": "Verdant / London Ale III (WLP066)",
+    "aliases": ["Verdant IPA", "London Fog", "WLP066", "LalBrew Verdant", "London Ale III", "M66 Hophead", "hazy IPA yeast"],
+    "overSplit": true,
+    "confidence": "medium",
+    "note": "Group lumps WLP066 London Fog with LalBrew Verdant IPA — both London Ale III-lineage hazy-IPA strains from Verdant Brewing (UK) house culture, sold as distinct products; Verdant is the searched origin (Lallemand/White Labs/MTF)."
+  },
+  {
+    "slug": "wlp090",
+    "currentLabel": "WLP090 San Diego Super Ale",
+    "canonicalLabel": "San Diego Super / Ballast Point (WLP090)",
+    "aliases": ["WLP090", "San Diego Super", "Ballast Point", "Pacman", "Wyeast 1764", "Point Loma", "clean high-flocc American ale"],
+    "overSplit": true,
+    "confidence": "medium",
+    "note": "Group lumps WLP090 San Diego Super (a clean fast Chico-adjacent San Diego strain, reputed Ballast Point) with Wyeast 1764 Pacman (Rogue) — the community treats these as DISTINCT; San Diego Super is the primary/searched name (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp095",
+    "currentLabel": "WLP095 Burlington Ale",
+    "canonicalLabel": "Conan (Vermont Ale)",
+    "aliases": ["Conan", "WLP095", "Vermont Ale", "The Alchemist", "Heady Topper", "A04 Barbarian", "LalBrew New England", "Burlington"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP095 Burlington = the Conan strain from The Alchemist's Heady Topper (Vermont); the NEIPA classic, UK-origin house yeast via Vermont Pub & Brewery — Conan is the searched name (Mad Fermentationist/MTF)."
+  },
+  {
+    "slug": "wlp300",
+    "currentLabel": "WLP300 Hefeweizen Ale",
+    "canonicalLabel": "Weihenstephan Hefe (WLP300)",
+    "aliases": ["WLP300", "Weihenstephan", "Hefeweizen", "Wyeast 3068", "German Wheat", "banana clove wheat yeast"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "WLP300 Hefeweizen = the White Labs Weihenstephan wheat isolate (sibling of 3068); the classic banana/clove hefeweizen yeast from Weihenstephan — split from the 3068 group here (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp351",
+    "currentLabel": "WLP351 Bavarian Weizen Ale",
+    "canonicalLabel": "Bavarian Weizen (Muri, WLP351)",
+    "aliases": ["WLP351", "Bavarian Weizen", "Wyeast 3638", "Muri", "Weizen I", "hefeweizen yeast", "clove-forward wheat"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP351 / Wyeast 3638 Bavarian Weizen — the clove-forward 'Muri' hefeweizen isolate (S. cerevisiae x uvarum hybrid, STA1+), distinct from the Weihenstephan 3068 line (suregork/Krogerus/MTF)."
+  },
+  {
+    "slug": "wlp380",
+    "currentLabel": "WLP380 Hefeweizen IV Ale",
+    "canonicalLabel": "Weihenstephan 3068 (WLP380)",
+    "aliases": ["WLP380", "Wyeast 3068", "Weihenstephan Weizen", "Hefeweizen IV", "Weizen", "banana clove wheat yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP380 group contains the '3068 Weihenstephan Weizen' isolate — the definitive Weihenstephan hefeweizen strain (balanced banana/clove); origin = Weihenstephan (White Labs/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp400",
+    "currentLabel": "WLP400 Belgian Wit Ale",
+    "canonicalLabel": "Hoegaarden Wit (WLP400)",
+    "aliases": ["WLP400", "Wyeast 3944", "Belgian Witbier", "Hoegaarden", "Celis", "witbier yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP400 / Wyeast 3944 Belgian Witbier — the tart spicy wit strain widely tied to the Hoegaarden/Celis lineage; Hoegaarden is the reference origin (White Labs/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp410",
+    "currentLabel": "WLP410 Belgian Wit II Ale",
+    "canonicalLabel": "Belgian Wit II (WLP410)",
+    "aliases": ["WLP410", "Belgian Wit II", "M21 Belgian Wit", "witbier yeast", "less-spicy wit"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP410 Belgian Wit II — a milder/less-phenolic witbier strain than WLP400, with no reliably documented single brewery origin; keep the descriptive Belgian Wit II label (White Labs)."
+  },
+  {
+    "slug": "wlp500",
+    "currentLabel": "WLP500 Trappist Ale",
+    "canonicalLabel": "Chimay (Trappist, WLP500)",
+    "aliases": ["Chimay", "WLP500", "Wyeast 1214", "Trappist Ale", "LalBrew Abbaye", "Belgian abbey yeast", "Abbey Ale C"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP500 / Wyeast 1214 Trappist = the Chimay strain (fruity Trappist abbey yeast); origin = Chimay Trappist brewery (Mr Malty/suregork/MTF)."
+  },
+  {
+    "slug": "wlp510",
+    "currentLabel": "WLP510 Bastogne Belgian Ale",
+    "canonicalLabel": "Orval (Bastogne, WLP510)",
+    "aliases": ["WLP510", "Bastogne", "Orval (reputed)", "Belgian Ale O", "B63 Monastic", "dry Belgian ale yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP510 Bastogne — a dry, clean high-attenuating Belgian ale strain widely reputed as an Orval-type primary (Omega codes it 'Belgian Ale O'); Orval is the searched reference (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp515",
+    "currentLabel": "WLP515 Antwerp Ale",
+    "canonicalLabel": "Antwerp / De Koninck (WLP515)",
+    "aliases": ["WLP515", "Antwerp Ale", "De Koninck", "Belgian Ale DK", "clean Belgian ale yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP515 Antwerp Ale — a clean Belgian ale strain from Antwerp, widely tied to De Koninck (Omega codes it 'Belgian Ale DK'); De Koninck/Antwerp is the origin (White Labs/suregork/MTF)."
+  },
+  {
+    "slug": "wlp520",
+    "currentLabel": "WLP520 Sigmund Kveik Ale",
+    "canonicalLabel": "Voss",
+    "aliases": ["Voss", "Sigmund", "WLP520", "Wyeast Voss", "OYL-061 Lutra", "LalBrew Voss", "M12 Kveik", "A43 Loki", "kveik"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP520 Sigmund = the Voss kveik from Sigmund Gjernes' farm in Voss, Norway — the most famous kveik; origin = Voss farmhouse (MTF Kveik registry)."
+  },
+  {
+    "slug": "wlp521",
+    "currentLabel": "WLP521 Hornindal Kveik Ale",
+    "canonicalLabel": "Hornindal",
+    "aliases": ["Hornindal", "WLP521", "OYL-091", "Hornindal Kveik Blend", "A46 Bartleby", "tropical kveik", "kveik"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP521 Hornindal = the Hornindal kveik (Terje Raftevold's culture) from Hornindal, Norway — a tropical/pineapple kveik blend; origin = Hornindal farmhouse (MTF Kveik registry)."
+  },
+  {
+    "slug": "wlp530",
+    "currentLabel": "WLP530 Abbey Ale",
+    "canonicalLabel": "Westmalle (WLP530)",
+    "aliases": ["Westmalle", "WLP530", "Wyeast 3787", "Trappist High Gravity", "Belgian Ale W", "Trappist abbey yeast", "B48 Triple Double"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP530 / Wyeast 3787 Trappist High Gravity = the Westmalle strain (the classic tripel/dubbel abbey yeast); origin = Westmalle Trappist brewery (Mr Malty/suregork/MTF)."
+  },
+  {
+    "slug": "wlp540",
+    "currentLabel": "WLP540 Abbey IV Ale",
+    "canonicalLabel": "Rochefort / Abbey IV (WLP540)",
+    "aliases": ["Rochefort", "WLP540", "Wyeast 1762", "Abbey IV", "St-Remy", "Belgian Ale R", "Trappist abbey yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP540 / Wyeast 1762 Abbey IV — marketed as the Rochefort strain, though genomics (Gallone/suregork) show British origin & POF-negative; Rochefort is the searched name, kept with the descriptor (suregork/MTF)."
+  },
+  {
+    "slug": "wlp545",
+    "currentLabel": "WLP545 Belgian Strong Ale",
+    "canonicalLabel": "Belle Saison / French Saison (3711)",
+    "aliases": ["Belle Saison", "French Saison", "Wyeast 3711", "WLP590", "M29 French Saison", "LalBrew Belle Saison", "diastaticus saison"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "This group is the French Saison / Belle Saison isolate (3711 = WLP590 = M29 = LalBrew Belle Saison), a super-attenuating diastaticus saison; the WLP545 label is a mis-anchor — French Saison/Belle Saison is the searched name (suregork/MTF)."
+  },
+  {
+    "slug": "wlp550",
+    "currentLabel": "WLP550 Belgian Ale",
+    "canonicalLabel": "Ardennes / Achouffe (WLP550)",
+    "aliases": ["Ardennes", "Achouffe", "WLP550", "Wyeast 3522", "Belgian Ale A", "Chouffe", "B45 Gnome"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP550 / Wyeast 3522 Belgian Ardennes = the Achouffe strain (fruity/spicy Belgian ale); origin = Brasserie d'Achouffe, Ardennes (Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp565",
+    "currentLabel": "WLP565 Belgian Saison I Ale",
+    "canonicalLabel": "Dupont (Saison, WLP565)",
+    "aliases": ["Dupont", "WLP565", "Wyeast 3724", "Belgian Saison I", "Saison Dupont", "classic saison yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP565 / Wyeast 3724 Belgian Saison I = the Saison Dupont strain (the classic peppery saison that stalls mid-ferment); origin = Brasserie Dupont (Mr Malty/suregork/MTF)."
+  },
+  {
+    "slug": "wlp570",
+    "currentLabel": "WLP570 Belgian Golden Ale",
+    "canonicalLabel": "Duvel (Belgian Golden, WLP570)",
+    "aliases": ["Duvel", "WLP570", "Wyeast 1388", "Belgian Golden", "Duvel Moortgat", "Belgian Ale D", "golden strong yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP570 / Wyeast 1388 Belgian Strong Golden = the Duvel strain (from Duvel Moortgat); the classic Belgian golden strong ale yeast — origin = Duvel Moortgat (BYO/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp644",
+    "currentLabel": "WLP644 Saccharomyces brux-like Trois",
+    "canonicalLabel": "Trois (Saccharomyces 'brux-like')",
+    "aliases": ["WLP644", "Trois", "Brettanomyces Trois", "Saccharomyces bruxellensis Trois", "OYL-200 Tropical IPA", "A20 Citrus", "mango/pineapple yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP644 'brux-like Trois' — originally sold as a Brett but reclassified as a POF+ Saccharomyces strain producing mango/pineapple esters; keep the well-known 'Trois' name (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp802",
+    "currentLabel": "WLP802 Czech Budejovice Lager",
+    "canonicalLabel": "Budvar (Czech Budejovice, WLP802)",
+    "aliases": ["Budvar", "WLP802", "Budweiser Budvar", "Czech Budejovice", "Wyeast 2000", "Bohemian pilsner lager yeast"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP802 / Wyeast 2000 Budvar = the Budweiser Budvar strain from Ceske Budejovice; the classic Czech pilsner lager yeast — origin = Budvar (White Labs/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp810",
+    "currentLabel": "WLP810 San Francisco Lager",
+    "canonicalLabel": "California Common / Anchor Steam (WLP810)",
+    "aliases": ["Anchor Steam", "California Common", "WLP810", "Wyeast 2112", "San Francisco Lager", "steam beer yeast", "Goldrush Lager"],
+    "overSplit": false,
+    "confidence": "high",
+    "note": "WLP810 / Wyeast 2112 = the California Common / steam-beer lager strain from the Anchor Steam (San Francisco) lineage; Anchor is the reference origin (White Labs/Brulosophy/MTF)."
+  },
+  {
+    "slug": "wlp830",
+    "currentLabel": "WLP830 German Lager",
+    "canonicalLabel": "Weihenstephan 34/70 (WLP830)",
+    "aliases": ["Weihenstephan", "34/70", "WLP830", "Wyeast 2278", "Czech Pils", "German Lager", "clean workhorse lager", "L28 Urkel"],
+    "overSplit": true,
+    "confidence": "high",
+    "note": "WLP830 German Lager = a Weihenstephan 34/70-type clean workhorse lager (grouped here with Wyeast 2278 Czech Pils, a Pilsner Urquell D-strain kin); Weihenstephan 34/70 is the reference (suregork/MTF)."
+  },
+  {
+    "slug": "wlp833",
+    "currentLabel": "WLP833 German Bock Lager",
+    "canonicalLabel": "Ayinger (German Bock, WLP833)",
+    "aliases": ["Ayinger", "WLP833", "German Bock", "Wyeast 2487", "Bavarian bock lager yeast", "malty lager", "L18 The GOAT"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP833 German Bock — a malty full-bodied Bavarian bock/dunkel lager strain widely tied to the Ayinger lineage; Ayinger is the reference origin (White Labs/MTF)."
+  },
+  {
+    "slug": "wlp835",
+    "currentLabel": "WLP835 German X Lager",
+    "canonicalLabel": "German X / Bavarian Monastery (WLP835)",
+    "aliases": ["WLP835", "German X Lager", "Bavarian monastery lager", "Rocky Mountain Lager", "Wyeast 2105", "vault lager strain"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP835 German X Lager — a malty low-sulfur Bavarian lager strain (White Labs describes a 'famous Bavarian monastery' source but names no brewery); keep the descriptive German X label (White Labs)."
+  },
+  {
+    "slug": "wlp838",
+    "currentLabel": "WLP838 Southern German Lager",
+    "canonicalLabel": "Southern German Lager (WLP838)",
+    "aliases": ["WLP838", "Southern German Lager", "German Lager II", "malty Bavarian lager", "OYL-109"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP838 Southern German Lager — a malty, low-sulfur balanced Bavarian lager strain with no reliably documented single brewery origin; keep the descriptive label (White Labs)."
+  },
+  {
+    "slug": "wlp845",
+    "currentLabel": "WLP845 Fast Lager",
+    "canonicalLabel": "Fast Lager (WLP845)",
+    "aliases": ["WLP845", "Fast Lager", "Autobahn Lager", "warm-fermenting lager", "quick lager strain"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP845 Fast Lager — a warm-tolerant fast-fermenting lager strain (marketed for speed) with no documented single brewery origin; keep the descriptive Fast Lager label (White Labs)."
+  },
+  {
+    "slug": "wlp850",
+    "currentLabel": "WLP850 Copenhagen Lager",
+    "canonicalLabel": "Carlsberg (Copenhagen, WLP850)",
+    "aliases": ["Carlsberg", "WLP850", "Copenhagen Lager", "Wyeast 2042", "Danish Lager", "clean Danish lager yeast"],
+    "overSplit": false,
+    "confidence": "medium",
+    "note": "WLP850 / Wyeast 2042 Danish Lager — a clean crisp Danish lager strain from the Copenhagen/Carlsberg lineage; Carlsberg is the reference origin (White Labs/Wyeast/MTF)."
+  },
+  {
+    "slug": "wlp860",
+    "currentLabel": "WLP860 Munich Helles",
+    "canonicalLabel": "Munich Helles / Augustiner (WLP860)",
+    "aliases": ["WLP860", "Munich Helles", "Augustiner (reputed)", "Bayern Lager", "malty Munich lager", "L17 Harvest"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP860 Munich Helles — a malty Munich helles lager strain (reputed Augustiner-type by lore, unconfirmed); keep the descriptive Munich Helles label, note the Augustiner rumor (White Labs)."
+  },
+  {
+    "slug": "wlp920",
+    "currentLabel": "WLP920 Old Bavarian Lager",
+    "canonicalLabel": "Old Bavarian Lager (WLP920)",
+    "aliases": ["WLP920", "Old Bavarian Lager", "European Lager", "Wyeast 2247", "malty dark lager yeast"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP920 / Wyeast 2247 Old Bavarian Lager — a malty central-European dark-lager strain with no reliably documented single brewery origin; keep the descriptive label (White Labs/Wyeast)."
+  },
+  {
+    "slug": "wlp940",
+    "currentLabel": "WLP940 Mexican Lager",
+    "canonicalLabel": "Mexican Lager / Dos Equis (WLP940)",
+    "aliases": ["WLP940", "Mexican Lager", "Dos Equis (reputed)", "Cuauhtemoc-type lager", "clean Mexican lager yeast", "L09 Que Bueno"],
+    "overSplit": false,
+    "confidence": "low",
+    "note": "WLP940 Mexican Lager — a clean crisp lager strain from a Mexican brewery source (reputed Cuauhtemoc/Dos Equis lineage, unconfirmed); keep the descriptive Mexican Lager label (White Labs)."
+  }
+]

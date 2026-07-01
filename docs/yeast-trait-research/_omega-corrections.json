@@ -1,0 +1,122 @@
+[
+  {
+    "id": "OYL-006",
+    "ourName": "Voss Kveik",
+    "ourType": "ale",
+    "correctName": "British Ale I",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-006 is British Ale I (historic London brewery top-cropper), not Voss Kveik. Voss Kveik is OYL-061. Confirmed on the 2022 Probrew and 2024 Homebrew strain posters and the British Ale I product page.",
+    "sourceUrl": "https://omegayeast.com/yeast/ales/british-ale-i"
+  },
+  {
+    "id": "OYL-013",
+    "ourName": "London Ale",
+    "ourType": "ale",
+    "correctName": "British Ale VI",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-013 is British Ale VI. London Ale is OYL-003 (which our dataset already has correctly). Confirmed on the British Ale VI product page and 2022 Probrew poster.",
+    "sourceUrl": "https://omegayeast.com/yeast/ales/british-ale-vi"
+  },
+  {
+    "id": "OYL-030",
+    "ourName": "Tropical IPA",
+    "ourType": "wheat",
+    "correctName": "Wit",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-030 is Wit (a Belgian-style witbier ale strain), not Tropical IPA. Tropical IPA is OYL-200. Type is ale (Belgian ale), not wheat. Confirmed on the Wit product page and 2022/2024 posters.",
+    "sourceUrl": "https://omegayeast.com/yeast/belgian-ales/wit"
+  },
+  {
+    "id": "OYL-041",
+    "ourName": "DIPA Ale",
+    "ourType": "ale",
+    "correctName": "CL-50 Ale",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-041 is CL-50 Ale (a neutral, big-body, well-attenuating strain). DIPA Ale (Conan) is OYL-052. Confirmed via the 2018 Probrew strain list and the omegayeast.com CL-50 Ale portfolio page.",
+    "sourceUrl": "https://omegayeast.com/uploads/downloads/OYL-Probrew-Strains-List-2018-04-19.pdf"
+  },
+  {
+    "id": "OYL-052",
+    "ourName": "Omega HotHead Ale",
+    "ourType": "ale",
+    "correctName": "DIPA Ale",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-052 is DIPA Ale, the strong fermenter popularly called 'Conan'. HotHead is OYL-057. Our OYL-052 and OYL-057 names are swapped. Confirmed on 2022/2024 posters and Omega search results for HotHead (OYL-057).",
+    "sourceUrl": "https://omegayeast.com/yeast/kveiks/hothead-ale"
+  },
+  {
+    "id": "OYL-057",
+    "ourName": "Wallonian Farmhouse",
+    "ourType": "kveik",
+    "correctName": "Hothead Kveik",
+    "correctType": "kveik",
+    "confidence": "high",
+    "note": "OYL-057 is HotHead Kveik (Norwegian ale strain, honey/overripe-mango), not 'Wallonian Farmhouse'. Type is correct (kveik) but the name is wrong. Confirmed on the Hothead Kveik product page.",
+    "sourceUrl": "https://omegayeast.com/yeast/kveiks/hothead-ale"
+  },
+  {
+    "id": "OYL-061",
+    "ourName": "Lutra Kveik",
+    "ourType": "kveik",
+    "correctName": "Voss Kveik",
+    "correctType": "kveik",
+    "confidence": "high",
+    "note": "OYL-061 is Voss Kveik (Gjernes farmstead, orange-citrus). Lutra Kveik is OYL-071 (liquid), which our dataset already has correctly. Confirmed on the Voss Kveik product page and 2022/2024 posters.",
+    "sourceUrl": "https://omegayeast.com/yeast/kveiks/voss-kveik"
+  },
+  {
+    "id": "OYL-101",
+    "ourName": "Saisonstein's Monster",
+    "ourType": "lager",
+    "correctName": "Pilsner I",
+    "correctType": "lager",
+    "confidence": "high",
+    "note": "OYL-101 is Pilsner I (Czech H-strain Pilsen lager). Saisonstein is OYL-500 (an ale), which our dataset lists separately. Type (lager) is correct; the name is wrong. Confirmed on 2022/2024 posters.",
+    "sourceUrl": "https://omegayeast.com/uploads/downloads/2024-Omega-Yeast-Homebrew-Strain-Poster.pdf"
+  },
+  {
+    "id": "OYL-200",
+    "ourName": "Kolsch I",
+    "ourType": "ale",
+    "correctName": "Tropical IPA",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-200 is Tropical IPA (non-flocculent Sacch, tart tropical mango/pineapple). Kolsch I is OYL-017, which our dataset already has correctly. Confirmed on the Tropical IPA product page.",
+    "sourceUrl": "https://omegayeast.com/yeast/ales/tropical-ipa"
+  },
+  {
+    "id": "OYL-203",
+    "ourName": "Hefe Weizen",
+    "ourType": "brett",
+    "correctName": "Brettanomyces Lambicus",
+    "correctType": "brett",
+    "confidence": "high",
+    "note": "OYL-203 is Brettanomyces Lambicus (horsey/cherry-pie funk). Type (brett) is correct but the name 'Hefe Weizen' is wrong. Confirmed on the 2022 Probrew poster.",
+    "sourceUrl": "https://omegayeast.com/uploads/downloads/2022-Omega-Yeast-Probrew-Strain-Poster.pdf"
+  },
+  {
+    "id": "OYL-400",
+    "ourName": "American Lager",
+    "ourType": "ale",
+    "correctName": "Bananza",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-400 is Bananza (Omega original, ripe banana esters, non-phenolic ale). Not 'American Lager'. Type (ale) is correct; the name is wrong. Confirmed on the Bananza product page.",
+    "sourceUrl": "https://omegayeast.com/yeast/ales/bananza"
+  },
+  {
+    "id": "OYL-500",
+    "ourName": "Belgian Ale A",
+    "ourType": "ale",
+    "correctName": "Saisonstein",
+    "correctType": "ale",
+    "confidence": "high",
+    "note": "OYL-500 is Saisonstein (Omega original saison hybrid of French OYL-026 and Belgian OYL-027). Belgian Ale A is OYL-024, which our dataset already has correctly. Type (ale) is correct; the name is wrong. Confirmed on 2022/2024 posters.",
+    "sourceUrl": "https://omegayeast.com/uploads/downloads/2024-Omega-Yeast-Homebrew-Strain-Poster.pdf"
+  }
+]

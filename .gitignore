@@ -32,3 +32,9 @@ stripe
 
 # TypeScript build artifacts
 tsconfig.tsbuildinfo
+
+# Raw recipe corpus (Brewer's Friend Kaggle dump) — facts-only derived outputs
+# are committed, but the raw member-submitted recipes are never shipped/committed.
+# See ~/.claude/plans/i-found-this-crazy-noble-pumpkin.md (legal/data posture).
+src/modules/corpus-lab/raw/
+src/modules/corpus-lab/offline/out/cloud.ndjson

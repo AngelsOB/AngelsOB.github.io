@@ -26,6 +26,7 @@ const COLS: { label: string; links: { href: string; text: string }[] }[] = [
     links: [
       { href: "/hops", text: "Hops" },
       { href: "/yeast", text: "Yeast" },
+      { href: "/yeast/substitution-chart", text: "Yeast substitutions" },
     ],
   },
   {
