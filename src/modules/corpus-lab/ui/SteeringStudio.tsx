@@ -11,7 +11,11 @@ import { getBjcpCategories } from "@/utils/bjcp";
 import { uid } from "@/utils/uid";
 import { useRecipeStore } from "@/modules/recipe/stores/recipeStore";
 import type { Recipe, FermentationStep } from "@/modules/recipe/models/Recipe";
-import type { SteeringQuery, SteeringResult } from "@/modules/corpus-lab/steering/RecipeSteeringService";
+import type {
+  SteeringQuery,
+  SteeringResult,
+  ReflectResult,
+} from "@/modules/corpus-lab/steering/RecipeSteeringService";
 
 import {
   HOP_AXES,
@@ -134,7 +138,7 @@ function midpoint(p25: ValueMap, p75: ValueMap): ValueMap {
   return out;
 }
 
-async function callSteering(body: object): Promise<SteeringResult> {
+async function callLab<T>(body: object): Promise<T> {
   const res = await fetch("/api/lab/steering", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -142,25 +146,42 @@ async function callSteering(body: object): Promise<SteeringResult> {
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error ?? "Something went wrong");
-  return json as SteeringResult;
+  return json as T;
+}
+
+async function callSteering(body: object): Promise<SteeringResult> {
+  return callLab<SteeringResult>(body);
+}
+
+async function callReflect(recipe: Recipe, style?: string): Promise<ReflectResult> {
+  return callLab<ReflectResult>({ mode: "reflect", recipe, style });
 }
 
 export default function SteeringStudio() {
   const router = useRouter();
   const commitImportedRecipe = useRecipeStore((s) => s.commitImportedRecipe);
+  const recipes = useRecipeStore((s) => s.recipes);
+  const loadRecipes = useRecipeStore((s) => s.loadRecipes);
 
   const [form, setForm] = useState<FormState>(INITIAL);
   const [result, setResult] = useState<SteeringResult | null>(null);
+  const [reflect, setReflect] = useState<ReflectResult | null>(null);
+  const [reflectRecipeId, setReflectRecipeId] = useState<string>("");
   const [norms, setNorms] = useState<SteeringResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [normsLoading, setNormsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
 
+  useEffect(() => {
+    loadRecipes();
+  }, [loadRecipes]);
+
   // Fetch the style's norm band + per-axis ceilings whenever the style changes
   // (a no-target steer). Also warms the server-side cloud cache so the first
-  // real Calculate is fast.
+  // real Calculate is fast. Cleared when reflecting — reflect brings its own norms.
   useEffect(() => {
+    if (reflect) return;
     let cancelled = false;
     setNormsLoading(true);
     setNorms(null);
@@ -170,18 +191,22 @@ export default function SteeringStudio() {
       .catch(() => { /* norms are best-effort; wheels fall back to audited maxes */ })
       .finally(() => { if (!cancelled) setNormsLoading(false); });
     return () => { cancelled = true; };
-  }, [form.style]);
+  }, [form.style, reflect]);
 
-  // Context for the wheels: prefer the calculated result, fall back to norms.
-  const ctx = result ?? norms;
+  // Context for the wheels: reflect (imported recipe) > steered result > style norms.
+  // Reflect and steer share styleNorms / axisMax / achievedFlavor display fields.
+  const ctx = reflect ?? result ?? norms;
 
   // The recipe as shown/saved — enriched with a default fermentation step when
   // the engine leaves it empty, so the mock never shows fallback sample steps.
   const displayRecipe = useMemo<Recipe | null>(() => {
-    if (!result) return null;
-    const r = result.recipe;
+    const r = reflect?.recipe ?? result?.recipe;
+    if (!r) return null;
     return r.fermentationSteps?.length ? r : { ...r, fermentationSteps: [DEFAULT_FERM_STEP] };
-  }, [result]);
+  }, [reflect, result]);
+
+  const achievedHop = (reflect ?? result)?.achievedFlavor.hop as ValueMap | undefined;
+  const achievedMalt = (reflect ?? result)?.achievedFlavor.malt as ValueMap | undefined;
 
   // Wheels scale their RIM to axisMax (the typical ceiling), so a strong-but-
   // normal recipe fills the radar — the radar itself is the "normal" zone. A
@@ -212,6 +237,8 @@ export default function SteeringStudio() {
   const run = useCallback(async (state: FormState, locks?: Locks) => {
     setLoading(true);
     setError(null);
+    setReflect(null);
+    setReflectRecipeId("");
     try {
       setResult(await callSteering(buildQuery(state, locks)));
     } catch (err) {
@@ -221,6 +248,31 @@ export default function SteeringStudio() {
       setLoading(false);
     }
   }, []);
+
+  // PRD-009 Phase 0 — place a saved recipe on the radars (no edits).
+  const handleReflect = useCallback(async () => {
+    const recipe = recipes.find((r) => r.id === reflectRecipeId);
+    if (!recipe) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const r = await callReflect(recipe);
+      setReflect(r);
+      // Sync the style picker to whatever the recipe matched, so the norm box
+      // and any subsequent Calculate start from the same place.
+      if (r.style.matchedCode && r.style.matchedName) {
+        setForm((f) => ({ ...f, style: `${r.style.matchedCode}. ${r.style.matchedName}` }));
+      } else if (recipe.style) {
+        setForm((f) => ({ ...f, style: recipe.style! }));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+      setReflect(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [recipes, reflectRecipeId]);
 
   // Every run — the primary Calculate/Recalculate and the "Another take" reroll
   // alike — bumps the reroll seed so it yields a fresh plausible take with the
@@ -248,6 +300,11 @@ export default function SteeringStudio() {
 
   const handleOpen = async () => {
     if (!displayRecipe) return;
+    // Reflecting a saved recipe — open the original, don't fork a copy.
+    if (reflect && reflectRecipeId) {
+      router.push(`/recipes/${reflectRecipeId}`);
+      return;
+    }
     setOpening(true);
     setError(null);
     try {
@@ -289,7 +346,11 @@ export default function SteeringStudio() {
               <select
                 aria-label="Beer style"
                 value={form.style}
-                onChange={(e) => setForm((f) => ({ ...f, style: e.target.value }))}
+                onChange={(e) => {
+                  setReflect(null);
+                  setReflectRecipeId("");
+                  setForm((f) => ({ ...f, style: e.target.value }));
+                }}
                 style={{
                   width: "100%",
                   appearance: "none",
@@ -320,12 +381,57 @@ export default function SteeringStudio() {
               color={hsTokens.hops}
               size="lg"
               onClick={handleCalculate}
-              disabled={loading || normsLoading}
+              disabled={loading || (normsLoading && !reflect)}
               arrow={!loading}
             >
-              {loading ? "Brewing…" : normsLoading ? "Warming up…" : result ? "Recalculate" : "Calculate"}
+              {loading ? "Brewing…" : normsLoading && !reflect ? "Warming up…" : result ? "Recalculate" : "Calculate"}
             </HSButton>
           </div>
+        </div>
+
+        {/* PRD-009 Phase 0 — reflect a saved recipe onto the radars (no edits). */}
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <label className="studio-style-picker" style={{ position: "relative", flex: "1 1 220px", maxWidth: 420 }}>
+            <select
+              aria-label="Recipe to reflect"
+              value={reflectRecipeId}
+              onChange={(e) => setReflectRecipeId(e.target.value)}
+              style={{
+                width: "100%",
+                appearance: "none",
+                padding: "10px 34px 10px 14px",
+                fontFamily: hsTokens.body,
+                fontWeight: 700,
+                fontSize: 14,
+                color: hsTokens.ink,
+                background: hsTokens.paper,
+                border: `2px solid ${hsTokens.ink}`,
+                borderRadius: 999,
+                boxShadow: hsTokens.sh1,
+                cursor: "pointer",
+              }}
+            >
+              <option value="">Reflect a saved recipe…</option>
+              {recipes.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}{r.style ? ` · ${r.style}` : ""}</option>
+              ))}
+            </select>
+            <span aria-hidden style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", fontSize: 12 }}>▾</span>
+          </label>
+          <HSButton
+            variant="ghost"
+            size="md"
+            onClick={handleReflect}
+            disabled={loading || !reflectRecipeId}
+          >
+            {reflect ? "Re-reflect" : "Show on radars"}
+          </HSButton>
+          {reflect ? (
+            <span style={{ fontFamily: hsTokens.mono, fontSize: 12, color: hsTokens.muted }}>
+              reflecting · unmatched {(reflect.unmatchedRate * 100).toFixed(0)}%
+              {reflect.styleNorms.level !== "style" ? ` · norms: ${reflect.styleNorms.level}` : ""}
+            </span>
+          ) : null}
         </div>
 
         {/* LEFT — steering */}
@@ -340,12 +446,12 @@ export default function SteeringStudio() {
               median={hopMedian}
               band={hopBand}
               values={form.hop}
-              achieved={result ? (result.achievedFlavor.hop as ValueMap) : null}
+              achieved={achievedHop ?? null}
               onChange={setAxis("hop")}
               onReset={resetGroup("hop")}
               locked={form.lockHops}
               onToggleLock={() => setForm((f) => ({ ...f, lockHops: !f.lockHops }))}
-              loading={normsLoading}
+              loading={normsLoading && !reflect}
             />
             <SteeringWheel
               title="Malt character"
@@ -355,12 +461,12 @@ export default function SteeringStudio() {
               median={maltMedian}
               band={maltBand}
               values={form.malt}
-              achieved={result ? (result.achievedFlavor.malt as ValueMap) : null}
+              achieved={achievedMalt ?? null}
               onChange={setAxis("malt")}
               onReset={resetGroup("malt")}
               locked={form.lockGrain}
               onToggleLock={() => setForm((f) => ({ ...f, lockGrain: !f.lockGrain }))}
-              loading={normsLoading}
+              loading={normsLoading && !reflect}
             />
           </div>
 

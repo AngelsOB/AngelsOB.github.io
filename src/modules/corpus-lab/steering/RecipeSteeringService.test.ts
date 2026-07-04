@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "vitest";
 import { RecipeSteeringService, type SteeringQuery } from "./RecipeSteeringService";
 import type { CloudRecord } from "./featureSpace";
+import type { Recipe, Fermentable, Hop } from "../../recipe/models/Recipe";
 
 // ── synthetic fixture: 3 flavour-distinct clusters across 3 style families ──
 
@@ -401,5 +402,79 @@ describe("RecipeSteeringService — styleNorms (the style's own typical flavour 
     for (const key of Object.keys(result.styleNorms.hop.p25) as Array<keyof typeof result.styleNorms.hop.p25>) {
       expect(result.styleNorms.hop.p75[key]).toBeGreaterThanOrEqual(result.styleNorms.hop.p25[key]);
     }
+  });
+});
+
+// ── reflect (PRD-009 Phase 0) ────────────────────────────────────────────────
+
+function reflectRecipe(overrides: Partial<Recipe> & Pick<Recipe, "fermentables" | "hops" | "style">): Recipe {
+  const now = new Date().toISOString();
+  return {
+    id: "reflect-test",
+    name: "Reflect Test",
+    currentVersion: 1,
+    batchVolumeL: 20,
+    equipment: {
+      boilTimeMin: 60, boilOffRateLPerHour: 4, brewhouseEfficiencyPercent: 75,
+      mashThicknessLPerKg: 2.7, grainAbsorptionLPerKg: 0.8, mashTunDeadspaceLiters: 2,
+      mashTunLossLiters: 0, kettleLossLiters: 1, hopsAbsorptionLPerKg: 0.7,
+      chillerLossLiters: 0, fermenterLossLiters: 0.5, coolingShrinkagePercent: 4,
+    },
+    yeasts: [], otherIngredients: [],
+    mashSteps: [{ id: "m1", name: "Sacch", temperatureC: 67, durationMinutes: 60 }],
+    fermentationSteps: [],
+    createdAt: now, updatedAt: now,
+    ...overrides,
+  };
+}
+
+function f(name: string, weightKg: number, colorLovibond: number): Fermentable {
+  return { id: name, name, weightKg, colorLovibond, ppg: 36, efficiencyPercent: 80 };
+}
+function h(name: string, grams: number, type: Hop["type"], extra: Partial<Hop> = {}): Hop {
+  return { id: name, name, grams, type, alphaAcid: 12, ...extra };
+}
+
+describe("RecipeSteeringService — reflect (PRD-009 Phase 0)", () => {
+  test("returns the recipe's own flavour against its style's norm box", () => {
+    const recipe = reflectRecipe({
+      style: "American Stout",
+      fermentables: [
+        f("Briess - Brewers Malt 2-Row", 3.5, 1.8),
+        f("Flaked Barley", 1.0, 1.5),
+        f("Roasted Barley", 0.5, 450),
+      ],
+      hops: [h("Magnum", 30, "boil", { timeMinutes: 60, alphaAcid: 12 })],
+    });
+    const result = service.reflect(recipe);
+    // Passthrough — reflect does not rewrite the recipe.
+    expect(result.recipe).toBe(recipe);
+    expect(result.achievedFlavor.malt.coffee).toBeGreaterThan(0.5);
+    expect(result.achievedFlavor.malt.roast).toBeGreaterThan(0.3);
+    // Style norms + axis ceilings are the same display fields steer() returns.
+    expect(result.styleNorms.malt.p25).toBeDefined();
+    expect(result.axisMax.malt.roast).toBeGreaterThan(0);
+    expect(result.axisDialMax.malt.roast).toBeCloseTo(result.axisMax.malt.roast * 1.25, 9);
+    expect(result.row).toHaveLength(23);
+  });
+
+  test("style override wins over recipe.style", () => {
+    const recipe = reflectRecipe({
+      style: "American IPA",
+      fermentables: [f("Briess - Brewers Malt 2-Row", 5, 1.8)],
+      hops: [],
+    });
+    const asIpa = service.reflect(recipe);
+    const asStout = service.reflect(recipe, { style: "American Stout" });
+    expect(asIpa.style.input).toBe("American IPA");
+    expect(asStout.style.input).toBe("American Stout");
+    // Different style pools → different norm boxes (stout has more roast in p75).
+    expect(asStout.styleNorms.malt.p75.roast).toBeGreaterThan(asIpa.styleNorms.malt.p75.roast);
+  });
+
+  test("does not mutate steer() behaviour — generate path stays independent", () => {
+    const steered = service.steer({ style: "American IPA" });
+    expect(steered.recipe.id).toBe("steered-recipe");
+    expect(steered.requestedFlavor).toBeDefined();
   });
 });
