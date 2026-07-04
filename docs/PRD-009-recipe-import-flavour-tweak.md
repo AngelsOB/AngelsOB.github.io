@@ -1,6 +1,6 @@
 # PRD-009: Recipe Import & Flavour Tweak (Corpus Lab "Restyle")
 
-> **Status:** In progress — Phase 0 (featurize & reflect)
+> **Status:** In progress — Phase 1 (Tier-1 edit engine / restyle)
 > **Created:** 2026-07-03
 > **Depends on:** Corpus Lab steering module (`src/modules/corpus-lab/`, Phase 1+2 — the k-NN cloud, the malt/hop flavour models, and the residual-correction operators; currently uncommitted). Optionally reuses the existing BeerXML import path (`BeerXmlImport.ts`) and the app `Recipe` model.
 > **Goal:** Let the Corpus Lab take a *specific* recipe someone already has — theirs, a shared one, a curated starter — and make the *smallest* set of ingredient changes that nudges it toward a flavour they describe, while keeping it a real, brewable beer. Hand back a **diff**, not a fresh recipe.

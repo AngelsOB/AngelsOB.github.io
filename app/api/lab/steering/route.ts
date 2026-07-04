@@ -19,6 +19,7 @@ import type { Recipe } from "@/modules/recipe/models/Recipe";
  * Bodies:
  *   { style, target?, … }              → steer(query)     (generate)
  *   { mode: "reflect", recipe, style? } → reflect(recipe)  (PRD-009 Phase 0)
+ *   { mode: "restyle", recipe, tweak, opts? } → restyle() (PRD-009 Phase 1)
  */
 
 let cachedService: RecipeSteeringService | null = null;
@@ -39,10 +40,23 @@ type ReflectBody = {
   style?: string;
 };
 
+type RestyleBody = {
+  mode: "restyle";
+  recipe: Recipe;
+  tweak: Record<string, unknown>;
+  opts?: Record<string, unknown>;
+};
+
 function isReflectBody(body: unknown): body is ReflectBody {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
   return b.mode === "reflect" && !!b.recipe && typeof b.recipe === "object";
+}
+
+function isRestyleBody(body: unknown): body is RestyleBody {
+  if (!body || typeof body !== "object") return false;
+  const b = body as Record<string, unknown>;
+  return b.mode === "restyle" && !!b.recipe && typeof b.recipe === "object" && !!b.tweak;
 }
 
 export async function POST(req: NextRequest) {
@@ -56,6 +70,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "recipe.fermentables is required" }, { status: 400 });
       }
       const result = getService().reflect(body.recipe, { style: body.style });
+      return NextResponse.json(result);
+    }
+    if (isRestyleBody(body)) {
+      if (!Array.isArray(body.recipe.fermentables)) {
+        return NextResponse.json({ error: "recipe.fermentables is required" }, { status: 400 });
+      }
+      const result = getService().restyle(
+        body.recipe,
+        body.tweak as Parameters<RecipeSteeringService["restyle"]>[1],
+        body.opts as Parameters<RecipeSteeringService["restyle"]>[2],
+      );
       return NextResponse.json(result);
     }
 

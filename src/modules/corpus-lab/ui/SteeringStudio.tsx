@@ -15,6 +15,7 @@ import type {
   SteeringQuery,
   SteeringResult,
   ReflectResult,
+  RestyleResult,
 } from "@/modules/corpus-lab/steering/RecipeSteeringService";
 
 import {
@@ -157,6 +158,36 @@ async function callReflect(recipe: Recipe, style?: string): Promise<ReflectResul
   return callLab<ReflectResult>({ mode: "reflect", recipe, style });
 }
 
+async function callRestyle(
+  recipe: Recipe,
+  tweak: object,
+  opts?: object,
+): Promise<RestyleResult> {
+  return callLab<RestyleResult>({ mode: "restyle", recipe, tweak, opts });
+}
+
+/** Wheel values are absolute; restyle wants deltas from the reflected baseline. */
+function buildRestyleTweak(
+  baseline: ReflectResult["achievedFlavor"],
+  form: FormState,
+): { malt?: ValueMap; hop?: ValueMap; ibu?: number } {
+  const tweak: { malt?: ValueMap; hop?: ValueMap; ibu?: number } = {};
+  const malt: ValueMap = {};
+  for (const [k, v] of Object.entries(form.malt)) {
+    const delta = v - ((baseline.malt as ValueMap)[k] ?? 0);
+    if (Math.abs(delta) > 0.05) malt[k] = delta;
+  }
+  const hop: ValueMap = {};
+  for (const [k, v] of Object.entries(form.hop)) {
+    const delta = v - ((baseline.hop as ValueMap)[k] ?? 0);
+    if (Math.abs(delta) > 0.05) hop[k] = delta;
+  }
+  if (Object.keys(malt).length) tweak.malt = malt;
+  if (Object.keys(hop).length) tweak.hop = hop;
+  if (form.ibu.enabled) tweak.ibu = form.ibu.value;
+  return tweak;
+}
+
 export default function SteeringStudio() {
   const router = useRouter();
   const commitImportedRecipe = useRecipeStore((s) => s.commitImportedRecipe);
@@ -166,6 +197,7 @@ export default function SteeringStudio() {
   const [form, setForm] = useState<FormState>(INITIAL);
   const [result, setResult] = useState<SteeringResult | null>(null);
   const [reflect, setReflect] = useState<ReflectResult | null>(null);
+  const [restyleResult, setRestyleResult] = useState<RestyleResult | null>(null);
   const [reflectRecipeId, setReflectRecipeId] = useState<string>("");
   const [norms, setNorms] = useState<SteeringResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -193,20 +225,18 @@ export default function SteeringStudio() {
     return () => { cancelled = true; };
   }, [form.style, reflect]);
 
-  // Context for the wheels: reflect (imported recipe) > steered result > style norms.
-  // Reflect and steer share styleNorms / axisMax / achievedFlavor display fields.
-  const ctx = reflect ?? result ?? norms;
+  // Context for the wheels: restyle > reflect > steered result > style norms.
+  const ctx = restyleResult ?? reflect ?? result ?? norms;
 
-  // The recipe as shown/saved — enriched with a default fermentation step when
-  // the engine leaves it empty, so the mock never shows fallback sample steps.
   const displayRecipe = useMemo<Recipe | null>(() => {
-    const r = reflect?.recipe ?? result?.recipe;
+    const r = restyleResult?.recipe ?? reflect?.recipe ?? result?.recipe;
     if (!r) return null;
     return r.fermentationSteps?.length ? r : { ...r, fermentationSteps: [DEFAULT_FERM_STEP] };
-  }, [reflect, result]);
+  }, [restyleResult, reflect, result]);
 
-  const achievedHop = (reflect ?? result)?.achievedFlavor.hop as ValueMap | undefined;
-  const achievedMalt = (reflect ?? result)?.achievedFlavor.malt as ValueMap | undefined;
+  const achievedHop = (restyleResult ?? reflect ?? result)?.achievedFlavor.hop as ValueMap | undefined;
+  const achievedMalt = (restyleResult ?? reflect ?? result)?.achievedFlavor.malt as ValueMap | undefined;
+  const reflectBaseline = reflect?.achievedFlavor;
 
   // Wheels scale their RIM to axisMax (the typical ceiling), so a strong-but-
   // normal recipe fills the radar — the radar itself is the "normal" zone. A
@@ -238,6 +268,7 @@ export default function SteeringStudio() {
     setLoading(true);
     setError(null);
     setReflect(null);
+    setRestyleResult(null);
     setReflectRecipeId("");
     try {
       setResult(await callSteering(buildQuery(state, locks)));
@@ -256,6 +287,8 @@ export default function SteeringStudio() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setRestyleResult(null);
+    setForm((f) => ({ ...f, hop: {}, malt: {} }));
     try {
       const r = await callReflect(recipe);
       setReflect(r);
@@ -273,6 +306,31 @@ export default function SteeringStudio() {
       setLoading(false);
     }
   }, [recipes, reflectRecipeId]);
+
+  const hasRestyleTweak = reflectBaseline && (
+    Object.keys(form.hop).length > 0 || Object.keys(form.malt).length > 0 || form.ibu.enabled
+  );
+
+  const handleApplyTweak = useCallback(async () => {
+    const recipe = recipes.find((r) => r.id === reflectRecipeId);
+    if (!recipe || !reflectBaseline) return;
+    const tweak = buildRestyleTweak(reflectBaseline, form);
+    if (!tweak.malt && !tweak.hop && tweak.ibu == null) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await callRestyle(recipe, tweak, { editBudget: 3, sanctionTier: 1 });
+      setRestyleResult(r);
+      if (r.tooLargeForTweak) {
+        setError("That ask is too big for a minimal tweak — try steer() to regenerate");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error");
+      setRestyleResult(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [recipes, reflectRecipeId, reflectBaseline, form]);
 
   // Every run — the primary Calculate/Recalculate and the "Another take" reroll
   // alike — bumps the reroll seed so it yields a fresh plausible take with the
@@ -300,8 +358,8 @@ export default function SteeringStudio() {
 
   const handleOpen = async () => {
     if (!displayRecipe) return;
-    // Reflecting a saved recipe — open the original, don't fork a copy.
-    if (reflect && reflectRecipeId) {
+    // Unmodified reflect — jump to the saved recipe. Restyled → fork below.
+    if (reflect && reflectRecipeId && !restyleResult) {
       router.push(`/recipes/${reflectRecipeId}`);
       return;
     }
@@ -348,8 +406,9 @@ export default function SteeringStudio() {
                 value={form.style}
                 onChange={(e) => {
                   setReflect(null);
+                  setRestyleResult(null);
                   setReflectRecipeId("");
-                  setForm((f) => ({ ...f, style: e.target.value }));
+                  setForm((f) => ({ ...f, style: e.target.value, hop: {}, malt: {} }));
                 }}
                 style={{
                   width: "100%",
@@ -427,12 +486,42 @@ export default function SteeringStudio() {
             {reflect ? "Re-reflect" : "Show on radars"}
           </HSButton>
           {reflect ? (
-            <span style={{ fontFamily: hsTokens.mono, fontSize: 12, color: hsTokens.muted }}>
-              reflecting · unmatched {(reflect.unmatchedRate * 100).toFixed(0)}%
-              {reflect.styleNorms.level !== "style" ? ` · norms: ${reflect.styleNorms.level}` : ""}
-            </span>
+            <>
+              <HSButton
+                variant="ink"
+                color={hsTokens.malt}
+                size="md"
+                onClick={handleApplyTweak}
+                disabled={loading || !hasRestyleTweak}
+              >
+                Apply tweak
+              </HSButton>
+              <span style={{ fontFamily: hsTokens.mono, fontSize: 12, color: hsTokens.muted }}>
+                {restyleResult ? "restyled" : "reflecting"}
+                {restyleResult?.tooLargeForTweak ? " · too large" : ""}
+                {!restyleResult && reflect ? ` · unmatched ${(reflect.unmatchedRate * 100).toFixed(0)}%` : ""}
+                {ctx?.styleNorms.level !== "style" ? ` · norms: ${ctx.styleNorms.level}` : ""}
+              </span>
+            </>
           ) : null}
         </div>
+
+        {restyleResult && restyleResult.edits.length > 0 ? (
+          <div style={{ gridColumn: "1 / -1", ...panelStyle, padding: "14px 16px" }}>
+            <HSEyebrow style={{ fontSize: 11, marginBottom: 8 }}>Changelog</HSEyebrow>
+            <ul style={{ margin: 0, paddingLeft: 18, fontFamily: hsTokens.mono, fontSize: 12, lineHeight: 1.6 }}>
+              {restyleResult.edits.map((e, i) => (
+                <li key={i}>
+                  {e.kind === "adjust"
+                    ? `${e.ingredient}: ${e.from}${e.unit} → ${e.to}${e.unit}`
+                    : e.kind === "add"
+                      ? `+ ${e.ingredient} ${e.amount}${e.unit}`
+                      : `− ${e.ingredient}`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {/* LEFT — steering */}
         <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 20 }}>
@@ -440,7 +529,7 @@ export default function SteeringStudio() {
           <div className="studio-wheels" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 18 }}>
             <SteeringWheel
               title="Hop character"
-              hint="drag to push"
+              hint={reflect ? "drag to tweak vs this recipe" : "drag to push"}
               accent={hsTokens.hops}
               axes={hopAxes}
               median={hopMedian}
@@ -455,7 +544,7 @@ export default function SteeringStudio() {
             />
             <SteeringWheel
               title="Malt character"
-              hint="drag to push"
+              hint={reflect ? "drag to tweak vs this recipe" : "drag to push"}
               accent={hsTokens.malt}
               axes={maltAxes}
               median={maltMedian}
@@ -566,14 +655,15 @@ export default function SteeringStudio() {
         {/* RIGHT — live preview (sticks below the global header) */}
         <div style={{ position: "sticky", top: "calc(var(--hs-header-peek, 88px) + 16px)", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
           <RecipePreview recipe={displayRecipe} />
-          {result ? (
+          {displayRecipe ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: hsTokens.display, fontSize: 16, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {result.recipe.name}
+                  {displayRecipe.name}
                 </div>
                 <div style={{ fontFamily: hsTokens.mono, fontSize: 11, color: hsTokens.muted }}>
-                  {result.calculations.abv.toFixed(1)}% · {result.calculations.ibu.toFixed(0)} IBU · {result.calculations.srm.toFixed(1)} SRM · held in memory
+                  {restyleResult ? "restyled recipe" : reflect ? "reflected recipe" : "held in memory"}
+                  {result ? ` · ${result.calculations.abv.toFixed(1)}% · ${result.calculations.ibu.toFixed(0)} IBU · ${result.calculations.srm.toFixed(1)} SRM` : ""}
                 </div>
               </div>
               <HSButton variant="ink" color={hsTokens.roast} size="lg" onClick={handleOpen} disabled={opening} arrow={!opening}>

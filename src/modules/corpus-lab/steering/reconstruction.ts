@@ -444,7 +444,18 @@ export function correctMaltGristToward(
   items: GristBillItem[],
   sanctioned: Set<string>,
   target: Partial<MaltFlavorProfile>,
-  opts: { step?: number; maxPasses?: number; maxDonorShare?: number; minDeficit?: number; avoidCollateral?: boolean; collateralPenalty?: number; prevalence?: Record<string, number> } = {},
+  opts: {
+    step?: number;
+    maxPasses?: number;
+    maxDonorShare?: number;
+    minDeficit?: number;
+    avoidCollateral?: boolean;
+    collateralPenalty?: number;
+    prevalence?: Record<string, number>;
+    /** When true, also reduce grains driving an axis when achieved > target.
+     *  Default false — `steer()` never produces negative deltas. */
+    allowReduce?: boolean;
+  } = {},
 ): { items: GristBillItem[]; notes: string[] } {
   const step = opts.step ?? CORRECTION_STEP_SHARE;
   const maxPasses = opts.maxPasses ?? CORRECTION_MAX_PASSES;
@@ -452,6 +463,7 @@ export function correctMaltGristToward(
   const minDeficit = opts.minDeficit ?? CORRECTION_MIN_DEFICIT;
   const avoidCollateral = opts.avoidCollateral ?? false;
   const collateralPenalty = opts.collateralPenalty ?? CORRECTION_COLLATERAL_PENALTY;
+  const allowReduce = opts.allowReduce ?? false;
   // In-style weighting: when the neighbourhood's grain PREVALENCE is supplied, a
   // donor's score is scaled by how much the neighbourhood actually leans on it, so
   // the correction reaches for the common in-style grain (more munich/vienna in a
@@ -478,16 +490,62 @@ export function correctMaltGristToward(
   const exhausted = new Map<keyof MaltFlavorProfile, Set<string>>();
   for (let pass = 0; pass < maxPasses; pass++) {
     const achieved = achievedOf(work);
-    // The largest still-open (unsettled) pushed-axis shortfall.
+    // Largest still-open gap on a pushed axis — either a shortfall (raise) or,
+    // when allowReduce, a surplus (lower). Restyle uses both; steer() only raises.
     let axis: keyof MaltFlavorProfile | null = null;
-    let worstDeficit = minDeficit;
+    let worstGap = minDeficit;
+    let direction: "up" | "down" = "up";
     for (const a of pushedAxes) {
       if (settled.has(a)) continue;
       const deficit = (target[a] ?? 0) - achieved[a];
-      if (deficit > worstDeficit) { worstDeficit = deficit; axis = a; }
+      if (deficit > worstGap) { worstGap = deficit; axis = a; direction = "up"; }
+      if (allowReduce) {
+        const surplus = achieved[a] - (target[a] ?? 0);
+        if (surplus > worstGap) { worstGap = surplus; axis = a; direction = "down"; }
+      }
     }
     if (!axis) break;
     const ax = axis;
+
+    // ── reduce: shift share off grains that drive this axis ────────────────
+    if (direction === "down") {
+      const reduceLadder = work
+        .map((w) => ({ w, arch: MALT_ARCHETYPES_BY_SLUG.get(w.archetype) }))
+        .filter((x): x is { w: Part; arch: NonNullable<typeof x.arch> } => !!x.arch && (x.arch.flavor[ax] || 0) > 0)
+        .sort((a, b) => b.arch.intensity * (b.arch.flavor[ax] || 0) - a.arch.intensity * (a.arch.flavor[ax] || 0));
+
+      let stepped = false;
+      for (const { w: donorPart, arch: donorArch } of reduceLadder) {
+        if (donorPart.share <= 1e-6) continue;
+        const dec = Math.min(step, donorPart.share);
+        // Recipient: the grain in the bill weakest on this axis (usually base malt).
+        const recipients = work
+          .filter((p) => p.archetype !== donorPart.archetype)
+          .map((p) => ({ p, arch: MALT_ARCHETYPES_BY_SLUG.get(p.archetype) }))
+          .filter((x): x is { p: Part; arch: NonNullable<typeof x.arch> } => !!x.arch)
+          .sort((a, b) => (a.arch.intensity * (a.arch.flavor[ax] || 0)) - (b.arch.intensity * (b.arch.flavor[ax] || 0)));
+        if (recipients.length === 0) continue;
+
+        const trial: Part[] = work.map((p) => ({ ...p }));
+        const donor = trial.find((p) => p.archetype === donorPart.archetype)!;
+        donor.share -= dec;
+        recipients[0].p.share += dec;
+        const after = achievedOf(trial.filter((p) => p.share > 1e-9))[ax];
+        if (!(after < achieved[ax] - 1e-4)) continue;
+        stepped = true;
+        const tgt = target[ax] ?? 0;
+        if (after < tgt) {
+          if (Math.abs(after - tgt) < Math.abs(tgt - achieved[ax])) { work = trial.filter((p) => p.share > 1e-9); changed = true; }
+          settled.add(ax);
+        } else {
+          work = trial.filter((p) => p.share > 1e-9);
+          changed = true;
+        }
+        break;
+      }
+      if (!stepped) settled.add(ax);
+      continue;
+    }
 
     // Axes to protect: other pushed axes already at/over target — a donor that also
     // drives these overshoots them, so with avoidCollateral on we drop such donors.
@@ -546,7 +604,9 @@ export function correctMaltGristToward(
   }
 
   if (!changed) return { items, notes };
-  notes.push("nudged the grist toward the requested malt character with more of a malt the neighbourhood already uses");
+  notes.push(allowReduce
+    ? "rebalanced the grist toward the requested malt character using grains already in the bill"
+    : "nudged the grist toward the requested malt character with more of a malt the neighbourhood already uses");
   const asItems: GristBillItem[] = work.map((w) => ({ archetype: w.archetype, pct: w.share * 100, preset: w.preset }));
   const brew = enforceGristBrewability(asItems);
   notes.push(...brew.notes);
@@ -877,7 +937,18 @@ export function correctHopScheduleToward(
   flavorOf: (name: string) => HopFlavorProfile | undefined,
   target: Partial<HopFlavorProfile>,
   evaluate: (templates: HopTemplate[]) => HopFlavorProfile,
-  opts: { step?: number; donorMaxGpl?: number; addedMaxGpl?: number; maxPasses?: number; minDeficit?: number; avoidCollateral?: boolean; collateralPenalty?: number; prevalence?: Record<string, number> } = {},
+  opts: {
+    step?: number;
+    donorMaxGpl?: number;
+    addedMaxGpl?: number;
+    maxPasses?: number;
+    minDeficit?: number;
+    avoidCollateral?: boolean;
+    collateralPenalty?: number;
+    prevalence?: Record<string, number>;
+    /** When true, trim dry-hop doses driving an axis when achieved > target. Default false. */
+    allowReduce?: boolean;
+  } = {},
 ): { templates: HopTemplate[]; notes: string[] } {
   const step = opts.step ?? HOP_CORRECTION_STEP_GPL;
   const donorMaxGpl = opts.donorMaxGpl ?? HOP_CORRECTION_DONOR_MAX_GPL;
@@ -886,6 +957,7 @@ export function correctHopScheduleToward(
   const minDeficit = opts.minDeficit ?? HOP_CORRECTION_MIN_DEFICIT;
   const avoidCollateral = opts.avoidCollateral ?? false;
   const collateralPenalty = opts.collateralPenalty ?? CORRECTION_COLLATERAL_PENALTY;
+  const allowReduce = opts.allowReduce ?? false;
   // In-style weighting (see correctMaltGristToward): scale a donor by how much the
   // neighbourhood leans on that hop, so a common in-style variety wins over a rare
   // one that merely scores high on the axis. No prevalence → uniform (old behaviour).
@@ -900,18 +972,52 @@ export function correctHopScheduleToward(
   let work: HopTemplate[] = templates.map((t) => ({ ...t }));
   let addedTotal = 0;
   let changed = false;
+  const settled = new Set<keyof HopFlavorProfile>();
 
   for (let pass = 0; pass < maxPasses; pass++) {
-    if (addedTotal >= addedMaxGpl) break;
     const achieved = evaluate(work);
-    // Largest still-open pushed-axis shortfall.
     let axis: keyof HopFlavorProfile | null = null;
-    let worstDeficit = minDeficit;
+    let worstGap = minDeficit;
+    let direction: "up" | "down" = "up";
     for (const ax of pushedAxes) {
+      if (settled.has(ax)) continue;
       const deficit = (target[ax] ?? 0) - achieved[ax];
-      if (deficit > worstDeficit) { worstDeficit = deficit; axis = ax; }
+      if (deficit > worstGap) { worstGap = deficit; axis = ax; direction = "up"; }
+      if (allowReduce) {
+        const surplus = achieved[ax] - (target[ax] ?? 0);
+        if (surplus > worstGap) { worstGap = surplus; axis = ax; direction = "down"; }
+      }
     }
     if (!axis) break;
+
+    // ── reduce: trim dry-hop (or whirlpool) doses driving this axis ─────────
+    if (direction === "down") {
+      const reducible = work
+        .filter((t) => (t.type === "dry hop" || t.type === "whirlpool") && (flavorOf(t.name)?.[axis] ?? 0) > 0)
+        .sort((a, b) => (flavorOf(b.name)?.[axis] ?? 0) - (flavorOf(a.name)?.[axis] ?? 0));
+      let stepped = false;
+      for (const donor of reducible) {
+        if (donor.gpl <= 1e-6) continue;
+        const dec = Math.min(step, donor.gpl);
+        const trial = work.map((t) => (t === donor ? { ...t, gpl: t.gpl - dec } : { ...t })).filter((t) => t.gpl > 1e-6);
+        const after = evaluate(trial)[axis];
+        if (!(after < achieved[axis] - 1e-4)) continue;
+        stepped = true;
+        const tgt = target[axis] ?? 0;
+        if (after < tgt) {
+          if (Math.abs(after - tgt) < Math.abs(tgt - achieved[axis])) { work = trial; changed = true; }
+          settled.add(axis);
+        } else {
+          work = trial;
+          changed = true;
+        }
+        break;
+      }
+      if (!stepped) settled.add(axis);
+      continue;
+    }
+
+    if (addedTotal >= addedMaxGpl) break;
 
     // Axes to protect: pushed axes (other than the one being raised) already at
     // or over target — a donor strong in these overshoots them. With
@@ -936,14 +1042,14 @@ export function correctHopScheduleToward(
       const score = gain * styleWeightOf(name);
       if (score > donorScore) { donorScore = score; donor = name; }
     }
-    if (!donor || donorScore <= 0) break;
+    if (!donor || donorScore <= 0) { settled.add(axis); continue; }
 
     // Grow the donor's dry-hop dose (boost an existing one, else add a new charge).
     const existing = work.find((t) => t.type === "dry hop" && t.name === donor);
     const donorGplNow = existing ? existing.gpl : 0;
-    if (donorGplNow >= donorMaxGpl) break;
+    if (donorGplNow >= donorMaxGpl) { settled.add(axis); continue; }
     const inc = Math.min(step, donorMaxGpl - donorGplNow, addedMaxGpl - addedTotal);
-    if (inc <= 0) break;
+    if (inc <= 0) { settled.add(axis); continue; }
 
     const trial: HopTemplate[] = work.map((t) => ({ ...t }));
     const trialExisting = trial.find((t) => t.type === "dry hop" && t.name === donor);
@@ -952,19 +1058,22 @@ export function correctHopScheduleToward(
 
     const tgt = target[axis] ?? 0;
     const after = evaluate(trial)[axis];
-    if (!(after > achieved[axis] + 1e-4)) break; // saturated
+    if (!(after > achieved[axis] + 1e-4)) { settled.add(axis); continue; }
     if (after > tgt) {
       // overshoot: keep the step only if it lands closer than not adding it, then stop.
       if (Math.abs(after - tgt) < Math.abs(tgt - achieved[axis])) { work = trial; addedTotal += inc; changed = true; }
-      break;
+      settled.add(axis);
+    } else {
+      work = trial;
+      addedTotal += inc;
+      changed = true;
     }
-    work = trial;
-    addedTotal += inc;
-    changed = true;
   }
 
   if (!changed) return { templates, notes };
-  notes.push("added a dry-hop charge of a variety the neighbourhood already uses to reach the requested hop character");
+  notes.push(allowReduce
+    ? "adjusted hop doses already in the bill toward the requested hop character"
+    : "added a dry-hop charge of a variety the neighbourhood already uses to reach the requested hop character");
   return { templates: work, notes };
 }
 

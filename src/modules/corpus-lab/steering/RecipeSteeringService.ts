@@ -61,6 +61,12 @@ import {
 } from "./reconstruction";
 import { hashSeed, mulberry32 } from "./prng";
 import { featurize, type FermentableClassification } from "./featurize";
+import {
+  restyleTier1,
+  type RestyleTweak,
+  type RestyleOpts,
+  type RecipeEdit,
+} from "./restyle";
 
 export type StyleGateMode = "family" | "strict" | "none";
 /** The adaptive gate's rungs, tightest → widest (see queryNeighbors). */
@@ -252,6 +258,21 @@ export type ReflectResult = {
   style: SteeringResult["style"];
   classifications: FermentableClassification[];
   unmatchedRate: number;
+  notes: string[];
+};
+
+/** PRD-009 Phase 1 — minimal-edit restyle result + display context from the cloud. */
+export type RestyleResult = {
+  recipe: Recipe;
+  edits: RecipeEdit[];
+  requestedFlavor: { malt: MaltFlavorProfile; hop: HopFlavorProfile };
+  achievedFlavor: { malt: MaltFlavorProfile; hop: HopFlavorProfile };
+  styleNorms: ReflectResult["styleNorms"];
+  axisMax: ReflectResult["axisMax"];
+  axisDialMax: ReflectResult["axisDialMax"];
+  bodyRange: ReflectResult["bodyRange"];
+  style: ReflectResult["style"];
+  tooLargeForTweak: boolean;
   notes: string[];
 };
 
@@ -595,6 +616,46 @@ export class RecipeSteeringService {
       style: { input: styleInput, matchedCode, matchedName, family: fam },
       classifications: feat.classifications,
       unmatchedRate: feat.unmatchedRate,
+      notes,
+    };
+  }
+
+  /**
+   * PRD-009 Phase 1 — minimal flavour-directed edits on an imported recipe.
+   * Tier 1 only: re-proportion the recipe's own ingredients; preserve batch
+   * volume and total grain weight; IBU solved only when explicitly retargeted.
+   */
+  restyle(recipe: Recipe, tweak: RestyleTweak, opts?: RestyleOpts): RestyleResult {
+    const tier1 = restyleTier1(recipe, tweak, opts);
+    const notes = [...tier1.notes];
+
+    let edited = tier1.recipe;
+    const originalIbu = tier1.baseline.ibu;
+
+    if (tweak.ibu != null && !tier1.tooLargeForTweak) {
+      edited = { ...edited, hops: this.solveHopsForTargetIBU(edited, Math.max(0, tweak.ibu)) };
+      notes.push(`re-solved IBU to ${tweak.ibu.toFixed(0)} (explicit retarget)`);
+    } else if (tweak.ibu == null) {
+      const afterIbu = recipeCalculationService.calculate(edited).ibu;
+      if (Math.abs(afterIbu - originalIbu) > 0.5) {
+        notes.push(`IBU drifted ${originalIbu.toFixed(0)} → ${afterIbu.toFixed(0)} from dry-hop edits (bittering charges untouched)`);
+      }
+    }
+
+    const ctx = this.reflect(edited, { style: opts?.style ?? recipe.style });
+    const afterFeat = featurize(edited);
+
+    return {
+      recipe: edited,
+      edits: tier1.edits,
+      requestedFlavor: tier1.requestedFlavor,
+      achievedFlavor: { malt: afterFeat.malt, hop: afterFeat.hop },
+      styleNorms: ctx.styleNorms,
+      axisMax: ctx.axisMax,
+      axisDialMax: ctx.axisDialMax,
+      bodyRange: ctx.bodyRange,
+      style: ctx.style,
+      tooLargeForTweak: tier1.tooLargeForTweak,
       notes,
     };
   }
