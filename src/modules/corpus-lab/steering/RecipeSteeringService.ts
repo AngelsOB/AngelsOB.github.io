@@ -60,6 +60,7 @@ import {
   type HopTemplate,
 } from "./reconstruction";
 import { hashSeed, mulberry32 } from "./prng";
+import { featurize, type FermentableClassification } from "./featurize";
 
 export type StyleGateMode = "family" | "strict" | "none";
 /** The adaptive gate's rungs, tightest → widest (see queryNeighbors). */
@@ -228,6 +229,29 @@ export type SteeringResult = {
     /** Convenience for existing callers: band !== "experimental". */
     inBounds: boolean;
   };
+  notes: string[];
+};
+
+/**
+ * Phase 0 of PRD-009 — place an imported recipe on the flavour radars next to
+ * its matched style's norm box. No edits; just featurize + style context.
+ * Shares `styleNorms` / `axisMax` / `axisDialMax` display fields with
+ * `SteeringResult` so the studio can render either interchangeably.
+ */
+export type ReflectResult = {
+  recipe: Recipe;
+  calculations: RecipeCalculations;
+  achievedFlavor: { malt: MaltFlavorProfile; hop: HopFlavorProfile };
+  /** 23-dim continuous row — the recipe's point in the cloud's feature space. */
+  row: number[];
+  maltBody: number;
+  styleNorms: SteeringResult["styleNorms"];
+  axisMax: SteeringResult["axisMax"];
+  axisDialMax: SteeringResult["axisDialMax"];
+  bodyRange: SteeringResult["bodyRange"];
+  style: SteeringResult["style"];
+  classifications: FermentableClassification[];
+  unmatchedRate: number;
   notes: string[];
 };
 
@@ -513,6 +537,66 @@ export class RecipeSteeringService {
       return out;
     };
     this.globalAxisMax = { malt: axisP99((r) => r.m), hop: axisP99((r) => r.h) };
+  }
+
+  /**
+   * PRD-009 Phase 0 — featurize an arbitrary recipe and return it against its
+   * matched style's norm box. Purely reflective: no edits, no k-NN, no solve.
+   * Style is auto-resolved from `recipe.style` (overridable via `opts.style`).
+   */
+  reflect(recipe: Recipe, opts?: { style?: string }): ReflectResult {
+    const notes: string[] = [];
+    const feat = featurize(recipe);
+    notes.push(...feat.notes);
+
+    const styleInput = (opts?.style ?? recipe.style ?? "").trim() || "American IPA";
+    const match = matchBjcpStyle(styleInput);
+    const matchedCode = match.canonical?.split(".")[0];
+    const matchedName = match.autoAccept ? match.best?.presetName : undefined;
+    const fam = family(matchedName ?? styleInput);
+    if (!match.autoAccept) {
+      notes.push(`style "${styleInput}" didn't resolve to an exact BJCP entry — norms from flavour-family "${fam}"`);
+    }
+
+    let centroid: Centroid;
+    let centroidLevel: "style" | "family" | "global";
+    const styleLevel = this.styleCentroid(matchedCode);
+    if (styleLevel) {
+      centroid = styleLevel;
+      centroidLevel = "style";
+    } else {
+      centroid = this.familyCentroid(fam);
+      centroidLevel = centroid.count === this.cloud.length ? "global" : "family";
+      if (match.autoAccept) {
+        notes.push(
+          `fewer than ${MIN_STYLE_CENTROID_RECORDS} cloud records specifically match "${matchedName ?? styleInput}" — norms from the broader "${fam}" family`,
+        );
+      }
+    }
+
+    return {
+      recipe,
+      calculations: feat.calculations,
+      achievedFlavor: { malt: feat.malt, hop: feat.hop },
+      row: feat.row,
+      maltBody: feat.maltBody,
+      styleNorms: {
+        malt: { p25: malt9ToProfile(centroid.maltP25), p75: malt9ToProfile(centroid.maltP75) },
+        hop: { p25: hop9ToProfile(centroid.hopP25), p75: hop9ToProfile(centroid.hopP75) },
+        recordCount: centroid.count,
+        level: centroidLevel,
+      },
+      axisMax: { malt: malt9ToProfile(this.globalAxisMax.malt), hop: hop9ToProfile(this.globalAxisMax.hop) },
+      axisDialMax: {
+        malt: malt9ToProfile(this.globalAxisMax.malt.map((v) => v * AXIS_DIAL_HEADROOM)),
+        hop: hop9ToProfile(this.globalAxisMax.hop.map((v) => v * AXIS_DIAL_HEADROOM)),
+      },
+      bodyRange: { min: this.stats.lo[MALTBODY_IDX], mid: this.stats.mean[MALTBODY_IDX], max: this.stats.hi[MALTBODY_IDX] },
+      style: { input: styleInput, matchedCode, matchedName, family: fam },
+      classifications: feat.classifications,
+      unmatchedRate: feat.unmatchedRate,
+      notes,
+    };
   }
 
   steer(query: SteeringQuery): SteeringResult {
