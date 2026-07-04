@@ -165,6 +165,26 @@ describe.runIf(RUN)("RecipeSteeringService — real-cloud example queries (gated
     expect(distinct.size).toBeGreaterThan(1);
   }, TIMEOUT_MS);
 
+  it("lock one bill, reroll the other: a locked bill survives verbatim", () => {
+    const base = { style: "American IPA", exploration: 0.8 } as SteeringQuery;
+    const first = service.steer(base);
+
+    // Lock the grain (pass it back), reroll the hops with a fresh seed.
+    const grainLocked = service.steer({ ...base, lockedFermentables: first.recipe.fermentables, hopVariation: 5 });
+    // Lock the hops, reroll the grain.
+    const hopsLocked = service.steer({ ...base, lockedHops: first.recipe.hops, gristVariation: 5 });
+    printResult("lock grain, reroll hops", grainLocked);
+    printResult("lock hops, reroll grain", hopsLocked);
+
+    // The locked bill is byte-identical — names AND amounts, not just the varieties.
+    expect(grainLocked.recipe.fermentables).toEqual(first.recipe.fermentables);
+    expect(hopsLocked.recipe.hops).toEqual(first.recipe.hops);
+    // …and the OTHER bill actually did change (the reroll wasn't a no-op).
+    const hopSig = (r: SteeringResult) => r.recipe.hops.map((h) => h.name).join("|");
+    const grainSig = (r: SteeringResult) => r.recipe.fermentables.map((f) => f.name).join("|");
+    expect(hopSig(grainLocked) !== hopSig(first) || grainSig(hopsLocked) !== grainSig(first)).toBe(true);
+  }, TIMEOUT_MS);
+
   it("regression: distinct styles sharing a coarse family no longer collide (no explicit override)", () => {
     const styles = ["Munich Helles", "Czech Pale Lager", "American Lager", "Black IPA", "Belgian IPA", "Brown IPA"];
     const results = styles.map((style) => ({ style, result: service.steer({ style }) }));

@@ -14,8 +14,11 @@ import {
   pickModalYeastName,
   buildYeastFromPresetName,
   yeastTypeOf,
+  correctMaltGristToward,
+  correctHopScheduleToward,
 } from "./reconstruction";
 import type { CloudRecord } from "./featureSpace";
+import { aggregateMaltFlavor, MALT_ARCHETYPES_BY_SLUG } from "../maltFlavor";
 
 const ZERO9 = new Array(9).fill(0);
 function rec(over: Partial<CloudRecord> = {}): CloudRecord {
@@ -600,5 +603,180 @@ describe("buildYeastFromPresetName", () => {
 
   test("unknown preset name returns null", () => {
     expect(buildYeastFromPresetName("Not A Real Yeast")).toBeNull();
+  });
+});
+
+// ── residual correction (#3) ──────────────────────────────────────────────────
+
+describe("correctMaltGristToward", () => {
+  const item = (archetype: string, pct: number) => ({ archetype, pct, preset: presetForArchetype(archetype)! });
+  const caramelOf = (items: Array<{ archetype: string; pct: number }>) =>
+    aggregateMaltFlavor(items.map((i) => ({ archetype: i.archetype, amount: i.pct }))).caramel;
+
+  test("uses more of a sanctioned caramel malt to raise the caramel axis", () => {
+    const start = [item("base-pale", 100)];
+    const sanctioned = new Set(["base-pale", "crystal-medium"]);
+    const before = caramelOf(start);
+    const { items } = correctMaltGristToward(start, sanctioned, { caramel: 3 });
+    expect(caramelOf(items)).toBeGreaterThan(before);
+    expect(items.some((i) => i.archetype === "crystal-medium")).toBe(true);
+  });
+
+  test("never invents a grain the neighbourhood didn't use", () => {
+    // Special B is the strongest caramel/dark-fruit donor, but it's not sanctioned
+    // here — the correction must reach only for crystal-light, which IS.
+    const start = [item("base-pale", 100)];
+    const { items } = correctMaltGristToward(start, new Set(["base-pale", "crystal-light"]), { caramel: 3 });
+    expect(items.some((i) => i.archetype === "crystal-light")).toBe(true);
+    expect(items.some((i) => i.archetype === "special-b")).toBe(false);
+  });
+
+  test("keeps the diastatic base floor (stays brewable)", () => {
+    const start = [item("base-pale", 100)];
+    const { items } = correctMaltGristToward(start, new Set(["base-pale", "crystal-dark"]), { caramel: 5 });
+    const total = items.reduce((s, i) => s + i.pct, 0);
+    const base = items.filter((i) => i.archetype === "base-pale").reduce((s, i) => s + i.pct, 0);
+    expect(base / total).toBeGreaterThanOrEqual(0.55 - 1e-6);
+  });
+
+  test("caps the corrective donor's share (no cloying 45% crystal bill)", () => {
+    const start = [item("base-pale", 100)];
+    const { items } = correctMaltGristToward(start, new Set(["base-pale", "crystal-dark"]), { caramel: 5 }, { maxDonorShare: 0.2 });
+    const total = items.reduce((s, i) => s + i.pct, 0);
+    const crystal = items.filter((i) => i.archetype === "crystal-dark").reduce((s, i) => s + i.pct, 0);
+    expect(crystal / total).toBeLessThanOrEqual(0.2 + 1e-6);
+  });
+
+  test("no-op when no axis is pushed or the deficit is already met", () => {
+    const start = [item("base-pale", 80), item("crystal-medium", 20)];
+    expect(correctMaltGristToward(start, new Set(["base-pale", "crystal-medium"]), {}).items).toEqual(start);
+    // caramel already well above a tiny target -> nothing to do
+    const met = correctMaltGristToward(start, new Set(["base-pale", "crystal-medium"]), { caramel: 0.01 });
+    expect(met.items).toEqual(start);
+  });
+
+  test("stops when the malt aggregator saturates (donor no longer helps)", () => {
+    // Sanity: the loop terminates and the donor never exceeds its cap even for an
+    // unreachable target, because each pass must strictly improve the axis.
+    const start = [item("base-pale", 100)];
+    const arch = MALT_ARCHETYPES_BY_SLUG.get("crystal-dark")!;
+    expect(arch.flavor.caramel).toBeGreaterThan(0); // guards the fixture
+    const { items } = correctMaltGristToward(start, new Set(["base-pale", "crystal-dark"]), { caramel: 99 });
+    const total = items.reduce((s, i) => s + i.pct, 0);
+    const crystal = items.filter((i) => i.archetype === "crystal-dark").reduce((s, i) => s + i.pct, 0);
+    expect(crystal / total).toBeLessThanOrEqual(0.3 + 1e-6);
+  });
+});
+
+// ── hop residual correction (#3 for hops) ─────────────────────────────────────
+
+describe("correctHopScheduleToward", () => {
+  // A tiny stand-in flavour model: each variety drives ONE axis, and the
+  // schedule's achieved value on an axis is a saturating function of the total
+  // dry-hop g/L of varieties that drive it — enough to exercise the greedy loop.
+  const VARIETY_AXIS: Record<string, keyof import("../../recipe/models/Presets").HopFlavorProfile> = {
+    galaxy: "berry", cascade: "citrus", mosaic: "berry",
+  };
+  const flavorOf = (name: string) => {
+    const axis = VARIETY_AXIS[name];
+    if (!axis) return undefined;
+    const p = { citrus: 0, tropicalFruit: 0, stoneFruit: 0, berry: 0, floral: 0, spice: 0, herbal: 0, grassy: 0, resinPine: 0 };
+    p[axis] = 5;
+    return p;
+  };
+  const evaluate = (tpls: Array<{ name: string; type: string; gpl: number }>) => {
+    const p = { citrus: 0, tropicalFruit: 0, stoneFruit: 0, berry: 0, floral: 0, spice: 0, herbal: 0, grassy: 0, resinPine: 0 };
+    for (const t of tpls) {
+      const axis = VARIETY_AXIS[t.name];
+      if (axis && t.type === "dry hop") p[axis] += t.gpl; // linear-ish; capped below by donor limits
+    }
+    return p;
+  };
+
+  test("adds a dry-hop of the strongest-on-axis sanctioned variety to raise the axis", () => {
+    const start = [{ name: "cascade", type: "boil" as const, gpl: 2, timeMinutes: 60 }];
+    const { templates, notes } = correctHopScheduleToward(start, ["galaxy", "cascade"], flavorOf, { berry: 4 }, evaluate);
+    const galaxy = templates.find((t) => t.name === "galaxy");
+    expect(galaxy).toBeDefined();
+    expect(galaxy!.type).toBe("dry hop");
+    expect(evaluate(templates).berry).toBeGreaterThan(evaluate(start).berry);
+    expect(notes.length).toBeGreaterThan(0);
+  });
+
+  test("never invents a hop the neighbourhood didn't use", () => {
+    // mosaic drives berry too, but only cascade is sanctioned here -> no berry donor available.
+    const start = [{ name: "cascade", type: "boil" as const, gpl: 2, timeMinutes: 60 }];
+    const { templates } = correctHopScheduleToward(start, ["cascade"], flavorOf, { berry: 4 }, evaluate);
+    expect(templates.some((t) => t.name === "mosaic" || t.name === "galaxy")).toBe(false);
+  });
+
+  test("respects the per-donor dose cap", () => {
+    const start: Array<{ name: string; type: "boil"; gpl: number; timeMinutes: number }> = [];
+    const { templates } = correctHopScheduleToward(start, ["galaxy"], flavorOf, { berry: 99 }, evaluate, { donorMaxGpl: 4 });
+    const galaxy = templates.find((t) => t.name === "galaxy");
+    expect(galaxy!.gpl).toBeLessThanOrEqual(4 + 1e-9);
+  });
+
+  test("respects the total-added cap across varieties", () => {
+    const { templates } = correctHopScheduleToward([], ["galaxy", "mosaic"], flavorOf, { berry: 99 }, evaluate, { addedMaxGpl: 3, donorMaxGpl: 10 });
+    const added = templates.filter((t) => t.type === "dry hop").reduce((s, t) => s + t.gpl, 0);
+    expect(added).toBeLessThanOrEqual(3 + 1e-9);
+  });
+
+  test("no-op when no hop axis is pushed", () => {
+    const start = [{ name: "cascade", type: "boil" as const, gpl: 2, timeMinutes: 60 }];
+    expect(correctHopScheduleToward(start, ["galaxy"], flavorOf, {}, evaluate).templates).toEqual(start);
+  });
+});
+
+// ── collateral-aware donor selection (avoidCollateral toggle) ──────────────────
+
+describe("residual correction — avoidCollateral", () => {
+  const item = (archetype: string, pct: number) => ({ archetype, pct, preset: presetForArchetype(archetype)! });
+
+  test("MALT: picks the purest caramel donor when dark fruit was pulled down", () => {
+    // crystal-dark drives caramel hardest but also carries dark fruit; crystal-
+    // medium is nearly as caramel-forward with far less dark fruit. Pushing
+    // caramel UP + dark fruit DOWN should switch the pick only when the toggle is on.
+    const start = [item("base-pale", 100)];
+    const sanctioned = new Set(["base-pale", "crystal-medium", "crystal-dark"]);
+    const target = { caramel: 5, darkFruit: 0 };
+    const off = correctMaltGristToward(start, sanctioned, target, { avoidCollateral: false });
+    const on = correctMaltGristToward(start, sanctioned, target, { avoidCollateral: true });
+    expect(off.items.some((i) => i.archetype === "crystal-dark")).toBe(true);
+    expect(on.items.some((i) => i.archetype === "crystal-medium")).toBe(true);
+    expect(on.items.some((i) => i.archetype === "crystal-dark")).toBe(false);
+  });
+
+  test("HOP: picks the purer berry donor when stone fruit was pulled down", () => {
+    const VEC: Record<string, import("../../recipe/models/Presets").HopFlavorProfile> = {
+      galaxy: { citrus: 0, tropicalFruit: 0, stoneFruit: 4, berry: 5, floral: 0, spice: 0, herbal: 0, grassy: 0, resinPine: 0 },
+      nelson: { citrus: 0, tropicalFruit: 0, stoneFruit: 0, berry: 4, floral: 0, spice: 0, herbal: 0, grassy: 0, resinPine: 0 },
+    };
+    const flavorOf = (name: string) => VEC[name];
+    const evaluate = (tpls: Array<{ name: string; type: string; gpl: number }>) => {
+      const p = { citrus: 0, tropicalFruit: 0, stoneFruit: 0, berry: 0, floral: 0, spice: 0, herbal: 0, grassy: 0, resinPine: 0 };
+      for (const t of tpls) {
+        const v = VEC[t.name];
+        if (v && t.type === "dry hop") for (const k of Object.keys(p) as Array<keyof typeof p>) p[k] += (v[k] / 5) * t.gpl * 0.3;
+      }
+      return p;
+    };
+    const target = { berry: 5, stoneFruit: 0 }; // berry up, stone fruit down
+    const off = correctHopScheduleToward([], ["galaxy", "nelson"], flavorOf, target, evaluate, { avoidCollateral: false });
+    const on = correctHopScheduleToward([], ["galaxy", "nelson"], flavorOf, target, evaluate, { avoidCollateral: true });
+    // off = strongest berry outright (galaxy, which also carries stone fruit)
+    expect(off.templates.some((t) => t.name === "galaxy")).toBe(true);
+    // on = the purer berry donor (nelson), avoiding the stone-fruit collateral
+    expect(on.templates.some((t) => t.name === "nelson")).toBe(true);
+    expect(on.templates.some((t) => t.name === "galaxy")).toBe(false);
+  });
+
+  test("default (toggle off) is unchanged from before", () => {
+    // With avoidCollateral unset, malt correction still reaches for the hardest
+    // caramel driver (crystal-dark) exactly as the earlier tests expect.
+    const start = [item("base-pale", 100)];
+    const res = correctMaltGristToward(start, new Set(["base-pale", "crystal-medium", "crystal-dark"]), { caramel: 5 });
+    expect(res.items.some((i) => i.archetype === "crystal-dark")).toBe(true);
   });
 });

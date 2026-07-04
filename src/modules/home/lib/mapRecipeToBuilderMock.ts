@@ -5,6 +5,7 @@ import {
   type WaterProfile,
 } from "@/modules/recipe/services/WaterChemistryService";
 import { getBjcpStyleSpec, type RangeTuple } from "@/utils/bjcpSpecs";
+import { matchBjcpStyle } from "@/utils/bjcpMatching";
 import { hsTokens } from "@/modules/builder/tokens";
 
 // Maps a real Recipe into the data the builder mock renders. The mock is hardcoded
@@ -23,6 +24,9 @@ export type BuilderMockGrain = {
   weight: string;
   lb: number;
   srm: number;
+  /** Unrounded °L straight off the fermentable — input for the malt-archetype
+   *  matcher (the grain flavor radar), where the rounded display srm won't do. */
+  lovibond: number;
 };
 export type BuilderMockHop = {
   name: string;
@@ -31,6 +35,14 @@ export type BuilderMockHop = {
   purpose: string;
   aa: string;
   ibu: number;
+  // Raw addition fields, passed through for the hop flavor radar (the
+  // dose/timing-weighted aggregation needs more than the display strings).
+  grams: number;
+  hopType: Hop["type"];
+  timeMinutes?: number;
+  temperatureC?: number;
+  whirlpoolTimeMinutes?: number;
+  flavor?: Hop["flavor"];
 };
 export type BuilderMockFermStep = {
   label: string;
@@ -58,6 +70,8 @@ export type BuilderMockData = {
   name: string;
   style: string;
   batch: string;
+  /** Batch volume in liters — the hop flavor aggregation's dose denominator. */
+  batchL: number;
   profile: string;
   stats: { og: number; fg: number; abv: number; ibu: number; cal: number; srm: number };
   ranges: {
@@ -186,9 +200,15 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
   const calc = recipeCalculationService.calculate(recipe);
 
   // ── Style + ranges ──
-  const code = recipe.style?.split(".")[0]?.trim();
+  // Resolve the style through the shared matcher rather than assuming the
+  // builder's "21A. American IPA" prefix format: browse/imported recipes carry
+  // bare names ("American IPA"), aliases, or free text, and the old
+  // split(".") lookup returned no spec for those — which is why the BJCP
+  // range gauges only worked for builder-authored recipes.
+  const match = matchBjcpStyle(recipe.style ?? "");
+  const code = match.autoAccept ? match.best?.preset.code : undefined;
   const spec = getBjcpStyleSpec(code);
-  const styleDisplay = recipe.style?.trim() || "Custom style";
+  const styleDisplay = match.canonical ?? (recipe.style?.trim() || "Custom style");
 
   // ── Grains ── (every fermentable; the mock body scrolls its grain ledger
   // so long bills aren't truncated — see TabSections FermentablesSection)
@@ -199,6 +219,7 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
     weight: fmtLb(f.weightKg),
     lb: f.weightKg * KG_TO_LB,
     srm: Math.round(f.colorLovibond),
+    lovibond: f.colorLovibond,
   }));
 
   // ── Hops ── (every hop; the mock body scrolls the hop bill — see BuilderMock
@@ -216,6 +237,12 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
     purpose: hopPurpose(h),
     aa: `${h.alphaAcid.toFixed(1)}% AA`,
     ibu: weightSum > 0 ? Math.round((weights[i] / weightSum) * totalIbu) : 0,
+    grams: h.grams,
+    hopType: h.type,
+    timeMinutes: h.timeMinutes,
+    temperatureC: h.temperatureC,
+    whirlpoolTimeMinutes: h.whirlpoolTimeMinutes,
+    flavor: h.flavor,
   }));
 
   // ── Mash ──
@@ -224,7 +251,7 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
     ? {
         stepName: firstStep.name || "Saccharification rest",
         tempF: cToF(firstStep.temperatureC),
-        timeMin: firstStep.durationMinutes,
+        timeMin: Math.round(firstStep.durationMinutes),
         strikeF: calc.strikeTempC != null ? `${cToF(calc.strikeTempC)}°F` : "—",
         mashWater: lToGal(calc.mashWaterL),
         sparge: lToGal(calc.spargeWaterL),
@@ -290,7 +317,7 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
     return {
       label: s.name || s.type,
       temp: `${cToF(s.temperatureC)}°F`,
-      days: Math.max(1, s.durationDays),
+      days: Math.max(1, Math.round(s.durationDays)),
       color: c.color,
       dark: c.dark,
       carb: false,
@@ -302,9 +329,9 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
     fermentation.push({
       label: isKeg ? "Keg" : "Bottle",
       temp: isKeg
-        ? `${recipe.packaging.targetCo2Volumes ?? 2.4} vol`
+        ? `${round1(recipe.packaging.targetCo2Volumes ?? 2.4)} vol`
         : `${recipe.packaging.conditioningTempC != null ? cToF(recipe.packaging.conditioningTempC) + "°F" : "cond"}`,
-      days: recipe.packaging.conditioningDays ?? 7,
+      days: Math.max(1, Math.round(recipe.packaging.conditioningDays ?? 7)),
       color: hsTokens.honey,
       dark: false,
       carb: true,
@@ -313,12 +340,13 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
 
   // ── Brew sheet (real data, no scripted pre-boil miss) ──
   const batchGal = (recipe.batchVolumeL * L_TO_GAL).toFixed(1);
+  const boilMin = Math.round(recipe.equipment.boilTimeMin);
   const brewSheet: BrewSheetData = {
     title: recipe.name || "Brew sheet.",
     status: "Planned",
     brewData: [
       { label: "Batch", value: `${batchGal} gal` },
-      { label: "Boil", value: `${recipe.equipment.boilTimeMin} min` },
+      { label: "Boil", value: `${boilMin} min` },
       { label: "Setup", value: recipe.equipmentProfileName || "Custom" },
       { label: "Eff", value: `${Math.round(recipe.equipment.brewhouseEfficiencyPercent)}%` },
     ],
@@ -352,7 +380,8 @@ export function mapRecipeToBuilderMock(recipe: Recipe): BuilderMockData {
   return {
     name: recipe.name || "Untitled recipe",
     style: styleDisplay,
-    batch: `${batchGal} gal · ${recipe.equipment.boilTimeMin} min`,
+    batch: `${batchGal} gal · ${boilMin} min`,
+    batchL: recipe.batchVolumeL,
     profile: recipe.equipmentProfileName || "Custom",
     stats: {
       og: calc.og,

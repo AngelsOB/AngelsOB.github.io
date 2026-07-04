@@ -38,3 +38,4 @@ tsconfig.tsbuildinfo
 # See ~/.claude/plans/i-found-this-crazy-noble-pumpkin.md (legal/data posture).
 src/modules/corpus-lab/raw/
 src/modules/corpus-lab/offline/out/cloud.ndjson
+src/modules/corpus-lab/server/dist/

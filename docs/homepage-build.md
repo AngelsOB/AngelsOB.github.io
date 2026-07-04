@@ -455,7 +455,28 @@ below are the landed design (knobs called out).
 - `mock/StyleGuidelines.tsx` — compact mock of `BJCPStyleRail`: OG/FG/ABV/IBU
   gauges + SRM gradient visualizer. Takes `grainFill` (gauges/pin interpolate),
   `fgShift` (FG/ABV gauges follow the honest beat), + optional `data` (real ranges
-  via `getBjcpStyleSpec`).
+  via `getBjcpStyleSpec`). Styles resolve through `matchBjcpStyle` in
+  `mapRecipeToBuilderMock` (bare names / aliases / code prefixes all work — the
+  old `split(".")` only handled builder-authored "21A. …" strings, which is why
+  browse previews had no ranges). A metric with no spec renders a plain track +
+  centered marker + "no style range" (never the old collapsed zero-width band),
+  and the SRM visualizer drops its range box/bound labels instead of hatching a
+  made-up band.
+- **Recipe-adaptable radars** (Jul 2026): `mock/HopFlavorRadar.tsx` now charts
+  the real 9 axes (`HOP_FLAVOR_KEYS` radar order) and takes optional `values`
+  (0..1 per axis); without them it falls back to the tour sample — REAL numbers:
+  Citra/Mosaic variety vectors from the preset dataset, and the full-card BLEND
+  is the sample bill run through `HopFlavorCalculationService` offline.
+  `mock/GrainFlavorRadar.tsx` (new) is the malt sibling on the Grain tab
+  (in-flow card, no scene-level slot — no tour beat pulls it out), same 9 malt
+  axes/ceilings as the builder's `GrainFlavorCard`, `fill` = grainFill so it
+  grows with the grains beat. `mock/useMockFlavors.ts` computes recipe-mode
+  values in `BuilderMock`: inline `hop.flavor` first, and the hop-preset bundle
+  is only `import()`ed when a hop lacks one (the malt lexicon is always lazy) —
+  keeps the deferred-ingredient-bundle discipline; tour mode loads nothing.
+  `mapRecipeToBuilderMock` passes raw hop addition fields + grain `lovibond` +
+  `batchL` through for this, and rounds display numbers (ferm days, boil/mash
+  minutes, CO₂ vols) so imported/steered recipes can't render float tails.
 - `mock/BrewSheetPanelV4.tsx` — brew sheet content (`framed` prop; optional `data`
   for a real recipe, which drops the scripted pre-boil-miss section).
 - `mock/HopFlavorRadar.tsx` — pure SVG radar, lifted from v3.

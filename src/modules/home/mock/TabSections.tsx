@@ -5,6 +5,7 @@ import { hsTokens } from "@/modules/builder/tokens";
 import { srmToRgb } from "@/modules/recipe/utils/srmColorUtils";
 import { getYeastLabFavicon } from "@/modules/recipe/utils/yeastLabIcons";
 import type { TabKey } from "./BuilderMock";
+import { GrainFlavorRadar } from "./GrainFlavorRadar";
 import type { BuilderMockData } from "../lib/mapRecipeToBuilderMock";
 
 // At-rest content for the mock's non-hops, non-brewsheet tabs. The mock is a
@@ -28,10 +29,10 @@ const YEAST = hsTokens.yeast;
 const HONEY = hsTokens.honey;
 const HOPS = hsTokens.hops;
 
-export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive = false, data }: { active: TabKey; grainFill?: number; tempShift?: number; honestActive?: boolean; data?: BuilderMockData }) {
+export function TabSection({ active, grainFill = 1, tempShift = 0, honestActive = false, data, maltFlavor }: { active: TabKey; grainFill?: number; tempShift?: number; honestActive?: boolean; data?: BuilderMockData; maltFlavor?: number[] }) {
   switch (active) {
     case "fermentables":
-      return <FermentablesSection grainFill={grainFill} data={data} />;
+      return <FermentablesSection grainFill={grainFill} data={data} maltFlavor={maltFlavor} />;
     case "mash":
       return <MashSection tempShift={tempShift} honestActive={honestActive} data={data} />;
     case "yeast":
@@ -144,7 +145,7 @@ export const GRAIN_STEP_LEVELS = (() => {
   return GRAINS.map((g) => (acc += g.lb) / GRAIN_TOTAL);
 })();
 
-function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data?: BuilderMockData }) {
+function FermentablesSection({ grainFill = 1, data, maltFlavor }: { grainFill?: number; data?: BuilderMockData; maltFlavor?: number[] }) {
   // Sample uses the hardcoded GRAINS + staircase; data mode (signed-in hero)
   // uses the recipe's grain bill. grainFill is 1 in data mode, so every grain
   // reveals fully. Cumulative weight fractions are computed from whichever bill.
@@ -170,6 +171,10 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
           <div key={`${g.name}-${i}`} style={{ width: `${(g.lb / total) * 100 * reveal(i)}%`, background: srmToRgb(g.srm) }} />
         ))}
       </div>
+      {/* Row: scrollable ledger on the left, fixed flavor radar on the right —
+          mirrors the hop section's bill + radar layout. The radar is in-flow
+          (no tour beat pulls it out), so no scene-level slot is needed. */}
+      <div style={{ display: "flex", gap: 10, flex: 1, minHeight: 0 }}>
       {/* ledger rows — fade + slide in as each grain is added. Scrollable so
           recipes with a long grain bill (the signed-in mock case) can scroll
           to see all rows; the header + bill stack above stay visible.
@@ -183,6 +188,7 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
           flexDirection: "column",
           gap: 5,
           flex: 1,
+          minWidth: 0,
           minHeight: 0,
           overflowY: "auto",
           overflowX: "hidden",
@@ -230,6 +236,23 @@ function FermentablesSection({ grainFill = 1, data }: { grainFill?: number; data
           </div>
           );
         })}
+      </div>
+      {/* grist flavor radar — the malt sibling of the hop radar card. Sample
+          grist in the tour (grows with the grains beat via fill), the recipe's
+          own aggregated profile in data mode. */}
+      <div style={{ width: 151, flexShrink: 0, alignSelf: "flex-start" }}>
+        <div
+          style={{
+            background: hsTokens.cream,
+            border: `2px solid ${INK}`,
+            borderRadius: 12,
+            boxShadow: "3px 3px 0 var(--hs-ink)",
+            padding: 8,
+          }}
+        >
+          <GrainFlavorRadar size={96} values={maltFlavor} fill={grainFill} />
+        </div>
+      </div>
       </div>
     </SectionBody>
   );

@@ -51,9 +51,19 @@ import {
   pickModalYeastName,
   buildYeastFromPresetName,
   yeastTypeOf,
+  archetypeForPresetName,
+  correctMaltGristToward,
+  correctHopScheduleToward,
+  normalizeHopName,
+  blendGristPct,
+  type GristBillItem,
+  type HopTemplate,
 } from "./reconstruction";
+import { hashSeed, mulberry32 } from "./prng";
 
 export type StyleGateMode = "family" | "strict" | "none";
+/** The adaptive gate's rungs, tightest → widest (see queryNeighbors). */
+type RestrictLevel = "style" | "family" | "none";
 
 /** A single flavour/stat target point. Unset axes default to the style's own median. */
 export type SteeringTarget = {
@@ -91,8 +101,15 @@ export type SteeringQuery = {
   /**
    * Reroll seed. Same query + same `variation` -> identical recipe; bump it for
    * a different plausible take at the current `exploration` level. Default 0.
+   * The grain and hop bills reroll INDEPENDENTLY — set `gristVariation` /
+   * `hopVariation` to reroll one while the other stays put (lock one, reroll the
+   * other). Both fall back to `variation` when unset.
    */
   variation?: number;
+  /** Reroll seed for the GRAIN bill only. Bump to reroll the grist while the hops stay fixed (lock hops). Defaults to `variation`. */
+  gristVariation?: number;
+  /** Reroll seed for the HOP bill only. Bump to reroll the hops while the grist stays fixed (lock grain). Defaults to `variation`. */
+  hopVariation?: number;
   /**
    * Size of the wider neighbourhood the ingredient IDENTITIES are voted from —
    * the "menu" of plausible malts/hops — while the %s/doses stay on the tight
@@ -100,6 +117,67 @@ export type SteeringQuery = {
    * (k when exploration is 0, so behaviour is unchanged there).
    */
   varietyK?: number;
+  /**
+   * Verbatim ingredient locks. When set, that bill is used EXACTLY as given —
+   * its reconstruction AND its solver (grain: the reverse-ABV weight solve;
+   * hops: the IBU solve) are skipped, so it survives a reroll or a re-steer
+   * byte-for-byte. This is the hard "lock this bill, reroll the other" the
+   * seed-only reroll couldn't guarantee (a rerolled grist shifts OG, and the
+   * IBU solver would then rescale even "seed-locked" hops). Pass the previous
+   * result's `recipe.fermentables` / `recipe.hops` back in.
+   */
+  lockedFermentables?: Fermentable[];
+  lockedHops?: Hop[];
+  /**
+   * How many candidate reconstructions to generate off the (shared) k-NN
+   * neighbourhood and rerank by how closely their ACHIEVED flavour matches the
+   * request — the closed loop that turns "spikier selection" from random
+   * variety into DIRECTED search. Every candidate is still built only from
+   * ingredients real neighbours used, so realism is untouched; we just keep the
+   * one that best hits the target. Candidate 0 is always the deterministic
+   * single-shot pick (raw seeds, `exploration` as given), so reranking can only
+   * match or beat today's output, never regress. 1 = today's behaviour exactly.
+   */
+  candidates?: number;
+  /**
+   * Style ↔ push balance for the rerank score, 0-1. 0 (default): the full
+   * requested profile is scored, so a candidate is rewarded for staying on the
+   * style's own centroid everywhere the user DIDN'T push — a good, on-style beer
+   * that also leans the way they asked. 1 ("crazy mode"): only the pushed axes
+   * count, so the rerank chases them hard and lets the rest drift wherever the
+   * best-matching candidate lands. Pushed axes are always weighted heavily; this
+   * only controls how much the UNpushed axes pull back toward the style.
+   */
+  wildness?: number;
+  /**
+   * After reranking, close the reachable part of a MALT flavour shortfall by
+   * using more of the grain that drives the deficit axis (see
+   * `correctMaltGristToward`) — the fraction-move the k-NN rerank structurally
+   * can't make. Bounded and brewability-gated; only acts on pushed malt axes and
+   * only with an unlocked grain bill. Default false (no behaviour change).
+   */
+  correctResidual?: boolean;
+  /**
+   * EXPERIMENTAL (only affects residual correction). When raising a pushed axis,
+   * penalise a donor ingredient for the flavour it also adds to OTHER pushed axes
+   * already at/over target — so pulling one axis down (e.g. stone fruit) while
+   * keeping others up (berry, tropical) picks the "purest" donor instead of one
+   * that drags the pulled-down axis back up. Can't fully decouple axes that real
+   * ingredients bundle together, only stop the correction fighting the ask.
+   * Default false.
+   */
+  avoidCollateral?: boolean;
+  /**
+   * EXPERIMENTAL. Search a SEPARATE neighbourhood for the grain bill and the hop
+   * bill — the grain steered only by the malt-side dims (malt axes + gravity + SRM
+   * + body), the hops only by the hop-side dims (hop axes + IBU + buGu), each
+   * grounded at the style centroid on the other's dims. Avoids the sparse "weird
+   * zone" a joint malt+hop push lands in (each profile common alone, the
+   * combination rare), so both bills come from dense, real parts of the cloud.
+   * Only diverges from the default when you actually push both sides. Default false
+   * (one shared neighbourhood, byte-identical to the original behaviour).
+   */
+  splitNeighbourhoods?: boolean;
 };
 
 export type SteeringResult = {
@@ -127,6 +205,16 @@ export type SteeringResult = {
    * Scaling each axis by its own ceiling makes the flavour space usable.
    */
   axisMax: { malt: MaltFlavorProfile; hop: HopFlavorProfile };
+  /**
+   * The raw value that maps to the TOP of a 0-5 flavour dial (dial-5), per axis.
+   * `axisMax` is dial-4 (the edge of typical); this is `axisMax × AXIS_DIAL_HEADROOM`,
+   * the aggressive-but-brewable extreme residual correction can reach. A UI should
+   * scale its radar full-scale AND its target wheels to THIS, so the wheels fill
+   * with realistic recipes over 0-4 and the 4-5 zone is a genuine "push it" reach.
+   */
+  axisDialMax: { malt: MaltFlavorProfile; hop: HopFlavorProfile };
+  /** The cloud's robust maltBody range — lets a UI map a normalized "thin ↔ full" dial to a real `target.body`. */
+  bodyRange: { min: number; mid: number; max: number };
   style: { input: string; matchedCode?: string; matchedName?: string; family: StyleFamily };
   neighborhood: { k: number; recordIds: number[]; weights: number[] };
   styleFit: {
@@ -160,6 +248,16 @@ const STYLE_FIT_STRETCH_MAX = 2.0;
  * gravity for neighbour-finding — the actual ABV is hit exactly by the reverse solver later. */
 const ASSUMED_ATTENUATION_FOR_QUERY = 0.75;
 const FALLBACK_YEAST_PRESET = "SafAle US-05"; // clean, neutral — used only if reconstruction finds nothing
+
+/**
+ * Weight of the yeast multi-hot block in the k-NN DISTANCE. Zero on purpose:
+ * yeast is now selected for the style separately (modalYeastOverIdxs), so
+ * letting it also shape the flavour neighbourhood just dilutes how much a
+ * flavour push moves the result. It was 3 — ~27% of the distance — tuned for
+ * style purity, a classification goal we no longer optimise for. Dial back up
+ * if flavour neighbourhoods start drifting off-style despite the explicit gate.
+ */
+const KNN_YEAST_WEIGHT = 0;
 
 /**
  * The yeast strain types (see YeastStrainType) that belong in each coarse style
@@ -216,6 +314,53 @@ const MASH_SOLVE_NOTE_THRESHOLD = 0.03;
  * Matches reconstruction.ts's bittering bucket (≥40 min → snaps to 45/60), so a reconstructed bittering
  * charge is always caught while flavour (10-39 min), whirlpool, and dry-hop additions stay fixed. */
 const BITTERING_MIN_MINUTES = 40;
+
+/** Reranking a single candidate is just today's single-shot path — no spread to choose from. */
+const DEFAULT_CANDIDATES = 1;
+/** Sanity cap on candidate count (each is a full reconstruction + solve pass). */
+const MAX_CANDIDATES = 32;
+/**
+ * Exploration forced onto the ALTERNATIVE candidates (index ≥ 1) when reranking,
+ * if the caller didn't ask for more. Candidate 0 keeps the caller's own
+ * `exploration`, so the deterministic baseline is always in the pool; the
+ * alternatives need some spread or they'd all collapse to that same pick and
+ * there'd be nothing to rerank. Only engaged when `candidates > 1`.
+ */
+const RERANK_ALT_EXPLORATION = 0.6;
+/** How much more a user-pushed axis counts than an unpushed one in the rerank score. */
+const RERANK_PUSHED_AXIS_WEIGHT = 3;
+/**
+ * How many of the best-aligned candidates form the "another take" pool. The
+ * rerank still returns the single best on a fresh query (variation seed 0), but a
+ * reroll (any non-zero grist/hop seed) surfaces a DIFFERENT, still-well-aligned
+ * candidate seeded by that reroll — instead of always re-finding the one global
+ * best and looking near-identical. Only these top-N by alignment are eligible, so
+ * a take is always one of the closest matches, never a poorly-aligned outlier.
+ * (Could later be exposed as a "how different" knob.)
+ */
+const RERANK_ROTATE_POOL = 5;
+/**
+ * Adaptive-gate miss threshold: normalised RMS error (achieved vs requested, on the
+ * pushed axes, scaled by each axis's ceiling) above which the style is judged
+ * unable to hit the push in-style, so the gate widens a rung. ~0.3 ≈ "still off by
+ * a third of the axis after correction" — a genuine miss (roast on a hazy), not the
+ * small residual a reachable target leaves.
+ */
+const GATE_MISS_THRESHOLD = 0.3;
+/** Floor for an axis's ceiling when normalising rerank error (guards divide-by-zero on a dead axis). */
+const RERANK_AXIS_MAX_FLOOR = 0.1;
+/**
+ * Dial headroom above the typical ceiling. `axisMax` is the corpus's ~p99 — the
+ * edge of what NORMAL recipes reach — which we map to dial-4, not dial-5, so
+ * realistic recipes fill the lower 0-4 of a flavour wheel and the top 4-5 is
+ * reserved for a deliberate push past typical. `axisDialMax = axisMax × this` is
+ * that dial-5 point: aggressive but still brewable, and — validated on the real
+ * cloud (RecipeSteeringService.rerank.test.ts) — almost exactly what residual
+ * correction (#3) can actually reach on every malt axis (mean ratio ~1.00). So
+ * the top of the dial is a real, reachable target, not a lie. (Hops currently
+ * reach ~0.81 of it via rerank alone until a hop-side correction lands.)
+ */
+const AXIS_DIAL_HEADROOM = 1.25;
 
 function weightedMean(neighbors: WeightedNeighbor[], pick: (r: CloudRecord) => number): number {
   return neighbors.reduce((s, n) => s + n.weight * pick(n.rec), 0);
@@ -285,6 +430,17 @@ type Centroid = { row: number[]; yeastBlock: YeastBlock; count: number; idxs?: n
 
 /** Below this many cloud records, a specific-style centroid is too noisy to trust — fall back to the family. */
 const MIN_STYLE_CENTROID_RECORDS = 30;
+/**
+ * BJCP data-quality filter. Homebrew corpus style labels are noisy — a third of
+ * recipes tagged "American Light Lager" run past 8 SRM (amber, crystal-laden),
+ * dragging the style AVERAGE dark and poisoning both the centroid and the k-NN.
+ * When the matched style has an SRM guideline, keep only records within
+ * [lo × LO, hi × HI] of it, so a beer that violates its own style's colour spec
+ * can't define that style. HI is the load-bearing bound (junk is darker than
+ * spec); LO stays generous. No SRM spec → no filter (unresolved/exotic styles).
+ */
+const STYLE_SRM_TOLERANCE_HI = 1.3;
+const STYLE_SRM_TOLERANCE_LO = 0.5;
 
 export class RecipeSteeringService {
   private readonly cloud: CloudRecord[];
@@ -413,144 +569,370 @@ export class RecipeSteeringService {
       else notes.push(`yeast "${query.yeastName}" has no cloud data to steer by — searching without a yeast lock`);
     }
 
-    const queryTarget = this.clampBodyTarget(query.target, notes);
-    const queryRow = this.buildQueryRow(centroid.row, queryTarget);
-
-    // Two neighbourhoods from one k-NN pass: the tight `k` drives the quantities
-    // (role %s, hop doses, timings, addition count, yeast, attenuation, ABV/IBU),
+    // Each neighbourhood yields two nested sets: the tight `k` drives the
+    // quantities (role %s, hop doses, timings, addition count, attenuation, IBU),
     // and a wider `varietyK` is the MENU the ingredient identities are voted (and,
     // with exploration>0, sampled) from. Kernel bandwidth is adaptive, so just
     // widening k would flatten the weighting and loosen the %s — hence the split.
     const exploration = Math.max(0, Math.min(1, query.exploration ?? 0));
     const variation = query.variation ?? 0;
+    // Independent reroll seeds so the grain and hop bills can be rerolled
+    // separately — lock one (keep its seed) and reroll the other.
+    const gristSeed = query.gristVariation ?? variation;
+    const hopSeed = query.hopVariation ?? variation;
     const varietyK = Math.min(
       this.cloud.length,
       Math.max(k, query.varietyK ?? Math.round(k * (1 + 2 * exploration))),
     );
-    const wideRaw = this.queryNeighbors(queryRow, queryYeast, varietyK, gate, fam, strictCode);
-    if (wideRaw.length === 0) throw new Error("no neighbours found in the cloud for this query");
-    // The k nearest are the first k of the varietyK nearest (both sorted ascending).
-    const neighbors = wideRaw.slice(0, Math.min(k, wideRaw.length));
-    const weights = kernelWeights(neighbors.map((n) => n.distance));
-    const weighted: WeightedNeighbor[] = neighbors.map((n, i) => ({ rec: this.cloud[n.index], weight: weights[i] }));
-    const wideWeights = kernelWeights(wideRaw.map((n) => n.distance));
-    const wideWeighted: WeightedNeighbor[] = wideRaw.map((n, i) => ({ rec: this.cloud[n.index], weight: wideWeights[i] }));
 
-    // ---- average the neighbourhood's targets, synthesize one clean bill ----
-    // Flavour steering already happened when the neighbourhood was chosen (the
-    // target moved the query point); reconstruction just faithfully rebuilds
-    // what the neighbourhood uses. `exploration` adds seeded variety.
-    const { items: gristItems, notes: gristNotes } = pickGristBill(weighted, {
-      identityNeighbors: wideWeighted,
-      exploration,
-      seed: variation,
-    });
-    notes.push(...gristNotes);
-    const { fermentables, percentById } = buildFermentablesFromGristBill(gristItems);
+    // Split neighbourhoods: steer the grain bill and the hop bill in their OWN
+    // subspaces, each grounded at the style centroid on the other's dims. Pushing
+    // both malt AND hop hard would otherwise drive one joint query point into a
+    // sparse corner the cloud barely occupies (roasty AND tropical: each common
+    // alone, the combination almost unseen), so reconstruction ends up averaging
+    // weird outliers. Split → the grain comes from real recipes with this MALT
+    // profile and the hops from real recipes with this HOP profile, both dense; the
+    // malt↔hop correlation is only "broken" exactly when the user deliberately asks
+    // for a combination real brewers don't make. Default off = one shared query row
+    // for both, byte-identical to the original single-neighbourhood behaviour.
+    const split = query.splitNeighbourhoods ?? false;
+    const grainRow = this.buildQueryRow(centroid.row, query.target, split ? "grain" : "both");
+    const hopRow = split ? this.buildQueryRow(centroid.row, query.target, "hop") : grainRow;
 
-    const { templates: hopTemplates, notes: hopNotes } = reconstructHopSchedule(weighted, {
-      identityNeighbors: wideWeighted,
-      exploration,
-      seed: variation,
-    });
-    notes.push(...hopNotes);
-    const hops = materializeHopSchedule(hopTemplates, batchVolumeL);
+    const deriveHood = (wideRaw: Array<{ index: number; distance: number }>) => {
+      // The k nearest are the first k of the varietyK nearest (both sorted ascending).
+      const neighbors = wideRaw.slice(0, Math.min(k, wideRaw.length));
+      const weights = kernelWeights(neighbors.map((n) => n.distance));
+      const weighted: WeightedNeighbor[] = neighbors.map((n, i) => ({ rec: this.cloud[n.index], weight: weights[i] }));
+      const wideWeights = kernelWeights(wideRaw.map((n) => n.distance));
+      const wideWeighted: WeightedNeighbor[] = wideRaw.map((n, i) => ({ rec: this.cloud[n.index], weight: wideWeights[i] }));
+      return { neighbors, weights, weighted, wideWeighted };
+    };
+    type Hood = ReturnType<typeof deriveHood>;
 
+    // A locked bill is used verbatim — no reconstruction, and no gate probing on that side.
+    const grainLocked = !!query.lockedFermentables?.length;
+    const hopsLocked = !!query.lockedHops?.length;
+
+    // Requested flavour (target overlaid on the style centroid) + which axes were
+    // pushed. Up here because the adaptive gate below PROBES whether a rung can hit them.
+    const reqMalt = rowToMalt(grainRow);
+    const reqHop = rowToHop(hopRow);
+    const pushedMalt = new Set(Object.entries(query.target?.malt ?? {}).filter(([, v]) => v != null).map(([key]) => key));
+    const pushedHop = new Set(Object.entries(query.target?.hop ?? {}).filter(([, v]) => v != null).map(([key]) => key));
+
+    // Ingredient sanctions + prevalence from a hood's identity neighbourhood — the
+    // corrections reach only for what real neighbours used, weighted toward the common.
+    const hoodSanctions = (hood: Hood) => {
+      const maltPrevalence = blendGristPct(hood.wideWeighted);
+      const hopPrevalence: Record<string, number> = {};
+      for (const { rec, weight } of hood.wideWeighted) for (const [name, gpl] of rec.hp) if (gpl > 0) hopPrevalence[normalizeHopName(name)] = (hopPrevalence[normalizeHopName(name)] ?? 0) + weight * gpl;
+      return {
+        maltPrevalence,
+        maltSanctioned: new Set<string>(Object.keys(maltPrevalence).filter((a) => maltPrevalence[a] > 0)),
+        hopPrevalence,
+        hopSanctioned: new Set<string>(Object.keys(hopPrevalence)),
+      };
+    };
+
+    // Shared bill builders (reconstruct + residual-correct from a hood) — used both
+    // to PROBE a gate rung (seed 0) and to synthesize the final candidates.
+    const buildGrist = (hood: Hood, seed: number, expl: number): { items: GristBillItem[]; notes: string[] } => {
+      const s = hoodSanctions(hood);
+      const grist = pickGristBill(hood.weighted, { identityNeighbors: hood.wideWeighted, exploration: expl, seed });
+      let items = grist.items;
+      const gnotes = [...grist.notes];
+      if (query.correctResidual && pushedMalt.size > 0) {
+        const maltTarget: Partial<MaltFlavorProfile> = {};
+        for (const key of pushedMalt) maltTarget[key as keyof MaltFlavorProfile] = reqMalt[key as keyof MaltFlavorProfile];
+        const c = correctMaltGristToward(items, s.maltSanctioned, maltTarget, { avoidCollateral: query.avoidCollateral, prevalence: s.maltPrevalence });
+        items = c.items;
+        gnotes.push(...c.notes);
+      }
+      return { items, notes: gnotes };
+    };
+    const buildHopTemplates = (hood: Hood, seed: number, expl: number): { templates: HopTemplate[]; notes: string[] } => {
+      const s = hoodSanctions(hood);
+      const hopRes = reconstructHopSchedule(hood.weighted, { identityNeighbors: hood.wideWeighted, exploration: expl, seed });
+      let templates = hopRes.templates;
+      const hnotes = [...hopRes.notes];
+      if (query.correctResidual && pushedHop.size > 0) {
+        const hopTarget: Partial<HopFlavorProfile> = {};
+        for (const key of pushedHop) hopTarget[key as keyof HopFlavorProfile] = reqHop[key as keyof HopFlavorProfile];
+        const evaluate = (tpls: HopTemplate[]): HopFlavorProfile => {
+          const hs = materializeHopSchedule(tpls, batchVolumeL).map((h) => ({ ...h, name: h.name.toLowerCase() }));
+          return hopFlavorCalculationService.calculateCombinedFlavor(hs, HOP_FLAVOR_BY_LOWER, batchVolumeL);
+        };
+        const c = correctHopScheduleToward(templates, s.hopSanctioned, (name) => HOP_FLAVOR_BY_LOWER.get(name), hopTarget, evaluate, { avoidCollateral: query.avoidCollateral, prevalence: s.hopPrevalence });
+        templates = c.templates;
+        hnotes.push(...c.notes);
+      }
+      return { templates, notes: hnotes };
+    };
+    // Normalised RMS error of an achieved bill vs the request, on the pushed axes only.
+    const maltProbeErr = (items: GristBillItem[]): number => {
+      const a = aggregateMaltFlavor(items.map((i) => ({ archetype: i.archetype, amount: i.pct })));
+      let sum = 0; let n = 0;
+      MALT_FLAVOR_KEYS.forEach((key, i) => {
+        if (!pushedMalt.has(key)) return;
+        const max = Math.max(this.globalAxisMax.malt[i], RERANK_AXIS_MAX_FLOOR);
+        const d = (a[key] - reqMalt[key]) / max; sum += d * d; n++;
+      });
+      return n ? Math.sqrt(sum / n) : 0;
+    };
+    const hopProbeErr = (templates: HopTemplate[]): number => {
+      const hs = materializeHopSchedule(templates, batchVolumeL).map((h) => ({ ...h, name: h.name.toLowerCase() }));
+      const a = hopFlavorCalculationService.calculateCombinedFlavor(hs, HOP_FLAVOR_BY_LOWER, batchVolumeL);
+      let sum = 0; let n = 0;
+      HOP_FLAVOR_KEYS.forEach((key, i) => {
+        if (!pushedHop.has(key)) return;
+        const max = Math.max(this.globalAxisMax.hop[i], RERANK_AXIS_MAX_FLOOR);
+        const d = (a[key] - reqHop[key]) / max; sum += d * d; n++;
+      });
+      return n ? Math.sqrt(sum / n) : 0;
+    };
+
+    // ---- adaptive style gate: stay tight to the style, widen ONLY when a push
+    // genuinely can't be hit in-style. Rungs: this exact style → its family → the
+    // whole cloud. At rest (nothing pushed) it never widens, so a hazy is built only
+    // from hazies — no other style's grains bleeding in (that was the crystal leak).
+    // An explicit `styleGate` pins a fixed rung. ----
+    const gateToRestrict: Record<StyleGateMode, RestrictLevel> = { strict: "style", family: "family", none: "none" };
+    const fullLadder = (["style", "family", "none"] as RestrictLevel[]).filter((r) => r !== "style" || !!strictCode);
+    const ladder: RestrictLevel[] = query.styleGate ? [gateToRestrict[query.styleGate]] : fullLadder;
+    // Restrict the tightest ("style") rung to exactly the records the style centroid
+    // used — the BJCP-SRM-conformant ones — so the neighbourhood is built from the
+    // same de-junked set, not the mislabelled dark recipes that share the label.
+    const styleIdxSet = centroidLevel === "style" && centroid.idxs ? new Set(centroid.idxs) : undefined;
+    const styleConform = styleIdxSet ? (i: number) => styleIdxSet.has(i) : undefined;
+    let restrict: RestrictLevel = ladder[0];
+    let grainHood!: Hood;
+    let hopHood!: Hood;
+    let built = false;
+    for (const r of ladder) {
+      const grainRaw = this.queryNeighbors(grainRow, queryYeast, varietyK, r, fam, strictCode, styleConform);
+      if (grainRaw.length === 0) continue; // no records at this rung — widen to the next
+      restrict = r;
+      grainHood = deriveHood(grainRaw);
+      hopHood = split ? deriveHood(this.queryNeighbors(hopRow, queryYeast, varietyK, r, fam, strictCode, styleConform)) : grainHood;
+      built = true;
+      const canProbeMalt = pushedMalt.size > 0 && !grainLocked;
+      const canProbeHop = pushedHop.size > 0 && !hopsLocked;
+      if (!canProbeMalt && !canProbeHop) break; // nothing pushed → stay tightest
+      const mErr = canProbeMalt ? maltProbeErr(buildGrist(grainHood, 0, exploration).items) : 0;
+      const hErr = canProbeHop ? hopProbeErr(buildHopTemplates(hopHood, 0, exploration).templates) : 0;
+      if (Math.max(mErr, hErr) <= GATE_MISS_THRESHOLD) break; // reachable in-style → stop widening
+    }
+    if (!built) throw new Error("no neighbours found in the cloud for this query");
+    if (!query.styleGate && restrict !== ladder[0]) {
+      notes.push(`couldn't reach the target within the style — widened the search to ${restrict === "none" ? "the whole cloud" : "the " + restrict}`);
+    }
+
+    // ---- yeast: chosen for the STYLE, not pulled from the (flavour-steered)
+    // neighbourhood — the most common strain among this style's OWN records,
+    // restricted to strain types that belong in the family (lager→lager,
+    // wheat→wheat/ale…). Seed-independent (a reroll varies the grain/hops, never
+    // the strain), so it's resolved ONCE and shared across every candidate.
+    // This is also why yeast no longer needs to weigh on the k-NN distance at
+    // all (see KNN_YEAST_WEIGHT).
     let yeast: Yeast | null = query.yeastName ? buildYeastFromPresetName(query.yeastName) : null;
-    if (query.yeastName && !yeast) notes.push(`yeast preset "${query.yeastName}" not found — falling back to the neighbourhood's modal yeast`);
+    if (query.yeastName && !yeast) notes.push(`yeast preset "${query.yeastName}" not found — falling back to the style's typical yeast`);
     if (!yeast) {
-      // Constrain the modal vote to strain types that belong in this style
-      // family, so a corpus-polluted neighbourhood (ale-yeast "lagers", a stray
-      // kveik in a clean IPA) can't hand back a category-wrong yeast. If the
-      // neighbourhood has none on-style, fall back to the most common on-style
-      // yeast in the whole cloud before the generic clean-ale default.
       const allow = allowYeastTypeFor(fam);
-      let modalName = pickModalYeastName(weighted, { allow });
+      let modalName = centroid.idxs ? this.modalYeastOverIdxs(centroid.idxs, allow) : null;
+      if (!modalName) modalName = pickModalYeastName(grainHood.weighted, { allow }); // gate "none" / no style records
       if (!modalName) {
         modalName = this.ynByGlobalFrequency.find(allow) ?? null;
-        if (modalName) notes.push(`no on-style yeast among the neighbours — defaulted to the corpus's most common "${fam}" yeast, ${modalName}`);
+        if (modalName) notes.push(`no on-style yeast for "${fam}" — defaulted to the corpus's most common one, ${modalName}`);
       }
       yeast = modalName ? buildYeastFromPresetName(modalName) : null;
     }
     if (!yeast) {
-      notes.push("no reconstructable yeast in the neighbourhood — defaulting to a generic clean ale yeast");
+      notes.push("no reconstructable yeast for this style — defaulting to a generic clean ale yeast");
       yeast = buildYeastFromPresetName(FALLBACK_YEAST_PRESET)!;
     }
 
-    // ---- assemble + run through the app's real calculators ----
-    const recipe = this.buildBaseRecipe(batchVolumeL, fermentables, hops, yeast, matchedName ?? query.style);
-
-    // The corpus has no mash-schedule field at all (checked directly), but it
-    // does have attenuation OUTCOMES (og/fg) — and the kinetic model is
-    // already the forward map from mash temp -> attenuation, given yeast.
-    // Inverting it recovers a real signal ("how hot/cold do flavour-similar
-    // neighbours typically mash, to finish where they do") from data that
-    // never recorded mash temperature directly. This only depends on yeast
-    // attenuation + mash steps (never fermentables/OG), so it's fully
-    // independent of the ABV/grain-weight solve below — no iteration needed.
-    const neighborhoodAvgAttenuation = weightedMean(weighted, (r) => apparentAttenuation(r.og, r.fg));
-    const mashSolve = this.solveMashTemp(recipe, neighborhoodAvgAttenuation);
-    recipe.mashSteps = [{ id: "mash-1", name: "Saccharification", temperatureC: mashSolve.temperatureC, durationMinutes: 60 }];
+    // ---- mash temp: the corpus has no mash-schedule field at all (checked
+    // directly), but it does have attenuation OUTCOMES (og/fg), and the kinetic
+    // model is already the forward map from mash temp -> attenuation given
+    // yeast. Inverting it recovers "how hot/cold do flavour-similar neighbours
+    // mash, to finish where they do." It depends only on yeast attenuation + the
+    // neighbourhood's own attenuation — both shared — so it's solved ONCE here
+    // (on a fermentable/hop-less probe recipe) and reused by every candidate. ----
+    const neighborhoodAvgAttenuation = weightedMean(grainHood.weighted, (r) => apparentAttenuation(r.og, r.fg));
+    const probeRecipe = this.buildBaseRecipe(batchVolumeL, [], [], yeast, matchedName ?? query.style);
+    const mashSolve = this.solveMashTemp(probeRecipe, neighborhoodAvgAttenuation);
+    const mashStep = { id: "mash-1", name: "Saccharification", temperatureC: mashSolve.temperatureC, durationMinutes: 60 };
     if (mashSolve.note) notes.push(mashSolve.note);
 
-    // ABV is entirely determined by ingredients + process (grain %, weight,
-    // efficiency) — it's not an independent fact worth "learning" from the
-    // neighbourhood's raw self-reported numbers (noisy homebrew-submitted
-    // data, and redundant with what the grain bill already encodes). Default
-    // to the style's own BJCP guideline midpoint — a real, authoritative
-    // number — and only fall back to the corpus average when the style
-    // didn't resolve to a BJCP spec at all.
+    // ABV target (shared): entirely determined by ingredients + process, so not
+    // worth "learning" from the neighbourhood's noisy self-reported numbers.
+    // Default to the style's own BJCP guideline midpoint (authoritative), falling
+    // back to the corpus average only when the style didn't resolve to a spec.
+    const neighborhoodAvgIBU = weightedMean(hopHood.weighted, (r) => r.ibu);
     const bjcpAbv = matchedCode ? getBjcpStyleSpec(matchedCode)?.abv : undefined;
-    const targetABV = query.target?.abv ?? (bjcpAbv ? (bjcpAbv[0] + bjcpAbv[1]) / 2 : weightedMean(weighted, (r) => r.abv));
-    const ogRefVolumeL = volumeCalculationService.calculateIntoFermenterVolume(recipe);
-    const effectiveAttenuation = recipeCalculationService.getEffectiveAttenuation(recipe, "kinetic");
-    recipe.fermentables = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
-      fermentables, percentById, targetABV, ogRefVolumeL, recipe.equipment.brewhouseEfficiencyPercent, effectiveAttenuation,
-    );
+    const targetABV = query.target?.abv ?? (bjcpAbv ? (bjcpAbv[0] + bjcpAbv[1]) / 2 : weightedMean(grainHood.weighted, (r) => r.abv));
 
-    // An explicit target is a dial — hit it precisely. With no explicit ask,
-    // don't pinpoint-solve to the family centroid's derived IBU either: that
-    // number is itself just an approximation, and always forcing exact
-    // convergence onto it papers over the natural (and honest) variance a
-    // real reconstructed hop bill has. Instead accept whatever IBU the
-    // naturally-reconstructed schedule lands on, as long as it's within a
-    // tolerance band of the neighbourhood's OWN average IBU — only nudge
-    // toward the nearest edge of that band if it's genuinely outside it.
-    if (query.target?.ibu != null) {
-      recipe.hops = this.solveHopsForTargetIBU(recipe, Math.max(0, query.target.ibu));
-    } else if (recipe.hops.length > 0) {
-      const neighborhoodAvgIBU = weightedMean(weighted, (r) => r.ibu);
-      const naturalIBU = recipeCalculationService.calculate(recipe).ibu;
-      const band = Math.max(5, neighborhoodAvgIBU * 0.15);
-      const lo = Math.max(0, neighborhoodAvgIBU - band);
-      const hi = neighborhoodAvgIBU + band;
-      if (naturalIBU < lo || naturalIBU > hi) {
-        const nearestEdge = naturalIBU < lo ? lo : hi;
-        recipe.hops = this.solveHopsForTargetIBU(recipe, nearestEdge);
-        notes.push(`the reconstructed hop bill's natural IBU (${naturalIBU.toFixed(0)}) was outside the neighbourhood's typical ${lo.toFixed(0)}-${hi.toFixed(0)} range — nudged to ${nearestEdge.toFixed(0)}`);
+    // ---- one candidate: reconstruct grist + hops off the shared neighbourhood
+    // (seeded), assemble, and run the app's real calculators. The grain/hop bills
+    // are the only thing a reroll seed moves; everything above is shared. ----
+    type Candidate = {
+      recipe: Recipe;
+      calculations: RecipeCalculations;
+      gristItems: GristBillItem[];
+      achievedMalt: MaltFlavorProfile;
+      achievedHop: HopFlavorProfile;
+      notes: string[];
+    };
+    const synthesize = (cIndex: number): Candidate => {
+      const cNotes: string[] = [];
+      // Candidate 0 is the deterministic baseline: the caller's own exploration
+      // and raw seeds — i.e. today's single-shot output, always in the pool so a
+      // rerank can only match or beat it. Alternatives get a forced exploration
+      // floor and independent seeds; without spread they'd all collapse onto
+      // candidate 0 and there'd be nothing to rerank.
+      const expl = cIndex === 0 ? exploration : Math.max(exploration, RERANK_ALT_EXPLORATION);
+      const gSeed = cIndex === 0 ? gristSeed : hashSeed(gristSeed, "cand", cIndex);
+      const hSeed = cIndex === 0 ? hopSeed : hashSeed(hopSeed, "cand", cIndex);
+
+      let gristItems: GristBillItem[] = [];
+      let fermentables: Fermentable[];
+      let percentById: Record<string, number> = {};
+      if (grainLocked) {
+        fermentables = query.lockedFermentables!.map((f) => ({ ...f }));
+      } else {
+        const grist = buildGrist(grainHood, gSeed, expl); // reconstruct + #3 malt correction
+        gristItems = grist.items;
+        cNotes.push(...grist.notes);
+        ({ fermentables, percentById } = buildFermentablesFromGristBill(gristItems));
       }
-    }
 
-    const calculations = recipeCalculationService.calculate(recipe);
+      let hops: Hop[];
+      if (hopsLocked) {
+        hops = query.lockedHops!.map((h) => ({ ...h }));
+      } else {
+        const hopRes = buildHopTemplates(hopHood, hSeed, expl); // reconstruct + #3 hop correction
+        cNotes.push(...hopRes.notes);
+        hops = materializeHopSchedule(hopRes.templates, batchVolumeL);
+      }
+
+      const recipe = this.buildBaseRecipe(batchVolumeL, fermentables, hops, yeast!, matchedName ?? query.style);
+      recipe.mashSteps = [{ ...mashStep }];
+
+      // Skip the weight solve when the grain is locked — keep its exact weights.
+      if (!grainLocked) {
+        const ogRefVolumeL = volumeCalculationService.calculateIntoFermenterVolume(recipe);
+        const effectiveAttenuation = recipeCalculationService.getEffectiveAttenuation(recipe, "kinetic");
+        recipe.fermentables = fermentableCalculationService.calculateWeightsFromPercentsAndABV(
+          fermentables, percentById, targetABV, ogRefVolumeL, recipe.equipment.brewhouseEfficiencyPercent, effectiveAttenuation,
+        );
+      }
+
+      // An explicit target IBU is a dial — hit it precisely. With no explicit
+      // ask, accept whatever the reconstructed schedule lands on, as long as it's
+      // within a tolerance band of the neighbourhood's own average IBU; only
+      // nudge to the nearest edge if it's genuinely outside. Skip when locked.
+      if (hopsLocked) {
+        // no-op: locked hops are used exactly as given
+      } else if (query.target?.ibu != null) {
+        recipe.hops = this.solveHopsForTargetIBU(recipe, Math.max(0, query.target.ibu));
+      } else if (recipe.hops.length > 0) {
+        const naturalIBU = recipeCalculationService.calculate(recipe).ibu;
+        const ibuBand = Math.max(5, neighborhoodAvgIBU * 0.15);
+        const lo = Math.max(0, neighborhoodAvgIBU - ibuBand);
+        const hi = neighborhoodAvgIBU + ibuBand;
+        if (naturalIBU < lo || naturalIBU > hi) {
+          const nearestEdge = naturalIBU < lo ? lo : hi;
+          recipe.hops = this.solveHopsForTargetIBU(recipe, nearestEdge);
+          cNotes.push(`the reconstructed hop bill's natural IBU (${naturalIBU.toFixed(0)}) was outside the neighbourhood's typical ${lo.toFixed(0)}-${hi.toFixed(0)} range — nudged to ${nearestEdge.toFixed(0)}`);
+        }
+      }
+
+      const calculations = recipeCalculationService.calculate(recipe);
+
+      // Locked grain has no gristItems (reconstruction was skipped) — recover the
+      // malt flavour from the fermentables' preset names instead.
+      const achievedMalt = grainLocked
+        ? aggregateMaltFlavor(recipe.fermentables.map((f) => ({ archetype: archetypeForPresetName(f.name) ?? "unknown", amount: f.weightKg })))
+        : aggregateMaltFlavor(gristItems.map((i) => ({ archetype: i.archetype, amount: i.pct })));
+      // HOP_FLAVOR_BY_LOWER is keyed lower-case (corpus names vary in case) but
+      // materializeHopSchedule prefers the properly-cased preset name for a nicer
+      // recipe — lower-case just for this lookup, same as buildCloud.ts does.
+      const lowerCasedHops = recipe.hops.map((h) => ({ ...h, name: h.name.toLowerCase() }));
+      const achievedHop = hopFlavorCalculationService.calculateCombinedFlavor(lowerCasedHops, HOP_FLAVOR_BY_LOWER, batchVolumeL);
+
+      return { recipe, calculations, gristItems, achievedMalt, achievedHop, notes: cNotes };
+    };
+
+    // ---- rerank: generate N candidates and keep the one whose ACHIEVED flavour
+    // is closest to the request. This is the closed loop — the target no longer
+    // only picks the neighbourhood, it now selects among realistic candidates.
+    // Candidate 0 == today's single-shot output, so it can only match or beat the
+    // baseline on the alignment score, never regress. ----
+    const candidateCount = Math.max(1, Math.min(MAX_CANDIDATES, Math.round(query.candidates ?? DEFAULT_CANDIDATES)));
+    const wildness = Math.max(0, Math.min(1, query.wildness ?? 0));
+    // Normalised squared flavour error vs the request. Pushed axes weigh heavily;
+    // unpushed axes weigh (1 - wildness), so at wildness 0 a candidate is also
+    // rewarded for staying on the style centroid everywhere it wasn't pushed, and
+    // at wildness 1 only the pushed axes matter (the rest may drift).
+    const alignmentError = (c: Candidate): number => {
+      let s = 0;
+      MALT_FLAVOR_KEYS.forEach((key, i) => {
+        const max = Math.max(this.globalAxisMax.malt[i], RERANK_AXIS_MAX_FLOOR);
+        const d = (c.achievedMalt[key] - reqMalt[key]) / max;
+        const w = pushedMalt.has(key) ? RERANK_PUSHED_AXIS_WEIGHT : 1 - wildness;
+        s += w * d * d;
+      });
+      HOP_FLAVOR_KEYS.forEach((key, i) => {
+        const max = Math.max(this.globalAxisMax.hop[i], RERANK_AXIS_MAX_FLOOR);
+        const d = (c.achievedHop[key] - reqHop[key]) / max;
+        const w = pushedHop.has(key) ? RERANK_PUSHED_AXIS_WEIGHT : 1 - wildness;
+        s += w * d * d;
+      });
+      return s;
+    };
+
+    // Build every candidate, rank by alignment (ties broken by seed index so the
+    // order is deterministic). The top RERANK_ROTATE_POOL form the "another take"
+    // pool: a fresh query (variation seed 0) returns the single best, but a reroll
+    // (non-zero grist/hop seed) picks a DIFFERENT, still-well-aligned candidate
+    // from that pool — seeded by the reroll — so "Another take" surfaces the other
+    // near-best recipes we build anyway instead of re-finding the same winner.
+    const scored = Array.from({ length: candidateCount }, (_, c) => synthesize(c))
+      .map((cand, i) => ({ cand, err: alignmentError(cand), i }))
+      .sort((a, b) => a.err - b.err || a.i - b.i);
+    const poolSize = Math.min(RERANK_ROTATE_POOL, scored.length);
+    // gristSeed + hopSeed is 0 only on an un-rerolled query; any reroll bumps it.
+    const takeSeed = gristSeed + hopSeed;
+    const poolIndex = takeSeed === 0 ? 0 : Math.floor(mulberry32(hashSeed(gristSeed, hopSeed, "rerank-take"))() * poolSize);
+    const chosen = scored[Math.min(poolIndex, poolSize - 1)];
+    const best = chosen.cand;
+    if (candidateCount > 1) {
+      const rank = scored.indexOf(chosen);
+      notes.push(rank === 0
+        ? `reranked ${candidateCount} candidates by flavour match (wildness ${wildness.toFixed(2)})`
+        : `reranked ${candidateCount} candidates — this "take" is #${rank + 1} of the ${poolSize} closest matches (wildness ${wildness.toFixed(2)})`);
+    }
+    notes.push(...best.notes);
+
+    const { recipe, calculations } = best;
 
     // ---- style-fit / density signal (graded, not a hard in/out flip) ----
     // Baseline is style-LOCAL: sampled from this style's own records, so "how far
     // have I wandered" means the same thing in a sparse style as in a dense one.
-    const meanNeighborDistance = neighbors.reduce((s, n) => s + n.distance, 0) / neighbors.length;
+    // With split neighbourhoods the grain and hop bills sit at different distances
+    // from the style; report the MORE experimental side so a wild hop push flags
+    // even when the grain is classic (and vice versa). Un-split, both are equal.
+    const grainMeanDist = grainHood.neighbors.reduce((s, n) => s + n.distance, 0) / grainHood.neighbors.length;
+    const hopMeanDist = hopHood.neighbors.reduce((s, n) => s + n.distance, 0) / hopHood.neighbors.length;
+    const meanNeighborDistance = Math.max(grainMeanDist, hopMeanDist);
     const baselineTag = centroidLevel === "style" ? `style:${strictCode}` : centroidLevel === "family" ? `family:${fam}` : "global";
-    const baselineDistance = this.getBaselineDistance(neighbors.length, centroid.idxs, baselineTag);
+    const baselineDistance = this.getBaselineDistance(grainHood.neighbors.length, centroid.idxs, baselineTag);
     const ratio = baselineDistance > 0 ? meanNeighborDistance / baselineDistance : 0;
     const band: SteeringResult["styleFit"]["band"] =
       ratio <= STYLE_FIT_TYPICAL_MAX ? "typical" : ratio <= STYLE_FIT_STRETCH_MAX ? "stretch" : "experimental";
     const inBounds = band !== "experimental";
     if (band === "experimental") notes.push("this target sits well outside the cloud's dense region for this style — treat the result as experimental");
-
-    const achievedMalt = aggregateMaltFlavor(gristItems.map((i) => ({ archetype: i.archetype, amount: i.pct })));
-    // HOP_FLAVOR_BY_LOWER is keyed lower-case (corpus names vary in case) but
-    // materializeHopSchedule prefers the properly-cased preset name for a
-    // nicer recipe — lower-case just for this lookup, same as buildCloud.ts does.
-    const lowerCasedHops = recipe.hops.map((h) => ({ ...h, name: h.name.toLowerCase() }));
-    const achievedHop = hopFlavorCalculationService.calculateCombinedFlavor(lowerCasedHops, HOP_FLAVOR_BY_LOWER, batchVolumeL);
 
     const styleNorms: SteeringResult["styleNorms"] = {
       malt: { p25: malt9ToProfile(centroid.maltP25), p75: malt9ToProfile(centroid.maltP75) },
@@ -562,12 +944,18 @@ export class RecipeSteeringService {
     return {
       recipe,
       calculations,
-      requestedFlavor: { malt: rowToMalt(queryRow), hop: rowToHop(queryRow) },
-      achievedFlavor: { malt: achievedMalt, hop: achievedHop },
+      requestedFlavor: { malt: reqMalt, hop: reqHop },
+      achievedFlavor: { malt: best.achievedMalt, hop: best.achievedHop },
       styleNorms,
       axisMax: { malt: malt9ToProfile(this.globalAxisMax.malt), hop: hop9ToProfile(this.globalAxisMax.hop) },
+      axisDialMax: {
+        malt: malt9ToProfile(this.globalAxisMax.malt.map((v) => v * AXIS_DIAL_HEADROOM)),
+        hop: hop9ToProfile(this.globalAxisMax.hop.map((v) => v * AXIS_DIAL_HEADROOM)),
+      },
+      bodyRange: { min: this.stats.lo[MALTBODY_IDX], mid: this.stats.mean[MALTBODY_IDX], max: this.stats.hi[MALTBODY_IDX] },
       style: { input: query.style, matchedCode, matchedName, family: fam },
-      neighborhood: { k: neighbors.length, recordIds: neighbors.map((n) => this.cloud[n.index].id), weights },
+      // Reports the grain neighbourhood; when split, the hop side has its own (see styleFit).
+      neighborhood: { k: grainHood.neighbors.length, recordIds: grainHood.neighbors.map((n) => this.cloud[n.index].id), weights: grainHood.weights },
       styleFit: { meanNeighborDistance, baselineDistance, ratio, band, inBounds },
       notes,
     };
@@ -596,13 +984,35 @@ export class RecipeSteeringService {
     return this.centroidFromIndices(idxs);
   }
 
+  /**
+   * A predicate keeping only records within a tolerance of the style's BJCP SRM
+   * guideline — the data-quality filter that drops mislabelled junk (see
+   * STYLE_SRM_TOLERANCE_*). Always-true when the style has no SRM spec.
+   */
+  bjcpConformFilter(code: string | undefined): (i: number) => boolean {
+    const srm = code ? getBjcpStyleSpec(code)?.srm : undefined;
+    if (!srm) return () => true;
+    const lo = srm[0] * STYLE_SRM_TOLERANCE_LO;
+    const hi = srm[1] * STYLE_SRM_TOLERANCE_HI;
+    return (i: number) => { const s = this.cloud[i].srm; return s >= lo && s <= hi; };
+  }
+
   /** The specific-style-level centroid, or null if the code is unresolved or too thin on data to trust. */
   private styleCentroid(code: string | undefined): Centroid | null {
     if (!code) return null;
+    const conform = this.bjcpConformFilter(code);
     const idxs: number[] = [];
-    for (let i = 0; i < this.cloud.length; i++) if (this.styleCodeOf[i] === code) idxs.push(i);
-    if (idxs.length < MIN_STYLE_CENTROID_RECORDS) return null;
-    return this.centroidFromIndices(idxs);
+    const raw: number[] = [];
+    for (let i = 0; i < this.cloud.length; i++) {
+      if (this.styleCodeOf[i] !== code) continue;
+      raw.push(i);
+      if (conform(i)) idxs.push(i);
+    }
+    // Prefer the spec-conformant records; only fall back to the noisy full set if
+    // the filter left too few to trust (a noisy centroid still beats none).
+    const use = idxs.length >= MIN_STYLE_CENTROID_RECORDS ? idxs : raw;
+    if (use.length < MIN_STYLE_CENTROID_RECORDS) return null;
+    return this.centroidFromIndices(use);
   }
 
   private yeastVectorForPresetName(name: string): YeastBlock | null {
@@ -610,60 +1020,64 @@ export class RecipeSteeringService {
     return cls ? yeastBlockFromClass(cls, this.vocab) : null;
   }
 
+  /** The most common on-style yeast among a set of records (the matched style's own members). */
+  private modalYeastOverIdxs(idxs: number[], allow: (name: string) => boolean): string | null {
+    const tally = new Map<string, number>();
+    for (const i of idxs) {
+      const yn = this.cloud[i].yn;
+      if (yn && allow(yn)) tally.set(yn, (tally.get(yn) ?? 0) + 1);
+    }
+    let best: string | null = null;
+    let bestN = 0;
+    for (const [name, n] of tally) if (n > bestN) { best = name; bestN = n; }
+    return best;
+  }
+
   // ── query construction ───────────────────────────────────────────────────────
 
   /**
-   * Clamp the body target to the cloud's real maltBody range (±3σ). The feature
-   * is tiny in magnitude (mean ~0.08, σ ~0.12), so a UI slider that runs to,
-   * say, 2 would place the query ~16σ out — k-NN then ignores everything else
-   * and grabs the few adjunct "body bombs", producing an un-mashable grist. This
-   * keeps the push on the manifold; the grist brewability floor is the backstop.
+   * Overlay explicit target axes onto the style centroid; unset axes keep the
+   * centroid's value. `side` restricts WHICH dims a target may move, so the grain
+   * and hop bills can each be steered in their own subspace while staying grounded
+   * at the style on the other's dims (see `splitNeighbourhoods`):
+   *   - grain-side dims = malt axes + gravity(abv) + SRM + maltBody
+   *   - hop-side dims   = hop axes + IBU + buGu
+   * "both" (the default) applies everything and is byte-identical to the original
+   * single-query behaviour.
    */
-  private clampBodyTarget(target: SteeringTarget | undefined, notes: string[]): SteeringTarget | undefined {
-    if (target?.body == null) return target;
-    const mean = this.stats.mean[MALTBODY_IDX];
-    const std = this.stats.std[MALTBODY_IDX];
-    const lo = mean - 3 * std;
-    const hi = mean + 3 * std;
-    if (target.body >= lo && target.body <= hi) return target;
-    const clamped = Math.max(lo, Math.min(hi, target.body));
-    notes.push(`body target ${target.body.toFixed(2)} is beyond what real grists reach — clamped to ${clamped.toFixed(2)} to keep the recipe brewable`);
-    return { ...target, body: clamped };
-  }
-
-  /** Overlay explicit target axes onto the style centroid; unset axes keep the centroid's value. */
-  private buildQueryRow(centroidRow: number[], target?: SteeringTarget): number[] {
+  private buildQueryRow(centroidRow: number[], target?: SteeringTarget, side: "grain" | "hop" | "both" = "both"): number[] {
     const row = [...centroidRow];
-    if (target?.malt) {
+    const doGrain = side !== "hop";
+    const doHop = side !== "grain";
+    if (doGrain && target?.malt) {
       for (const [key, value] of Object.entries(target.malt)) {
         if (value == null) continue;
         const idx = MALT_FLAVOR_KEYS.indexOf(key as (typeof MALT_FLAVOR_KEYS)[number]);
         if (idx >= 0) row[idx] = value;
       }
     }
-    if (target?.hop) {
+    if (doHop && target?.hop) {
       for (const [key, value] of Object.entries(target.hop)) {
         if (value == null) continue;
         const idx = HOP_FLAVOR_KEYS.indexOf(key as (typeof HOP_FLAVOR_KEYS)[number]);
         if (idx >= 0) row[9 + idx] = value;
       }
     }
-    if (target?.abv != null) {
+    if (doGrain && target?.abv != null) {
       // GRAVITY_IDX holds gravity POINTS ((og-1)*1000, see gravityPoints()), not (og-1) —
       // the missing *1000 here previously produced a ~1000x-too-small value that also
       // corrupted the buGu dim below, blowing up k-NN distance for any ABV-targeted query.
       row[GRAVITY_IDX] = (1000 * target.abv) / (ABV_FACTOR * ASSUMED_ATTENUATION_FOR_QUERY);
     }
-    if (target?.ibu != null) row[IBU_IDX] = target.ibu;
-    if (target?.srm != null) row[SRM_IDX] = target.srm;
-    // Only re-derive buGu when a target actually moved gravity or IBU. Otherwise
-    // keep the centroid's own buGu (the neighbourhood mean of per-recipe ibu/grav),
-    // so a no-target query point equals the centroid exactly instead of drifting
-    // to a ratio-of-means on this one dim.
-    if (target?.abv != null || target?.ibu != null) {
+    if (doHop && target?.ibu != null) row[IBU_IDX] = target.ibu;
+    if (doGrain && target?.srm != null) row[SRM_IDX] = target.srm;
+    // Only re-derive buGu (a hop-side dim) when a target actually moved IBU (or, in
+    // "both", gravity via abv). Otherwise keep the centroid's own buGu so a no-target
+    // query point equals the centroid exactly instead of drifting to a ratio-of-means.
+    if (doHop && (target?.ibu != null || (side === "both" && target?.abv != null))) {
       row[BUGU_IDX] = row[GRAVITY_IDX] > 0 ? row[IBU_IDX] / row[GRAVITY_IDX] : 0;
     }
-    if (target?.body != null) row[MALTBODY_IDX] = target.body;
+    if (doGrain && target?.body != null) row[MALTBODY_IDX] = target.body;
     return row;
   }
 
@@ -673,28 +1087,34 @@ export class RecipeSteeringService {
     queryRow: number[],
     queryYeast: YeastBlock,
     k: number,
-    gate: StyleGateMode,
+    restrict: RestrictLevel,
     fam: StyleFamily,
     strictCode?: string,
+    styleConform?: (i: number) => boolean,
   ): Array<{ index: number; distance: number }> {
     const qz = zScore(queryRow, this.stats);
     const qn2 = yeastNorm2(queryYeast);
 
-    // "strict" restricts to whichever level the centroid itself came from —
-    // the specific style when we had enough data for one, else the family.
+    // The adaptive gate's three rungs: "style" = only this exact BJCP style (the
+    // purest, no other styles bleeding in); "family" = the whole flavour family
+    // (all IPAs, all lagers…); "none" = the whole cloud. Widen only when a push
+    // can't be hit in-style. "style" with no resolved code falls back to family.
     const candidateIdx: number[] = [];
     for (let i = 0; i < this.cloud.length; i++) {
-      if (gate === "strict") {
+      if (restrict === "style") {
         if (strictCode ? this.styleCodeOf[i] !== strictCode : this.familyOf[i] !== fam) continue;
+        if (styleConform && !styleConform(i)) continue; // BJCP data-quality filter, only at the tightest rung
+      } else if (restrict === "family") {
+        if (this.familyOf[i] !== fam) continue;
       }
       candidateIdx.push(i);
     }
-    if (candidateIdx.length === 0) throw new Error(`no cloud records for a strict style gate on "${strictCode ?? fam}"`);
+    if (candidateIdx.length === 0) return []; // this rung has no records — the adaptive gate widens past it
 
     const distances = new Float64Array(candidateIdx.length);
     for (let c = 0; c < candidateIdx.length; c++) {
       const i = candidateIdx[c];
-      distances[c] = weightedDistance2(qz, queryYeast, qn2, this.zRows[i], this.yeastBlocks[i], this.yeastNorms[i]);
+      distances[c] = weightedDistance2(qz, queryYeast, qn2, this.zRows[i], this.yeastBlocks[i], this.yeastNorms[i], KNN_YEAST_WEIGHT);
     }
     const nearest = kNearestByDistance(distances, Math.min(k, candidateIdx.length));
     return nearest.map((n) => ({ index: candidateIdx[n.index], distance: n.distance }));
@@ -735,7 +1155,7 @@ export class RecipeSteeringService {
         const ci = candidateIdx[c];
         distances[c] = ci === s
           ? Infinity
-          : weightedDistance2(this.zRows[s], this.yeastBlocks[s], this.yeastNorms[s], this.zRows[ci], this.yeastBlocks[ci], this.yeastNorms[ci]);
+          : weightedDistance2(this.zRows[s], this.yeastBlocks[s], this.yeastNorms[s], this.zRows[ci], this.yeastBlocks[ci], this.yeastNorms[ci], KNN_YEAST_WEIGHT);
       }
       const kthK = Math.min(k, candidateIdx.length - 1);
       if (kthK <= 0) continue;

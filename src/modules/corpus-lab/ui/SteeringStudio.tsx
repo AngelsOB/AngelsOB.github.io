@@ -40,11 +40,26 @@ type FormState = {
   abv: ScalarTarget;
   ibu: ScalarTarget;
   srm: ScalarTarget;
+  /** Grist body signal (cloud `mb` units, ~-0.3…0.45). Overlaid onto the k-NN
+   *  query row so it shifts neighbour selection toward thinner/fuller grists;
+   *  surfaced as a qualitative Thin→Big scale, never the raw number. */
+  body: ScalarTarget;
   /** One consumer knob for "adventurousness" — drives both the engine's
    *  creativity (flavour-match vs popularity) and exploration (sampling past
    *  the top pick, which is what makes "another take" actually differ). */
   creativity: number;
-  variation: number; // reroll seed
+  /** Style ↔ push balance for the rerank (engine `wildness`). 0 = hew to the
+   *  style everywhere you didn't push; 1 = chase the pushed axes and let the
+   *  rest drift. Pushed axes are always honoured; this tunes the rest. */
+  wildness: number;
+  /** EXPERIMENTAL: when raising a pushed flavour, prefer ingredients that don't
+   *  also drag up an axis you pulled DOWN (engine `avoidCollateral`). */
+  avoidCollateral: boolean;
+  gristVariation: number; // grain-bill reroll seed
+  hopVariation: number; // hop-bill reroll seed
+  lockGrain: boolean; // "Another take" keeps the grain bill
+  lockHops: boolean; // "Another take" keeps the hop bill
+  splitNeighbourhoods: boolean; // search a separate neighbourhood for grain vs hops
 };
 
 const INITIAL: FormState = {
@@ -54,22 +69,49 @@ const INITIAL: FormState = {
   abv: { enabled: false, value: 6 },
   ibu: { enabled: false, value: 45 },
   srm: { enabled: false, value: 8 },
+  body: { enabled: false, value: 0.08 }, // cloud mean ≈ 0.08 → "Medium"
   creativity: 0.35,
-  variation: 0,
+  wildness: 0.3, // lean on-style by default (good beer first); crank to chase the push
+  avoidCollateral: false, // experimental, off by default
+  gristVariation: 0,
+  hopVariation: 0,
+  lockGrain: false,
+  lockHops: false,
+  splitNeighbourhoods: true, // on by default — the truer per-bill behaviour we're trying
 };
 
-function buildQuery(form: FormState): SteeringQuery {
+// Map the raw grist-body signal (~-0.3…0.45) onto words a brewer actually uses.
+// Buckets centre "Medium" on the cloud mean (~0.08); the engine clamps to ±3σ.
+const bodyLabel = (v: number): string =>
+  v <= -0.12 ? "Thin" : v < 0.02 ? "Light" : v < 0.16 ? "Medium" : v < 0.3 ? "Full" : "Big";
+
+type Locks = { fermentables?: Recipe["fermentables"]; hops?: Recipe["hops"] };
+
+function buildQuery(form: FormState, locks?: Locks): SteeringQuery {
   const target: NonNullable<SteeringQuery["target"]> = {};
   if (Object.keys(form.hop).length) target.hop = form.hop;
   if (Object.keys(form.malt).length) target.malt = form.malt;
   if (form.abv.enabled) target.abv = form.abv.value;
   if (form.ibu.enabled) target.ibu = form.ibu.value;
   if (form.srm.enabled) target.srm = form.srm.value;
+  if (form.body.enabled) target.body = form.body.value;
   return {
     style: form.style,
     exploration: form.creativity, // `creativity` slider now drives exploration (the creativity knob was removed)
-    variation: form.variation,
+    gristVariation: form.gristVariation,
+    hopVariation: form.hopVariation,
     target: Object.keys(target).length ? target : undefined,
+    // Rerank several candidates by flavour match and close the reachable residual
+    // — this is what makes a pushed wheel actually LAND on what it asked for
+    // (and lets the 0-4/dial-5 scale be a real target, not a lie).
+    candidates: 16,
+    wildness: form.wildness,
+    correctResidual: true,
+    splitNeighbourhoods: form.splitNeighbourhoods,
+    avoidCollateral: form.avoidCollateral,
+    // A locked bill is sent back verbatim so the engine keeps it exactly.
+    lockedFermentables: locks?.fermentables?.length ? locks.fermentables : undefined,
+    lockedHops: locks?.hops?.length ? locks.hops : undefined,
   };
 }
 
@@ -141,6 +183,10 @@ export default function SteeringStudio() {
     return r.fermentationSteps?.length ? r : { ...r, fermentationSteps: [DEFAULT_FERM_STEP] };
   }, [result]);
 
+  // Wheels scale their RIM to axisMax (the typical ceiling), so a strong-but-
+  // normal recipe fills the radar — the radar itself is the "normal" zone. A
+  // deliberate push then runs past the rim (out to axisDialMax = 1.25×, the
+  // reach of residual correction), which the wheel renders as "off the charts".
   const hopAxes = useMemo(
     () => axesWithMax(HOP_AXES, ctx?.axisMax.hop as ValueMap | undefined, DEFAULT_HOP_MAX),
     [ctx],
@@ -163,11 +209,11 @@ export default function SteeringStudio() {
     });
   const resetGroup = (group: "hop" | "malt") => () => setForm((f) => ({ ...f, [group]: {} }));
 
-  const run = useCallback(async (state: FormState) => {
+  const run = useCallback(async (state: FormState, locks?: Locks) => {
     setLoading(true);
     setError(null);
     try {
-      setResult(await callSteering(buildQuery(state)));
+      setResult(await callSteering(buildQuery(state, locks)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
       setResult(null);
@@ -178,13 +224,23 @@ export default function SteeringStudio() {
 
   // Every run — the primary Calculate/Recalculate and the "Another take" reroll
   // alike — bumps the reroll seed so it yields a fresh plausible take with the
-  // current steering, rather than re-fetching the identical deterministic
-  // recipe. (At creativity 0 the engine is deterministic by design, so output
-  // only varies once some creativity is dialled in — the default has it.)
+  // current steering. The rerank's near-best pool means a reroll surfaces a
+  // different well-aligned recipe even at creativity 0, so reroll no longer needs
+  // any exploration dialled in to do something.
   const runFresh = (state: FormState) => {
-    const next = { ...state, variation: state.variation + 1 };
+    // Bump only the UNLOCKED bills' seeds, and send the locked bill(s) back
+    // verbatim so the engine keeps them exactly (lock one, reroll the other).
+    const next = {
+      ...state,
+      gristVariation: state.gristVariation + (state.lockGrain ? 0 : 1),
+      hopVariation: state.hopVariation + (state.lockHops ? 0 : 1),
+    };
+    const locks: Locks = {
+      fermentables: state.lockGrain ? result?.recipe.fermentables : undefined,
+      hops: state.lockHops ? result?.recipe.hops : undefined,
+    };
     setForm(next);
-    run(next);
+    run(next, locks);
   };
 
   const handleCalculate = () => runFresh(form);
@@ -287,6 +343,8 @@ export default function SteeringStudio() {
               achieved={result ? (result.achievedFlavor.hop as ValueMap) : null}
               onChange={setAxis("hop")}
               onReset={resetGroup("hop")}
+              locked={form.lockHops}
+              onToggleLock={() => setForm((f) => ({ ...f, lockHops: !f.lockHops }))}
               loading={normsLoading}
             />
             <SteeringWheel
@@ -300,6 +358,8 @@ export default function SteeringStudio() {
               achieved={result ? (result.achievedFlavor.malt as ValueMap) : null}
               onChange={setAxis("malt")}
               onReset={resetGroup("malt")}
+              locked={form.lockGrain}
+              onToggleLock={() => setForm((f) => ({ ...f, lockGrain: !f.lockGrain }))}
               loading={normsLoading}
             />
           </div>
@@ -313,6 +373,7 @@ export default function SteeringStudio() {
             <TargetSlider label="ABV" unit="%" min={2} max={14} step={0.1} accent={hsTokens.yeast} target={form.abv} onChange={(t) => setForm((f) => ({ ...f, abv: t }))} />
             <TargetSlider label="IBU" min={0} max={120} step={1} accent={hsTokens.hops} target={form.ibu} onChange={(t) => setForm((f) => ({ ...f, ibu: t }))} />
             <TargetSlider label="SRM" unit="°L" min={0} max={60} step={1} accent={hsTokens.roast} target={form.srm} onChange={(t) => setForm((f) => ({ ...f, srm: t }))} />
+            <TargetSlider label="Body" min={-0.3} max={0.45} step={0.02} accent={hsTokens.malt} target={form.body} onChange={(t) => setForm((f) => ({ ...f, body: t }))} format={bodyLabel} />
           </section>
 
           {/* creativity + reroll */}
@@ -336,12 +397,61 @@ export default function SteeringStudio() {
                 variant="ghost"
                 size="sm"
                 onClick={handleReroll}
-                disabled={loading || !result || form.creativity <= 0}
-                title={form.creativity <= 0 ? "Raise creativity to reroll" : "Another plausible take"}
+                disabled={loading || !result || (form.lockGrain && form.lockHops)}
+                title={
+                  form.lockGrain && form.lockHops ? "Both bills are locked — unlock one to reroll"
+                    : form.lockGrain ? "Rerolls the hops (grain locked)"
+                    : form.lockHops ? "Rerolls the grain (hops locked)"
+                    : "Another plausible take"
+                }
               >
                 ↻ Another take
               </HSButton>
             </div>
+          </section>
+
+          {/* wildness — how hard the rerank chases your push vs staying on-style */}
+          <section style={panelStyle}>
+            <div style={panelHeadStyle}>
+              <HSEyebrow style={{ fontSize: 11 }}>Wildness</HSEyebrow>
+              <span style={{ fontFamily: hsTokens.mono, fontSize: 12, color: hsTokens.muted }}>{Math.round(form.wildness * 100)}%</span>
+            </div>
+            <input
+              className="studio-range"
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={form.wildness}
+              onChange={(e) => setForm((f) => ({ ...f, wildness: parseFloat(e.target.value) }))}
+              style={{ width: "100%", accentColor: hsTokens.yeast }}
+            />
+            <div style={{ marginTop: 8 }}>
+              <HSScriptNote color={hsTokens.muted} size={13} rotate={-2}>
+                {form.wildness <= 0.15 ? "true to the style" : form.wildness >= 0.7 ? "chase the push, let the rest wander" : "lean into your push, stay near the style"}
+              </HSScriptNote>
+            </div>
+          </section>
+
+          {/* experimental toggles */}
+          <section style={panelStyle}>
+            <div style={panelHeadStyle}>
+              <HSEyebrow style={{ fontSize: 11 }}>Experimental</HSEyebrow>
+            </div>
+            <ToggleRow
+              label="Split malt & hop search"
+              hint="each bill from its own neighbourhood"
+              accent={hsTokens.hops}
+              on={form.splitNeighbourhoods}
+              onToggle={() => setForm((f) => ({ ...f, splitNeighbourhoods: !f.splitNeighbourhoods }))}
+            />
+            <ToggleRow
+              label="Avoid collateral flavours"
+              hint="a push won't drag a pulled-down axis back up"
+              accent={hsTokens.malt}
+              on={form.avoidCollateral}
+              onToggle={() => setForm((f) => ({ ...f, avoidCollateral: !f.avoidCollateral }))}
+            />
           </section>
 
           {result ? <StyleFitBadge fit={result.styleFit} /> : null}
@@ -381,6 +491,7 @@ function TargetSlider({
   accent,
   target,
   onChange,
+  format,
 }: {
   label: string;
   unit?: string;
@@ -390,6 +501,8 @@ function TargetSlider({
   accent: string;
   target: ScalarTarget;
   onChange: (t: ScalarTarget) => void;
+  /** Custom readout for values with no meaningful unit (e.g. body → "Medium"). */
+  format?: (v: number) => string;
 }) {
   const on = target.enabled;
   return (
@@ -437,9 +550,63 @@ function TargetSlider({
         style={{ flex: 1, accentColor: accent, opacity: on ? 1 : 0.4 }}
       />
       <span style={{ flex: "0 0 auto", width: 58, textAlign: "right", fontFamily: hsTokens.mono, fontSize: 13, color: on ? hsTokens.ink : hsTokens.muted }}>
-        {on ? `${target.value.toFixed(unit === "%" ? 1 : 0)}${unit ?? ""}` : "median"}
+        {on ? (format ? format(target.value) : `${target.value.toFixed(unit === "%" ? 1 : 0)}${unit ?? ""}`) : "median"}
       </span>
     </div>
+  );
+}
+
+// ── experimental toggle row ──────────────────────────────────────────────────
+function ToggleRow({ label, hint, accent, on, onToggle }: { label: string; hint: string; accent: string; on: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      className="studio-focus"
+      aria-pressed={on}
+      onClick={onToggle}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "7px 0",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+      title={on ? "On" : "Off"}
+    >
+      <span
+        style={{
+          flex: "0 0 auto",
+          width: 34,
+          height: 18,
+          borderRadius: 999,
+          background: on ? accent : "transparent",
+          border: `2px solid ${on ? accent : hsAlpha(hsTokens.ink, 35)}`,
+          position: "relative",
+          transition: "background 120ms var(--hs-ease, ease), border-color 120ms var(--hs-ease, ease)",
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            top: 1,
+            left: on ? 16 : 1,
+            width: 12,
+            height: 12,
+            borderRadius: 999,
+            background: on ? hsTokens.paper : hsTokens.ink,
+            transition: "left 120ms var(--hs-ease, ease)",
+          }}
+        />
+      </span>
+      <span style={{ minWidth: 0 }}>
+        <span style={{ display: "block", fontFamily: hsTokens.body, fontWeight: 700, fontSize: 13, color: on ? hsTokens.ink : hsTokens.muted }}>{label}</span>
+        <span style={{ display: "block", fontFamily: hsTokens.body, fontSize: 11, color: hsTokens.muted }}>{hint}</span>
+      </span>
+    </button>
   );
 }
 

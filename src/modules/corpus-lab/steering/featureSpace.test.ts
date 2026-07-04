@@ -74,6 +74,20 @@ describe("computeStats / zScore", () => {
     const zHigh = zScore([4], stats);
     expect(zHigh[0]).toBeGreaterThan(0);
   });
+
+  test("winsorizes garbage outliers so they can't inflate the scale (dead-dim fix)", () => {
+    // 0..99 plus one garbage value — the real spread is ~29, the outlier ~99999.
+    const rows: number[][] = [];
+    for (let i = 0; i < 100; i++) rows.push([i]);
+    rows.push([99999]);
+    const stats = computeStats(rows);
+    expect(stats.hi[0]).toBeLessThan(200); // p99 clip sits at the real top, not the garbage
+    expect(stats.std[0]).toBeLessThan(60); // reflects the ~0..99 spread, not the outlier
+    // the garbage point clips to hi -> a bounded z, identical to the real top value
+    expect(zScore([99999], stats)[0]).toBeCloseTo(zScore([stats.hi[0]], stats)[0], 9);
+    // and a normal mid-range value still gets real, non-flattened separation
+    expect(Math.abs(zScore([90], stats)[0] - zScore([50], stats)[0])).toBeGreaterThan(0.8);
+  });
 });
 
 // ── yeast vocab / blocks ─────────────────────────────────────────────────────

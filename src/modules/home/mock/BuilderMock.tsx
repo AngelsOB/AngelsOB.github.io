@@ -6,6 +6,7 @@ import { HopFlavorRadar } from "./HopFlavorRadar";
 import BrewSheetPanel from "./BrewSheetPanel";
 import { TabSection, SectionHead, WaterSection } from "./TabSections";
 import { StyleGuidelines } from "./StyleGuidelines";
+import { useMockFlavors } from "./useMockFlavors";
 import type { BuilderMockData } from "../lib/mapRecipeToBuilderMock";
 
 // A simplified version of the real recipe builder. Clickable tabs switch the
@@ -101,11 +102,18 @@ interface Props {
   onClose?: () => void;
 }
 
+// Recipe-mode placeholder while the (lazy) flavor data loads — the radars
+// render their rings-only empty state instead of the tour's sample flavors.
+const NO_FLAVOR: number[] = Array(9).fill(0);
+
 export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill = 1, fgShift = 0, tempShift = 0, honestActive = false, data, openHref, onClose }: Props) {
   const hopsActive = activeTab === "hops";
   const brewsheetActive = activeTab === "brewsheet";
   const waterActive = activeTab === "water";
   const otherActive = !hopsActive && !brewsheetActive && !waterActive;
+  // Recipe-adaptable radar values (null-ish in tour mode, where the radars
+  // keep their hardcoded sample and no flavor data loads).
+  const flavors = useMockFlavors(data);
 
   return (
     <div className="tour-scene" style={{ position: "relative", width: "100%" }}>
@@ -228,7 +236,7 @@ export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill =
                   paddingBottom: 10,
                 }}
               >
-                <HopBillTable data={data} />
+                <HopBillTable data={data} flavorByName={data ? flavors.hopByName : undefined} />
               </div>
               <div
                 data-tour="radar-slot"
@@ -267,7 +275,7 @@ export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill =
               pointerEvents: otherActive ? "auto" : "none",
             }}
           >
-            <TabSection active={activeTab} grainFill={grainFill} tempShift={tempShift} honestActive={honestActive} data={data} />
+            <TabSection active={activeTab} grainFill={grainFill} tempShift={tempShift} honestActive={honestActive} data={data} maltFlavor={data ? flavors.malt ?? NO_FLAVOR : undefined} />
           </div>
         </div>
       </div>
@@ -299,7 +307,7 @@ export function BuilderMock({ activeTab, onSelectTab, grainFill = 1, waterFill =
               padding: 8,
             }}
           >
-            <HopFlavorRadar size={96} variant="full" />
+            <HopFlavorRadar size={96} variant="full" values={data ? flavors.hop ?? NO_FLAVOR : undefined} />
           </div>
         </div>
       </div>
@@ -815,7 +823,16 @@ function TabButton({
   );
 }
 
-function HopBillTable({ data }: { data?: BuilderMockData }) {
+function HopBillTable({
+  data,
+  flavorByName,
+}: {
+  data?: BuilderMockData;
+  /** Recipe mode: per-variety flavor values for the row minis (0..1 per axis).
+   *  Undefined while loading / in tour mode — tour rows fall back to the
+   *  hardcoded sample profiles, recipe rows to the rings-only empty state. */
+  flavorByName?: Map<string, number[]> | null;
+}) {
   const rows = data
     ? data.hops.map((h) => ({
         name: h.name,
@@ -826,6 +843,8 @@ function HopBillTable({ data }: { data?: BuilderMockData }) {
         aa: h.aa,
       }))
     : HOPS.map((h) => ({ ...h, aa: "13.2% AA" }));
+  const miniValues = (name: string): number[] | undefined =>
+    data ? flavorByName?.get(name) ?? NO_FLAVOR : undefined;
   return (
     <div
       style={{
@@ -877,7 +896,7 @@ function HopBillTable({ data }: { data?: BuilderMockData }) {
                 : "transparent",
           }}
         >
-          <HopFlavorRadar size={36} variant="mini" hopName={hop.name} />
+          <HopFlavorRadar size={36} variant="mini" hopName={hop.name} values={miniValues(hop.name)} />
           <div>
             <div
               style={{

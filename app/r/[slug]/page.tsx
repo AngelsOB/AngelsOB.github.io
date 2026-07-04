@@ -38,7 +38,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ? `${recipe.notes.slice(0, 120).trim()}${recipe.notes.length > 120 ? '...' : ''} — ${stats}`
       : `${recipe.name} homebrew recipe by ${ownerName}. ${stats}. Full ingredients, mash schedule & brew-day instructions.`
 
-    const images = recipe.labelUrl ? [{ url: recipe.labelUrl }] : []
+    // Every recipe has a generated share card (opengraph-image.tsx), so the
+    // card is always the large-image asset. A custom beer label, when present,
+    // takes precedence as the more brag-worthy image; otherwise Next injects the
+    // generated card automatically, so we leave images unset here.
+    const labelImages = recipe.labelUrl ? [{ url: recipe.labelUrl }] : undefined
 
     return {
       title: recipe.name,
@@ -50,13 +54,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         url: `/r/${slug}`,
         type: 'article',
         siteName: 'Brewing.It',
-        ...(images.length > 0 ? { images } : {}),
+        ...(labelImages ? { images: labelImages } : {}),
       },
       twitter: {
-        card: images.length > 0 ? 'summary_large_image' : 'summary',
+        card: 'summary_large_image',
         title: `${recipe.name} | Brewing.It`,
         description,
-        ...(images.length > 0 ? { images: [recipe.labelUrl!] } : {}),
+        ...(labelImages ? { images: [recipe.labelUrl!] } : {}),
       },
     }
   } catch {

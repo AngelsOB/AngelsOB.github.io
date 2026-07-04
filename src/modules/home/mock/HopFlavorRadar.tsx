@@ -2,34 +2,45 @@
 
 import { hsTokens } from "@/modules/builder/tokens";
 
-// Mini and full hop flavor radar SVG. Lifted verbatim from
-// the old v3 homepage mock radar — pure SVG, no
-// animation, so it carries over unchanged. GSAP moves its container.
+// Mini and full hop flavor radar SVG — pure SVG, no animation; GSAP moves its
+// container. Axes mirror the real builder's radar (HOP_FLAVOR_KEYS order in
+// models/Presets.ts) so a mock polygon and the real one tell the same story.
 
 const AXES = [
   "Citrus",
   "Tropical",
   "Stone fruit",
-  "Pine",
-  "Spice",
+  "Berry",
   "Floral",
+  "Spice",
+  "Herbal",
+  "Grassy",
+  "Pine",
 ];
 
-// Profile per hop name. Index aligns with AXES.
+// Variety profiles for the tour's sample bill — the real preset dataset's
+// values (0-5 scale, normalized /5). Index aligns with AXES.
 const PROFILES: Record<string, number[]> = {
-  Citra: [0.95, 0.85, 0.65, 0.22, 0.18, 0.35],
-  Mosaic: [0.85, 0.92, 0.78, 0.35, 0.2, 0.45],
+  Citra: [1, 0.8, 0.4, 0.2, 0.2, 0, 0, 0, 0.4],
+  Mosaic: [0.6, 0.8, 0.6, 0.6, 0.2, 0, 0.2, 0.2, 0.4],
 };
-const BLEND = [0.92, 0.88, 0.72, 0.28, 0.19, 0.4];
+// The sample bill's combined estimate — the same dose/timing-weighted math the
+// real builder's radar runs (HopFlavorCalculationService), computed offline
+// for the tour's 0.5oz Citra 60 / 1.5oz Mosaic 60 / 1oz Citra whirlpool @ 5 gal.
+const BLEND = [0.58, 0.48, 0.25, 0.14, 0.12, 0, 0.01, 0.01, 0.24];
 
 interface Props {
   size: number;
   variant: "mini" | "full";
   hopName?: string;
+  /** Recipe mode: 0..1 per axis in AXES order. Overrides the hardcoded
+   *  sample profiles; all-zero renders rings only (a clean "no data" state). */
+  values?: number[];
 }
 
-export function HopFlavorRadar({ size, variant, hopName }: Props) {
-  const values = hopName ? PROFILES[hopName] ?? BLEND : BLEND;
+export function HopFlavorRadar({ size, variant, hopName, values: valuesProp }: Props) {
+  const values = valuesProp ?? (hopName ? PROFILES[hopName] ?? BLEND : BLEND);
+  const hasFlavor = values.some((v) => v > 0.005);
   // Full variant reserves side gutters so the start/end-anchored axis labels
   // ("Tropical", "Stone fruit") fit inside the SVG instead of clipping at its
   // edges when the radar is grown on the hops beat.
@@ -91,28 +102,33 @@ export function HopFlavorRadar({ size, variant, hopName }: Props) {
           />
         );
       })}
-      {/* Filled value polygon */}
-      <polygon
-        points={polygon}
-        fill={hsTokens.hops}
-        fillOpacity={0.35}
-        stroke={hsTokens.hops}
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-      />
+      {/* Filled value polygon (skipped entirely when there's no flavor data —
+          rings-only reads as an intentional empty state, not a glitch) */}
+      {hasFlavor ? (
+        <polygon
+          points={polygon}
+          fill={hsTokens.hops}
+          fillOpacity={0.35}
+          stroke={hsTokens.hops}
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+        />
+      ) : null}
       {/* Vertices */}
-      {values.map((v, i) => {
-        const [x, y] = point(i, v);
-        return (
-          <circle
-            key={`pt-${i}`}
-            cx={x}
-            cy={y}
-            r={variant === "full" ? 2.5 : 1.5}
-            fill={hsTokens.ink}
-          />
-        );
-      })}
+      {hasFlavor
+        ? values.map((v, i) => {
+            const [x, y] = point(i, v);
+            return (
+              <circle
+                key={`pt-${i}`}
+                cx={x}
+                cy={y}
+                r={variant === "full" ? 2.5 : 1.5}
+                fill={hsTokens.ink}
+              />
+            );
+          })
+        : null}
       {/* Axis labels — only on full variant */}
       {variant === "full" &&
         AXES.map((label, i) => {

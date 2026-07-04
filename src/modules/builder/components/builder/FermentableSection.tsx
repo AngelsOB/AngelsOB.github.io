@@ -35,6 +35,7 @@ import HSScriptNote from "../HSScriptNote";
 import HSButton from "../HSButton";
 import FermentablePresetModal from "../modals/FermentablePresetModal";
 import CustomFermentableModal from "../modals/CustomFermentableModal";
+import GrainFlavorCard from "./GrainFlavorCard";
 
 // All bill-stack property animations (segment widths shifting as
 // percentages change, new segment growing on add, hover-expand, color
@@ -2321,5 +2322,10 @@ export function FermentableHelperCard() {
     [fermentables, totalGrainKg]
   );
   if (fermentables.length === 0) return null;
-  return <BillStack rows={rows} totalGrainKg={totalGrainKg} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <GrainFlavorCard fermentables={fermentables} />
+      <BillStack rows={rows} totalGrainKg={totalGrainKg} />
+    </div>
+  );
 }

@@ -54,6 +54,10 @@ const MALT_AXES: RadarAxis[] = [
 // a shared 0-5 radar would squash every malt polygon into a tiny centre blob.
 const DEFAULT_MALT_MAX: Record<string, number> = { grainy: 1.5, biscuit: 2.5, caramel: 2.5, darkFruit: 2, chocolate: 2.5, coffee: 2.5, roast: 2.5, nutty: 1.5, honey: 2 };
 const DEFAULT_HOP_MAX: Record<string, number> = { citrus: 5, tropicalFruit: 4.5, stoneFruit: 3, berry: 3, floral: 3.5, spice: 3, herbal: 3, grassy: 2, resinPine: 4 };
+// Fallback maltBody range (robust p1..p99 from the cloud) used before the live
+// bodyRange arrives from the engine. The UI shows a normalized 0-100% "thin →
+// full" dial and maps it onto this raw range — no more inscrutable -0.3..0.45.
+const DEFAULT_BODY_RANGE = { min: -0.3, mid: 0.05, max: 0.45 };
 
 /** Round a raw p99 ceiling up to a tidy radar max (nearest 0.5, floor 1). */
 const niceMax = (v: number) => Math.max(1, Math.ceil(v * 2) / 2);
@@ -76,8 +80,9 @@ type FormState = {
   yeastName: string;
   /** 0-1 how adventurous the ingredient picks are; 0 = always the popular choice. */
   exploration: number;
-  /** Reroll seed — bump for a different plausible take at the same exploration. */
-  variation: number;
+  /** Independent reroll seeds — bump one to reroll that bill while the other stays put. */
+  gristVariation: number;
+  hopVariation: number;
   abv: ScalarOverride;
   ibu: ScalarOverride;
   srm: ScalarOverride;
@@ -92,16 +97,17 @@ const INITIAL_STATE: FormState = {
   styleGate: "family",
   yeastName: "",
   exploration: 0,
-  variation: 0,
+  gristVariation: 0,
+  hopVariation: 0,
   abv: { enabled: false, value: 6.5 },
   ibu: { enabled: false, value: 50 },
   srm: { enabled: false, value: 8 },
-  body: { enabled: false, value: 0.15 },
+  body: { enabled: false, value: 50 }, // 0-100% "thin → full" dial (mapped to raw maltBody in buildQuery)
   hop: axisDefaults(HOP_AXES) as Record<HopKey, AxisOverride>,
   malt: axisDefaults(MALT_AXES) as Record<MaltKey, AxisOverride>,
 };
 
-function buildQuery(form: FormState): SteeringQuery {
+function buildQuery(form: FormState, bodyRange: { min: number; max: number }): SteeringQuery {
   const hop: Partial<HopFlavorProfile> = {};
   for (const ax of HOP_AXES) {
     const o = form.hop[ax.key as HopKey];
@@ -118,7 +124,8 @@ function buildQuery(form: FormState): SteeringQuery {
   if (form.abv.enabled) target.abv = form.abv.value;
   if (form.ibu.enabled) target.ibu = form.ibu.value;
   if (form.srm.enabled) target.srm = form.srm.value;
-  if (form.body.enabled) target.body = form.body.value;
+  // Map the 0-100% "thin → full" dial onto the cloud's real maltBody range.
+  if (form.body.enabled) target.body = bodyRange.min + (form.body.value / 100) * (bodyRange.max - bodyRange.min);
 
   return {
     style: form.style,
@@ -126,7 +133,8 @@ function buildQuery(form: FormState): SteeringQuery {
     styleGate: form.styleGate,
     yeastName: form.yeastName.trim() || undefined,
     exploration: form.exploration,
-    variation: form.variation,
+    gristVariation: form.gristVariation,
+    hopVariation: form.hopVariation,
     target: Object.keys(target).length ? target : undefined,
   };
 }
@@ -206,6 +214,8 @@ export default function SteeringPlaygroundClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refetch on style only; k/gate rarely matter for the norm band
   }, [form.style]);
 
+  // Rim = axisMax (typical ceiling); the radar is the "normal" zone and a push
+  // runs off the charts past the rim — same scale the Studio wheels use.
   const hopAxes = useMemo(() => axesWithMax(HOP_AXES, norms?.axisMax.hop as Record<string, number> | undefined, DEFAULT_HOP_MAX), [norms]);
   const maltAxes = useMemo(() => axesWithMax(MALT_AXES, norms?.axisMax.malt as Record<string, number> | undefined, DEFAULT_MALT_MAX), [norms]);
 
@@ -235,7 +245,7 @@ export default function SteeringPlaygroundClient() {
       const res = await fetch("/api/lab/steering", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildQuery(state)),
+        body: JSON.stringify(buildQuery(state, norms?.bodyRange ?? DEFAULT_BODY_RANGE)),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -253,9 +263,14 @@ export default function SteeringPlaygroundClient() {
   }
 
   const handleCalculate = () => runQuery(form);
-  // Reroll bumps the seed AND recomputes with it, so it's a one-click "another take".
-  const handleReroll = () => {
-    const next = { ...form, variation: form.variation + 1 };
+  // Reroll bumps a seed AND recomputes — grain and hops reroll independently, so
+  // "↻ Grain" keeps the hops (and vice versa): lock one, reroll the other.
+  const reroll = (which: "both" | "grain" | "hops") => {
+    const next = {
+      ...form,
+      gristVariation: form.gristVariation + (which !== "hops" ? 1 : 0),
+      hopVariation: form.hopVariation + (which !== "grain" ? 1 : 0),
+    };
     setForm(next);
     runQuery(next);
   };
@@ -373,19 +388,23 @@ export default function SteeringPlaygroundClient() {
                 onChange={(e) => setForm((f) => ({ ...f, exploration: parseFloat(e.target.value) }))}
               />
             </label>
-            <div className="flex items-end">
-              <button
-                onClick={handleReroll}
-                disabled={loading || form.exploration <= 0}
-                className="w-full rounded border px-2 py-1 text-sm hover:bg-gray-50 disabled:opacity-30"
-                title={form.exploration <= 0 ? "Raise adventurousness above 0 to reroll" : "Different plausible take at this level"}
-              >
-                ↻ Reroll (#{form.variation})
-              </button>
+            <div className="flex items-end gap-1" title={form.exploration <= 0 ? "Raise adventurousness above 0 to reroll" : undefined}>
+              {(["both", "grain", "hops"] as const).map((which) => (
+                <button
+                  key={which}
+                  onClick={() => reroll(which)}
+                  disabled={loading || form.exploration <= 0}
+                  className="flex-1 rounded border px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-30"
+                  title={which === "both" ? "Reroll both bills" : which === "grain" ? "Reroll the grain bill, keep the hops" : "Reroll the hop bill, keep the grain"}
+                >
+                  ↻ {which === "both" ? "Both" : which === "grain" ? "Grain" : "Hops"}
+                </button>
+              ))}
             </div>
             <p className="col-span-2 text-xs text-gray-400">
               How far past the popular pick the ingredient choices can reach. Same style + same reroll always gives
               the same recipe; the %s and doses stay put — only which malt/hop fills each slot changes.
+              <span className="text-gray-500"> ↻ Grain and ↻ Hops reroll one bill and leave the other alone (lock one, reroll the other).</span>
             </p>
           </div>
 
@@ -394,8 +413,8 @@ export default function SteeringPlaygroundClient() {
             <ScalarRow label="ABV %" unit="%" min={2} max={16} step={0.1} override={form.abv} onChange={(v) => setForm((f) => ({ ...f, abv: v }))} />
             <ScalarRow label="IBU" min={0} max={120} step={1} override={form.ibu} onChange={(v) => setForm((f) => ({ ...f, ibu: v }))} />
             <ScalarRow label="SRM" min={0} max={80} step={1} override={form.srm} onChange={(v) => setForm((f) => ({ ...f, srm: v }))} />
-            {/* maltBody is a small-magnitude feature (cloud mean ~0.08, σ ~0.12); range matches real recipes (~p1..p99). The engine also clamps to ±3σ. */}
-            <ScalarRow label="Body" min={-0.3} max={0.45} step={0.02} override={form.body} onChange={(v) => setForm((f) => ({ ...f, body: v }))} />
+            {/* Normalized 0-100% "thin → full" dial; buildQuery maps it onto the cloud's real maltBody range (from result.bodyRange). No more raw -0.3..0.45. */}
+            <ScalarRow label="Body (thin→full)" unit="%" min={0} max={100} step={5} override={form.body} onChange={(v) => setForm((f) => ({ ...f, body: v }))} />
           </div>
 
           <div className="col-span-full rounded border p-3">

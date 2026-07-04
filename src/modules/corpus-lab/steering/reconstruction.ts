@@ -15,10 +15,11 @@
  * attenuation — never invented numbers.
  */
 import type { Fermentable, Hop, Yeast } from "../../recipe/models/Recipe";
+import type { HopFlavorProfile } from "../../recipe/models/Presets";
 import { FERMENTABLE_PRESETS } from "../../recipe/data/fermentablePresets";
 import { HOP_PRESETS } from "../../recipe/data/hopPresets";
 import { YEAST_PRESETS } from "../../recipe/data/yeastPresets";
-import { MALT_ARCHETYPE_SLUGS } from "../maltFlavor";
+import { MALT_ARCHETYPE_SLUGS, MALT_ARCHETYPES_BY_SLUG, aggregateMaltFlavor, type MaltFlavorProfile } from "../maltFlavor";
 import type { CloudRecord } from "./featureSpace";
 import { selectExplored, mulberry32, hashSeed } from "./prng";
 
@@ -87,6 +88,16 @@ export function unmappedArchetypes(): string[] {
 export function presetForArchetype(archetype: string) {
   const name = ARCHETYPE_TO_PRESET_NAME[archetype];
   return name ? FERMENTABLE_BY_NAME.get(name) : undefined;
+}
+
+const PRESET_NAME_TO_ARCHETYPE: Record<string, string> = Object.fromEntries(
+  Object.entries(ARCHETYPE_TO_PRESET_NAME).map(([archetype, presetName]) => [presetName, archetype]),
+);
+
+/** Reverse of ARCHETYPE_TO_PRESET_NAME — recover a malt archetype from a fermentable's
+ *  preset name, so a locked grain bill can still report its malt flavour. */
+export function archetypeForPresetName(name: string): string | undefined {
+  return PRESET_NAME_TO_ARCHETYPE[name];
 }
 
 /**
@@ -375,6 +386,173 @@ export function enforceGristBrewability(items: GristBillItem[]): { items: GristB
   return { items: outItems, notes };
 }
 
+// ── Residual correction (#3) ─────────────────────────────────────────────────
+
+/** Never let a single corrective donor exceed this share of the grist — a
+ * caramel-forward beer is real, a 45%-crystal one is cloying and fake. */
+const CORRECTION_MAX_DONOR_SHARE = 0.3;
+/** Grist share added per corrective pass (diminishing returns via saturation stop it early). */
+const CORRECTION_STEP_SHARE = 0.05;
+/** At most this many passes — a hard backstop. Higher than it looks because the
+ * gentlest-first escalation climbs one grain a step at a time before moving on. */
+const CORRECTION_MAX_PASSES = 40;
+/** Only correct a pushed axis whose shortfall is at least this much (skip trivial gaps). */
+const CORRECTION_MIN_DEFICIT = 0.15;
+/**
+ * Weight on collateral flavour when `avoidCollateral` is on: a donor's score for
+ * the axis being raised is docked `penalty ×` its contribution to every OTHER
+ * pushed axis already at/over target. 1 = collateral counts as much as the gain,
+ * so a donor is only chosen if it helps the deficit more than it overshoots the
+ * axes the user pulled down. Shared by the malt and hop corrections.
+ */
+const CORRECTION_COLLATERAL_PENALTY = 1.0;
+/** With avoidCollateral on, a grain is dropped from the ladder if its (penalty-
+ * weighted) contribution to the pulled-down axes exceeds this fraction of its gain
+ * on the axis being raised — so a purer donor is used and the protected axis stays
+ * put (e.g. crystal-medium over crystal-dark when dark fruit was pulled down). */
+const CORRECTION_COLLATERAL_MAX_RATIO = 0.5;
+/**
+ * Floor on the in-style weight (see the corrections' `prevalence`). A donor's
+ * score is scaled by `FLOOR + (1-FLOOR)·prevalenceNorm`, so even a zero-prevalence
+ * grain keeps `FLOOR` of its raw pull. This makes prevalence a TIE-BREAKER that
+ * nudges close calls toward the in-style choice, without letting a weak-but-common
+ * donor beat a strong one and cripple the reach on a genuine push (which a hard
+ * prevalence multiply did — biscuit reachability fell to ~0.45).
+ */
+const CORRECTION_IN_STYLE_FLOOR = 0.6;
+
+/**
+ * Close the reachable part of a malt flavour shortfall by using MORE of the
+ * grain that drives the deficit axis — the "extrapolate what they're using to
+ * get there, then use extra of it" step (#3). This is the dimension the k-NN
+ * rerank structurally can't touch: a reroll varies WHICH malt fills a role, but
+ * the role's fraction is fixed by the neighbourhood, and malt flavour is
+ * fraction-driven.
+ *
+ * Greedy and bounded: each pass finds the largest still-open pushed-axis deficit,
+ * picks the donor archetype that most drives that axis (intensity × its flavour
+ * on the axis) FROM the set the neighbourhood actually used (`sanctioned` — never
+ * invents a grain), and shifts a small share of the grist onto it. Stops as soon
+ * as a pass stops helping (the malt aggregator saturates, so more crystal
+ * eventually adds nothing) or the donor hits its share cap. The result is run
+ * through `enforceGristBrewability`, so the diastatic-base floor still holds.
+ *
+ * `target` carries only the pushed axes and their (raw) requested values. Pure —
+ * no cloud, no weights — so it's unit-tested directly.
+ */
+export function correctMaltGristToward(
+  items: GristBillItem[],
+  sanctioned: Set<string>,
+  target: Partial<MaltFlavorProfile>,
+  opts: { step?: number; maxPasses?: number; maxDonorShare?: number; minDeficit?: number; avoidCollateral?: boolean; collateralPenalty?: number; prevalence?: Record<string, number> } = {},
+): { items: GristBillItem[]; notes: string[] } {
+  const step = opts.step ?? CORRECTION_STEP_SHARE;
+  const maxPasses = opts.maxPasses ?? CORRECTION_MAX_PASSES;
+  const maxDonorShare = opts.maxDonorShare ?? CORRECTION_MAX_DONOR_SHARE;
+  const minDeficit = opts.minDeficit ?? CORRECTION_MIN_DEFICIT;
+  const avoidCollateral = opts.avoidCollateral ?? false;
+  const collateralPenalty = opts.collateralPenalty ?? CORRECTION_COLLATERAL_PENALTY;
+  // In-style weighting: when the neighbourhood's grain PREVALENCE is supplied, a
+  // donor's score is scaled by how much the neighbourhood actually leans on it, so
+  // the correction reaches for the common in-style grain (more munich/vienna in a
+  // hazy) instead of the potent-but-out-of-style specialty (honey malt) just
+  // because it moves the axis hardest. No prevalence → uniform (old behaviour).
+  const prevalence = opts.prevalence;
+  const maxPrev = prevalence ? Math.max(1e-9, ...Object.values(prevalence)) : 1;
+  const styleWeightOf = (slug: string) => (prevalence ? CORRECTION_IN_STYLE_FLOOR + (1 - CORRECTION_IN_STYLE_FLOOR) * ((prevalence[slug] ?? 0) / maxPrev) : 1);
+  const notes: string[] = [];
+  const pushedAxes = (Object.keys(target) as Array<keyof MaltFlavorProfile>).filter((k) => target[k] != null);
+  if (pushedAxes.length === 0 || items.length === 0) return { items, notes };
+
+  type Part = { archetype: string; share: number; preset: GristBillItem["preset"] };
+  const total = items.reduce((s, i) => s + i.pct, 0) || 1;
+  let work: Part[] = items.map((i) => ({ archetype: i.archetype, share: i.pct / total, preset: i.preset }));
+  const achievedOf = (parts: Part[]): MaltFlavorProfile =>
+    aggregateMaltFlavor(parts.map((p) => ({ archetype: p.archetype, amount: p.share })));
+
+  let changed = false;
+  // Axes we're finished with — either hit, or taken as far as the ladder can.
+  const settled = new Set<keyof MaltFlavorProfile>();
+  // Per-axis grains we've climbed PAST (maxed or saturated) — never returned to, so
+  // the escalation is monotonic despite the whole bill rescaling each step.
+  const exhausted = new Map<keyof MaltFlavorProfile, Set<string>>();
+  for (let pass = 0; pass < maxPasses; pass++) {
+    const achieved = achievedOf(work);
+    // The largest still-open (unsettled) pushed-axis shortfall.
+    let axis: keyof MaltFlavorProfile | null = null;
+    let worstDeficit = minDeficit;
+    for (const a of pushedAxes) {
+      if (settled.has(a)) continue;
+      const deficit = (target[a] ?? 0) - achieved[a];
+      if (deficit > worstDeficit) { worstDeficit = deficit; axis = a; }
+    }
+    if (!axis) break;
+    const ax = axis;
+
+    // Axes to protect: other pushed axes already at/over target — a donor that also
+    // drives these overshoots them, so with avoidCollateral on we drop such donors.
+    const avoidAxes = avoidCollateral
+      ? pushedAxes.filter((a) => a !== ax && achieved[a] >= (target[a] ?? 0))
+      : [];
+
+    // Escalate gentlest-first: reach for the least-assertive in-style grain that
+    // still moves this axis, and only climb to a bigger-flavour one when the gentle
+    // ones are maxed or saturated — base → munich → crystal → roast, the way a
+    // brewer adds depth. Candidates are the sanctioned grains that drive the axis,
+    // ordered by intensity ascending (ties broken toward the more in-style one).
+    const exSet = exhausted.get(ax) ?? new Set<string>();
+    exhausted.set(ax, exSet);
+    const ladder = [...sanctioned]
+      .map((slug) => MALT_ARCHETYPES_BY_SLUG.get(slug))
+      .filter((a): a is NonNullable<typeof a> => !!a && !exSet.has(a.slug) && !!presetForArchetype(a.slug) && (a.flavor[ax] || 0) > 0)
+      .filter((a) => {
+        // with avoidCollateral, drop a grain whose collateral on the pulled-down
+        // axes is more than a fraction of its gain on the axis being raised.
+        if (avoidAxes.length === 0) return true;
+        const gain = a.intensity * (a.flavor[ax] || 0);
+        let collateral = 0;
+        for (const av of avoidAxes) collateral += a.intensity * (a.flavor[av] || 0);
+        return collateralPenalty * collateral <= CORRECTION_COLLATERAL_MAX_RATIO * gain;
+      })
+      .sort((a, b) => a.intensity - b.intensity || styleWeightOf(b.slug) - styleWeightOf(a.slug));
+
+    const tgt = target[ax] ?? 0;
+    let stepped = false;
+    for (const arch of ladder) {
+      const shareNow = work.find((w) => w.archetype === arch.slug)?.share ?? 0;
+      if (shareNow >= maxDonorShare) { exSet.add(arch.slug); continue; } // maxed — exhaust + escalate
+      const inc = Math.min(step, maxDonorShare - shareNow);
+      // Trial: scale the bill down by (1-inc) to make room, add `inc` of this grain.
+      const trial: Part[] = work.map((w) => ({ ...w, share: w.share * (1 - inc) }));
+      const te = trial.find((w) => w.archetype === arch.slug);
+      if (te) te.share += inc; else trial.push({ archetype: arch.slug, share: inc, preset: presetForArchetype(arch.slug)! });
+      const after = achievedOf(trial)[ax];
+      if (!(after > achieved[ax] + 1e-4)) { exSet.add(arch.slug); continue; } // saturated — exhaust + escalate
+      stepped = true;
+      // Overshoot guard: if the step vaults past the target, keep it only when it
+      // lands closer than not stepping; either way the axis is now as close as it gets.
+      if (after > tgt) {
+        if (Math.abs(after - tgt) < Math.abs(tgt - achieved[ax])) { work = trial; changed = true; }
+        settled.add(ax);
+      } else {
+        work = trial;
+        changed = true;
+        // hit the per-grain cap on this step → exhaust it so we climb next pass.
+        if ((trial.find((w) => w.archetype === arch.slug)?.share ?? 0) >= maxDonorShare - 1e-9) exSet.add(arch.slug);
+      }
+      break; // one grain-step per pass
+    }
+    if (!stepped) settled.add(ax); // nothing left on the ladder could move it — done
+  }
+
+  if (!changed) return { items, notes };
+  notes.push("nudged the grist toward the requested malt character with more of a malt the neighbourhood already uses");
+  const asItems: GristBillItem[] = work.map((w) => ({ archetype: w.archetype, pct: w.share * 100, preset: w.preset }));
+  const brew = enforceGristBrewability(asItems);
+  notes.push(...brew.notes);
+  return { items: brew.items, notes };
+}
+
 /** Weighted-average a k-NN neighbourhood's `g` (archetype -> % of grist) maps. */
 export function blendGristPct(neighbors: Array<{ rec: CloudRecord; weight: number }>): Record<string, number> {
   const out: Record<string, number> = {};
@@ -660,6 +838,134 @@ export function materializeHopSchedule(templates: HopTemplate[], batchVolumeL: n
 /** Uniformly scale every hop's grams (used by the target-IBU bisection solver). */
 export function scaleHops(hops: Hop[], factor: number): Hop[] {
   return hops.map((h) => ({ ...h, grams: h.grams * factor }));
+}
+
+// ── Hop-side residual correction (#3 for hops) ────────────────────────────────
+
+/** g/L added to the corrective dry-hop per pass (saturation stops it early). */
+const HOP_CORRECTION_STEP_GPL = 1.0;
+/** A single corrective variety can't exceed this dry-hop dose — a big charge, not a firehose. */
+const HOP_CORRECTION_DONOR_MAX_GPL = 6;
+/** Total corrective dry-hop added across all passes is capped here (keeps the bill real). */
+const HOP_CORRECTION_ADDED_MAX_GPL = 8;
+const HOP_CORRECTION_MAX_PASSES = 12;
+/** Only correct a pushed hop axis whose shortfall is at least this much. */
+const HOP_CORRECTION_MIN_DEFICIT = 0.2;
+/** Corrective charge is a 3-day dry hop (expressed in minutes for the template). */
+const HOP_CORRECTION_DRYHOP_MINUTES = 3 * 24 * 60;
+
+/**
+ * The hop analogue of `correctMaltGristToward`: close the part of a HOP flavour
+ * shortfall the k-NN rerank leaves by adding a bounded late/dry-hop charge of the
+ * variety that most drives the deficit axis — drawn only from what the
+ * neighbourhood actually used (`sanctioned` → never invents a hop).
+ *
+ * Hop flavour is dose-driven (a late charge's g/L), not fraction-driven like
+ * malt, so this adds grams rather than shifting proportions: each pass finds the
+ * largest open pushed-axis deficit, picks the strongest-on-axis sanctioned
+ * variety, and grows its dry-hop dose a step — stopping when the flavour
+ * aggregator saturates (more of the same hop stops helping) or a dose cap is hit.
+ *
+ * Pure: the whole-schedule flavour is evaluated through an injected `evaluate`
+ * (the caller wires in the app's real hop-flavour calc), and each variety's own
+ * vector through `flavorOf`, so this has no cloud/app dependency and is unit-tested
+ * directly. Bittering is never touched (the IBU solver owns that downstream).
+ */
+export function correctHopScheduleToward(
+  templates: HopTemplate[],
+  sanctioned: Iterable<string>,
+  flavorOf: (name: string) => HopFlavorProfile | undefined,
+  target: Partial<HopFlavorProfile>,
+  evaluate: (templates: HopTemplate[]) => HopFlavorProfile,
+  opts: { step?: number; donorMaxGpl?: number; addedMaxGpl?: number; maxPasses?: number; minDeficit?: number; avoidCollateral?: boolean; collateralPenalty?: number; prevalence?: Record<string, number> } = {},
+): { templates: HopTemplate[]; notes: string[] } {
+  const step = opts.step ?? HOP_CORRECTION_STEP_GPL;
+  const donorMaxGpl = opts.donorMaxGpl ?? HOP_CORRECTION_DONOR_MAX_GPL;
+  const addedMaxGpl = opts.addedMaxGpl ?? HOP_CORRECTION_ADDED_MAX_GPL;
+  const maxPasses = opts.maxPasses ?? HOP_CORRECTION_MAX_PASSES;
+  const minDeficit = opts.minDeficit ?? HOP_CORRECTION_MIN_DEFICIT;
+  const avoidCollateral = opts.avoidCollateral ?? false;
+  const collateralPenalty = opts.collateralPenalty ?? CORRECTION_COLLATERAL_PENALTY;
+  // In-style weighting (see correctMaltGristToward): scale a donor by how much the
+  // neighbourhood leans on that hop, so a common in-style variety wins over a rare
+  // one that merely scores high on the axis. No prevalence → uniform (old behaviour).
+  const prevalence = opts.prevalence;
+  const maxPrev = prevalence ? Math.max(1e-9, ...Object.values(prevalence)) : 1;
+  const styleWeightOf = (name: string) => (prevalence ? CORRECTION_IN_STYLE_FLOOR + (1 - CORRECTION_IN_STYLE_FLOOR) * ((prevalence[name] ?? 0) / maxPrev) : 1);
+  const notes: string[] = [];
+  const pushedAxes = (Object.keys(target) as Array<keyof HopFlavorProfile>).filter((k) => target[k] != null);
+  if (pushedAxes.length === 0) return { templates, notes };
+
+  const sanctionedNames = [...sanctioned];
+  let work: HopTemplate[] = templates.map((t) => ({ ...t }));
+  let addedTotal = 0;
+  let changed = false;
+
+  for (let pass = 0; pass < maxPasses; pass++) {
+    if (addedTotal >= addedMaxGpl) break;
+    const achieved = evaluate(work);
+    // Largest still-open pushed-axis shortfall.
+    let axis: keyof HopFlavorProfile | null = null;
+    let worstDeficit = minDeficit;
+    for (const ax of pushedAxes) {
+      const deficit = (target[ax] ?? 0) - achieved[ax];
+      if (deficit > worstDeficit) { worstDeficit = deficit; axis = ax; }
+    }
+    if (!axis) break;
+
+    // Axes to protect: pushed axes (other than the one being raised) already at
+    // or over target — a donor strong in these overshoots them. With
+    // avoidCollateral on, dock its score by their contribution so the purest
+    // donor for the deficit axis wins (e.g. a berry hop that isn't also stone
+    // fruit, when stone fruit was pulled down).
+    const avoidAxes = avoidCollateral
+      ? pushedAxes.filter((ax) => ax !== axis && achieved[ax] >= (target[ax] ?? 0))
+      : [];
+
+    // The neighbourhood-sanctioned variety strongest on that axis — net of
+    // collateral, and weighted toward the varieties the neighbourhood actually uses.
+    let donor: string | null = null;
+    let donorScore = 0;
+    for (const name of sanctionedNames) {
+      const vec = flavorOf(name);
+      const contrib = vec?.[axis] ?? 0;
+      if (contrib <= 0) continue; // must actually help the deficit axis
+      let gain = contrib;
+      for (const av of avoidAxes) gain -= collateralPenalty * (vec?.[av] ?? 0);
+      if (gain <= 0) continue;
+      const score = gain * styleWeightOf(name);
+      if (score > donorScore) { donorScore = score; donor = name; }
+    }
+    if (!donor || donorScore <= 0) break;
+
+    // Grow the donor's dry-hop dose (boost an existing one, else add a new charge).
+    const existing = work.find((t) => t.type === "dry hop" && t.name === donor);
+    const donorGplNow = existing ? existing.gpl : 0;
+    if (donorGplNow >= donorMaxGpl) break;
+    const inc = Math.min(step, donorMaxGpl - donorGplNow, addedMaxGpl - addedTotal);
+    if (inc <= 0) break;
+
+    const trial: HopTemplate[] = work.map((t) => ({ ...t }));
+    const trialExisting = trial.find((t) => t.type === "dry hop" && t.name === donor);
+    if (trialExisting) trialExisting.gpl += inc;
+    else trial.push({ name: donor, type: "dry hop", gpl: inc, timeMinutes: HOP_CORRECTION_DRYHOP_MINUTES });
+
+    const tgt = target[axis] ?? 0;
+    const after = evaluate(trial)[axis];
+    if (!(after > achieved[axis] + 1e-4)) break; // saturated
+    if (after > tgt) {
+      // overshoot: keep the step only if it lands closer than not adding it, then stop.
+      if (Math.abs(after - tgt) < Math.abs(tgt - achieved[axis])) { work = trial; addedTotal += inc; changed = true; }
+      break;
+    }
+    work = trial;
+    addedTotal += inc;
+    changed = true;
+  }
+
+  if (!changed) return { templates, notes };
+  notes.push("added a dry-hop charge of a variety the neighbourhood already uses to reach the requested hop character");
+  return { templates: work, notes };
 }
 
 // ── Yeast reconstruction ─────────────────────────────────────────────────────

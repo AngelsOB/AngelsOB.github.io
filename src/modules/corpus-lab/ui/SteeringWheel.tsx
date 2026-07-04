@@ -5,7 +5,7 @@ import { useRef, useState, type CSSProperties } from "react";
 import { hsTokens, hsAlpha } from "@/modules/builder/tokens";
 import HSEyebrow from "@/modules/builder/components/HSEyebrow";
 import HSScriptNote from "@/modules/builder/components/HSScriptNote";
-import type { FlavorAxis } from "./axes";
+import { PUSH_HEADROOM, type FlavorAxis } from "./axes";
 
 /**
  * Interactive Hop-&-Skip flavour "steering wheel".
@@ -16,10 +16,13 @@ import type { FlavorAxis } from "./axes";
  *    "however this style usually tastes";
  *  - a pushed axis becomes a solid ink handle at the value you dragged to.
  *
- * Drag a handle out to the rim to push that flavour toward the style's
- * realistic maximum; drag it back to the centre to release it (back to
- * typical). After a Calculate, an accent-filled polygon shows what the
- * generated recipe actually tastes like ("in the glass").
+ * The rim is the style's typical ceiling — the radar itself is the "normal"
+ * zone. Drag a handle out to the rim for a strong-but-classic amount, or keep
+ * pulling PAST the rim to go "off the charts" (up to PUSH_HEADROOM×, the reach
+ * of the engine's residual correction); drag back to the centre to release it
+ * (back to typical). After a Calculate, an accent-filled polygon shows what the
+ * generated recipe actually tastes like ("in the glass") — and it, too, can
+ * spill past the rim when the recipe genuinely out-does a normal one.
  *
  * Structural chrome (rings, spokes, handles) is pure HS ink; only the axis
  * labels carry each flavour's own identity colour. Interaction math (pointer →
@@ -40,6 +43,8 @@ export default function SteeringWheel({
   achieved,
   onChange,
   onReset,
+  locked = false,
+  onToggleLock,
   size = 300,
   loading = false,
 }: {
@@ -59,6 +64,9 @@ export default function SteeringWheel({
   /** (key, value) to push an axis; value === null releases it back to median. */
   onChange: (key: string, value: number | null) => void;
   onReset: () => void;
+  /** When set, shows a lock toggle; a locked bill is kept (not rerolled) on "Another take". */
+  locked?: boolean;
+  onToggleLock?: () => void;
   size?: number;
   /** Norms still loading — dim the wheel and ignore drags. */
   loading?: boolean;
@@ -68,9 +76,13 @@ export default function SteeringWheel({
   const [activeAxis, setActiveAxis] = useState<number | null>(null);
 
   const n = axes.length;
-  // Floor guards against a caller passing a tiny size (< 96 ⇒ negative radius,
-  // which would invert the geometry and the drag projection).
-  const radius = Math.max(1, size / 2 - 48);
+  // Floor guards against a caller passing a tiny size (< 108 ⇒ negative radius).
+  // Pulled in from -48 to leave a margin the "off the charts" overflow (up to
+  // PUSH_HEADROOM× the rim) can spill into without clipping the viewBox.
+  const radius = Math.max(1, size / 2 - 54);
+  // How far a handle/polygon vertex may sit from centre — the rim (typical) plus
+  // the push headroom. Labels live just beyond this so an overflow can't hit them.
+  const overflowRadius = radius * PUSH_HEADROOM;
   const cx = size / 2;
   const cy = size / 2;
 
@@ -87,8 +99,10 @@ export default function SteeringWheel({
 
   function pointAt(i: number, value: number) {
     const angle = angleFor(i);
-    const max = axisMax(i);
-    const r = (Math.max(0, Math.min(max, value)) / max) * radius;
+    const max = axisMax(i); // the rim = the style's typical ceiling
+    // A value may run past the rim, out to max × PUSH_HEADROOM (the residual-
+    // correction reach) — rendered "off the charts" beyond the outer ring.
+    const r = (Math.max(0, Math.min(max * PUSH_HEADROOM, value)) / max) * radius;
     return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
   }
 
@@ -130,7 +144,9 @@ export default function SteeringWheel({
     // to a neighbour — only radial movement moves the value.
     const proj = (x - cx) * Math.cos(angle) + (y - cy) * Math.sin(angle);
     const max = axisMax(axisIdx);
-    const raw = Math.max(0, Math.min(1, proj / radius)) * max;
+    // Drag spans 0 → rim → PUSH_HEADROOM× rim: past the rim is the "off the
+    // charts" push, still capped at what residual correction can actually reach.
+    const raw = Math.max(0, Math.min(PUSH_HEADROOM, proj / radius)) * max;
     const key = axes[axisIdx].key;
     // Snap to a tidy 0.05 step; anything inside the hub is a release.
     if (raw < max * 0.04) onChange(key, null);
@@ -183,27 +199,54 @@ export default function SteeringWheel({
             </HSScriptNote>
           ) : null}
         </div>
-        <button
-          type="button"
-          className="studio-focus"
-          onClick={onReset}
-          disabled={!hasPush}
-          style={{
-            fontFamily: hsTokens.mono,
-            fontSize: 10,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: hasPush ? hsTokens.ink : hsTokens.muted,
-            background: "transparent",
-            border: "none",
-            cursor: hasPush ? "pointer" : "default",
-            opacity: hasPush ? 1 : 0.4,
-            padding: "2px 2px",
-            transition: "opacity 120ms var(--hs-ease, ease)",
-          }}
-        >
-          reset
-        </button>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+          {onToggleLock ? (
+            <button
+              type="button"
+              className="studio-focus"
+              onClick={onToggleLock}
+              aria-pressed={locked}
+              aria-label={locked ? "Locked — “Another take” keeps this bill" : "Unlocked — lock so “Another take” keeps this bill"}
+              title={locked ? "Locked — “Another take” keeps this bill" : "Lock this bill so “Another take” keeps it"}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                color: locked ? accent : hsTokens.muted,
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: "1px 2px",
+                transition: "color 120ms var(--hs-ease, ease)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="4.5" y="11" width="15" height="10" rx="2" />
+                {locked ? <path d="M8 11V7a4 4 0 0 1 8 0v4" /> : <path d="M8 11V7a4 4 0 0 1 7.9-1" />}
+              </svg>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="studio-focus"
+            onClick={onReset}
+            disabled={!hasPush}
+            style={{
+              fontFamily: hsTokens.mono,
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: hasPush ? hsTokens.ink : hsTokens.muted,
+              background: "transparent",
+              border: "none",
+              cursor: hasPush ? "pointer" : "default",
+              opacity: hasPush ? 1 : 0.4,
+              padding: "2px 2px",
+              transition: "opacity 120ms var(--hs-ease, ease)",
+            }}
+          >
+            reset
+          </button>
+        </div>
       </div>
 
       {/* the wheel */}
@@ -331,8 +374,8 @@ export default function SteeringWheel({
         {/* axis labels */}
         {axes.map((ax, i) => {
           const a = angleFor(i);
-          const x = cx + (radius + 20) * Math.cos(a);
-          const y = cy + (radius + 20) * Math.sin(a);
+          const x = cx + (overflowRadius + 12) * Math.cos(a);
+          const y = cy + (overflowRadius + 12) * Math.sin(a);
           const anchor = Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle";
           const pushed = ax.key in values;
           return (

@@ -157,6 +157,16 @@ describe("RecipeSteeringService — basic query", () => {
     expect(result.style.family).toBe("Other");
     expect(result.notes.some((n) => n.includes("didn't resolve"))).toBe(true);
   });
+
+  test("axisDialMax is axisMax scaled by the 1.25 dial headroom (axisMax = dial-4, axisDialMax = dial-5)", () => {
+    const { axisMax, axisDialMax } = service.steer({ style: "American IPA" });
+    for (const key of Object.keys(axisMax.malt) as Array<keyof typeof axisMax.malt>) {
+      expect(axisDialMax.malt[key]).toBeCloseTo(axisMax.malt[key] * 1.25, 9);
+    }
+    for (const key of Object.keys(axisMax.hop) as Array<keyof typeof axisMax.hop>) {
+      expect(axisDialMax.hop[key]).toBeCloseTo(axisMax.hop[key] * 1.25, 9);
+    }
+  });
 });
 
 // ── solvers ──────────────────────────────────────────────────────────────────

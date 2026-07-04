@@ -6,6 +6,9 @@ dependency lab → app), so it's safe to iterate in isolation and to delete with
 impact. Heavy offline builds are gated behind `BUILD_CLOUD=1` so the normal test suite
 stays fast and CI-safe.
 
+Production serving (self-hosted corpus server + Vercel proxy — the corpus never leaves
+our own hardware): [corpus-lab-serving.md](corpus-lab-serving.md).
+
 ---
 
 ## 1. What we're building
@@ -82,7 +85,7 @@ stay gitignored throughout.
 
 | File | Purpose |
 |---|---|
-| `maltFlavor.ts` (+ `.test.ts`) | Curated malt lexicon: **9 flavour axes** + `intensity` + body contributions; `aggregateMaltFlavor` / `aggregateMaltBody`; `MALT_INTENSITY_LAMBDA=1.6`. Types are local (self-contained). 34 archetypes, book-validated (Mallett). |
+| `maltFlavor.ts` (+ `.test.ts`) | Curated malt lexicon: **9 flavour axes** + `intensity` + body contributions; `aggregateMaltFlavor` / `aggregateMaltBody`; `MALT_INTENSITY_LAMBDA=1.6`. 34 archetypes, book-validated (Mallett). **Promoted Jul 2026** to `src/modules/recipe/data/maltFlavor.ts` (which also gained a runtime name→archetype matcher, the TS port of `build-archetype-map.mjs`'s classifier) when the builder's fermentables section grew its grain-flavour radar (`GrainFlavorCard`); this file is now a re-export shim, so lab imports and tests are unchanged and containment still holds (lab → app direction). |
 | `offline/corpus.mjs` | Streaming helpers over the raw NDJSON-ish corpus (`streamRecords`, `parseLine`, `CORPUS_FILE`). |
 | `offline/eda.mjs` | Phase 0 ground-truthing (counts, distinct ingredient strings, unit sanity). |
 | `offline/build-archetype-map.mjs` | Grain name → malt-archetype mapper → `out/archetype-map.json` + review tsv. |

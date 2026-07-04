@@ -56,7 +56,9 @@ export function continuousRow(f: ContinuousFeatures): number[] {
   return [...f.m, ...f.h, grav, f.ibu, f.srm, buGu, f.mb];
 }
 
-export type Stats = { mean: number[]; std: number[] };
+/** `mean`/`std` are WINSORIZED (computed on data clipped to [lo, hi]); `lo`/`hi`
+ * are the per-dim clip bounds so a query can be winsorized the same way. */
+export type Stats = { mean: number[]; std: number[]; lo: number[]; hi: number[] };
 
 /** Per-dimension mean over a set of equal-length rows (e.g. a style-family centroid). */
 export function componentwiseMean(rows: number[][]): number[] {
@@ -67,20 +69,57 @@ export function componentwiseMean(rows: number[][]): number[] {
   return mean;
 }
 
-/** Per-dimension mean/std over a set of rows (population std, floor 1 to avoid div-by-0). */
+/**
+ * Per-dimension WINSORIZED mean/std for robust standardization.
+ *
+ * Each dim is clipped to its [p1, p99] range BEFORE the mean/std are taken, so
+ * the handful of garbage self-reported values (an OG parsed as 1200 → gravity
+ * 14,897; an IBU of 4768) can't inflate the scale and flatten every real recipe
+ * into z≈0. Plain mean/std did exactly that — it left gravity and buGu
+ * effectively DEAD (each <1.5% of k-NN distance, so strength wasn't a
+ * neighbour signal at all). On the clipped data the scale ≈ the true std, so
+ * every input ends up unit-variance: fair, granular, equal-weighted, and
+ * outlier-proof. `lo`/`hi` are kept so `zScore` can clip a query point the same
+ * way. Std floored at 1 for a constant dim (div-by-0 guard).
+ */
 export function computeStats(rows: number[][]): Stats {
   const D = rows[0]?.length ?? 0;
-  const mean = componentwiseMean(rows);
-  const std = new Array(D).fill(0);
-  for (const r of rows) for (let j = 0; j < D; j++) { const d = r[j] - mean[j]; std[j] += d * d; }
-  for (let j = 0; j < D; j++) std[j] = Math.sqrt(std[j] / (rows.length || 1)) || 1;
-  return { mean, std };
+  const N = rows.length;
+  const mean = new Array(D).fill(0);
+  const std = new Array(D).fill(1);
+  const lo = new Array(D).fill(0);
+  const hi = new Array(D).fill(0);
+  const col = new Float64Array(N);
+  for (let j = 0; j < D; j++) {
+    for (let i = 0; i < N; i++) col[i] = rows[i][j];
+    const sorted = Float64Array.from(col).sort();
+    const at = (p: number) => (N ? sorted[Math.min(N - 1, Math.max(0, Math.round((N - 1) * p)))] : 0);
+    const loJ = at(0.01);
+    const hiJ = at(0.99);
+    lo[j] = loJ;
+    hi[j] = hiJ;
+    const clip = (v: number) => (v < loJ ? loJ : v > hiJ ? hiJ : v);
+    let sum = 0;
+    for (let i = 0; i < N; i++) sum += clip(col[i]);
+    const m = N ? sum / N : 0;
+    let ss = 0;
+    for (let i = 0; i < N; i++) { const d = clip(col[i]) - m; ss += d * d; }
+    mean[j] = m;
+    std[j] = Math.sqrt(N ? ss / N : 0) || 1;
+  }
+  return { mean, std, lo, hi };
 }
 
+/** Winsorize each value to [lo, hi], then standardize by the winsorized mean/std. */
 export function zScore(row: number[], stats: Stats): Float64Array {
   const D = row.length;
   const z = new Float64Array(D);
-  for (let j = 0; j < D; j++) z[j] = (row[j] - stats.mean[j]) / stats.std[j];
+  const hasBounds = stats.lo != null && stats.hi != null;
+  for (let j = 0; j < D; j++) {
+    let v = row[j];
+    if (hasBounds) { const lo = stats.lo[j], hi = stats.hi[j]; v = v < lo ? lo : v > hi ? hi : v; }
+    z[j] = (v - stats.mean[j]) / stats.std[j];
+  }
   return z;
 }
 

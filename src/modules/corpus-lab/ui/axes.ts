@@ -50,14 +50,28 @@ export const DEFAULT_MALT_MAX: Record<string, number> = {
   grainy: 1.5, biscuit: 2.5, caramel: 2.5, darkFruit: 2, chocolate: 2.5, coffee: 2.5, roast: 2.5, nutty: 1.5, honey: 2,
 };
 
-/** Round a raw p99 ceiling up to a tidy radar max (nearest 0.5, floor 1). */
-export const niceMax = (v: number) => Math.max(1, Math.ceil(v * 2) / 2);
+/**
+ * How far past the rim a wheel lets a value go — the "off the charts" push zone.
+ * The rim is each axis's typical ceiling (`axisMax`); a deliberate push can run
+ * out to `axisMax × PUSH_HEADROOM`, which is exactly `axisDialMax` — the extreme
+ * residual correction (#3) can actually reach. Mirrors the engine's
+ * AXIS_DIAL_HEADROOM so the wheel never lets you ask for more than #3 can hit.
+ */
+export const PUSH_HEADROOM = 1.25;
 
-/** Attach each axis's own display ceiling — live engine axisMax if present, else the audited fallback. */
+/**
+ * Attach each axis's own rim ceiling — the live engine `axisMax` (p99 of real
+ * recipes) if present, else the audited fallback. NOT rounded up: the rim is the
+ * RAW p99 so a strong-but-normal recipe reaches the rim (fills the radar) and a
+ * push runs a consistent PUSH_HEADROOM past it. Rounding to the nearest 0.5 used
+ * to inflate the rim (citrus 4.67→5.0), which both under-filled typical recipes
+ * and ate the "off the charts" overflow so pushes never visibly cleared the rim.
+ * Floored at 1 to guard a dead/tiny axis (div-by-zero in the wheel's scaling).
+ */
 export function axesWithMax(
   axes: FlavorAxis[],
   live: Record<string, number> | undefined,
   fallback: Record<string, number>,
 ): FlavorAxis[] {
-  return axes.map((a) => ({ ...a, max: niceMax(live?.[a.key] ?? fallback[a.key] ?? 5) }));
+  return axes.map((a) => ({ ...a, max: Math.max(1, live?.[a.key] ?? fallback[a.key] ?? 5) }));
 }
